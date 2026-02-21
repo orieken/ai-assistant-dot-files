@@ -15,6 +15,8 @@ FILES_TO_LINK=(
     ".openai.md"
     ".github/copilot-instructions.md"
     ".gemini/antigravity/instructions.md"
+    "FRAMEWORK_BLUEPRINT_PROMPT.md"
+    "BLUEPRINT_GENERATOR_PROMPT.md"
 )
 
 echo "Setting up AI Assistant Dotfiles..."

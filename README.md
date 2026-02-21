@@ -25,6 +25,8 @@ By using these dotfiles, all AI assistants are instructed to prioritize:
 | **`.openai.md`** | OpenAI / Codex | Global instructions for OpenAI models and tools leveraging Codex. |
 | **`.github/copilot-instructions.md`** | GitHub Copilot | Custom instructions injected into Copilot Chat and inline completions. |
 | **`.gemini/antigravity/instructions.md`** | Gemini Antigravity | Instructions specifically tailored for Google's agentic coding assistant within this ecosystem. |
+| **`FRAMEWORK_BLUEPRINT_PROMPT.md`** | General AI Usage | A core prompt or meta-prompt establishing the framework blueprint for AI agents. |
+| **`BLUEPRINT_GENERATOR_PROMPT.md`** | Prompt Engineering | A prompt template to use with an AI (like Claude or ChatGPT) to automatically generate new blueprint prompts from existing codebases. |
 
 ## Usage (Installation)
 
