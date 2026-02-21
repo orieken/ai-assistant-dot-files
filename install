@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# This script creates symlinks from the local dotfiles to the user's home directory.
+# This ensures that tools like Claude, Cursor, and Windsurf always pull the latest rules when this repo is updated.
+
+# Determine the absolute path to this repository
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HOME_DIR="$HOME"
+
+# Array of files to symlink (relative to the repo root)
+FILES_TO_LINK=(
+    ".claude.md"
+    ".cursorrules"
+    ".windsurfrules"
+    ".openai.md"
+    ".github/copilot-instructions.md"
+    ".gemini/antigravity/instructions.md"
+)
+
+echo "Setting up AI Assistant Dotfiles..."
+
+for FILE in "${FILES_TO_LINK[@]}"; do
+    SOURCE_PATH="$REPO_DIR/$FILE"
+    TARGET_PATH="$HOME_DIR/$FILE"
+
+    # Ensure the parent directory exists in the home directory
+    TARGET_DIR="$(dirname "$TARGET_PATH")"
+    if [ ! -d "$TARGET_DIR" ]; then
+        echo "Creating directory: $TARGET_DIR"
+        mkdir -p "$TARGET_DIR"
+    fi
+
+    # Check if a symlink already exists
+    if [ -L "$TARGET_PATH" ]; then
+        echo "Symlink already exists for $FILE. Skipping."
+    # Check if a regular file exists
+    elif [ -f "$TARGET_PATH" ]; then
+        echo "Backing up existing file: $TARGET_PATH -> $TARGET_PATH.bak"
+        mv "$TARGET_PATH" "$TARGET_PATH.bak"
+        echo "Creating symlink for $FILE"
+        ln -s "$SOURCE_PATH" "$TARGET_PATH"
+    else
+        echo "Creating symlink for $FILE"
+        ln -s "$SOURCE_PATH" "$TARGET_PATH"
+    fi
+done
+
+echo
+echo "Setup complete! Your AI assistants will now pull rules directly from this repository."
+echo "Simply run 'git pull' in this directory to get future updates."
