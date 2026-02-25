@@ -1,0 +1,10 @@
+# Mac OS
+.DS_Store
+
+# Feature Team Workspace Outputs
+.claude/feature-workspace/
+features/
+
+# Legacy and Backups
+*.bak
+archive/

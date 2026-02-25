@@ -9,13 +9,16 @@ HOME_DIR="$HOME"
 
 # Array of files to symlink (relative to the repo root)
 FILES_TO_LINK=(
+    "ARCHITECTURE_RULES.md"
     ".claude.md"
     ".cursorrules"
+    ".cursor/rules/global.mdc"
     ".windsurfrules"
     ".openai.md"
     ".github/copilot-instructions.md"
     ".gemini/antigravity/instructions.md"
-    "FRAMEWORK_BLUEPRINT_PROMPT.md"
+    "E2E_FRAMEWORK_BLUEPRINT_PROMPT.md"
+    "API_FRAMEWORK_BLUEPRINT_PROMPT.md"
     "BLUEPRINT_GENERATOR_PROMPT.md"
 )
 
@@ -23,7 +26,12 @@ echo "Setting up AI Assistant Dotfiles..."
 
 for FILE in "${FILES_TO_LINK[@]}"; do
     SOURCE_PATH="$REPO_DIR/$FILE"
-    TARGET_PATH="$HOME_DIR/$FILE"
+    
+    if [ "$FILE" = ".claude.md" ]; then
+        TARGET_PATH="$HOME_DIR/.claude/CLAUDE.md"
+    else
+        TARGET_PATH="$HOME_DIR/$FILE"
+    fi
 
     # Ensure the parent directory exists in the home directory
     TARGET_DIR="$(dirname "$TARGET_PATH")"
