@@ -9,6 +9,7 @@ These rules apply to every project, every language, every file.
 
 - **Cyclomatic complexity < 7** on every function or method — no exceptions
 - **Unit test coverage ≥ 85%** for everything in `src/` and `lib/`
+- **Sandi Metz Rules (Strict Mode)**: Classes $\le$ 100 lines, methods $\le$ 5 lines, $\le$ 4 params, one object instantiated per controller.
 - **Every external dependency** (DB, HTTP, filesystem, clock, queue) hides behind an interface
 - **Models and factories** are always separate files following the naming convention
 - **SOLID principles** apply at all times — one reason to change per class
@@ -47,6 +48,13 @@ If complexity is approaching 7, apply in order:
 3. Replace `if/else` chains with lookup tables or dispatch maps
 4. Replace `switch` on type with polymorphism (Strategy, State)
 5. Never exceed 2 levels of nesting in a single function
+
+---
+
+## Legacy Code & Refactoring
+
+- **What to do when touching legacy code (Michael Feathers)**: When modifying untested/legacy code, identify the seam, write characterization tests to capture the *current actual behavior* (bugs and all), and NEVER refactor and add behavior in the same commit. Refactor first, then add behavior.
+- **Refactor step is NOT optional**: Follow TDD strictly. Red $\rightarrow$ Green $\rightarrow$ Refactor. The refactor step happens *before* you move onto the next feature, not "someday" on a tech-debt board.
 
 ---
 
@@ -180,13 +188,15 @@ Body: explain *why*, not *what*.
 
 ---
 
-## Naming
+## Naming (Martin Fowler's Intention-Revealing Names)
 
 - Functions and variables reveal intent: `isPaymentValid`, `calculateTax`, `activeUsers`
 - Booleans: `is`, `has`, `can`, `should` prefix
 - No abbreviations: write `configuration` not `cfg`, `manager` not `mgr`
 - No generic names: `data`, `info`, `handler`, `manager` — be specific
 - Functions do one thing; if you need `and` in the name, split it
+- **Bad (TypeScript)**: `const a = 5;`, `function pO(i) {...}`, `let d = new Date();`
+- **Good (TypeScript)**: `const MAX_RETRIES = 5;`, `function printOwing(invoice) {...}`, `let billingCycleStart = new Date();`
 
 ---
 
