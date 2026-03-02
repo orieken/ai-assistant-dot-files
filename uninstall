@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# This script removes symlinks created by the install script.
+# If backups (.bak) were created during installation, they will be restored.
+
+# Determine the absolute path to this repository
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HOME_DIR="$HOME"
+
+# Array of files to symlink (must match the array in `install`)
+FILES_TO_LINK=(
+    "ARCHITECTURE_RULES.md"
+    ".claude.md"
+    ".cursorrules"
+    ".cursor/rules/global.mdc"
+    ".windsurfrules"
+    ".openai.md"
+    ".github/copilot-instructions.md"
+    ".gemini/antigravity/instructions.md"
+    "E2E_FRAMEWORK_BLUEPRINT_PROMPT.md"
+    "API_FRAMEWORK_BLUEPRINT_PROMPT.md"
+    "BLUEPRINT_GENERATOR_PROMPT.md"
+    ".claude/agents"
+)
+
+echo "Uninstalling AI Assistant Dotfiles..."
+
+for FILE in "${FILES_TO_LINK[@]}"; do
+    if [ "$FILE" = ".claude.md" ]; then
+        TARGET_PATH="$HOME_DIR/.claude/CLAUDE.md"
+    else
+        TARGET_PATH="$HOME_DIR/$FILE"
+    fi
+
+    # Check if a symlink exists
+    if [ -L "$TARGET_PATH" ]; then
+        echo "Removing symlink: $TARGET_PATH"
+        rm "$TARGET_PATH"
+        
+        # Check if a backup file exists and restore it
+        if [ -e "$TARGET_PATH.bak" ]; then
+            echo "Restoring backup: $TARGET_PATH.bak -> $TARGET_PATH"
+            mv "$TARGET_PATH.bak" "$TARGET_PATH"
+        fi
+    elif [ -e "$TARGET_PATH" ]; then
+        echo "Target is not a symlink, skipping: $TARGET_PATH"
+    else
+        echo "Nothing to remove for $FILE (Path not found)."
+    fi
+done
+
+echo
+echo "Uninstall complete! Your original dotfiles (if any) have been restored."

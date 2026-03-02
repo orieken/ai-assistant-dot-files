@@ -40,6 +40,12 @@ To set up the global symlinks automatically, run the install script:
 ```
 
 *(Note: The script will back up any existing files to `.bak` before creating the symlinks).*
+
+To remove these files and restore any `.bak` backups automatically, simply run:
+```bash
+./uninstall
+```
+
 ### Project-Specific Workarounds (GitHub Copilot)
 Some tools, like **GitHub Copilot**, do not currently support a true user-level global instruction file. Copilot expects `.github/copilot-instructions.md` to be present at the root of *each specific project workspace*. 
 
@@ -58,16 +64,51 @@ ln -s ~/Projects/Rieken/ai-assistant-dot-files/.github/copilot-instructions.md .
 
 ## AI Feature Team (Multi-Agent Templates)
 
-This repository also contains a powerful Multi-Agent "Feature Team" pipeline built for **Claude Code**. It provides a fully automated subagent architecture including an Analyst, Developer, QA Engineer, Tech Writer, and DevOps Engineer.
+This repository also contains a powerful Multi-Agent "Feature Team" pipeline built for **Claude Code**. It provides a fully automated subagent architecture including an Analyst, Architect, Developer, Code Reviewer, QA Engineer, Tech Writer, and DevOps Engineer.
 
-Instead of manually copying these files into your projects, you can use the built-in scaffolding script to instantly deploy the feature team into any workspace:
+Instead of manually copying these files into your projects, the global `./install` script symlinks the agents to your home directory (`~/.claude/agents/`), meaning they are available instantly in any repository you open on your machine.
+
+---
+
+### Using the Agents (Claude Code, Cursor, Copilot)
+
+Because these agents are structured as `.md` system prompts with specialized tools and parameters, they interact slightly differently depending on your IDE/tool.
+
+#### 🤖 Claude Code (Native Support)
+Claude Code auto-discovers agents in your `~/.claude/agents/` directory. You can start a pipeline directly from your terminal:
+```bash
+# Start Claude Code in any project
+claude
+
+# Ask an agent to do a job using the @mention syntax:
+> @analyst please read ticket 123 and create a spec
+> @architect please review the spec and plan the structure
+> @developer please implement the architecture using TDD
+> @code-reviewer please review the code against our craftsmanship rules
+> @qa-engineer please write end-to-end tests
+```
+
+#### 🧑‍💻 Cursor IDE
+Cursor's Composer (Cmd+I or Cmd+K) can dynamically pull in agent files as context. To actuate an agent:
+1. Open Cursor's Composer or Chat.
+2. Tag the global agent file using `@developer.md` or `@code-reviewer.md`.
+3. Example Prompt: *"Act exactly as described in `@developer.md`. Please read `.claude/feature-workspace/analysis.md` and implement the feature."*
+
+#### ✈️ GitHub Copilot
+Copilot does not auto-discover custom agents like Claude Code does, but you can leverage Copilot Edits or Chat by directly feeding it the agent persona:
+1. Open GitHub Copilot Chat.
+2. Tag the agent file (e.g., `#file:code-reviewer.md`).
+3. Example Prompt: *"Act as the Code Reviewer persona from `#file:code-reviewer.md`. Read my current workspace changes and review them against `ARCHITECTURE_RULES.md`."*
+
+---
+
+If you prefer to have the agents copied physically into your project workspace (e.g., to commit them to a specific repo for team distribution), you can use the built-in scaffolding script:
 
 ```bash
 # Navigate to your specific project
 cd ~/Projects/My-Awesome-Project
 
-# Deploy the AI Feature Team
+# Deploy the AI Feature Team locally
 ~/Projects/Rieken/ai-assistant-dot-files/scaffold-team.sh
 ```
-
-This will automatically create the `.claude/agents`, `.claude/skills`, and `features/` directories in your project, empowering Claude to handle end-to-end feature delivery. Read more in the [Template README](templates/claude-feature-team/README.md).
+This deploys the templates directly into the project. Read more in the [Template README](templates/claude-feature-team/README.md).
