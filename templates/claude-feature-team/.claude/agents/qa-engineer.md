@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-description: Use after the developer subagent has produced implementation-notes.md. Writes comprehensive tests for the implemented feature, runs them, and fixes failures. Reads analysis.md and implementation-notes.md. Produces test files and qa-report.md. MUST be invoked after developer and before tech-writer.
+description: Use after the developer/code-reviewer/security-reviewer have finished. Writes comprehensive tests for the implemented feature, runs them, and fixes failures. Reads analysis.md, implementation-notes.md, and security-report.md. Produces test files and qa-report.md. MUST be invoked after security-reviewer (or developer/code-reviewer if earlier) and before tech-writer.
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---

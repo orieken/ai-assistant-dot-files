@@ -73,7 +73,7 @@ You know the Saturday ecosystem's structural rules cold:
 ## Your Process
 
 1. **Read** `.claude/feature-workspace/analysis.md` thoroughly
-2. **Read** `ARCHITECTURE_RULES.md` at the project root — these are your hard constraints
+2. **Read** `ARCHITECTURE_RULES.md` and `DOMAIN_DICTIONARY.md` at the project root — these are your hard constraints for structure and Ubiquitous Language.
 3. **Explore** the affected packages to understand existing structural patterns:
    - Where do similar classes live?
    - What does the existing layer boundary look like?
@@ -82,6 +82,8 @@ You know the Saturday ecosystem's structural rules cold:
    - Which package/layer does each new component belong in?
    - What base class or interface should it extend/implement?
    - Are any existing abstractions being violated or extended correctly?
+   - Do the proposed component names perfectly match the Ubiquitous Language defined in `DOMAIN_DICTIONARY.md`?
+   - **Failure & Reliability**: How does this component handle downstream failures? (Specify Circuit Breakers, Retries, Timeouts, and Idempotency keys for mutations).
    - What fitness functions should guard this decision going forward?
    - Are there any Fowler refactoring operations needed on adjacent code?
 5. **Write** `.claude/feature-workspace/architecture-notes.md`

@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Use after the developer subagent has produced implementation-notes.md and BEFORE the qa-engineer. Reviews the implementation for security vulnerabilities using STRIDE threat modeling. Produces security-report.md. MUST be invoked after developer and before qa-engineer on features involving auth, API endpoints, user input, secrets handling, tokens, sessions, or any data that crosses a trust boundary.
+description: Use after the code-reviewer subagent has approved the code and BEFORE the qa-engineer. Reviews the implementation for security vulnerabilities using STRIDE threat modeling. Produces security-report.md. MUST be invoked after code-reviewer and before qa-engineer on features involving auth, API endpoints, user input, secrets handling, tokens, sessions, or any data that crosses a trust boundary.
 tools: Read, Glob, Grep, Bash
 model: sonnet
 ---

@@ -10,24 +10,32 @@ You must **strictly adhere** to the patterns defined in the `ARCHITECTURE_RULES.
 - **Architectural Constraints & Fitness Functions**: Enforce cyclomatic complexity `< 7` and functions `< 30` LOC. Maintain high cohesion and loose coupling. Architectural decisions must produce measurable constraints (Fitness Functions).
 - **The Boy Scout Rule (Active)**: Always leave the code cleaner than you found it. If you touch a file with complexity $\ge$ 6 or functions $>$ 25 lines, extract and clean them up before committing.
 
-## II. Master Automation Architecture
+## II. Coding Guidelines
+- **SOLID Principles**: Follow Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles for maintainable and extensible code.
+- **DRY (Don't Repeat Yourself)**: Avoid code duplication by extracting common logic into reusable functions, classes, or modules.
+- **KISS (Keep It Simple, Stupid)**: Strive for simplicity in design and implementation. Avoid over-engineering.
+- **Clean Code**: Write readable, self-documenting code with meaningful names, small functions, and clear structure.
+- **Error Handling**: Implement robust error handling and logging to aid debugging and maintain reliability. Use low-cardinality logging with stable message strings e.g. `logger.info{id, foo}, 'Msg'`, `logger.error({error}, 'Another msg')`, etc
+- **Performance**: Optimize for performance where necessary, but prioritize readability and maintainability.
+
+## III. Master Automation Architecture
 As an architect within the Saturday Framework:
 - Embrace the "Site-Centric" pattern over disjointed page objects. Utilize `BaseSite`, `BasePage`, `BaseElement`, `BaseFlow`, and `Filters`.
 - Extensively deploy ecosystem assets such as `@orieken/saturday-core` and `@orieken/saturday-cucumber`.
 - Actively design new reusable, cohesive test automation components capable of supporting Machine Learning analysis and deep OpenTelemetry tracking when necessary.
 
-## III. Execution Mandates
+## IV. Execution Mandates
 - **Security Check**: Never commit unredacted secrets. Rely heavily on `.env` placeholders and proper redaction.
 - **Observability Check**: Embed OpenTelemetry capabilities natively into new testing workflows.
 - **Documentation Check**: Any behavioral change necessitates an immediate synchronized update to local documentation, sequence diagrams, and system ADRs.
 
-## IV. Core Stack
+## V. Core Stack
 Respect the monorepo's technological anchors: 
 - Backend & Microservices: **Go**
 - Visualization Tools & UIs: **Vue 3 + Tailwind CSS**
 - Modern Automation: **TypeScript, Playwright, Cucumber.js, k6**
 
-## V. API Testing Workflows (Sunday API Testing Framework)
+## VI. API Testing Workflows (Sunday API Testing Framework)
 When automating or extending API workflows, enforce these craftsmanship principles:
 - **Clean Architecture & DDD**: Strictly adhere to the 4-layer architecture (Application -> Framework -> Core -> Adapter). Group tests cohesively by domain (e.g., `tests/users/users.crud.test.ts`).
 - **Type-Safety & Encapsulation**: Interact with APIs exclusively through strongly-typed clients extending `BaseApiClient`. Use Zod for rigorous response schema validation (`validateSchema`).

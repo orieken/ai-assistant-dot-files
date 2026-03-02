@@ -29,7 +29,7 @@ We adhere strictly to Uncle Bob's Clean Architecture. Dependencies must ALWAYS p
 We embrace the strategic and tactical patterns of DDD.
 
 - **Bounded Contexts**: Structure your code by domain (e.g., `src/billing`, `src/users/auth`) rather than by technical concern (`src/controllers`, `src/models`, `src/services`).
-- **Ubiquitous Language**: Variables, classes, and methods MUST perfectly match the business terminology. Do not invent technical synonyms for business concepts.
+- **Ubiquitous Language (`DOMAIN_DICTIONARY.md`)**: Variables, classes, and methods MUST perfectly match the business terminology. Do not invent technical synonyms for business concepts. You MUST maintain and strictly adhere to the `DOMAIN_DICTIONARY.md` file in the root of the project as the single source of truth for all terminology.
 - **Repositories**: Abstract all data persistence behind Repository interfaces.
 - **Value Objects**: Use immutable Value Objects for concepts like Currency, Email Addresses, or Coordinates rather than primitive types.
 
@@ -151,3 +151,38 @@ When modifying untested or "legacy" code, you must follow this protocol:
 2. **Write Characterization Tests**: BEFORE changing any code, write tests that assert the *current actual behavior* of the system (even if it's flawed). This sets the baseline.
 3. **Introduce Testability**: Use the seam to get the code under test safely.
 4. **Refactor and Add Behavior SEPARATELY**: **NEVER** refactor code and add new behavior in the same commit. Refactor first to make the change easy, commit, then add the new feature.
+
+## X. Database Craftsmanship & Evolutionary Data
+
+Database schemas must evolve alongside the application without ever requiring downtime or maintenance windows. To achieve this, we mandate the **Expand/Contract Pattern (Parallel Change)**.
+
+1. **No Destructive Operations**: A single deployment may NEVER include destructive changes such as `DROP COLUMN`, `RENAME COLUMN`, or `DROP TABLE`.
+2. **The Expand Phase**: To change or replace a column, first add the new column (Expand). Deploy the code that writes to *both* the old and new columns, and backfill the data in the background. The migration for this phase runs *before* code deployment.
+3. **The Contract Phase**: Once all callers rely exclusively on the new column and data is fully migrated, issue a second, separate deployment that drops the old column (Contract). This migration runs *after* code deployment.
+4. **Non-Nullable Fields**: Never add a new `NOT NULL` column without providing a `DEFAULT` value, otherwise the migration will fail on tables with existing data.
+
+## XI. Frontend Craftsmanship (Accessibility & Semantic HTML)
+
+The User Interface must be treated with the same engineering rigor as the backend. We explicitly mandate **Accessibility (a11y)** and **Semantic HTML**.
+
+1. **Semantic HTML over `div`-soup**: Always use native semantic HTML elements (`<nav>`, `<main>`, `<article>`, `<button>`, `<form>`, `<label>`) instead of generic `<div>` or `<span>` tags.
+2. **Interactive Elements**: Never attach `onClick` or `keyup` listeners to non-interactive elements like a `<div>`. If an element represents an action, it must be a `<button>` or an `<a>` tag with proper `href`.
+3. **Accessibility (WCAG)**: Use ARIA attributes (`aria-label`, `aria-expanded`, `aria-hidden`) when semantic elements fall short. Ensure all form `<input>` elements have a clearly associated `<label>`.
+4. **Keyboard Navigation**: All interactive elements must be reachable and usable via Keyboard-only navigation (Tab, Enter, Space arrow keys) with a visible `:focus-visible` state.
+
+## XII. Shift-Left Performance & Reliability
+
+We design for failure and scale from day one. Performance and reliability are not QA's job; they are built into the architecture.
+
+1. **Strict Timeouts**: Every single network call (HTTP requests, database queries, external API calls) MUST have an explicit timeout configured. Infinite/default timeouts are strictly banned.
+2. **Idempotency on Mutations**: Any API endpoint or service operation that mutates state (POST, PUT, DELETE) or processes financial transactions MUST be designed to be idempotent (e.g., using `Idempotency-Key` headers or database unique constraints).
+3. **Prevent N+1 Queries**: Never execute database queries inside loop structures. You must use eager loading (`.include()`, `.populate()`) or DataLoaders to batch queries efficiently.
+
+## XIII. General Coding Guidelines
+
+- **SOLID Principles**: Follow Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles for maintainable and extensible code.
+- **DRY (Don't Repeat Yourself)**: Avoid code duplication by extracting common logic into reusable functions, classes, or modules.
+- **KISS (Keep It Simple, Stupid)**: Strive for simplicity in design and implementation. Avoid over-engineering.
+- **Clean Code**: Write readable, self-documenting code with meaningful names, small functions, and clear structure.
+- **Error Handling**: Implement robust error handling and logging to aid debugging and maintain reliability. Use low-cardinality logging with stable message strings e.g. `logger.info{id, foo}, 'Msg'`, `logger.error({error}, 'Another msg')`, etc
+- **Performance**: Optimize for performance where necessary, but prioritize readability and maintainability.

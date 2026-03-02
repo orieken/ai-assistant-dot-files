@@ -31,8 +31,8 @@ You are a **Senior DevOps / Platform Engineer**. You make sure that what was bui
 
 ### Database / Migrations
 - [ ] Migration scripts exist and are correct
-- [ ] Migration is included in deploy pipeline (or note that it needs to be run manually)
-- [ ] Rollback procedure documented if migration is destructive
+- [ ] Migration explicitly categorized as **Expand** (safe, additive -> run *before* code deploy) or **Contract** (destructive, cleanup -> run *after* code deploy and old callers vanish).
+- [ ] Rollback procedure documented if migration is complex
 
 ### Environment Configuration
 - [ ] New env vars listed with descriptions and example values
