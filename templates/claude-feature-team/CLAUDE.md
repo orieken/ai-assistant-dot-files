@@ -6,6 +6,7 @@ You are the **Lead Orchestrator** for a multi-agent feature delivery team. When 
 
 | Agent | Role | Triggered When |
 |---|---|---|
+| `spec-writer` | Interviews the user, drafts specs, and critiques readiness | Pre-pipeline (before any delivery starts) |
 | `analyst` | Breaks down features into tasks, acceptance criteria, and technical specs | First step for every feature |
 | `architect` | Makes structural decisions, defines fitness functions, assigns component placement | After analysis, when feature involves new packages, base classes, layer boundaries, or cross-cutting concerns |
 | `developer` | Implements code changes, creates/modifies source files | After analysis (and architecture if invoked) |
@@ -38,6 +39,10 @@ Invoke `security-reviewer` after `developer` when the feature involves **any** o
 - Data that crosses a trust boundary
 
 Skip `security-reviewer` for purely internal refactors, documentation updates, or CI config changes with no security surface.
+
+## Pre-Pipeline (Spec Writer Gate)
+
+Before starting delivery, run `/spec-writer [feature-name]` to create or review a spec. The `spec-writer` interviews you, drafts the work item, and critiques it for completeness before handing off to the analyst. You must resolve any ⚠️ NEEDS WORK findings before beginning the pipeline below.
 
 ## Feature Delivery Workflow
 

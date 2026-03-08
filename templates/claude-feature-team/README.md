@@ -12,6 +12,7 @@ your-project/
 │   └── your-feature.md                ← Your feature specs live here
 └── .claude/
     ├── agents/
+    │   ├── spec-writer.md             ← Interviews user and critiques spec readiness
     │   ├── analyst.md                 ← Breaks down features into tasks
     │   ├── architect.md               ← Makes structural and design decisions
     │   ├── performance-engineer.md    ← Enforces shift-left reliability and constraints

@@ -64,7 +64,7 @@ ln -s ~/Projects/Rieken/ai-assistant-dot-files/.github/copilot-instructions.md .
 
 ## AI Feature Team (Multi-Agent Templates & Skills)
 
-This repository also contains a powerful Multi-Agent "Feature Team" pipeline built for **Claude Code**. It provides a fully automated subagent architecture including an Analyst, Architect, Performance Engineer, Data Engineer, Developer, Code Reviewer, Accessibility Engineer, Security Reviewer, QA Engineer, SRE, Tech Writer, and DevOps Engineer, along with executable **Skills** (like complexity checking and test running) that enforce craftsmanship rules programmatically.
+This repository also contains a powerful Multi-Agent "Feature Team" pipeline built for **Claude Code**. It provides a fully automated subagent architecture including a Spec Writer, Analyst, Architect, Performance Engineer, Data Engineer, Developer, Code Reviewer, Accessibility Engineer, Security Reviewer, QA Engineer, SRE, Tech Writer, and DevOps Engineer, along with executable **Skills** (like complexity checking and test running) that enforce craftsmanship rules programmatically.
 
 Instead of manually copying these files into your projects, the global `./install` script symlinks the agents (`~/.claude/agents/`) and skills (`~/.claude/skills/`) to your home directory, meaning they are available instantly in any repository you open on your machine.
 

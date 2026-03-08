@@ -43,7 +43,7 @@ mkdir -p "$TARGET_DIR/.claude"
 cp -r "$TEMPLATE_DIR/.claude/agents" "$TARGET_DIR/.claude/"
 cp -r "$TEMPLATE_DIR/.claude/skills" "$TARGET_DIR/.claude/"
 cp -r "$TEMPLATE_DIR/.claude/rules" "$TARGET_DIR/.claude/"
-echo "✅ Subagents (Analyst, Architect, Performance, Data, Developer, Code Reviewer, A11y, Security, QA, SRE, Tech Writer, DevOps) installed."
+echo "✅ Subagents (Spec Writer, Analyst, Architect, Performance, Data, Developer, Code Reviewer, A11y, Security, QA, SRE, Tech Writer, DevOps) installed."
 echo "✅ Skills installed."
 echo "✅ Rules installed."
 
