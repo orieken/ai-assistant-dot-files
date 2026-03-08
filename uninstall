@@ -21,6 +21,7 @@ FILES_TO_LINK=(
     "API_FRAMEWORK_BLUEPRINT_PROMPT.md"
     "BLUEPRINT_GENERATOR_PROMPT.md"
     ".claude/agents"
+    ".claude/skills"
 )
 
 echo "Uninstalling AI Assistant Dotfiles..."

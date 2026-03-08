@@ -21,6 +21,8 @@ FILES_TO_LINK=(
     "API_FRAMEWORK_BLUEPRINT_PROMPT.md"
     "BLUEPRINT_GENERATOR_PROMPT.md"
     ".claude/agents"
+    ".claude/skills"
+    ".claude/rules"
 )
 
 echo "Setting up AI Assistant Dotfiles..."
@@ -43,16 +45,17 @@ for FILE in "${FILES_TO_LINK[@]}"; do
 
     # Check if a symlink already exists
     if [ -L "$TARGET_PATH" ]; then
-        echo "Symlink already exists for $FILE. Skipping."
+        echo "Updating symlink for $FILE (points to new path if changed)."
+        ln -snf "$SOURCE_PATH" "$TARGET_PATH"
     # Check if a regular file or directory exists
     elif [ -e "$TARGET_PATH" ]; then
         echo "Backing up existing path: $TARGET_PATH -> $TARGET_PATH.bak"
         mv "$TARGET_PATH" "$TARGET_PATH.bak"
         echo "Creating symlink for $FILE"
-        ln -s "$SOURCE_PATH" "$TARGET_PATH"
+        ln -snf "$SOURCE_PATH" "$TARGET_PATH"
     else
         echo "Creating symlink for $FILE"
-        ln -s "$SOURCE_PATH" "$TARGET_PATH"
+        ln -snf "$SOURCE_PATH" "$TARGET_PATH"
     fi
 done
 

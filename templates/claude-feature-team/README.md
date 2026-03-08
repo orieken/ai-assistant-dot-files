@@ -13,11 +13,34 @@ your-project/
 └── .claude/
     ├── agents/
     │   ├── analyst.md                 ← Breaks down features into tasks
+    │   ├── architect.md               ← Makes structural and design decisions
+    │   ├── performance-engineer.md    ← Enforces shift-left reliability and constraints
+    │   ├── data-engineer.md           ← Designs schema and migrations
     │   ├── developer.md               ← Implements code
+    │   ├── code-reviewer.md           ← Reviews code against architecture rules
+    │   ├── accessibility-engineer.md  ← Reviews frontend for semantic HTML & a11y
+    │   ├── security-reviewer.md       ← Reviews implementation for STRIDE threats
     │   ├── qa-engineer.md             ← Writes and runs tests
+    │   ├── sre-engineer.md            ← Defines SLIs and enforces structured telemetry
     │   ├── tech-writer.md             ← Updates documentation
     │   └── devops-engineer.md         ← CI/CD and infrastructure
     └── skills/
+        ├── analyze-complexity/
+        │   ├── SKILL.md               ← Checks cyclomatic complexity & LOC
+        │   └── check.sh
+        ├── check-accessibility/
+        │   ├── SKILL.md               ← Enforces semantic HTML and ARIA rules
+        │   └── check.sh
+        ├── run-tests/
+        │   ├── SKILL.md               ← Runs tests and checks coverage > 85%
+        │   └── run.sh
+        ├── validate-migrations/
+        │   ├── SKILL.md               ← Enforces Expand/Contract patterns
+        │   └── check.sh
+        ├── verify-dependencies/
+        │   ├── SKILL.md               ← Checks Clean Architecture direction
+        │   └── check.sh
+        │   └── run.sh
         └── deliver-feature/
             └── SKILL.md               ← The /deliver-feature slash command
 ```
@@ -84,11 +107,13 @@ Implement the feature in features/user-avatar-upload.md
 Claude will:
 1. 🔍 **Analyst** reads your spec, explores the codebase, writes a technical breakdown
 2. ⏸️ **You approve** the analysis before code is written
-3. 💻 **Developer** implements the feature
-4. 🧪 **QA Engineer** writes and runs tests, fixes failures
-5. 📝 **Tech Writer** updates README, CHANGELOG, docs
-6. 🚀 **DevOps** updates CI/CD config and env var documentation
-7. ✅ **Summary** delivered to you with manual steps required
+3. 🏛️ **Architect / Data Engineer** designs the structural or schema changes if needed
+4. 💻 **Developer** implements the feature
+5. 🛡️ **Code Reviewer / Security / A11y** review the implementation
+6. 🧪 **QA Engineer** writes and runs tests, fixes failures
+7. 📝 **Tech Writer** updates README, CHANGELOG, docs
+8. 🚀 **DevOps** updates CI/CD config and env var documentation
+9. ✅ **Summary** delivered to you with manual steps required
 
 ### Manual Invocation
 

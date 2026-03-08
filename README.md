@@ -62,11 +62,11 @@ mkdir -p .github
 ln -s ~/Projects/Rieken/ai-assistant-dot-files/.github/copilot-instructions.md .github/copilot-instructions.md
 ```
 
-## AI Feature Team (Multi-Agent Templates)
+## AI Feature Team (Multi-Agent Templates & Skills)
 
-This repository also contains a powerful Multi-Agent "Feature Team" pipeline built for **Claude Code**. It provides a fully automated subagent architecture including an Analyst, Architect, Developer, Code Reviewer, QA Engineer, Tech Writer, and DevOps Engineer.
+This repository also contains a powerful Multi-Agent "Feature Team" pipeline built for **Claude Code**. It provides a fully automated subagent architecture including an Analyst, Architect, Performance Engineer, Data Engineer, Developer, Code Reviewer, Accessibility Engineer, Security Reviewer, QA Engineer, SRE, Tech Writer, and DevOps Engineer, along with executable **Skills** (like complexity checking and test running) that enforce craftsmanship rules programmatically.
 
-Instead of manually copying these files into your projects, the global `./install` script symlinks the agents to your home directory (`~/.claude/agents/`), meaning they are available instantly in any repository you open on your machine.
+Instead of manually copying these files into your projects, the global `./install` script symlinks the agents (`~/.claude/agents/`) and skills (`~/.claude/skills/`) to your home directory, meaning they are available instantly in any repository you open on your machine.
 
 ---
 
@@ -112,3 +112,22 @@ cd ~/Projects/My-Awesome-Project
 ~/Projects/Rieken/ai-assistant-dot-files/scaffold-team.sh
 ```
 This deploys the templates directly into the project. Read more in the [Template README](templates/claude-feature-team/README.md).
+
+
+```text
+You are the orchestrator. I want to build this feature: [feature description]. 
+
+Please run this exact pipeline:
+1. Pass the prompt to the @analyst to write the {feature-description}-analysis.md file
+2. Pass the {feature-description}-analysis.md file to the @architect to write the {feature-description}-architecture.md file
+3. Pass the {feature-description}-architecture.md file to the @performance-engineer to write the {feature-description}-performance-report.md file
+4. Pass the {feature-description}-performance-report.md file to the @data-engineer to write the {feature-description}-data-engineering.md file
+5. Pass the {feature-description}-data-engineering.md file to the @developer to write the {feature-description}-implementation.md file
+6. Pass the {feature-description}-implementation.md file to the @code-reviewer to write the {feature-description}-review.md file
+7. Pass the {feature-description}-review.md file to the @accessibility-engineer to write the {feature-description}-a11y-report.md file
+8. Pass the {feature-description}-a11y-report.md file to the @security-reviewer to write the {feature-description}-security-report.md file
+9. Pass the {feature-description}-security-report.md file to the @qa-engineer to write the {feature-description}-tests.md file
+10. Pass the {feature-description}-tests.md file to the @sre-engineer to write the {feature-description}-observability-report.md file
+11. Pass the {feature-description}-observability-report.md file to the @tech-writer to write the {feature-description}-documentation.md file
+12. Pass the {feature-description}-documentation.md file to the @devops-engineer to write the {feature-description}-deployment.md file
+```
