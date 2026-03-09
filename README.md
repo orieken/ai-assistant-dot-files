@@ -68,6 +68,35 @@ This repository also contains a powerful Multi-Agent "Feature Team" pipeline bui
 
 Instead of manually copying these files into your projects, the global `./install` script symlinks the agents (`~/.claude/agents/`) and skills (`~/.claude/skills/`) to your home directory, meaning they are available instantly in any repository you open on your machine.
 
+### The Team Architecture
+
+```mermaid
+graph TD
+    User([User]) --> Orchestrator{CLAUDE.md\nOrchestrator}
+    
+    subgraph "Phase 1: Discovery & Design"
+        Orchestrator --> SpecWriter[spec-writer]
+        SpecWriter --> Analyst[analyst]
+        Analyst --> Architect[architect]
+    end
+    
+    subgraph "Phase 2: Implementation & Review"
+        Architect --> Developer[developer]
+        Developer --> CodeReviewer[code-reviewer]
+        CodeReviewer --> SecurityReviewer[security-reviewer]
+    end
+    
+    subgraph "Phase 3: Verification & Shipping"
+        SecurityReviewer --> QAEngineer[qa-engineer]
+        QAEngineer --> TechWriter[tech-writer]
+        TechWriter --> DevOpsEngineer[devops-engineer]
+    end
+    
+    CodeReviewer -. "Feedback loop" .-> Developer
+    QAEngineer -. "Feedback loop" .-> Developer
+    SecurityReviewer -. "Feedback loop" .-> Developer
+```
+
 ---
 
 ### Using the Agents (Claude Code, Cursor, Copilot)
@@ -113,6 +142,35 @@ cd ~/Projects/My-Awesome-Project
 ```
 This deploys the templates directly into the project. Read more in the [Template README](templates/claude-feature-team/README.md).
 
+### Generating Feature Specs (Pre-Pipeline)
+
+Before running the full delivery pipeline, you should use the **Spec Writer** agent to draft a high-quality feature specification. The Spec Writer acts as a product manager, interviewing you about your requirements and producing a structured markdown file that the rest of the agents can execute against.
+
+```bash
+# Example using Claude Code to draft a new feature
+> @spec-writer I want to build a new feature for user authentication. Please interview me and write the spec to features/user-auth.md
+```
+
+The Spec Writer will ask you clarifying questions (e.g. edge cases, success metrics, out of scope items). Once it has enough detail, it will write the `features/user-auth.md` file and critique its own readiness. You can then pass this file to the orchestrator pipeline below!
+
+### Example Orchestrator Pipeline Prompt
+
+The entire software development lifecycle can be fully mapped out into a rigid pipeline where one subagent strictly hands off its artifacts to the next.
+
+```mermaid
+graph TD
+    Analyst[1. analyst] --> Architect[2. architect]
+    Architect --> Perf[3. performance-engineer]
+    Perf --> Data[4. data-engineer]
+    Data --> Dev[5. developer]
+    Dev --> CodeRev[6. code-reviewer]
+    CodeRev --> A11y[7. accessibility-engineer]
+    A11y --> SecRev[8. security-reviewer]
+    SecRev --> QA[9. qa-engineer]
+    QA --> SRE[10. sre-engineer]
+    SRE --> Docs[11. tech-writer]
+    Docs --> Deploy[12. devops-engineer]
+```
 
 ```text
 You are the orchestrator. I want to build this feature: [feature description]. 
