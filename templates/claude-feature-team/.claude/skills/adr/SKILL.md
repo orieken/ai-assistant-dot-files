@@ -1,45 +1,39 @@
 ---
 name: adr
-description: A standalone skill to interactively draft and record Architecture Decision Records (ADRs).
+description: Effortless, consistent Architecture Decision Records.
 triggers:
-  keywords: ["adr", "architecture decision record", "document decision"]
-  intentPatterns: ["write an adr for {decision}", "document the decision to {decision}", "we decided to {decision}, record it", "create an architecture decision record"]
-standalone: true   # must work without MCP/external systems
+  keywords: ["ADR", "decision", "record", "document"]
+  intentPatterns: ["Write an ADR for *", "Document the decision to *", "We decided to *, record it", "Create an architecture decision record"]
+standalone: true
 ---
 
 ## When To Use
-Use this skill when the user asks to document, record, or write an architectural decision.
-Do NOT use when the user is asking the Architect to *make* a decision. This skill is for *recording* a decision that has already been made or proposed.
+When the user explicitly asks to document an architectural decision or asks to write an ADR.
 
 ## Context To Load First
-1. All existing ADRs in `docs/adr/` (to determine the next number and match tone).
+1. All existing ADRs in `docs/adr/` (for next number + tone)
 2. `ARCHITECTURE_RULES.md`
 3. `DOMAIN_DICTIONARY.md`
-4. `.claude/feature-workspace/architecture-notes.md` (if it exists).
+4. `.claude/feature-workspace/architecture-notes.md` if it exists.
 
 ## Process
-1. **Determine the next ADR number**: Scan the `docs/adr/` directory for existing files to find the highest `ADR-[NNN]` number. The new ADR will be `NNN + 1`.
-2. **Interactive Q&A**: Ask the user the following questions one by one (or extract the answers if already provided in the prompt):
-   - "What was decided?" (must be one sentence, active voice)
-   - "What was the context that made this decision necessary?"
-   - "What alternatives were considered and why were they rejected?"
-   - "What are the consequences — what becomes easier, harder, or different?"
-   - "Does this decision produce a fitness function? If so, how is it enforced?"
-3. **Draft the ADR**: Create the markdown content using the Output Format below.
-   - What to check: Verify the title uses active voice (e.g., "Use X", not "Decision to use X").
-   - When to pause: **STOP HERE explicitly for user approval.** Show the drafted ADR to the user and ask: "Does this look correct? Reply 'approve' to save."
-4. **Save the ADR**: Once approved, write the file to `docs/adr/ADR-[NNN]-[kebab-title].md`.
-5. **Update the Index**: Update the `docs/adr/README.md` file to include the new ADR. If `docs/adr/README.md` does not exist, create it with a simple markdown list of all ADRs.
+1. Determine next ADR number (scan `docs/adr/` for existing files)
+2. Ask: "What was decided?" (one sentence, active voice) — one question at a time
+3. Ask: "What was the context that made this decision necessary?"
+4. Ask: "What alternatives were considered and why were they rejected?"
+5. Ask: "What are the consequences — easier, harder, changed?"
+6. Ask: "Does this decision produce a fitness function? If so, how is it enforced?"
+7. Draft the ADR and show it for approval
+8. On approval, write to `docs/adr/ADR-[NNN]-[kebab-title].md`
+9. Update `docs/adr/README.md` (index) — create it if it doesn't exist
 
 ## Output Format
-Create `docs/adr/ADR-[NNN]-[kebab-title].md`:
-
 ```markdown
-# ADR-[NNN]: [Title]
+# ADR-[NNN]: [Title — active voice: "Use X" not "Decision to use X"]
 
 Date: YYYY-MM-DD
 Status: Accepted
-Deciders: [from git config user.name or ask user]
+Deciders: [from git config user.name]
 Technical Story: [feature or ticket that prompted this]
 
 ## Context
@@ -62,9 +56,10 @@ Technical Story: [feature or ticket that prompted this]
 ```
 
 ## Guardrails
-- **Mandatory Approval**: You MUST NEVER write the ADR file to disk without explicit user approval of the draft.
-- **Sequence Integrity**: You MUST NEVER number an ADR without checking the existing sequence in `docs/adr/`.
-- **Active Voice**: ADR titles MUST use active voice (e.g., "Use React", not "Decision to use React").
+- Never write an ADR without user approval of the draft
+- Never number an ADR without checking the existing sequence
+- ADR titles use active voice
+- Never write the consequences as implementation details — write effects, not mechanisms
 
 ## Standalone Mode
-Works fully without MCP. Uses standard local file reading to scan `docs/adr/` and writes local files once approved by the user through chat.
+Fully conversational. Generates the Markdown logic locally.

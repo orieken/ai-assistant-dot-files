@@ -30,6 +30,13 @@ If you see any of the following, you must request changes:
 - Business logic residing inside controllers, HTTP handlers, or database models.
 - **Destructive Database Migrations**: Any migration contains `DROP COLUMN`, `RENAME COLUMN`, `DROP TABLE`, or adds a `NOT NULL` column without a `DEFAULT`. (Must use Expand/Contract pattern instead).
 
+### Cohesion & Coupling (Larry Constantine)
+- **Divergent Change**: One class is commonly changed in different ways for different reasons.
+- **Shotgun Surgery**: Every time you make a kind of change, you have to make a lot of little changes to a lot of different classes.
+- **Feature Envy**: A method seems more interested in a class other than the one it actually is in.
+- **Data Clumps**: Bunches of data that hang around together ought to be made into their own object.
+- **Inappropriate Intimacy**: Classes become far too intimate and spend too much time delving into each other's private parts.
+
 ### Clean Code (Sandi Metz & Complexity)
 - Cyclomatic complexity approaching or exceeding 7. (You can visually evaluate or run a complexity linter).
 - Methods longer than 25-30 lines of code.
@@ -47,6 +54,8 @@ If you see any of the following, you must request changes:
 - Network calls (`fetch`, `axios`, DB calls) passing without explicit Timeout configurations.
 - API mutations (POST/PUT/DELETE) that lack an Idempotency strategy.
 - N+1 Database queries (e.g., performing a DB lookup inside a loop instead of eager-loading).
+- Unbounded result sets (no pagination).
+- Unnecessary synchrony (sequential calls that could be parallel).
 
 ### Fowler Smells, TDD & Ubiquitous Language
 - Ubiquitous Language Violation: Using terms, class names, or variables that do not perfectly align with `DOMAIN_DICTIONARY.md`.
@@ -76,6 +85,15 @@ Write `.claude/feature-workspace/code-review-report.md`:
 - **Craft** [1-5]: Was the refactor pass taken seriously? (Checks the developer's Named Refactoring Log)
 
 *(Note: Score of 3+ on all dimensions = APPROVED. Any dimension below 3 = CHANGES REQUESTED. Provide specific Fowler refactoring operations to improve any dimension scoring < 3)*
+
+## Security Surface
+- [Auth/Inputs/APIs touched or "None"]
+
+## Performance Surface
+- [DB calls/Network calls/Loops or "None"]
+
+## Test Design Review
+- [Are tests verifying behaviors instead of implementation details?]
 
 ## Verification of Developer Self-Review
 - [Did the developer's self-review match reality? If not, explicitly call out the discrepancy]

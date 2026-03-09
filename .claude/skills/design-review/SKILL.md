@@ -1,34 +1,33 @@
 ---
 name: design-review
-description: A standalone skill for reviewing the design of any code, completely detached from feature delivery.
+description: Standalone design critique of any file, not tied to feature delivery.
 triggers:
-  keywords: ["design review", "well-designed", "design smells", "fowler"]
-  intentPatterns: ["review the design of {target}", "is this well-designed", "check {target} for design smells", "would fowler approve of this"]
-standalone: true   # must work without MCP/external systems
+  keywords: ["review", "design", "smells", "fowler", "critique"]
+  intentPatterns: ["Review the design of *", "Is this well-designed?", "Check * for design smells", "Would Fowler approve of this?"]
+standalone: true
 ---
 
 ## When To Use
-Use this skill when asked to evaluate the design, architecture, or craftsmanship of a specific file, class, or module outside of standard feature implementation. 
-Do NOT use when asked to run tests, write implementations, or deploy code.
+Triggered when the user asks for a design review, code critique, or smell checking of a specific file or directory outside the context of the standard feature delivery pipeline. Do NOT use if the user just asks to "review my code" during feature implementation; that's the code-reviewer's job.
 
 ## Context To Load First
 1. `ARCHITECTURE_RULES.md`
 2. `DOMAIN_DICTIONARY.md`
-3. The target file(s) specified by the user.
-4. Any files the target imports from or that import it (explore one level of the dependency graph).
+3. The target file(s)
+4. Any files the target imports from or that import it (one level of dependency graph).
 
 ## Process
-1. **Write a Design Narrative**: Synthesize a 2-3 sentence plain-English description of what the target is trying to do. Assess if it does only one thing.
-2. **Map the dependency graph**: Identify what the target depends on and what depends on it (just one level deep).
-3. **Check all 10 Fowler smells**: Explicitly check the code against the 10 Refactoring Catalog operations in `ARCHITECTURE_RULES.md` Section VII (e.g., Extract Function, Replace Conditionals).
-4. **Check Clean Architecture layer placement**: Verify if the component belongs in Entities, Use Cases, Adapters, or Frameworks, and check if its dependencies point inward appropriately (Section I).
-5. **Check Simple Design rules**: Apply Kent Beck's 4 rules (Section VI) strictly in priority order: Passes tests, Reveals intention, No duplication, Fewest elements.
-6. **Check Sandi Metz constraints**: Evaluate class size ($\le$ 100 lines), method size ($\le$ 5 lines), and method parameters ($\le$ 4).
-7. **Identify the single most impactful refactoring**: Decide which named refactoring operation would provide the most value if applied first.
-8. **Produce a Design Report**: Output the findings using the exact structure below.
+1. Write a Design Narrative (what is this thing trying to do?)
+2. Map the dependency graph for the target (what does it depend on? what depends on it?)
+3. Check all Fowler smells from ARCHITECTURE_RULES.md
+4. Check Clean Architecture layer placement
+5. Check Simple Design rules (Beck's 4 rules) in priority order
+6. Check Sandi Metz constraints (class/method size, param count)
+7. Identify the single most impactful refactoring to apply first
+8. Produce a Design Report
 
 ## Output Format
-Create `.claude/feature-workspace/design-report.md` (and show it to the user):
+`.claude/feature-workspace/design-report.md`
 
 ```markdown
 # Design Review: [ClassName or filename]
@@ -61,9 +60,7 @@ Create `.claude/feature-workspace/design-report.md` (and show it to the user):
 ```
 
 ## Guardrails
-- **Read-only**: You MUST NEVER modify source files while running this skill.
-- **No execution**: Never run tests or execute code.
-- **Surface findings only**: You are an observer and a critic in this mode. Do not attempt to fix the problems you find unless the user explicitly asks you to in a completely separate prompt.
+Read-only. Never modify source files. Never run tests. Surface findings only.
 
 ## Standalone Mode
-Works entirely without external systems or MCP tools. Uses standard local file reading to parse the source code and static dependency analysis.
+Fully conversational. No external tools needed beyond file reading.

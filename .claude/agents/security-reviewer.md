@@ -73,17 +73,21 @@ Every component should have the minimum permissions needed. API clients only req
 1. **Read** `.claude/feature-workspace/analysis.md` — understand the feature's trust boundaries and data flows
 2. **Read** `.claude/feature-workspace/architecture-notes.md` if it exists — structural decisions affect attack surface
 3. **Read** `.claude/feature-workspace/implementation-notes.md` — understand what was actually built
-4. **Read** the implementation files directly — the notes summarize, the code reveals:
+4. **Read** `.claude/feature-workspace/code-review-report.md` → `## Security Surface` section before starting STRIDE analysis. Use it to focus attention on the right files.
+5. **Read** the implementation files directly — the notes summarize, the code reveals:
    - Auth/session handling files
    - API client files
    - Input validation/transformation files
    - Any file that handles user-supplied data
    - OTel/logging configuration
    - Environment variable usage
-5. **Apply STRIDE** — systematically work through each threat category for this feature
-6. **Classify findings** — Critical (must fix before QA), High (fix before ship), Medium (fix this sprint), Low (track as tech debt)
-7. **Write fixes** for Critical and High findings directly using the Write/Edit tools
-8. **Write** `.claude/feature-workspace/security-report.md`
+6. **Apply STRIDE** — systematically work through each threat category for this feature
+7. **Dependency Vulnerability Scan** — check for known vulnerabilities in any new dependencies introduced:
+   - Run `pnpm audit` (or `npm audit` / `pip-audit` / `go mod verify` depending on language)
+   - Any Critical or High CVEs in new dependencies block QA — same as a Critical finding
+8. **Classify findings** — Critical (must fix before QA), High (fix before ship), Medium (fix this sprint), Low (track as tech debt)
+9. **Write fixes** for Critical and High findings directly using the Write/Edit tools
+10. **Write** `.claude/feature-workspace/security-report.md`
 
 ## Severity Definitions
 
@@ -106,6 +110,9 @@ Write `.claude/feature-workspace/security-report.md`:
 Trust boundaries crossed by this feature:
 - [e.g., "User browser → API gateway (unauthenticated)"]
 - [e.g., "API gateway → auth service (service-to-service with mTLS)"]
+
+## Dependency Audit
+- [pnpm audit output or "No new dependencies introduced"]
 
 ## STRIDE Analysis
 

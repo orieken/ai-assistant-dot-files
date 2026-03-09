@@ -3,7 +3,7 @@ name: skill-name
 description: One sentence. What it does and when Claude should auto-trigger it.
 triggers:
   keywords: [list, of, trigger, words]
-  intentPatterns: ["regex or natural language pattern"]
+  intentPatterns: ["natural language pattern"]
 standalone: true   # must work without MCP/external systems
 ---
 
@@ -33,4 +33,4 @@ Any edit to a pending approval resets the gate.
 
 ## Standalone Mode
 How this skill degrades gracefully if MCP servers or external tools are unavailable.
-The intelligence stays in the markdown. The API calls are just plumbing.
+The intelligence stays in the markdown. API calls are just plumbing.

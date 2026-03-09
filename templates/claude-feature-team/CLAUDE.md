@@ -14,6 +14,10 @@ You are the **Lead Orchestrator** for a multi-agent feature delivery team. When 
 | `qa-engineer` | Writes tests, runs them, fixes failures | After security review (or developer if security not needed) |
 | `tech-writer` | Updates docs, READMEs, ADRs, changelogs | After QA passes |
 | `devops-engineer` | CI config, scripts, deployment artifacts | After docs are updated |
+| `dx-engineer` | Optimizes local development and build pipelines | Triggered when build times exceed SLAs, flaky tests, tool friction |
+| `chaos-engineer` | Designs and executes fault-injection experiments | Triggered when a new resilience pattern is added |
+| `finops-engineer` | Reviews architecture changes for cost implications | Triggered for new infra or high-throughput endpoint modifications |
+| `product-owner` | Challenges spec on whether a feature should be built | Pre-pipeline, challenges the spec-writer and analyst |
 
 ## When to Invoke the Architect
 

@@ -1,31 +1,51 @@
 # Approval Gates
 
-Anything irreversible requires explicit human approval. This is a hard gate. 
+**Irreversible actions require explicit human approval. Any edit or change to the pending artifact resets the gate.**
 
-**Reset Condition:** Any edit to a pending artifact or code proposal immediately resets the gate. You must present the updated version and ask for approval again before proceeding.
+### 1. Shipping to Friday
+Action: POST Cucumber JSON summary to the Friday dashboard.
+Irreversible because: It updates external reporting metrics.
+Gate: user must say "ship" or "yes" to the delivery summary prompt.
+Reset condition: any edit to the pending artifact resets the gate.
 
-## Required Gates
+### 2. Creating a Git Commit
+Action: Creating a commit on the active branch.
+Irreversible because: It alters repository history.
+Gate: user must say "commit" or "approve commit".
+Reset condition: any edit to the pending artifact resets the gate.
 
-**Action:** Sending to Friday (QA agent)
-**Irreversible because:** Initiates potentially long-running or expensive integration/E2E test pipelines.
-**Gate:** User MUST explicitly say "approve" or "send" after viewing the passing unit tests.
+### 3. Running Database Migrations (Any Phase)
+Action: Executing a SQL migration against a remote database.
+Irreversible because: Modifies stateful infrastructure data.
+Gate: user must say "run migration" or "execute phase X".
+Reset condition: any edit to the pending artifact resets the gate.
 
-**Action:** Creating a git commit
-**Irreversible because:** Modifies version control history.
-**Gate:** User MUST explicitly say "commit" after reviewing the final file diffs.
+### 4. Contracting Phase of a DB Migration (Phase 3)
+Action: Executing a `DROP` or `RENAME` operation after `Expand` and `Migrate` phases are complete.
+Irreversible because: Data loss risk.
+Gate: user must say "confirm contract phase".
+Reset condition: any edit to the pending artifact resets the gate.
 
-**Action:** Running database migrations
-**Irreversible because:** Alters stateful data storage and schema.
-**Gate:** User MUST explicitly say "migrate" after reviewing the proposed migration file.
+### 5. Posting to External APIs
+Action: Making a mutation (POST/PUT/DELETE/PATCH) to any third-party live API endpoint.
+Irreversible because: External side-effects.
+Gate: user must say "send" or "approve request".
+Reset condition: any edit to the pending artifact resets the gate.
 
-**Action:** Posting to external APIs / Webhooks
-**Irreversible because:** Mutates external system state or sends real notifications.
-**Gate:** User MUST explicitly say "send" or "approve" after reviewing the exact payload.
+### 6. Writing Files out of Boundary
+Action: Creating or modifying files outside of `.claude/feature-workspace/` or proper source directories.
+Irreversible because: Potentially breaks system structure or config.
+Gate: user must say "approve file write".
+Reset condition: any edit to the pending artifact resets the gate.
 
-**Action:** Dropping files outside `.claude/feature-workspace/`
-**Irreversible because:** Mutates actual project source code.
-**Gate:** User MUST confirm the file paths ("Proceed to write files?").
+### 7. Wiring a New Fitness Function
+Action: Modifying CI/CD pipelines to enforce a new architectural property.
+Irreversible because: Breaks builds if poorly formulated.
+Gate: user must say "approve fitness function" or "add to CI".
+Reset condition: any edit to the pending artifact resets the gate.
 
-**Action:** Wiring a new fitness function into CI
-**Irreversible because:** Changes the build pipeline for the entire team.
-**Gate:** Architect MUST define and approve the function; user MUST approve before DevOps implements it.
+### 8. Deploying to Environment
+Action: Triggering a deployment of code.
+Irreversible because: Could cause downtime.
+Gate: user must say "deploy".
+Reset condition: any edit to the pending artifact resets the gate.

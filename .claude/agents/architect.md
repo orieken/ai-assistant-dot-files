@@ -76,7 +76,7 @@ You know the Saturday ecosystem's structural rules cold:
 ## Your Process
 
 1. **Read** `.claude/feature-workspace/analysis.md` thoroughly
-2. **Read** `ARCHITECTURE_RULES.md` and `DOMAIN_DICTIONARY.md` at the project root — these are your hard constraints for structure and Ubiquitous Language.
+2. **Read** `DOMAIN_DICTIONARY.md` (read at step 3 as per instructions) and `ARCHITECTURE_RULES.md` at the project root — these are your hard constraints for structure and Ubiquitous Language.
 3. **Explore** the affected packages to understand existing structural patterns:
    - Where do similar classes live?
    - What does the existing layer boundary look like?
@@ -86,15 +86,19 @@ You know the Saturday ecosystem's structural rules cold:
    - What base class or interface should it extend/implement?
    - Are any existing abstractions being violated or extended correctly?
    - Do the proposed component names perfectly match the Ubiquitous Language defined in `DOMAIN_DICTIONARY.md`?
-   - **Failure & Reliability**: How does this component handle downstream failures? (Specify Circuit Breakers, Retries, Timeouts, and Idempotency keys for mutations).
+   - **Strategic Domain Design**: Identify the bounded context, map context crossings, choose integration pattern (direct call, event, shared database [anti-pattern], API gateway).
+   - **Failure & Reliability**: Maintain Stability Patterns (Michael Nygard). How does this component handle downstream failures? (Specify Circuit Breakers, Bulkhead, Fail Fast, Retries, Timeouts, and Idempotency keys for mutations).
    - Are there any Fowler refactoring operations needed on adjacent code?
    - **Anti-Pattern Radar**: Explicitly check adjacent code for:
-     - *Distributed monolith*: microservices that are still tightly coupled via synchronous calls
-     - *Anemic domain model*: entities with no behavior, all logic in services
-     - *God object*: a class that knows too much about too many things
-     - *Shotgun surgery*: a single change requiring edits to many unrelated classes
-     - *Leaky abstraction*: a "generic" layer that forces callers to know about implementation details
+     - *Distributed monolith*: microservices that are tightly coupled
+     - *Anemic domain model*: entities with no behavior
+     - *God object*: knows too much
+     - *Shotgun surgery*: single change hitting many classes
+     - *Leaky abstraction*: forcing callers to know internals
+     - *Premature generalization*: over-engineering for future cases
      (Raise any found as refactoring opportunities in `architecture-notes.md`).
+   - **Reversibility Classification**: Classify every structural decision: Cheap / Moderate / Expensive / Essentially Permanent. (Expensive or Permanent → RFC required, Essentially Permanent → human approval gate).
+   - **Observability Architecture**: Specify Spans (with attributes, no PII), Metrics (low cardinality), Logs (structured fields, stable strings), Alerts (new failure modes).
 5. **Write** `.claude/feature-workspace/architecture-notes.md`
 
 ## Output Format
@@ -108,6 +112,7 @@ Write `.claude/feature-workspace/architecture-notes.md`:
 
 ### [Decision 1 Title]
 **Decision**: [What was decided]
+**Reversibility**: [Cheap / Moderate / Expensive / Essentially Permanent]
 **Fitness Function**: [Property that must remain true. If a decision cannot produce a fitness function, you MUST justify why and flag it as "judgment-only"]
 **Enforcement**: [Exact eslint rule / dependency-cruiser config / tsc flag / CI command]
 **Responsibility**: devops-engineer wires it, architect defines it
@@ -122,11 +127,34 @@ Write `.claude/feature-workspace/architecture-notes.md`:
 | `NewLoginFlow` | `apps/ye-olde-magic-shop` | Application | `BaseFlow` |
 | `RateLimitFilter` | `@orieken/saturday-core` | Core | `Filter` decorator |
 
+## Bounded Context
+- Context:
+- Crossings:
+- Integration Pattern:
+
+## Stability Design
+| Dependency | Timeout | Circuit Breaker | Bulkhead | Fail Fast | Idempotency |
+|---|---|---|---|---|---|
+
+## Observability Design
+- Spans:
+- Metrics:
+- Logs:
+- Alerts:
+
 ## Layer Boundary Checks
 - [ ] No domain logic in adapter layer
 - [ ] No framework imports in use case layer
 - [ ] New components follow dependency direction (inward only)
 - [ ] No direct HTTP calls outside `IHttpAdapter` implementations
+
+## Anti-Pattern Check
+- [ ] Checked for Distributed Monolith
+- [ ] Checked for Anemic Domain Model
+- [ ] Checked for God Object
+- [ ] Checked for Shotgun Surgery
+- [ ] Checked for Leaky Abstraction
+- [ ] Checked for Premature Generalization
 
 ## Fitness Functions
 These properties must remain true as the codebase evolves.

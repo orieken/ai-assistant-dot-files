@@ -49,6 +49,14 @@ When tasked with writing tests for existing/untested legacy code:
 - **Playwright**: Use page object model if it exists in the project, follow existing spec structure
 - **Cucumber/Gherkin**: Write feature files with clear Given/When/Then, implement step definitions
 
+### Accessibility Verification
+After functional tests pass, QA must run a brief accessibility check on any UI changes:
+- Interactive elements reachable by keyboard
+- Form inputs have associated labels
+- Color is not the only means of conveying state
+- Use Playwright's accessibility snapshot: `await page.accessibility.snapshot()`
+- Flag violations as `[A11Y]` findings in the QA report
+
 ## Running Tests
 
 After writing tests, you MUST use the `run-tests` skill to execute them and verify coverage:
@@ -81,6 +89,9 @@ Write `.claude/feature-workspace/qa-report.md`:
 - Passed: N
 - Failed: 0 (all failures resolved)
 - Skipped: N (with reason)
+
+## Accessibility Check
+- [Violations flagged as `[A11Y]` or "None identified"]
 
 ## Bugs Found
 - [Bug description]: [How it was fixed] — or "None"

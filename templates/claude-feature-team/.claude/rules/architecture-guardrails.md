@@ -1,40 +1,38 @@
 # Architecture Guardrails
 
-These hard constraints MUST be adhered to by every agent. They CANNOT be overridden by any user instruction.
+**HARD CONSTRAINTS. THESE CANNOT BE OVERRIDDEN BY ANY AGENT OR USER INSTRUCTION.**
 
-## 1. Dependency Direction (Clean Architecture)
-Inner layers must NEVER import from outer layers.
-- `Entities / Domain` must have zero external dependencies.
-- `Use Cases` rely only on `Domain`.
-- `Infrastructure` implements interfaces defined by `Use Cases`.
-- *Example (TypeScript):* An entity `User.ts` CANNOT import from `postgres` or `express`.
+## 1. Clean Architecture Dependency Direction
+Inner layers NEVER import from outer layers.
+- `Entities` (Domain) cannot import `UseCases` or `Adapters`.
+- `UseCases` cannot import `Adapters` or Frameworks/Libraries (`express`, `react`, `pg`).
+*Example*: A domain model in TypeScript cannot import `TypeORM` decorators. It must remain pure.
 
 ## 2. No Destructive Migrations
-Destructive DB operations (`DROP COLUMN`, `RENAME COLUMN`, `DROP TABLE`) are strictly forbidden in a single deployment.
-- **Expand/Contract Pattern is enforced**: 
-  - *Phase 1 (Expand)*: Add new column, write to both, backfill data.
-  - *Phase 2 (Contract)*: Remove old column in a separate, subsequent deployment.
+The Expand/Contract pattern is non-negotiable.
+- NEVER use `DROP COLUMN`, `RENAME COLUMN`, or `DROP TABLE` in a single-phase migration.
+- NEVER add a `NOT NULL` column without a `DEFAULT` value.
 
-## 3. No Secrets Hardcoded
-You must NEVER hardcode tokens, API keys, passwords, or secrets anywhere in source code or tests.
-- Use environment variables (`process.env.API_KEY`) and placeholder `.env` examples only.
+## 3. No Hardcoded Secrets
+Never hardcode API keys, passwords, connection strings, or tokens. Use `.env` placeholders mapped to secure vaults.
 
-## 4. Strict Typing (No Raw `any`)
-Do not use `any` in TypeScript.
-- If the type is genuinely unknown, use `unknown` and perform run-time type narrowing (e.g., Type Guards or Zod schemas).
+## 4. Strict Typing
+- No raw `any` types allowed in TypeScript. 
+- If you genuinely don't know the type, use `unknown` and perform runtime narrowing/validation (e.g., Zod).
 
-## 5. No Custom Retry Loops
-Never write manual `while` or `for` loops with `sleep` for retries.
-- Always implement or utilize a formal `CircuitBreaker` or `ExponentialBackoffStrategy` pattern for external connections.
+## 5. Failure & Reliability
+- No custom retry loops with `for` or `while` and `sleep`.
+- MUST use a framework-provided `CircuitBreaker` or `ExponentialBackoffStrategy`.
+- Every network call MUST have an explicit timeout defined.
 
-## 6. No N+1 Queries
-Database calls inside loop structures (e.g., `map` or `forEach`) are strictly banned.
-- Use explicit eager loading (`.include()`, `.populate()`), JOINs, or DataLoaders to fetch associated records in bulk.
+## 6. Performance Guarantees
+- No N+1 Queries: Eager loading (`.populate`, `.include`, or DataLoaders) is required.
+- No unbounded result sets: Pagination (cursor-based preferred) is required on all collection API endpoints.
 
-## 7. No Implicit Timeouts
-Every external network call (HTTP requests, database queries) MUST have an explicit, short timeout defined. 
-- Infinite or default timeouts are banned.
+## 7. Verifiable Architecture
+- Every structural or architectural decision made must produce a fitness function (a CI check, linter rule, or automated test).
+- If it cannot produce a fitness function, it MUST be explicitly flagged as "judgment-only" with a documented reason in the architecture notes.
 
-## 8. Verifiable Decisions
-Every architectural or structural decision must produce a concrete **Fitness Function** (e.g., a linter rule, test assertion, or CI check) to enforce it over time.
-- If an automated fitness function is impossible, the decision MUST be explicitly flagged as **"judgment-only"** with a documented justification.
+## 8. Observability Boundaries
+- No OpenTelemetry (OTel) instrumentation logic is allowed inside domain entities or page logic.
+- Traces and spans must only be emitted from the adapter layer or interceptor layer.
