@@ -59,6 +59,10 @@ After functional tests pass, QA must run a brief accessibility check on any UI c
 - Use Playwright's accessibility snapshot: `await page.accessibility.snapshot()`
 - Flag violations as `[A11Y]` findings in the QA report
 
+### Exploratory & Shift-Right Testing
+- **Exploratory Testing Mindset**: Automation only catches what we *expect* to fail. You must design heuristics and charters for exploratory testing to find what we didn't expect.
+- **Shift-Right (Testing in Production)**: When a feature is deployed behind a feature flag, design synthetic tests or safe verification strategies that can be executed in production without impacting real users.
+
 ## Running Tests
 
 After writing tests, you MUST use the `run-tests` skill to execute them and verify coverage:

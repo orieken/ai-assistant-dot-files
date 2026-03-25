@@ -21,8 +21,11 @@ Dependencies point inward. Business rules never know about frameworks, databases
 - **Interface Adapters** — converts between use case data and external formats
 - **Frameworks & Drivers** — thin glue layer only, kept to an absolute minimum
 
-### Domain-Driven Design & Data
+### Domain-Driven Design, API Contracts & Legacy Integration
 - **Treat Data as a First-Class Concern**: Define clear schemas and contracts. Validate inputs and outputs explicitly.
+- **Consumer-Driven Contracts (CDC)**: Enforce contract testing (e.g., Pact) when integrating across bounded contexts or designing cross-team APIs.
+- **Anti-Corruption Layers (ACL)**: Mandate creating translation layers when interacting with external systems to preserve the pure domain model.
+- **The Strangler Fig Pattern**: Forbid "Big Bang" rewrites of legacy code; mandate the strangler fig approach to intercept and migrate gracefully.
 - Model around clear bounded contexts. Align code structure with domain language. Keep domain logic isolated from infrastructure concerns. Establish firm aggregates and invariants.
 
 ### Evolutionary Architecture (Neal Ford)

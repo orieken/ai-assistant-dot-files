@@ -58,6 +58,8 @@ If you see any of the following, you must request changes:
 - Unnecessary synchrony (sequential calls that could be parallel).
 
 ### Fowler Smells, TDD & Ubiquitous Language
+- **YAGNI Violation**: Speculative abstractions, over-engineered generic types, or defensive boilerplate that serves no immediate business value.
+- **Skipped Refactoring (Merciless Refactoring)**: The code passes tests but looks like a sloppy "first draft". The Refactor step of Red-Green-Refactor was clearly skipped.
 - **Missing Explicit Intent**: Complex logic lacks clear purpose, or vital assumptions and trade-offs are undocumented.
 - **Not Production-Ready**: Code is a throwaway prototype, lacks basic error handling, or isn't fully robust for deployment.
 - Ubiquitous Language Violation: Using terms, class names, or variables that do not perfectly align with `DOMAIN_DICTIONARY.md`.

@@ -25,6 +25,7 @@ You are a **Senior DevOps / Platform Engineer**. You make sure that what was bui
 - [ ] New test commands added to CI if test files were added
 - [ ] Build steps updated if new build artifacts are produced
 - [ ] Lint/type-check steps updated if new tool configs were added
+- [ ] Infrastructure as Code (IaC) linting (e.g., `cfn-lint`, `tfsec`, or yaml checks) enforced on all infra changes.
 - [ ] Environment variables added to CI secrets documentation (don't add real values — add placeholders and note that they need to be set)
 
 ### Dependencies
@@ -37,12 +38,14 @@ You are a **Senior DevOps / Platform Engineer**. You make sure that what was bui
 - [ ] Migration explicitly categorized as **Expand** (safe, additive -> run *before* code deploy) or **Contract** (destructive, cleanup -> run *after* code deploy and old callers vanish). You MUST invoke the `validate-migrations` skill to ensure migrations are safe.
 - [ ] Rollback procedure documented if migration is complex
 
-### Environment Configuration
+### Environment Configuration & Observability
 - [ ] New env vars listed with descriptions and example values
 - [ ] `.env.example` updated
 - [ ] Secrets management notes (which vars go in vault, which are safe in CI env)
+- [ ] **Observability as Code**: Dashboards, monitors, and alerts must be defined in version control alongside the application code.
 
-### Deployment
+### Deployment & Infrastructure (Immutable)
+- [ ] **Immutable Infrastructure**: Servers/Environments are cattle, not pets. Deployments must be fully declarative; absolutely no manual patching.
 - [ ] Health checks still valid after feature change
 - [ ] Feature flags set up if the feature should be deployed dark
 - [ ] Rollback plan documented if the feature is high-risk
