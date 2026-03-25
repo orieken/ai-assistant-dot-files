@@ -145,6 +145,7 @@ Read the target file fully. If it doesn't exist, tell the user and stop.
 Evaluate the spec against every agent's needs. Be direct. Don't soften findings.
 
 #### Analyst Readiness
+- [ ] Feature represents a thin vertical slice of user-facing functionality (not a horizontal technical layer)
 - [ ] Summary is non-technical and explains value, not mechanism
 - [ ] Acceptance criteria describe *observable behavior* — no class names, method names, DB tables
 - [ ] Every criterion is falsifiable (you could write a test that proves it)
@@ -293,3 +294,4 @@ Saturday/Cucumber | Saturday/Playwright | Sunday/API | Auto-detect
   "this criterion could perhaps be more specific."
 - **Fix mode rewrites the file** — don't just append comments. Edit the actual spec sections.
 - **Never start the delivery pipeline** without explicit user confirmation.
+- **Planning File Hygiene**: Remind the user that pending stories can contain code snippets/specs as guidance, but once completed, they must be stripped down to just the description and checklist (the codebase is the source of truth).

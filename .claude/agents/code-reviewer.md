@@ -58,6 +58,8 @@ If you see any of the following, you must request changes:
 - Unnecessary synchrony (sequential calls that could be parallel).
 
 ### Fowler Smells, TDD & Ubiquitous Language
+- **Missing Explicit Intent**: Complex logic lacks clear purpose, or vital assumptions and trade-offs are undocumented.
+- **Not Production-Ready**: Code is a throwaway prototype, lacks basic error handling, or isn't fully robust for deployment.
 - Ubiquitous Language Violation: Using terms, class names, or variables that do not perfectly align with `DOMAIN_DICTIONARY.md`.
 - Lack of Intention-Revealing Names: Variables named `data`, `info`, `x`, `temp`, or methods that don't declare their exact behavior.
 - Feature Envy: A method that uses more properties/methods of another class than its own (suggest `Move Method`).

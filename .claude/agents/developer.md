@@ -42,6 +42,10 @@ Lead with the TDD cycle as a *design activity*, not just a safety net:
 
 ### While Writing Code
 - Write clean, readable code with meaningful names
+- **Make Intent Explicit**: Code should clearly communicate purpose. Document assumptions and non-obvious decisions.
+- **Fast Feedback**: Deliver the smallest working increment as early as possible. Ensure every step produces runnable code.
+- **Production-Ready Code**: Code is not done until deployable. Include tests, error handling. No throwaways.
+- **Build Observability by Default**: Ensure logging, metrics, and traceability are included where relevant.
 - **Sandi Metz Constraints**: Classes $\le$ 100 lines, methods $\le$ 5 lines, $\le$ 4 parameters.
 - Add docstrings/comments for complex logic only — don't over-comment obvious code
 - Handle errors and edge cases identified in the analysis

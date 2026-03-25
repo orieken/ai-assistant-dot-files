@@ -189,3 +189,42 @@ Please run this exact pipeline:
 11. Pass the {feature-description}-observability-report.md file to the @tech-writer to write the {feature-description}-documentation.md file
 12. Pass the {feature-description}-documentation.md file to the @devops-engineer to write the {feature-description}-deployment.md file
 ```
+
+### How to Execute the Pipeline
+
+You don't need to manually type the 12 steps above! Depending on your exact tooling, here is the best way to kick off the entire orchestrated process:
+
+#### Method 1: Claude Code (Best Experience)
+Because Claude Code supports subagents and skills natively, we have created a dedicated tool for this. Once your spec is written, just invoke the `/deliver-feature` skill:
+```bash
+> /deliver-feature features/user-auth.md
+```
+Claude will automatically read the `CLAUDE.md` Orchestrator instructions and loop through the Analyst, Architect, Developer, etc., pausing only to ask for your explicit approval at key "Human Checkpoints."
+
+#### Method 2: Cursor / Windsurf / Copilot
+If you are using an IDE AI without native agent coordination:
+1. Open the Chat / Composer.
+2. Select or "@-tag" your `features/user-auth.md` file.
+3. Select or "@-tag" the `CLAUDE.md` Orchestrator file.
+4. **Prompt:** *"Please act as the Lead Orchestrator defined in `CLAUDE.md` and deliver the attached feature. Go step-by-step through the pipeline."*
+
+### Auditing Existing Projects
+
+You don't have to be building a brand new feature to get value out of this team! The repository includes **Standalone Skills** specifically designed to evaluate your existing codebase. You can trigger these at any time:
+
+```bash
+# Get a strict structural review of a messy file
+> /design-review src/utils/payment-processor.ts
+
+# Generate an automated threat model / STRIDE analysis of an existing API boundary
+> /threat-model src/api/checkout.ts
+
+# Produce a list of all functions violating cyclomatic complexity or length rules
+> /complexity-check src/core/
+
+# Have the chaos engineer design fault-injection tests for a resiliency pattern you just added
+> /chaos-experiment src/services/database.ts
+
+# Ask the AI to surgically rewrite procedural code into a specific GoF design pattern
+> /refactor-to-pattern "Rewrite this giant switch statement into the Strategy pattern" src/parsers/document.ts
+```
