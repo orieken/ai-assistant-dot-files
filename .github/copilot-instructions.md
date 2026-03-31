@@ -48,3 +48,8 @@ When automating or extending API workflows, enforce these craftsmanship principl
 - **Core Abstractions**: Never let test logic dictate HTTP execution details. All specific API domain clients must extend `BaseApiClient` and utilize `IHttpAdapter`.
 - **Validation**: Enforce strict schema validation using **Zod** (`validateSchema()`).
 - **Resilience Primitives**: Use framework strategies (`CircuitBreaker`, `ExponentialBackoffStrategy`) instead of custom retries or sleep loops.
+
+## Context Awareness & Configuration Mastery
+- **Environment Debugging**: When asked to fix PATH or environment configuration issues, immediately check shell config files (`.zshrc`, `.bashrc`, `.bash_profile`) rather than suggesting workarounds.
+- **Communication Patterns**: When user references 'these changes' or 'that script' without context, check recent messages and working directory first before asking for clarification.
+- **Project Structure**: For agent/configuration lookups, prioritize checking `.claude/`, `.cursor/`, `.gemini/` or `config/` directories first rather than searching todo files or past outputs.
