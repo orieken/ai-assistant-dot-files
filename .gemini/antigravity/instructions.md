@@ -43,7 +43,7 @@ When automating or extending UI/E2E workflows, enforce these craftsmanship princ
 - **First-Class Observability**: Native OpenTelemetry (OTel) generation for every BDD scenario and Playwright action.
 
 ## API Testing Workflows
-When automating or extending API workflows in the Sunday API Testing Framework, enforce these craftsmanship principles:
+When automating or extending API workflows in the Sunday Framework, enforce these craftsmanship principles:
 - **Execution Runners**: Use **Vitest** for unit tests and **Playwright** for integration/E2E API tests.
 - **Declarative Testing**: Utilize the custom `api` fixture (e.g., `({ api }) => { ... }`) and fluent custom matchers (`toHaveStatus`, `toBeSuccessful`, `toRespondWithin`).
 - **Core Abstractions**: Never let test logic dictate HTTP execution details. All specific API domain clients must extend `BaseApiClient` and utilize `IHttpAdapter`.
@@ -53,4 +53,4 @@ When automating or extending API workflows in the Sunday API Testing Framework, 
 ## Context Awareness & Configuration Mastery
 - **Environment Debugging**: When asked to fix PATH or environment configuration issues, immediately check shell config files (`.zshrc`, `.bashrc`, `.bash_profile`) rather than suggesting workarounds.
 - **Communication Patterns**: When user references 'these changes' or 'that script' without context, check recent messages and working directory first before asking for clarification.
-- **Project Structure**: For agent/configuration lookups, prioritize checking `.claude/`, `.cursor/`, `.gemini/` or `config/` directories first rather than searching todo files or past outputs.
+- **Project Structure**: For agent/configuration lookups, prioritize checking `.claude/`, `.cursor/`, `.gemini/` or `config/` directories first rather than searching todo files or past outputs.\n\n## VIII. Additional Concepts\n- Ensure 85% coverage.\n- Apply SOLID principles.\n- Refer to DOMAIN_DICTIONARY.\n- Support Expand/Contract pattern.
