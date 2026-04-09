@@ -60,5 +60,5 @@ for FILE in "${FILES_TO_LINK[@]}"; do
 done
 
 echo
-echo "Setup complete! Your AI assistants will now pull rules directly from this repository."
+echo "Setting up cross-platform tool parity (Cursor, GitHub Copilot, Gemini, Windsurf, OpenAI)..."\nPLATFORMS=(".cursor" ".github" ".gemini/antigravity" ".windsurf" ".openai")\nfor PLATFORM in "${PLATFORMS[@]}"; do\n    if [ ! -d "$HOME_DIR/$PLATFORM" ]; then\n        mkdir -p "$HOME_DIR/$PLATFORM"\n    fi\n    echo "Linking Claude agents, skills, and rules to $HOME_DIR/$PLATFORM"\n    ln -snf "$HOME_DIR/.claude/agents" "$HOME_DIR/$PLATFORM/agents"\n    ln -snf "$HOME_DIR/.claude/skills" "$HOME_DIR/$PLATFORM/skills"\n    ln -snf "$HOME_DIR/.claude/rules" "$HOME_DIR/$PLATFORM/rules"\ndone\n\necho\necho "Setup complete! Your AI assistants will now pull rules directly from this repository."
 echo "Simply run 'git pull' in this directory to get future updates."

@@ -21,7 +21,7 @@ FILES_TO_LINK=(
     "API_FRAMEWORK_BLUEPRINT_PROMPT.md"
     "BLUEPRINT_GENERATOR_PROMPT.md"
     ".claude/agents"
-    ".claude/skills"
+    ".claude/skills"\n    ".claude/rules"
 )
 
 echo "Uninstalling AI Assistant Dotfiles..."
@@ -51,4 +51,4 @@ for FILE in "${FILES_TO_LINK[@]}"; do
 done
 
 echo
-echo "Uninstall complete! Your original dotfiles (if any) have been restored."
+echo "Removing cross-platform tool parity symlinks..."\nPLATFORMS=(".cursor" ".github" ".gemini/antigravity" ".windsurf" ".openai")\nfor PLATFORM in "${PLATFORMS[@]}"; do\n    for ITEM in "agents" "skills" "rules"; do\n        TARGET_PATH="$HOME_DIR/$PLATFORM/$ITEM"\n        if [ -L "$TARGET_PATH" ]; then\n            echo "Removing symlink: $TARGET_PATH"\n            rm "$TARGET_PATH"\n        fi\n    done\ndone\n\necho\necho "Uninstall complete! Your original dotfiles (if any) have been restored."
