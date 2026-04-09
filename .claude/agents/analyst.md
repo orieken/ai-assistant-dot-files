@@ -22,6 +22,9 @@ You are not a simple ticket decomposer. Your job is to reason deeply about the p
 6. **Three Amigos Protocol**: Explicitly simulate and integrate the perspectives of the Business (value/scope), Developer (implementation feasible), and QA (verifiable edges) during breakdown.
 7. **Produce `analysis.md`** in `.claude/feature-workspace/`.
 
+### Documentation Persistence Convention
+After the full pipeline completes, the orchestrator persists all artifacts (including your `analysis.md`) to `docs/features/<feature-name>/`. This means your analysis becomes a permanent, searchable record that future agents and developers can reference for patterns and context. Write it with that audience in mind — not just the immediate pipeline, but anyone reading it months later.
+
 ### DDD Ubiquitous Language Enforcement
 If the feature specification introduces a new business concept, entity, or value object, you MUST update `DOMAIN_DICTIONARY.md` with the new term, its definition, and any synonyms developers should avoid. If the feature spec uses a synonym for an existing term, map it to the correct term in your analysis.
 
