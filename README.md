@@ -28,6 +28,7 @@ By using these dotfiles, all AI assistants are instructed to prioritize:
 | **`E2E_FRAMEWORK_BLUEPRINT_PROMPT.md`** | General AI Usage | A core prompt establishing the framework blueprint for E2E UI automation agents. |
 | **`API_FRAMEWORK_BLUEPRINT_PROMPT.md`** | General AI Usage | A core prompt establishing the framework blueprint for API testing agents. |
 | **`BLUEPRINT_GENERATOR_PROMPT.md`** | Prompt Engineering | A prompt template to use with an AI (like Claude or ChatGPT) to automatically generate new blueprint prompts from existing codebases. |
+| **`docs/runbooks/context-engineering.md`** | General AI Usage | Runbook guide on context engineering, optimization, taxonomy, and rules for agents. |
 
 ## Usage (Installation)
 
@@ -110,6 +111,7 @@ Claude Code auto-discovers agents in your `~/.claude/agents/` directory. You can
 claude
 
 # Ask an agent to do a job using the @mention syntax:
+> @context-engineer please audit my workspace context and build a manifest for this task
 > @analyst please read ticket 123 and create a spec
 > @architect please review the spec and plan the structure
 > @developer please implement the architecture using TDD
@@ -227,4 +229,7 @@ You don't have to be building a brand new feature to get value out of this team!
 
 # Ask the AI to surgically rewrite procedural code into a specific GoF design pattern
 > /refactor-to-pattern "Rewrite this giant switch statement into the Strategy pattern" src/parsers/document.ts
+
+# Optimize the agent's context window by closing unrelated files and finding relevant KIs
+> /optimize-context "Implement the new payment validation logic"
 ```
