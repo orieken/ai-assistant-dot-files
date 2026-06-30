@@ -1,0 +1,140 @@
+{
+  "platforms": [
+    {
+      "name": "claude-code",
+      "tier": 1,
+      "tierLabel": "Full",
+      "capabilities": {
+        "agents": true,
+        "skills": true,
+        "rules": true,
+        "hooks": true,
+        "subAgentOrchestration": true
+      },
+      "configPaths": {
+        "agents": ".claude/agents/",
+        "skills": ".claude/skills/",
+        "rules": ".claude/rules/",
+        "systemPrompt": "CLAUDE.md",
+        "settings": ".claude/settings.json"
+      },
+      "format": "markdown-with-frontmatter",
+      "installStrategy": "symlink",
+      "globalConfigDir": "~/.claude/",
+      "notes": "Full agent orchestration with tool access, skills, hooks, and multi-agent pipelines."
+    },
+    {
+      "name": "cursor",
+      "tier": 2,
+      "tierLabel": "Personas + Rules",
+      "capabilities": {
+        "agents": false,
+        "skills": false,
+        "rules": true,
+        "hooks": false,
+        "subAgentOrchestration": false
+      },
+      "configPaths": {
+        "rules": ".cursor/rules/",
+        "systemPrompt": ".cursorrules"
+      },
+      "format": "mdc-with-yaml-frontmatter",
+      "installStrategy": "generate-inline",
+      "globalConfigDir": "~/.cursor/rules/",
+      "notes": "Rules must be fully inlined in .mdc files. Cannot follow file references. Use ALWAYS/NEVER/CRITICAL keywords. Break into small focused files. Valid YAML frontmatter required or silently ignored."
+    },
+    {
+      "name": "windsurf",
+      "tier": 2,
+      "tierLabel": "Personas + Rules",
+      "capabilities": {
+        "agents": false,
+        "skills": false,
+        "rules": true,
+        "hooks": false,
+        "subAgentOrchestration": false
+      },
+      "configPaths": {
+        "systemPrompt": ".windsurfrules"
+      },
+      "format": "markdown",
+      "installStrategy": "generate-inline",
+      "globalConfigDir": null,
+      "notes": "Same format as .cursorrules. Single flat file with all rules inlined."
+    },
+    {
+      "name": "github-copilot",
+      "tier": 3,
+      "tierLabel": "System Prompt",
+      "capabilities": {
+        "agents": false,
+        "skills": false,
+        "rules": false,
+        "hooks": false,
+        "subAgentOrchestration": false
+      },
+      "configPaths": {
+        "systemPrompt": ".github/copilot-instructions.md"
+      },
+      "format": "markdown",
+      "installStrategy": "generate-inline",
+      "globalConfigDir": null,
+      "notes": "Single instruction file. Include rules and agent roster inline for awareness."
+    },
+    {
+      "name": "gemini",
+      "tier": 3,
+      "tierLabel": "System Prompt",
+      "capabilities": {
+        "agents": false,
+        "skills": false,
+        "rules": false,
+        "hooks": false,
+        "subAgentOrchestration": false
+      },
+      "configPaths": {
+        "systemPrompt": ".gemini/antigravity/instructions.md"
+      },
+      "format": "markdown",
+      "installStrategy": "generate-inline",
+      "globalConfigDir": null,
+      "notes": "Single instruction file for Antigravity IDE. Include rules and agent roster inline."
+    },
+    {
+      "name": "openai-codex",
+      "tier": 3,
+      "tierLabel": "System Prompt",
+      "capabilities": {
+        "agents": false,
+        "skills": false,
+        "rules": false,
+        "hooks": false,
+        "subAgentOrchestration": false
+      },
+      "configPaths": {
+        "systemPrompt": ".openai.md"
+      },
+      "format": "markdown",
+      "installStrategy": "generate-inline",
+      "globalConfigDir": null,
+      "notes": "Single instruction file. Include rules and agent roster inline."
+    }
+  ],
+  "tiers": {
+    "1": {
+      "label": "Full",
+      "description": "Supports agents with tool access, skills, rules, hooks, and multi-agent orchestration pipelines.",
+      "terminology": "agent"
+    },
+    "2": {
+      "label": "Personas + Rules",
+      "description": "Supports persona-level context shaping and rule files, but no native agent orchestration or tool access.",
+      "terminology": "persona"
+    },
+    "3": {
+      "label": "System Prompt",
+      "description": "Single instruction file only. All rules and agent awareness must be inlined.",
+      "terminology": "persona"
+    }
+  }
+}
