@@ -1,0 +1,272 @@
+# Context Engineering Framework — Implementation Checklist
+
+> **Goal**: One repo, one clone, one `./install.sh` — any machine, any AI tool, full framework.
+>
+> **Platforms**: Claude Code, Cursor, Gemini (Antigravity), GitHub Copilot, Windsurf, OpenAI Codex
+>
+> See [analysis.md](./analysis.md) for detailed acceptance criteria and [architecture-notes.md](./architecture-notes.md) for structural decisions.
+
+---
+
+## Phase 1: Foundation
+
+### Epic 1 — Canonical shared layer
+- [ ] Create `shared/rules/` and move `architecture-guardrails.md`, `design-principles.md`, `approval-gates.md` from `.claude/rules/`
+- [ ] Create `shared/agents/` and move all 20+ agent `.md` files from `.claude/agents/`
+- [ ] Create `shared/skills/` and move all 35+ skill directories from `.claude/skills/`
+- [ ] Move `ARCHITECTURE_RULES.md` and `DOMAIN_DICTIONARY.md` into `shared/`
+- [ ] Make `.claude/rules/`, `.claude/agents/`, `.claude/skills/` symlink to `shared/` equivalents
+- [ ] Create `shared/platform-registry.json` with platform name, config path, format, capability tier
+- [ ] Verify existing Claude Code functionality is unbroken after restructure
+
+### Epic 9 — Persona vs. agent formalization
+- [ ] Add **Persona** definition to `DOMAIN_DICTIONARY.md` (context frame, no tools, no autonomy)
+- [ ] Add **Agent** definition clarification (persona + tools + process + pipeline participation)
+- [ ] Add **Capability tier** to domain dictionary (Full / Personas+Rules / System Prompt)
+- [ ] Update platform configs to use correct term per platform capability
+
+### Epic 3 — Universal install/uninstall
+- [ ] Create `install.sh` with `--global` (symlinks to `~/`) and `--project <path>` (copies to target) modes
+- [ ] Add platform auto-detection (check for `.cursor/`, `gh copilot`, `gemini` CLI, etc.)
+- [ ] Add `--dry-run` flag
+- [ ] Make idempotent (backup existing, skip if identical)
+- [ ] Create `uninstall.sh` (remove symlinks, restore backups)
+- [ ] Update `scaffold-team.sh` to delegate to `install.sh --project --platform claude`
+- [ ] Print verification summary at end (agent count, skill count, platform count)
+- [ ] Support macOS, Linux, and WSL — no platform-specific dependencies
+- [ ] Add `--copy` mode fallback for Windows (non-WSL) where symlinks don't work
+
+---
+
+## Phase 2: Cross-platform parity
+
+### Epic 2 — Config generation
+- [x] Create `scripts/generate-configs.sh` that reads `shared/` + `platform-registry.json`
+- [x] Generate `.claude/` config (Tier 1 — symlinks to shared agents/skills/rules)
+- [x] Generate `.cursor/rules/` as multiple focused `.mdc` files (Cursor requires all content inline, no file refs):
+  - [x] `architecture.mdc` — guardrails + clean architecture rules (alwaysApply: true)
+  - [x] `design-principles.mdc` — Kent Beck, Fowler, Sandi Metz rules (alwaysApply: true)
+  - [x] `approval-gates.mdc` — human checkpoint rules (alwaysApply: true)
+  - [x] `agent-roster.mdc` — full agent/persona roster with descriptions (alwaysApply: true)
+  - [x] `testing.mdc` — Saturday/Sunday framework testing rules (globs: `["**/*.spec.*", "**/*.test.*"]`)
+  - [x] `go-backend.mdc` — Go-specific conventions (globs: `["**/*.go"]`)
+  - [x] `vue-frontend.mdc` — Vue 3 + Tailwind rules (globs: `["**/*.vue", "**/*.tsx"]`)
+- [x] Generate `.cursorrules` (Tier 2 — flat concatenation of all rules for legacy Cursor support)
+- [x] Generate `.windsurfrules` (Tier 2 — same format as `.cursorrules`)
+- [x] Generate `.github/copilot-instructions.md` (Tier 3 — rules + agent awareness)
+- [x] Generate `.gemini/antigravity/instructions.md` (Tier 3 — rules + agent awareness)
+- [x] Generate `.openai.md` (Tier 3 — rules + agent awareness)
+- [x] Extend `scripts/check-parity.sh` to diff generated configs vs. shared rules, fail on drift
+- [ ] Add CI fitness function: `check-parity.sh` runs on every PR
+
+### Epic 11 — Cross-platform agent/persona translation
+- [x] For Cursor: generate `.cursor/rules/<agent-name>.mdc` persona files (all content inlined, short and directive, use ALWAYS/NEVER/CRITICAL keywords, valid YAML frontmatter)
+- [x] For Gemini: generate persona blocks in `.gemini/antigravity/instructions.md`
+- [x] For Copilot: generate persona reference section in `copilot-instructions.md`
+- [x] Include agent roster summary in all Tier 2/3 configs ("these are the specialists available — invoke by name")
+- [ ] Test: verify each platform's AI tool acknowledges the persona/agent roster when prompted
+
+---
+
+## Phase 3: Pipeline hardening
+
+### Epic 4 — Wire context-engineer into pipeline
+- [ ] Update `deliver-feature/SKILL.md` Phase 0 → add step: invoke context-engineer after setup
+- [ ] Context-engineer produces `context-manifest.md` in `.claude/feature-workspace/`
+- [ ] Downstream agents read manifest for pinpointed file list (not full directory scans)
+- [ ] Add token budget estimation to manifest (flag if > 80% of context window)
+
+### Epic 5 — Inter-agent contracts
+- [ ] Create `shared/contracts/analysis-contract.md` (required sections for analyst output)
+- [ ] Create `shared/contracts/architecture-contract.md` (required sections for architect output)
+- [ ] Create `shared/contracts/implementation-contract.md` (required sections for developer output)
+- [ ] Create `shared/contracts/review-contract.md` (required sections for code-reviewer output)
+- [ ] Create `shared/contracts/security-contract.md` (required sections for security-reviewer output)
+- [ ] Create `shared/contracts/qa-contract.md` (required sections for qa-engineer output)
+- [ ] Create `shared/contracts/observability-contract.md` (required sections for sre-engineer output)
+- [ ] Create `shared/skills/validate-artifact/SKILL.md` (reads contract + artifact, fails if sections missing)
+- [ ] Wire `validate-artifact` into `deliver-feature` between each agent handoff
+
+### Epic 12 — Pipeline rollback & recovery
+- [ ] Add checkpoint system to `deliver-feature` — persist pipeline state after each phase
+- [ ] Create `shared/skills/resume-pipeline/SKILL.md` — reads checkpoint state, resumes from last successful phase
+- [ ] If an agent produces bad output, allow rollback to previous agent's artifact and re-run
+- [ ] Pipeline state file: `.claude/feature-workspace/pipeline-state.json` (current phase, completed agents, artifact checksums)
+- [ ] Add `--from-phase N` flag to `deliver-feature` for manual resume
+
+---
+
+## Phase 4: Quality & observability
+
+### Epic 6 — Agent golden-file tests
+- [ ] Create `tests/agents/` directory structure
+- [ ] Create `tests/agents/security-reviewer/` — vulnerable code input + expected findings
+- [ ] Create `tests/agents/code-reviewer/` — smelly code input + expected flags
+- [ ] Create `tests/agents/analyst/` — feature spec input + expected analysis sections
+- [ ] Create `tests/agents/architect/` — analysis input with architectural flags + expected structural decisions
+- [ ] Create `tests/agents/qa-engineer/` — implementation input + expected test plan sections
+- [ ] Create `scripts/test-agents.sh` — runs golden-file tests with fuzzy matching (grep patterns)
+- [ ] Add structural checks: verify agent output contains all contract-required sections
+- [ ] Document: "run `./scripts/test-agents.sh` after editing any agent prompt"
+
+### Epic 7 — Agent observability & feedback loop
+- [ ] Create `shared/skills/pipeline-trace/SKILL.md` — logs agent name, duration, status, iteration count
+- [ ] Persist `pipeline-trace.json` to `docs/features/<name>/`
+- [ ] Create `shared/skills/pipeline-retrospective/SKILL.md` — analyzes past N traces for patterns
+- [ ] Update analyst agent to read 3 most recent delivery summaries (feedback loop)
+- [ ] Update `deliver-feature` to auto-invoke `/retrospective` after every 5th delivery
+
+### Epic 13 — Agent performance metrics & scoring
+- [ ] Define agent quality metrics:
+  - Security reviewer: true positive rate (findings confirmed vs. false alarms)
+  - Code reviewer: first-pass acceptance rate (approved without CHANGES REQUESTED)
+  - Analyst: completeness score (all contract sections present and non-empty)
+  - Architect: fitness function coverage (decisions with enforcement vs. judgment-only)
+- [ ] Create `shared/skills/agent-scorecard/SKILL.md` — reads past N delivery artifacts and scores each agent
+- [ ] Persist scorecard to `docs/agent-metrics/scorecard-YYYY-MM.md`
+- [ ] Surface underperforming agents in retrospective output
+- [ ] Track metrics over time: is agent quality improving or degrading after prompt edits?
+
+### Epic 8 — Agent versioning & changelog
+- [ ] Add `version: 1.0.0` to every agent's frontmatter
+- [ ] Create `shared/agents/CHANGELOG.md` with initial entries
+- [ ] Create pre-commit hook: agent file change requires version bump + changelog entry
+- [ ] Include agent versions in delivery summary output
+- [ ] Include agent versions in pipeline-trace.json (correlate version to performance)
+
+---
+
+## Phase 5: Knowledge & memory
+
+### Epic 14 — Knowledge Items (KI) infrastructure
+- [ ] Create `shared/knowledge/` directory for reusable Knowledge Items
+- [ ] Define KI format: markdown file with frontmatter (tags, domain, created date)
+- [ ] Create `shared/skills/create-ki/SKILL.md` — captures a pattern, bug fix, or decision as a searchable KI
+- [ ] Create `shared/skills/search-ki/SKILL.md` — searches KIs by tag/domain before agents start work
+- [ ] Wire context-engineer to search KIs during manifest creation (Proactive RAG)
+- [ ] Seed initial KIs from existing ADRs and runbooks
+
+### Epic 15 — Cross-delivery learning
+- [ ] Create `shared/skills/extract-lessons/SKILL.md` — after delivery, extracts reusable patterns:
+  - Security findings that should become rules
+  - Code review rejections that indicate missing guardrails
+  - Architecture decisions that should become KIs
+- [ ] Auto-promote recurring security findings (3+ occurrences) to `shared/rules/` as new guardrails
+- [ ] Auto-promote recurring code review patterns to agent prompt improvements
+- [ ] Create `docs/lessons-learned/` directory for persisted lessons
+- [ ] Track: which KIs are actually referenced by agents (usage analytics)
+
+---
+
+## Phase 6: Context budget & optimization
+
+### Epic 16 — Dynamic context budget management
+- [ ] Define token budget per agent tier:
+  - Analyst/Architect: up to 60% of context window (need broad codebase awareness)
+  - Developer: up to 80% (needs code + analysis + architecture)
+  - Reviewer agents: up to 40% (focused on specific output)
+- [ ] Context-engineer estimates token count per file in manifest
+- [ ] Add `budget_utilization` field to pipeline-trace.json per agent
+- [ ] Create `shared/skills/context-audit/SKILL.md` — analyzes a conversation or pipeline run for context waste:
+  - Files loaded but never referenced in output
+  - Duplicate information across loaded files
+  - Large files loaded when a line-range read would suffice
+- [ ] Create fitness function: "no agent exceeds its token budget tier"
+
+### Epic 17 — Context pruning automation
+- [ ] Update context-engineer to auto-prune based on bounded context mapping:
+  - If task is in `billing` domain, exclude `auth` domain files unless explicitly crossing
+  - If task is UI-only, exclude infrastructure/migration files
+- [ ] Add "context decay" — summarize artifacts older than 2 phases in the pipeline instead of passing full text
+- [ ] Create `shared/skills/summarize-artifact/SKILL.md` — produces a 200-word summary of any agent artifact for downstream context compression
+
+---
+
+## Phase 7: Documentation & onboarding
+
+### Epic 18 — Framework documentation
+- [ ] Update README.md with:
+  - Architecture diagram (shared layer → platform configs → project install)
+  - Quick start guide (clone → install → verify)
+  - Platform capability matrix (what works where)
+  - Agent roster with one-line descriptions
+  - Skill catalog with trigger keywords
+- [ ] Create `docs/CONTRIBUTING.md` — how to add a new agent, skill, rule, or platform
+- [ ] Create `docs/ARCHITECTURE.md` — the canonical `shared/` layer design, tier system, and context flow
+- [ ] Create `docs/runbooks/adding-a-new-platform.md` — step-by-step guide
+- [ ] Create `docs/runbooks/editing-agent-prompts.md` — versioning, testing, and changelog requirements
+
+### Epic 19 — Onboarding experience
+- [ ] Create `shared/skills/onboard/SKILL.md` — interactive tour for new users:
+  - Explains the three context layers (rules, agents, skills)
+  - Shows how to invoke an agent
+  - Shows how to trigger a skill
+  - Shows how to run a pipeline
+  - Lists available approval gates
+- [ ] Add `install.sh --tour` flag that runs the onboarding skill after setup
+- [ ] Create `shared/templates/my-first-feature.md` — a tutorial feature spec that walks through the full pipeline
+
+---
+
+## Phase 8: Polish & hardening
+
+### Epic 10 — Health check & self-test
+- [ ] Implement `health-check` skill to verify:
+  - [ ] All symlinks resolve
+  - [ ] All agents have valid frontmatter (name, description, tools, model, version)
+  - [ ] All skills have valid SKILL.md with triggers
+  - [ ] All platform configs generated from current `shared/` (no drift)
+  - [ ] Domain dictionary has no orphaned terms
+  - [ ] All inter-agent contracts exist for pipeline agents
+  - [ ] Agent changelog is up to date (no version mismatches)
+  - [ ] Knowledge Items have valid frontmatter and tags
+- [ ] `install.sh` runs health-check automatically at end
+- [ ] Add `--verbose` flag for detailed diagnostics
+- [ ] Add `--fix` flag to auto-repair common issues (regenerate configs, fix symlinks)
+
+### Epic 20 — CI/CD integration
+- [ ] Create `.github/workflows/framework-ci.yml`:
+  - Runs `check-parity.sh` (config drift detection)
+  - Runs `test-agents.sh` (agent regression tests)
+  - Runs `health-check` (structural validation)
+  - Validates agent version bumps on agent file changes
+- [ ] Create `Makefile` with targets: `install`, `uninstall`, `generate`, `check`, `test-agents`, `health`
+- [ ] Add badge to README showing CI status
+
+### Epic 21 — Rollout & migration
+- [ ] Create `scripts/migrate-v1-to-v2.sh` — moves existing `.claude/agents/` to `shared/agents/`, creates symlinks
+- [ ] Document breaking changes from current structure to `shared/` canonical structure
+- [ ] Tag current state as `v1.0.0` before restructure
+- [ ] Tag completed framework as `v2.0.0`
+
+---
+
+## Summary: Gap Coverage Matrix
+
+| Gap Identified | Epic(s) | Phase |
+|---|---|---|
+| No feedback loop / learning system | Epic 7, 14, 15 | 4, 5 |
+| No agent evaluation / quality metrics | Epic 6, 13 | 4 |
+| Context-engineer not in pipeline | Epic 4 | 3 |
+| No inter-agent contract schema | Epic 5 | 3 |
+| No agent testing | Epic 6 | 4 |
+| No agent observability | Epic 7, 13 | 4 |
+| No dynamic context budget | Epic 16, 17 | 6 |
+| No RAG retrieval infrastructure | Epic 14 | 5 |
+| No cross-platform parity | Epic 2, 11 | 2 |
+| No agent versioning / changelog | Epic 8 | 4 |
+| No pipeline rollback / recovery | Epic 12 | 3 |
+| Persona vs. agent undefined | Epic 9 | 1 |
+| No onboarding experience | Epic 18, 19 | 7 |
+| No CI for the framework itself | Epic 20 | 8 |
+| No migration path from current structure | Epic 21 | 8 |
+
+---
+
+## Decisions (resolved)
+
+1. **Global symlinks vs. copies**: Generated configs only — avoids accidental edits to canonical source.
+2. **Cursor file references**: Cursor cannot follow "read this file" instructions in `.mdc` rules. LLMs don't dynamically traverse the file tree. All rules must be **inlined** in the `.mdc` body. Best practices: keep rules short and direct, use ALWAYS/NEVER/CRITICAL keywords, break into small focused `.mdc` files per concern, validate YAML frontmatter or Cursor silently ignores them. This means `generate-configs.sh` must **concatenate and inline** shared rules into each `.mdc` file — no file references.
+3. **Agent test strategy**: Structural checks (grep for required sections/findings) for CI. LLM-backed tests for manual verification only.
+4. **KI storage**: Both — `shared/knowledge/` for universal patterns (portable across machines), `.claude/knowledge/` for project-specific context.
+5. **Auto-promotion threshold**: 3 occurrences across different features triggers auto-promotion of a finding to a rule.

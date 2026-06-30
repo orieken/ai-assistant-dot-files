@@ -208,206 +208,23 @@ install_claude_code() {
   fi
 }
 
-install_cursor() {
-  log ""
-  log "--- Cursor (Tier 2: Personas + Rules) ---"
-
-  local rules_dir
+install_generated_configs() {
+  local output_dir
   if [[ "$MODE" == "global" ]]; then
-    rules_dir="$HOME/.cursor/rules"
+    output_dir="$HOME"
   else
-    rules_dir="$TARGET_DIR/.cursor/rules"
+    output_dir="$TARGET_DIR"
   fi
 
-  mkdir -p "$rules_dir" 2>/dev/null || true
-
-  local mdc_file="$rules_dir/global.mdc"
+  local gen_args=("--output" "$output_dir")
   if $DRY_RUN; then
-    dry "would generate $mdc_file (inlined from shared/rules/)"
-  else
-    cat > "$mdc_file" <<MDCEOF
----
-description: "Context Engineering Framework — architecture, design, and governance rules"
-alwaysApply: true
----
-
-MDCEOF
-
-    for rule_file in "$SHARED_DIR/rules/"*.md; do
-      echo "" >> "$mdc_file"
-      cat "$rule_file" >> "$mdc_file"
-      echo "" >> "$mdc_file"
-    done
-
-    cat >> "$mdc_file" <<'ROSTEREOF'
-
-# Agent / Persona roster
-
-The following specialized personas are available. Invoke them by name when you need domain-specific expertise.
-
-ROSTEREOF
-
-    for agent_file in "$SHARED_DIR/agents/"*.md; do
-      local agent_name
-      agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//')
-      local agent_desc
-      agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//')
-      if [[ -n "$agent_name" ]]; then
-        echo "- **$agent_name**: $agent_desc" >> "$mdc_file"
-      fi
-    done
-
-    ok "generated $mdc_file"
+    gen_args+=("--dry-run")
+  fi
+  if [[ -n "$PLATFORM_FILTER" ]]; then
+    gen_args+=("--platform" "$PLATFORM_FILTER")
   fi
 
-  local cursorrules
-  if [[ "$MODE" == "global" ]]; then
-    cursorrules="$HOME/.cursorrules"
-  else
-    cursorrules="$TARGET_DIR/.cursorrules"
-  fi
-
-  if $DRY_RUN; then
-    dry "would generate $cursorrules"
-  else
-    cp "$mdc_file" "$cursorrules" 2>/dev/null || true
-    ok "generated $cursorrules"
-  fi
-}
-
-install_windsurf() {
-  log ""
-  log "--- Windsurf (Tier 2: Personas + Rules) ---"
-
-  local windsurfrules
-  if [[ "$MODE" == "global" ]]; then
-    windsurfrules="$HOME/.windsurfrules"
-  else
-    windsurfrules="$TARGET_DIR/.windsurfrules"
-  fi
-
-  local cursor_source
-  if [[ "$MODE" == "global" ]]; then
-    cursor_source="$HOME/.cursorrules"
-  else
-    cursor_source="$TARGET_DIR/.cursorrules"
-  fi
-
-  if [[ -f "$cursor_source" ]]; then
-    if $DRY_RUN; then
-      dry "would copy $cursor_source -> $windsurfrules"
-    else
-      cp "$cursor_source" "$windsurfrules"
-      ok "generated $windsurfrules"
-    fi
-  else
-    skip "no .cursorrules to copy for windsurf (install cursor first)"
-  fi
-}
-
-generate_tier3_config() {
-  local platform_name="$1"
-  local dest_path="$2"
-  local header="$3"
-
-  if $DRY_RUN; then
-    dry "would generate $dest_path"
-    return
-  fi
-
-  mkdir -p "$(dirname "$dest_path")"
-
-  cat > "$dest_path" <<HEADEREOF
-$header
-
-## AI Feature Team & Global Rules
-You are part of the Saturday Multi-Agent Feature Team. Before beginning any complex task, architectural decision, or feature delivery, you MUST adhere to the rules below.
-
-HEADEREOF
-
-  for rule_file in "$SHARED_DIR/rules/"*.md; do
-    echo "" >> "$dest_path"
-    cat "$rule_file" >> "$dest_path"
-    echo "" >> "$dest_path"
-  done
-
-  cat >> "$dest_path" <<'RULESEOF'
-
-## Craftsmanship Rules
-You must **strictly adhere** to the patterns defined in `ARCHITECTURE_RULES.md` (Clean Architecture, DDD, GoF patterns, and micro-rules).
-- **TDD/BDD First**: Drive design through testing. Feature code is incomplete without tests. Practice Red-Green-Refactor.
-- **Kent Beck (Simple Design)**: 1) Passes tests, 2) Reveals intention, 3) No duplication, 4) Fewest elements.
-- **Martin Fowler (Refactoring)**: Use named refactoring operations (Extract Function, Inline Variable, etc.) instead of vague cleanups.
-- **Architectural Constraints & Fitness Functions**: Enforce cyclomatic complexity `< 7` and functions `< 30` LOC.
-- **The Boy Scout Rule**: Always leave the code cleaner than you found it.
-
-## Tech Stack
-- **Backend / MCP**: Go
-- **Frontend**: Vue 3 + Tailwind CSS
-- **Test Automation**: TypeScript, Playwright, Cucumber.js, k6
-
-## Agent / Persona Roster
-
-The following specialized personas are available. Invoke them by name when you need domain-specific expertise.
-
-RULESEOF
-
-  for agent_file in "$SHARED_DIR/agents/"*.md; do
-    local agent_name
-    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//')
-    local agent_desc
-    agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//')
-    if [[ -n "$agent_name" ]]; then
-      echo "- **$agent_name**: $agent_desc" >> "$dest_path"
-    fi
-  done
-
-  ok "generated $dest_path"
-}
-
-install_copilot() {
-  log ""
-  log "--- GitHub Copilot (Tier 3: System Prompt) ---"
-
-  local dest
-  if [[ "$MODE" == "global" ]]; then
-    dest="$HOME/.github/copilot-instructions.md"
-  else
-    dest="$TARGET_DIR/.github/copilot-instructions.md"
-  fi
-
-  generate_tier3_config "github-copilot" "$dest" \
-    "# Copilot Instructions (Saturday Framework)"
-}
-
-install_gemini() {
-  log ""
-  log "--- Gemini / Antigravity (Tier 3: System Prompt) ---"
-
-  local dest
-  if [[ "$MODE" == "global" ]]; then
-    dest="$HOME/.gemini/antigravity/instructions.md"
-  else
-    dest="$TARGET_DIR/.gemini/antigravity/instructions.md"
-  fi
-
-  generate_tier3_config "gemini" "$dest" \
-    "# Antigravity Instructions (Saturday Framework)"
-}
-
-install_openai() {
-  log ""
-  log "--- OpenAI / Codex (Tier 3: System Prompt) ---"
-
-  local dest
-  if [[ "$MODE" == "global" ]]; then
-    dest="$HOME/.openai.md"
-  else
-    dest="$TARGET_DIR/.openai.md"
-  fi
-
-  generate_tier3_config "openai-codex" "$dest" \
-    "# OpenAI / Codex Instructions (Saturday Framework)"
+  "$REPO_DIR/scripts/generate-configs.sh" "${gen_args[@]}"
 }
 
 echo ""
@@ -430,37 +247,11 @@ DETECTED_PLATFORMS=($(detect_platforms))
 echo "Found: ${DETECTED_PLATFORMS[*]}"
 echo ""
 
-INSTALLED_COUNT=0
-
 if should_install "claude-code"; then
   install_claude_code
-  ((INSTALLED_COUNT++))
 fi
 
-if should_install "cursor"; then
-  install_cursor
-  ((INSTALLED_COUNT++))
-fi
-
-if should_install "windsurf"; then
-  install_windsurf
-  ((INSTALLED_COUNT++))
-fi
-
-if should_install "github-copilot"; then
-  install_copilot
-  ((INSTALLED_COUNT++))
-fi
-
-if should_install "gemini"; then
-  install_gemini
-  ((INSTALLED_COUNT++))
-fi
-
-if should_install "openai-codex"; then
-  install_openai
-  ((INSTALLED_COUNT++))
-fi
+install_generated_configs
 
 echo ""
 echo "========================================"
@@ -469,7 +260,6 @@ echo "========================================"
 echo "  Agents:    $AGENT_COUNT"
 echo "  Skills:    $SKILL_COUNT"
 echo "  Rules:     $RULE_COUNT"
-echo "  Platforms: $INSTALLED_COUNT configured"
 echo ""
 
 if $DRY_RUN; then
