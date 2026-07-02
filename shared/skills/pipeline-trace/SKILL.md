@@ -1,0 +1,83 @@
+---
+name: pipeline-trace
+description: Owns the pipeline-trace.json schema (per-agent duration, status, iteration count) that deliver-feature writes during a run, and answers ad-hoc questions about a specific run's trace ("how long did the code-reviewer loop take on user-auth?", "show me the trace for the current run so far").
+triggers:
+  keywords: ["pipeline-trace", "trace", "how long did", "show the trace"]
+  intentPatterns: ["Show the pipeline trace for *", "How long did * take on *", "/pipeline-trace *"]
+standalone: true
+---
+
+## When To Use
+- `deliver-feature` writes to `.claude/feature-workspace/pipeline-trace.json` directly as part of its own
+  Checkpoint bookkeeping (see `deliver-feature/SKILL.md`, "Pipeline Tracing") — it does not invoke this
+  skill on every step, the same way it doesn't invoke a separate skill to write `pipeline-state.json`.
+- Invoke this skill when a human asks an ad-hoc question about timing/iterations for a specific feature's
+  run, current or past: "why did this delivery take so long", "which agent looped the most on user-auth".
+- For cross-delivery trend analysis (is code-reviewer getting slower over the last 10 features?), use
+  `pipeline-retrospective` instead — this skill only looks at one run at a time.
+
+## Context To Load First
+1. `.claude/feature-workspace/pipeline-trace.json` (in-progress run) or `docs/features/<feature-name>/pipeline-trace.json` (completed run)
+
+## Schema
+```json
+{
+  "featureName": "user-auth",
+  "startedAt": "2026-07-02T10:00:00Z",
+  "completedAt": "2026-07-02T11:30:00Z",
+  "totalDurationSeconds": 5400,
+  "agents": [
+    {
+      "agent": "analyst",
+      "step": 7,
+      "startedAt": "2026-07-02T10:05:00Z",
+      "completedAt": "2026-07-02T10:15:00Z",
+      "durationSeconds": 600,
+      "status": "PASS",
+      "iterations": 1,
+      "contractRetries": 0
+    },
+    {
+      "agent": "code-reviewer",
+      "step": 16,
+      "startedAt": "2026-07-02T10:40:00Z",
+      "completedAt": "2026-07-02T11:10:00Z",
+      "durationSeconds": 1800,
+      "status": "APPROVED",
+      "iterations": 3,
+      "changesRequestedCount": 2
+    }
+  ]
+}
+```
+
+Field notes:
+- `iterations`: total number of times this agent's step was executed, including retries (structural
+  validate-artifact retries and, for code-reviewer, CHANGES REQUESTED loops).
+- `contractRetries`: present only for contract-bound agents (see `shared/contracts/`) — how many times
+  `validate-artifact` failed before passing.
+- `changesRequestedCount`: present only for `code-reviewer` — how many times the verdict was CHANGES
+  REQUESTED before APPROVED.
+- `durationSeconds` accumulates across retries — it's total wall-clock time spent on that agent's step
+  across every attempt, not just the final successful one.
+
+## Process
+1. Read the relevant `pipeline-trace.json` (in-progress in `.claude/feature-workspace/`, or persisted in
+   `docs/features/<feature-name>/` for a completed run).
+2. Answer the specific question asked — total duration, slowest agent, which agent looped, etc. — by
+   reading the `agents` array directly. No aggregation across multiple files here (that's
+   `pipeline-retrospective`).
+
+## Output Format
+Free-form answer to the question asked, grounded in the actual JSON values — always cite the specific
+`durationSeconds`/`iterations` numbers rather than vague characterizations ("code-reviewer looped 3 times,
+totaling 1800s" not "code-reviewer took a while").
+
+## Guardrails
+- Never fabricate or estimate a timestamp/duration not present in the file — if the trace is missing or
+  incomplete (e.g. an interrupted run), say so explicitly rather than guessing.
+- This skill is read-only with respect to `pipeline-trace.json` — it does not write to it. Only
+  `deliver-feature` writes trace entries, as part of its own Checkpoint steps.
+
+## Standalone Mode
+Pure local JSON file reads. No external calls.

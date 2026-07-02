@@ -110,11 +110,11 @@
 - [x] Document: "run `./scripts/test-agents.sh` after editing any agent prompt" — in `tests/agents/README.md`
 
 ### Epic 7 — Agent observability & feedback loop
-- [ ] Create `shared/skills/pipeline-trace/SKILL.md` — logs agent name, duration, status, iteration count
-- [ ] Persist `pipeline-trace.json` to `docs/features/<name>/`
-- [ ] Create `shared/skills/pipeline-retrospective/SKILL.md` — analyzes past N traces for patterns
-- [ ] Update analyst agent to read 3 most recent delivery summaries (feedback loop)
-- [ ] Update `deliver-feature` to auto-invoke `/retrospective` after every 5th delivery
+- [x] Create `shared/skills/pipeline-trace/SKILL.md` — logs agent name, duration, status, iteration count — deliver-feature writes the file directly at each Checkpoint (same pattern as pipeline-state.json); this skill owns the schema and answers ad-hoc single-run questions
+- [x] Persist `pipeline-trace.json` to `docs/features/<name>/` — wired into deliver-feature Phase 4 persistence and the artifact tree
+- [x] Create `shared/skills/pipeline-retrospective/SKILL.md` — analyzes past N traces for patterns — cross-delivery trend analysis, distinct from the existing single-delivery `retrospective` skill; writes to `docs/pipeline-retrospectives/`
+- [x] Update analyst agent to read 3 most recent delivery summaries (feedback loop) — also cross-checks `retrospective.md` if present for the same 3 features, since that's where "What To Improve" actually lives
+- [x] Update `deliver-feature` to auto-invoke `/retrospective` after every 5th delivery — counts `docs/features/*/delivery-summary.md`, triggers on exact multiples of 5
 
 ### Epic 13 — Agent performance metrics & scoring
 - [ ] Define agent quality metrics:

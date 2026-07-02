@@ -26,7 +26,7 @@ Do NOT use when the user only wants a single agent's output (e.g., just an analy
 2. **Derive the feature name** — kebab-case from the feature file name (e.g., `features/user-auth.md` becomes `user-auth`).
 3. **Check for an existing `.claude/feature-workspace/pipeline-state.json`.** If one exists for this feature: stop and invoke `resume-pipeline` instead of continuing here — do not blindly clean the workspace out from under an in-progress or crashed run. If the user explicitly asked to start over ("start fresh", "restart delivery"), archive the old state file to `.claude/feature-workspace/.history/pipeline-state.json.<timestamp>` and proceed. If no state file exists, create the feature workspace: `.claude/feature-workspace/` — clean any prior artifacts.
 4. **Create the feature archive directory**: `docs/features/<feature-name>/` — this is where all final artifacts are persisted.
-5. **Initialize `.claude/feature-workspace/pipeline-state.json`** — see "Checkpointing & Pipeline State" below.
+5. **Initialize `.claude/feature-workspace/pipeline-state.json` and `.claude/feature-workspace/pipeline-trace.json`** — see "Checkpointing & Pipeline State" and "Pipeline Tracing" below.
 
 ### Phase 1: Discovery and Design
 6. **Invoke context-engineer** -> produces `context-manifest.md` in `.claude/feature-workspace/`. This scopes the bounded context, pins the specific files analyst/developer must read, lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the user which files it recommends cutting before continuing. **Checkpoint**: record in `pipeline-state.json`.
@@ -60,8 +60,9 @@ Do NOT use when the user only wants a single agent's output (e.g., just an analy
 28. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
 29. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
 30. **Update feature index** — add the new feature entry to `docs/features/README.md`.
-31. **PAUSE**: show the user the full `docs/features/<feature-name>/` listing. Confirm the documentation is complete.
-32. **Ship to Friday** — ask: "Ship to Friday?" On confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
+31. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If the count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered, producing `docs/features/<feature-name>/retrospective.md` before the next step. This is a single-delivery retrospective, distinct from `pipeline-retrospective` (which analyzes trends across many `pipeline-trace.json` files and is invoked manually, not on this cadence).
+32. **PAUSE**: show the user the full `docs/features/<feature-name>/` listing. Confirm the documentation is complete.
+33. **Ship to Friday** — ask: "Ship to Friday?" On confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
 
 ## Human Checkpoints
 - After context-engineer (step 6): if token budget is WARNING, confirm pruning before analyst starts
@@ -69,12 +70,16 @@ Do NOT use when the user only wants a single agent's output (e.g., just an analy
 - After architect RFC (step 11): confirm architectural direction before developer starts
 - After code-review CHANGES REQUESTED loop (step 17): confirm all findings resolved
 - After security Critical finding (step 20): explicit "fix confirmed" before QA starts
-- After artifact persistence (step 31): confirm documentation is complete
-- Before shipping to Friday (step 32): explicit "ship" confirmation
+- After artifact persistence (step 32): confirm documentation is complete
+- Before shipping to Friday (step 33): explicit "ship" confirmation
 
 ## Checkpointing & Pipeline State
 
-After every step marked **Checkpoint** above, write/update `.claude/feature-workspace/pipeline-state.json`:
+After every step marked **Checkpoint** above, write/update both `.claude/feature-workspace/pipeline-state.json`
+(resumability — see below) and `.claude/feature-workspace/pipeline-trace.json` (timing/performance history —
+see "Pipeline Tracing" below). They're updated together but serve different consumers: `pipeline-state.json`
+is read by `resume-pipeline` to continue an interrupted run; `pipeline-trace.json` is read by
+`pipeline-retrospective` and `agent-scorecard` to analyze trends across many runs.
 
 ```json
 {
@@ -123,6 +128,51 @@ If an agent's artifact turns out to be wrong (not just a validate-artifact FAIL,
 
 For resuming an interrupted run or replaying from a specific phase, use the `resume-pipeline` skill rather than restarting `deliver-feature` from Phase 0 — it reads `pipeline-state.json` and continues from `lastCompletedStep + 1`, or from the start of an explicitly requested phase ("resume delivery on user-auth from phase 2" / `--from-phase 2`).
 
+## Pipeline Tracing
+
+Alongside `pipeline-state.json`, maintain `.claude/feature-workspace/pipeline-trace.json` — a timing and
+iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard` (see
+`shared/skills/pipeline-trace/SKILL.md` for the full schema and query usage). Minimal shape:
+
+```json
+{
+  "featureName": "user-auth",
+  "startedAt": "2026-07-02T10:00:00Z",
+  "completedAt": "2026-07-02T11:30:00Z",
+  "totalDurationSeconds": 5400,
+  "agents": [
+    {
+      "agent": "analyst",
+      "step": 7,
+      "startedAt": "2026-07-02T10:05:00Z",
+      "completedAt": "2026-07-02T10:15:00Z",
+      "durationSeconds": 600,
+      "status": "PASS",
+      "iterations": 1,
+      "contractRetries": 0
+    },
+    {
+      "agent": "code-reviewer",
+      "step": 16,
+      "startedAt": "2026-07-02T10:40:00Z",
+      "completedAt": "2026-07-02T11:10:00Z",
+      "durationSeconds": 1800,
+      "status": "APPROVED",
+      "iterations": 3,
+      "changesRequestedCount": 2
+    }
+  ]
+}
+```
+
+- Record real wall-clock `startedAt`/`completedAt` for each agent invocation — never estimate or fabricate.
+- If an agent re-runs (a validate-artifact retry or a CHANGES REQUESTED loop), don't create a second entry
+  for it — update the same entry: add the additional elapsed time to `durationSeconds`, increment
+  `iterations`, and (for code-reviewer specifically) increment `changesRequestedCount`.
+- This file is persisted to `docs/features/<feature-name>/pipeline-trace.json` in Phase 4 alongside every
+  other artifact, so `pipeline-retrospective` and `agent-scorecard` can read trace history across many
+  past deliveries, not just the current run.
+
 ## Output Format
 
 ### Working Artifacts (temporary)
@@ -135,6 +185,7 @@ After pipeline completion, all artifacts are copied to `docs/features/<feature-n
 docs/features/<feature-name>/
   README.md                  <- index of all artifacts with links
   context-manifest.md        <- context-engineer output (scope, pinned files, KIs/ADRs, token budget)
+  pipeline-trace.json        <- per-agent timing, status, and iteration counts (see Pipeline Tracing)
   analysis.md                <- analyst output
   architecture-notes.md      <- architect output (if invoked)
   performance-report.md      <- performance-engineer output (if invoked)
@@ -148,6 +199,7 @@ docs/features/<feature-name>/
   docs-report.md             <- tech-writer output
   devops-report.md           <- devops-engineer output
   delivery-summary.md        <- final synthesis
+  retrospective.md           <- auto-generated every 5th delivery (see Phase 4); otherwise only present if the user ran /retrospective manually
 ```
 
 ### Delivery Summary Format
@@ -218,6 +270,7 @@ Status: Complete | Complete with notes | Blocked
 - Never persist artifacts to docs/features/ until the delivery summary is written
 - Never overwrite an existing workspace artifact without first backing it up to `.claude/feature-workspace/.history/` — rollback depends on that history existing
 - Never trust a `pipeline-state.json` entry whose checksum doesn't match the artifact currently on disk — re-run that step instead of resuming past it
+- Never fabricate timing data in `pipeline-trace.json` — if a step's start/end time wasn't actually observed, omit the entry rather than estimating it
 - The feature archive in docs/features/<feature-name>/ is append-only — never delete prior delivery artifacts
 
 ## Standalone Mode
