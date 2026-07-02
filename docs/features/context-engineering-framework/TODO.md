@@ -186,16 +186,16 @@
 ## Phase 7: Documentation & onboarding
 
 ### Epic 18 — Framework documentation
-- [ ] Update README.md with:
+- [x] Update README.md with:
   - Architecture diagram (shared layer → platform configs → project install)
-  - Quick start guide (clone → install → verify)
+  - Quick start guide (clone → install → verify) — verified `install.sh --global --dry-run` actually runs clean (24 agents, 47 skills, 3 rules) before documenting it; discovered `install.sh`/`uninstall.sh` already exist and work (Epic 3 is further along than the TODO suggested — left as-is per explicit instruction to save Epic 3 for last, just documented what's demonstrably true now)
   - Platform capability matrix (what works where)
-  - Agent roster with one-line descriptions
-  - Skill catalog with trigger keywords
-- [ ] Create `docs/CONTRIBUTING.md` — how to add a new agent, skill, rule, or platform
-- [ ] Create `docs/ARCHITECTURE.md` — the canonical `shared/` layer design, tier system, and context flow
-- [ ] Create `docs/runbooks/adding-a-new-platform.md` — step-by-step guide
-- [ ] Create `docs/runbooks/editing-agent-prompts.md` — versioning, testing, and changelog requirements
+  - Agent roster with one-line descriptions (24)
+  - Skill catalog with trigger keywords (47, grouped by purpose)
+- [x] Create `docs/CONTRIBUTING.md` — how to add a new agent, skill, rule, or platform
+- [x] Create `docs/ARCHITECTURE.md` — the canonical `shared/` layer design, tier system, and context flow
+- [x] Create `docs/runbooks/adding-a-new-platform.md` — step-by-step guide
+- [x] Create `docs/runbooks/editing-agent-prompts.md` — versioning, testing, and changelog requirements — also created `docs/pipeline-retrospectives/README.md` (existed only as a path reference from Epic 7, never actually created) for consistency with `docs/agent-metrics/` and `docs/lessons-learned/`, and linked all runbooks from `docs/runbooks/README.md` (its own stated convention wasn't being followed even for pre-existing runbooks)
 
 ### Epic 19 — Onboarding experience
 - [ ] Create `shared/skills/onboard/SKILL.md` — interactive tour for new users:

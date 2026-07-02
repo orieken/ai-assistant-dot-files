@@ -1,235 +1,313 @@
-# AI Assistant Dot Files
+# AI Assistant Dot Files — Context Engineering Framework
 
-This repository contains global configuration dotfiles for various AI coding assistants (Claude, Cursor, Windsurf, GitHub Copilot, Google Gemini Antigravity, and OpenAI/Codex).
+One canonical set of agents, skills, and rules — written once in `shared/`, generated or symlinked into
+whatever AI coding tool you actually use (Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini Antigravity,
+OpenAI/Codex). Edit `shared/`, run one script, every tool stays in sync — no more hand-copying the same
+instructions into five different config formats.
 
-These instructions configure the AI agents to behave as expert software craftsmen, adhering to the principles of Clean Architecture, Test-Driven Development (TDD), and domain-driven design within the Saturday Framework ecosystem.
+This also ships a full multi-agent **feature delivery pipeline** (spec → analysis → architecture →
+implementation → review → security → QA → docs → deploy) built around Clean Architecture, TDD, and the
+craftsmanship principles of Robert C. Martin, Martin Fowler, Kent Beck, and Neal Ford.
+
+For deeper detail beyond this README:
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the `shared/` layer design, tier system, context flow
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — how to add a new agent, skill, rule, or platform
+- [docs/runbooks/](docs/runbooks/) — operational guides, including adding a platform and editing agent prompts
+
+---
+
+## Architecture (Shared Layer → Platform Configs → Project Install)
+
+```
+shared/                              <- single source of truth, edit here only
+├── agents/        (24 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
+├── skills/        (47 skills)       <- .md with trigger keywords/patterns
+├── rules/                           <- architecture-guardrails.md, design-principles.md, approval-gates.md
+├── contracts/                       <- required-section contracts for pipeline agent handoffs
+├── knowledge/                       <- portable Knowledge Items (KIs)
+├── ARCHITECTURE_RULES.md
+├── DOMAIN_DICTIONARY.md
+└── platform-registry.json           <- tier/capability/format per platform
+
+        │  scripts/generate-configs.sh (reads shared/ + platform-registry.json)
+        ▼
+
+Generated / symlinked platform configs (this repo, or any target project via install.sh)
+├── .claude/{agents,rules,skills}/    -> symlinks to shared/ (Tier 1: Full)
+├── .cursor/rules/*.mdc               <- generated, rules inlined (Tier 2: Personas + Rules)
+├── .windsurfrules                    <- generated, flat (Tier 2)
+├── .github/copilot-instructions.md   <- generated (Tier 3: System Prompt)
+├── .gemini/antigravity/instructions.md <- generated (Tier 3)
+└── .openai.md                        <- generated (Tier 3)
+
+        │  install.sh --global | --project <path>
+        ▼
+
+Your machine (~/) or a target project — agents/skills/rules active in every AI tool you use
+```
+
+`scripts/check-parity.sh` verifies every generated config actually matches the canonical `shared/` source —
+run it after any edit to `shared/` before trusting the generated files are current.
+
+---
+
+## Quick Start
+
+```bash
+git clone <this-repo> ai-assistant-dot-files
+cd ai-assistant-dot-files
+
+# See what would happen first, without touching anything
+./install.sh --global --dry-run
+
+# Install globally (symlinks shared/ into ~/.claude, ~/.cursor, etc. — always current after a git pull)
+./install.sh --global
+
+# Or install into one specific project (copies configs, doesn't require this repo to stay on disk)
+./install.sh --project /path/to/your-project
+
+# Verify everything is wired correctly
+scripts/check-parity.sh
+```
+
+Both `--global` and `--project` auto-detect which of the six platforms you actually have installed and only
+generate configs for those (`--platform <name>` to force a single one). `--copy` falls back to copying
+instead of symlinking (needed on Windows without WSL, where symlinks require elevated permissions).
+
+Once installed:
+```bash
+# Claude Code: agents are native subagents, skills are slash commands
+claude
+> /new-feature "password reset via email"       # interview + spec
+> /deliver-feature features/password-reset.md   # full pipeline
+
+# Any other tool: agents are personas, invoke by @-tagging or referencing the file
+> Act as the code-reviewer persona from shared/agents/code-reviewer.md and review my current changes.
+```
+
+To remove: `./uninstall.sh --global` (or `--project <path>`) restores whatever was backed up during install.
+
+---
+
+## Platform Capability Matrix
+
+| Platform | Tier | Capability | Format | Terminology |
+|---|---|---|---|---|
+| **Claude Code** | 1 — Full | Agents (tool access, autonomous process, pipeline participation), skills, rules, hooks, subagent orchestration | Markdown + YAML frontmatter, symlinked from `shared/` | Agent |
+| **Cursor** | 2 — Personas + Rules | Persona-level context + rule files, no native orchestration | `.mdc` per concern, YAML frontmatter, content inlined (Cursor can't follow file references) | Persona |
+| **Windsurf** | 2 — Personas + Rules | Same as Cursor | Single flat `.windsurfrules`, inlined | Persona |
+| **GitHub Copilot** | 3 — System Prompt | Single instruction file only | `.github/copilot-instructions.md`, rules + roster inlined | Persona |
+| **Gemini (Antigravity)** | 3 — System Prompt | Single instruction file only | `.gemini/antigravity/instructions.md`, inlined | Persona |
+| **OpenAI / Codex** | 3 — System Prompt | Single instruction file only | `.openai.md`, inlined | Persona |
+
+Full definitions of **Agent**, **Persona**, and **Capability Tier** live in `DOMAIN_DICTIONARY.md`. The
+short version: only Tier 1 has real multi-step agent orchestration with tool access; Tiers 2/3 get the same
+underlying knowledge as a **persona** — a context frame with no autonomous pipeline participation — because
+that's what those tools are actually capable of running.
+
+---
+
+## Agent Roster (24)
+
+Full definitions in `shared/agents/`; versions tracked in `shared/agents/CHANGELOG.md`.
+
+| Agent | What it does |
+|---|---|
+| **spec-writer** | Interviews the user to build a complete feature spec, critiques its own readiness before it enters the pipeline. |
+| **product-owner** | Challenges scope and ROI before any code is written — maximizes work *not* done. |
+| **context-engineer** | Pre-flight context optimizer: scopes the bounded context, pins files, surfaces KIs/ADRs, estimates token budget, auto-prunes out-of-context files. |
+| **analyst** | First pipeline step. Turns a feature spec into acceptance criteria, task breakdown, data model/API changes, and a definition of done. |
+| **architect** | Structural decisions, fitness functions, layer boundaries — for features that need them. Writes RFCs for boundary-crossing changes. |
+| **performance-engineer** | Shift-left performance review of the architecture before implementation starts — N+1 prevention, timeouts, caching. |
+| **data-engineer** | Schema design and zero-downtime (Expand/Contract) migrations for features touching the database. |
+| **developer** | Implements the feature via TDD, runs in an isolated worktree, iterates with code-reviewer until approved. |
+| **code-reviewer** | Reviews for SOLID/clean-code violations; sends work back with named refactoring instructions until approved. |
+| **accessibility-engineer** | Reviews UI changes for semantic HTML and WCAG compliance before code-review passes to security. |
+| **security-reviewer** | STRIDE threat model of the implementation; fixes Critical/High findings directly rather than just recommending. |
+| **qa-engineer** | Writes and runs tests covering every acceptance criterion and edge case; fixes bugs it finds. |
+| **sre-engineer** | Observability review — SLIs, OTel spans, structured logging, PII hygiene. |
+| **tech-writer** | Updates all documentation for the delivered feature. |
+| **devops-engineer** | CI/CD, environment config, deployment — the final pipeline agent. |
+| **dependency-auditor** | Audits the dependency tree for vulnerabilities, license issues, and unused packages. |
+| **release-manager** | Semantic version bump, changelog, and deployment checklist from git history. |
+| **chaos-engineer** | Designs fault-injection experiments to verify resilience patterns actually work. |
+| **dx-engineer** | Developer-experience: build times, flaky tests, local dev loop friction. |
+| **finops-engineer** | Reviews architecture/code changes for cost implications as a first-class metric. |
+| **documentation-manager** | Persistent agent that extracts long-lived architectural/debugging knowledge from sessions over time. |
+| **modernization-supervisor** | Coordinates parallel legacy-modernization workstreams (dependencies, patterns, test coverage). |
+| **api-test-generator** | Generates Sunday Framework API test suites (Playwright + Vitest + Zod) from a spec. |
+| **test-driven-developer** | Autonomous red-green-refactor loop: writes tests first, iterates until green. |
+
+---
+
+## Skill Catalog (47)
+
+Full definitions in `shared/skills/<name>/SKILL.md`, including exact trigger keywords/intent patterns.
+Grouped by what they're for:
+
+### Pipeline orchestration
+| Skill | Trigger on |
+|---|---|
+| `deliver-feature` | "Deliver \*", "Implement \*", `/deliver-feature *` — runs the full agent sequence |
+| `resume-pipeline` | Resuming an interrupted run, `--from-phase N`, rolling back an agent's artifact |
+| `validate-artifact` | Auto-invoked between every contract-bound agent handoff — checks required sections |
+| `pipeline-trace` | "How long did \* take", ad-hoc single-run timing/iteration questions |
+| `pipeline-retrospective` | Cross-delivery trend analysis — is an agent getting slower or more retried over time |
+| `agent-scorecard` | Monthly quality scoring per agent (security TPR, first-pass acceptance, completeness, fitness coverage) |
+| `retrospective` | "How did \* go?" — single-delivery narrative, auto-invoked every 5th delivery |
+| `extract-lessons` | Cross-delivery pattern extraction — recurring findings that should become rules/prompt changes/KIs |
+| `context-audit` | Context waste analysis — unused pins, duplicates, unconstrained large reads |
+| `summarize-artifact` | Condensing an older pipeline artifact for a downstream agent (context decay) |
+| `search-ki` / `create-ki` | Searching/authoring Knowledge Items in `shared/knowledge/` |
+
+### Feature lifecycle
+| Skill | Trigger on |
+|---|---|
+| `new-feature` | Guided spec creation, optionally kicks off delivery |
+| `spec-writer` | `/spec-writer`, "write a spec for \*", "review this spec" |
+| `event-storm` | Collaborative domain modeling before a feature starts |
+
+### Code quality & architecture
+| Skill | Trigger on |
+|---|---|
+| `analyze-complexity` / `complexity-check` | Cyclomatic complexity / function length audits |
+| `design-review` | Standalone design critique of any file |
+| `refactor-to-pattern` | Rewriting procedural code into a named GoF/Enterprise pattern |
+| `check-ubiquitous-language` | Flags synonym drift against `DOMAIN_DICTIONARY.md` |
+| `verify-dependencies` | Clean Architecture import-boundary checks |
+| `review-pr` | Coordinates code-reviewer + security-reviewer + accessibility-engineer on a PR |
+
+### Testing
+| Skill | Trigger on |
+|---|---|
+| `run-tests` | Executes the suite, verifies the 85% coverage threshold |
+| `generate-fuzz-tests` | Property-based fuzz test generation |
+| `sunday-test-advisor` | Audits an API spec for missing test scenarios |
+| `debug-tests` | Iteratively debugging a failing test suite |
+| `api-contract-verify` | Pact-style consumer-driven contract verification |
+
+### Security & accessibility
+| Skill | Trigger on |
+|---|---|
+| `check-accessibility` | Semantic HTML / a11y violation scan |
+| `threat-model` | STRIDE + Data Flow Diagram before development starts |
+
+### Data & migrations
+| Skill | Trigger on |
+|---|---|
+| `db-migration` | Zero-downtime Expand/Contract migration design |
+| `validate-migrations` | Rejects destructive migration operations |
+
+### API design
+| Skill | Trigger on |
+|---|---|
+| `openapi` | API contract design before implementation |
+| `api-ingest` | Generates docs + typed clients from a Swagger/OpenAPI URL |
+
+### Documentation
+| Skill | Trigger on |
+|---|---|
+| `adr` / `badr` | Architecture Decision Records (technical / business-case) |
+| `scaffold-docs` | Comprehensive implementation guide generation |
+
+### Operations & incident response
+| Skill | Trigger on |
+|---|---|
+| `on-call` | Active incident response |
+| `five-whys` | Structured root cause analysis |
+| `chaos-experiment` | Game Day fault injection design |
+| `health-check` | Validates this installation — symlinks, frontmatter, config drift |
+| `debug-environment` | Systematic environment/config debugging |
+| `performance-profile` | Diagnosing *why* something is slow |
+| `dependency-update` | Safe, structured monorepo dependency updates |
+
+### Domain-specific / utility
+| Skill | Trigger on |
+|---|---|
+| `numpath-alignment` / `numpath-strategy` | NumPath research-project theoretical grounding checks |
+| `list-agents` | Lists configured custom agents in `.claude/` |
+
+---
+
+## AI Feature Team Pipeline
+
+```mermaid
+graph TD
+    User([User]) --> SpecWriter[spec-writer]
+    SpecWriter --> ContextEngineer[context-engineer]
+
+    subgraph "Phase 1: Discovery & Design"
+        ContextEngineer --> Analyst[analyst]
+        Analyst --> Architect[architect]
+        Architect --> Perf[performance-engineer]
+        Perf --> Data[data-engineer]
+    end
+
+    subgraph "Phase 2: Implementation & Review"
+        Data --> Developer[developer]
+        Developer --> CodeReviewer[code-reviewer]
+        CodeReviewer --> A11y[accessibility-engineer]
+        A11y --> SecurityReviewer[security-reviewer]
+    end
+
+    subgraph "Phase 3: Verification & Shipping"
+        SecurityReviewer --> QAEngineer[qa-engineer]
+        QAEngineer --> SRE[sre-engineer]
+        SRE --> TechWriter[tech-writer]
+        TechWriter --> DevOpsEngineer[devops-engineer]
+    end
+
+    CodeReviewer -. "CHANGES REQUESTED" .-> Developer
+    ValidateArtifact{{"validate-artifact\n(every contract-bound handoff)"}}
+```
+
+Every arrow above is also gated by `validate-artifact` (structural contract check) where the producing agent
+has a contract in `shared/contracts/`, and the whole run is checkpointed to
+`.claude/feature-workspace/pipeline-state.json` + `pipeline-trace.json` so it can be resumed or rolled back
+(`resume-pipeline`) rather than restarted from scratch.
+
+### Using the agents by tool
+
+**Claude Code (native support)** — agents are real subagents with tool access:
+```bash
+claude
+> /new-feature "user authentication"
+> /deliver-feature features/user-authentication.md
+```
+
+**Cursor / Windsurf** — agents are personas; reference the file directly:
+```
+Act exactly as described in shared/agents/developer.md. Read .claude/feature-workspace/analysis.md
+and implement the feature.
+```
+
+**GitHub Copilot** — same idea, tag the file:
+```
+Act as the Code Reviewer persona from #file:shared/agents/code-reviewer.md. Review my current
+workspace changes against ARCHITECTURE_RULES.md.
+```
+
+### Auditing an existing codebase
+
+Most skills don't require a full feature delivery — they work standalone against any file or directory:
+```bash
+> /design-review src/utils/payment-processor.ts
+> /threat-model src/api/checkout.ts
+> /complexity-check src/core/
+> /chaos-experiment src/services/database.ts
+> /refactor-to-pattern "Rewrite this switch statement as Strategy" src/parsers/document.ts
+```
+
+---
 
 ## Core Craftsmanship Principles Enforced
 
-By using these dotfiles, all AI assistants are instructed to prioritize:
+- **TDD/BDD (Kent Beck)**: Red-Green-Refactor, tests drive design.
+- **Clean Code & SOLID (Uncle Bob)**: cyclomatic complexity < 7, functions < 30 LOC.
+- **Evolutionary Architecture (Neal Ford & Martin Fowler)**: high cohesion, loose coupling, named refactorings.
+- **YAGNI & KISS**: no speculative abstraction.
+- **The Boy Scout Rule**: leave touched files cleaner than you found them.
+- **Security & Observability**: no hardcoded secrets, OTel by default, structured low-cardinality logging.
 
-- **TDD/BDD (Kent Beck)**: Driving design through tests and insisting on the Red-Green-Refactor cycle.
-- **Clean Code & SOLID (Uncle Bob)**: Enforcing strict cyclomatic complexity limits (< 7), short function lengths (< 30 LOC), and adherence to SOLID principles.
-- **Evolutionary Architecture (Neal Ford & Martin Fowler)**: Building highly cohesive, loosely coupled systems with proven enterprise patterns.
-- **YAGNI & KISS**: Avoiding over-engineering and premature abstractions.
-- **The Boy Scout Rule**: Proactively cleaning up minor technical debt and formatting issues when modifying files.
-- **Security & Observability**: Never hardcoding secrets, emitting OpenTelemetry traces, and maintaining documentation parity.
-
-## Files and Supported Agents
-
-| File Path | Supported Agent(s) | Description |
-| :--- | :--- | :--- |
-| **`.claude/CLAUDE.md`** | Anthropic Claude | Global instructions for Claude outlining framework patterns and design rules. |
-| **`.cursor/rules/global.mdc`** | Cursor IDE (AI Editor) | System prompt overrides for the Cursor IDE's internal AI models. |
-| **`.windsurfrules`** | Windsurf IDE (AI Editor) | System prompt overrides for the Windsurf IDE's internal AI models. |
-| **`.openai.md`** | OpenAI / Codex | Global instructions for OpenAI models and tools leveraging Codex. |
-| **`.github/copilot-instructions.md`** | GitHub Copilot | Custom instructions injected into Copilot Chat and inline completions. |
-| **`.gemini/antigravity/instructions.md`** | Gemini Antigravity | Instructions specifically tailored for Google's agentic coding assistant within this ecosystem. |
-| **`E2E_FRAMEWORK_BLUEPRINT_PROMPT.md`** | General AI Usage | A core prompt establishing the framework blueprint for E2E UI automation agents. |
-| **`API_FRAMEWORK_BLUEPRINT_PROMPT.md`** | General AI Usage | A core prompt establishing the framework blueprint for API testing agents. |
-| **`BLUEPRINT_GENERATOR_PROMPT.md`** | Prompt Engineering | A prompt template to use with an AI (like Claude or ChatGPT) to automatically generate new blueprint prompts from existing codebases. |
-| **`docs/runbooks/context-engineering.md`** | General AI Usage | Runbook guide on context engineering, optimization, taxonomy, and rules for agents. |
-
-## Usage (Installation)
-
-We recommend symlinking these files from this repository directly into your home directory. This allows you to simply run `git pull` in this folder to immediately update all your agent instructions globally.
-
-To set up the global symlinks automatically, run the install script:
-
-```bash
-./install
-```
-
-*(Note: The script will back up any existing files to `.bak` before creating the symlinks).*
-
-To remove these files and restore any `.bak` backups automatically, simply run:
-```bash
-./uninstall
-```
-
-### Project-Specific Workarounds (GitHub Copilot)
-Some tools, like **GitHub Copilot**, do not currently support a true user-level global instruction file. Copilot expects `.github/copilot-instructions.md` to be present at the root of *each specific project workspace*. 
-
-To keep your projects in sync with these standard dotfiles, you should symlink the central file into your individual project repositories:
-
-```bash
-# Navigate to your specific project
-cd ~/Projects/My-Awesome-Project
-
-# Ensure the .github directory exists
-mkdir -p .github
-
-# Create a symlink to the central dotfiles repository
-ln -s ~/Projects/Rieken/ai-assistant-dot-files/.github/copilot-instructions.md .github/copilot-instructions.md
-```
-
-## AI Feature Team (Multi-Agent Templates & Skills)
-
-This repository also contains a powerful Multi-Agent "Feature Team" pipeline built for **Claude Code**. It provides a fully automated subagent architecture including a Spec Writer, Analyst, Architect, Performance Engineer, Data Engineer, Developer, Code Reviewer, Accessibility Engineer, Security Reviewer, QA Engineer, SRE, Tech Writer, and DevOps Engineer, along with executable **Skills** (like complexity checking and test running) that enforce craftsmanship rules programmatically.
-
-Instead of manually copying these files into your projects, the global `./install` script symlinks the agents (`~/.claude/agents/`) and skills (`~/.claude/skills/`) to your home directory, meaning they are available instantly in any repository you open on your machine.
-
-### The Team Architecture
-
-```mermaid
-graph TD
-    User([User]) --> Orchestrator{CLAUDE.md\nOrchestrator}
-    
-    subgraph "Phase 1: Discovery & Design"
-        Orchestrator --> SpecWriter[spec-writer]
-        SpecWriter --> Analyst[analyst]
-        Analyst --> Architect[architect]
-    end
-    
-    subgraph "Phase 2: Implementation & Review"
-        Architect --> Developer[developer]
-        Developer --> CodeReviewer[code-reviewer]
-        CodeReviewer --> SecurityReviewer[security-reviewer]
-    end
-    
-    subgraph "Phase 3: Verification & Shipping"
-        SecurityReviewer --> QAEngineer[qa-engineer]
-        QAEngineer --> TechWriter[tech-writer]
-        TechWriter --> DevOpsEngineer[devops-engineer]
-    end
-    
-    CodeReviewer -. "Feedback loop" .-> Developer
-    QAEngineer -. "Feedback loop" .-> Developer
-    SecurityReviewer -. "Feedback loop" .-> Developer
-```
-
----
-
-### Using the Agents (Claude Code, Cursor, Copilot)
-
-Because these agents are structured as `.md` system prompts with specialized tools and parameters, they interact slightly differently depending on your IDE/tool.
-
-#### 🤖 Claude Code (Native Support)
-Claude Code auto-discovers agents in your `~/.claude/agents/` directory. You can start a pipeline directly from your terminal:
-```bash
-# Start Claude Code in any project
-claude
-
-# Ask an agent to do a job using the @mention syntax:
-> @context-engineer please audit my workspace context and build a manifest for this task
-> @analyst please read ticket 123 and create a spec
-> @architect please review the spec and plan the structure
-> @developer please implement the architecture using TDD
-> @code-reviewer please review the code against our craftsmanship rules
-> @qa-engineer please write end-to-end tests
-```
-
-#### 🧑‍💻 Cursor IDE
-Cursor's Composer (Cmd+I or Cmd+K) can dynamically pull in agent files as context. To actuate an agent:
-1. Open Cursor's Composer or Chat.
-2. Tag the global agent file using `@developer.md` or `@code-reviewer.md`.
-3. Example Prompt: *"Act exactly as described in `@developer.md`. Please read `.claude/feature-workspace/analysis.md` and implement the feature."*
-
-#### ✈️ GitHub Copilot
-Copilot does not auto-discover custom agents like Claude Code does, but you can leverage Copilot Edits or Chat by directly feeding it the agent persona:
-1. Open GitHub Copilot Chat.
-2. Tag the agent file (e.g., `#file:code-reviewer.md`).
-3. Example Prompt: *"Act as the Code Reviewer persona from `#file:code-reviewer.md`. Read my current workspace changes and review them against `ARCHITECTURE_RULES.md`."*
-
----
-
-If you prefer to have the agents copied physically into your project workspace (e.g., to commit them to a specific repo for team distribution), you can use the built-in scaffolding script:
-
-```bash
-# Navigate to your specific project
-cd ~/Projects/My-Awesome-Project
-
-# Deploy the AI Feature Team locally
-~/Projects/Rieken/ai-assistant-dot-files/scaffold-team.sh
-```
-This deploys the templates directly into the project. Read more in the [Template README](templates/claude-feature-team/README.md).
-
-### Generating Feature Specs (Pre-Pipeline)
-
-Before running the full delivery pipeline, you should use the **Spec Writer** agent to draft a high-quality feature specification. The Spec Writer acts as a product manager, interviewing you about your requirements and producing a structured markdown file that the rest of the agents can execute against.
-
-```bash
-# Example using Claude Code to draft a new feature
-> @spec-writer I want to build a new feature for user authentication. Please interview me and write the spec to features/user-auth.md
-```
-
-The Spec Writer will ask you clarifying questions (e.g. edge cases, success metrics, out of scope items). Once it has enough detail, it will write the `features/user-auth.md` file and critique its own readiness. You can then pass this file to the orchestrator pipeline below!
-
-### Example Orchestrator Pipeline Prompt
-
-The entire software development lifecycle can be fully mapped out into a rigid pipeline where one subagent strictly hands off its artifacts to the next.
-
-```mermaid
-graph TD
-    Analyst[1. analyst] --> Architect[2. architect]
-    Architect --> Perf[3. performance-engineer]
-    Perf --> Data[4. data-engineer]
-    Data --> Dev[5. developer]
-    Dev --> CodeRev[6. code-reviewer]
-    CodeRev --> A11y[7. accessibility-engineer]
-    A11y --> SecRev[8. security-reviewer]
-    SecRev --> QA[9. qa-engineer]
-    QA --> SRE[10. sre-engineer]
-    SRE --> Docs[11. tech-writer]
-    Docs --> Deploy[12. devops-engineer]
-```
-
-```text
-You are the orchestrator. I want to build this feature: [feature description]. 
-
-Please run this exact pipeline:
-1. Pass the prompt to the @analyst to write the {feature-description}-analysis.md file
-2. Pass the {feature-description}-analysis.md file to the @architect to write the {feature-description}-architecture.md file
-3. Pass the {feature-description}-architecture.md file to the @performance-engineer to write the {feature-description}-performance-report.md file
-4. Pass the {feature-description}-performance-report.md file to the @data-engineer to write the {feature-description}-data-engineering.md file
-5. Pass the {feature-description}-data-engineering.md file to the @developer to write the {feature-description}-implementation.md file
-6. Pass the {feature-description}-implementation.md file to the @code-reviewer to write the {feature-description}-review.md file
-7. Pass the {feature-description}-review.md file to the @accessibility-engineer to write the {feature-description}-a11y-report.md file
-8. Pass the {feature-description}-a11y-report.md file to the @security-reviewer to write the {feature-description}-security-report.md file
-9. Pass the {feature-description}-security-report.md file to the @qa-engineer to write the {feature-description}-tests.md file
-10. Pass the {feature-description}-tests.md file to the @sre-engineer to write the {feature-description}-observability-report.md file
-11. Pass the {feature-description}-observability-report.md file to the @tech-writer to write the {feature-description}-documentation.md file
-12. Pass the {feature-description}-documentation.md file to the @devops-engineer to write the {feature-description}-deployment.md file
-```
-
-### How to Execute the Pipeline
-
-You don't need to manually type the 12 steps above! Depending on your exact tooling, here is the best way to kick off the entire orchestrated process:
-
-#### Method 1: Claude Code (Best Experience)
-Because Claude Code supports subagents and skills natively, we have created a dedicated tool for this. Once your spec is written, just invoke the `/deliver-feature` skill:
-```bash
-> /deliver-feature features/user-auth.md
-```
-Claude will automatically read the `CLAUDE.md` Orchestrator instructions and loop through the Analyst, Architect, Developer, etc., pausing only to ask for your explicit approval at key "Human Checkpoints."
-
-#### Method 2: Cursor / Windsurf / Copilot
-If you are using an IDE AI without native agent coordination:
-1. Open the Chat / Composer.
-2. Select or "@-tag" your `features/user-auth.md` file.
-3. Select or "@-tag" the `CLAUDE.md` Orchestrator file.
-4. **Prompt:** *"Please act as the Lead Orchestrator defined in `CLAUDE.md` and deliver the attached feature. Go step-by-step through the pipeline."*
-
-### Auditing Existing Projects
-
-You don't have to be building a brand new feature to get value out of this team! The repository includes **Standalone Skills** specifically designed to evaluate your existing codebase. You can trigger these at any time:
-
-```bash
-# Get a strict structural review of a messy file
-> /design-review src/utils/payment-processor.ts
-
-# Generate an automated threat model / STRIDE analysis of an existing API boundary
-> /threat-model src/api/checkout.ts
-
-# Produce a list of all functions violating cyclomatic complexity or length rules
-> /complexity-check src/core/
-
-# Have the chaos engineer design fault-injection tests for a resiliency pattern you just added
-> /chaos-experiment src/services/database.ts
-
-# Ask the AI to surgically rewrite procedural code into a specific GoF design pattern
-> /refactor-to-pattern "Rewrite this giant switch statement into the Strategy pattern" src/parsers/document.ts
-
-# Optimize the agent's context window by closing unrelated files and finding relevant KIs
-> /optimize-context "Implement the new payment validation logic"
-```
+Full rules: `shared/rules/architecture-guardrails.md`, `shared/rules/design-principles.md`,
+`shared/rules/approval-gates.md`, `ARCHITECTURE_RULES.md`, `DOMAIN_DICTIONARY.md`.

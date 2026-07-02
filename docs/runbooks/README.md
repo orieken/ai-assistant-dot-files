@@ -56,6 +56,11 @@ Each runbook follows this structure:
 
 ---
 
-## Existing Runbook Content
+## Existing Runbooks
 
-General runbook summaries are available in `/docs/RUNBOOKS.md`. As individual runbooks are created, they are added to this directory and linked from here.
+- [context-engineering.md](context-engineering.md) — context taxonomy, principles, and verification for managing the LLM context window
+- [agent-workflows-and-context-engineering.md](agent-workflows-and-context-engineering.md) — internal mechanics of the multi-agent pipeline, hooks, and context engineering together
+- [adding-a-new-platform.md](adding-a-new-platform.md) — wiring a new AI tool into the `shared/` -> generated-config pipeline
+- [editing-agent-prompts.md](editing-agent-prompts.md) — versioning, changelog, and testing workflow for `shared/agents/` edits
+
+General runbook summaries are also available in `/docs/RUNBOOKS.md`. As new individual runbooks are created, add them to this directory and link them here.
