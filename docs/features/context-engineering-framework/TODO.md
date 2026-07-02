@@ -117,15 +117,15 @@
 - [x] Update `deliver-feature` to auto-invoke `/retrospective` after every 5th delivery — counts `docs/features/*/delivery-summary.md`, triggers on exact multiples of 5
 
 ### Epic 13 — Agent performance metrics & scoring
-- [ ] Define agent quality metrics:
-  - Security reviewer: true positive rate (findings confirmed vs. false alarms)
-  - Code reviewer: first-pass acceptance rate (approved without CHANGES REQUESTED)
-  - Analyst: completeness score (all contract sections present and non-empty)
-  - Architect: fitness function coverage (decisions with enforcement vs. judgment-only)
-- [ ] Create `shared/skills/agent-scorecard/SKILL.md` — reads past N delivery artifacts and scores each agent
-- [ ] Persist scorecard to `docs/agent-metrics/scorecard-YYYY-MM.md`
-- [ ] Surface underperforming agents in retrospective output
-- [ ] Track metrics over time: is agent quality improving or degrading after prompt edits?
+- [x] Define agent quality metrics — documented in `shared/skills/agent-scorecard/SKILL.md`'s "Metric Definitions" table:
+  - Security reviewer: true positive rate (proxy: Critical/High fix-applied rate, adjusted for disputes noted in retrospectives — a real confirmed/false-positive rate needs dispute tracking, see Epic 15)
+  - Code reviewer: first-pass acceptance rate (from pipeline-trace.json's changesRequestedCount, added in Epic 7)
+  - Analyst: completeness score (contract sections present AND non-placeholder, against analysis-contract.md from Epic 5)
+  - Architect: fitness function coverage (decisions with concrete Enforcement vs. judgment-only)
+- [x] Create `shared/skills/agent-scorecard/SKILL.md` — reads past N delivery artifacts and scores each agent
+- [x] Persist scorecard to `docs/agent-metrics/scorecard-YYYY-MM.md`
+- [x] Surface underperforming agents in retrospective output — added an "Agent Scorecard Cross-Reference" section to the single-delivery `retrospective` skill, and `pipeline-retrospective` (Epic 7) already cross-references the latest scorecard for cross-delivery trends
+- [x] Track metrics over time: is agent quality improving or degrading after prompt edits? — each scorecard compares against the previous month's file, IMPROVING/STABLE/DEGRADING per metric
 
 ### Epic 8 — Agent versioning & changelog
 - [ ] Add `version: 1.0.0` to every agent's frontmatter

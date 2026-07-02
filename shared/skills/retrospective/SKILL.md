@@ -17,6 +17,7 @@ Do NOT use for root cause analysis of a specific bug — use `/five-whys` instea
 1. `docs/features/<feature-name>/` — all pipeline artifacts
 2. `docs/features/<feature-name>/delivery-summary.md` — pipeline run status
 3. `CLAUDE.md` — project constraints for benchmarking
+4. The most recent `docs/agent-metrics/scorecard-*.md` (if one exists) — for the Agent Scorecard Cross-Reference section
 
 ## Process
 
@@ -49,7 +50,14 @@ Do NOT use for root cause analysis of a specific bug — use `/five-whys` instea
    - **What went poorly** — things that required rework, were missed, or caused delays
    - **What to improve** — actionable process changes for next time
 
-5. **Produce the retrospective** at `docs/features/<feature-name>/retrospective.md`.
+5. **Cross-reference the latest agent scorecard** (if `docs/agent-metrics/scorecard-*.md` exists): for each
+   agent that ran in this delivery, check whether it was flagged `UNDERPERFORMING` in the most recent
+   scorecard. If so, and this delivery shows the same symptom (e.g. scorecard flags code-reviewer's
+   first-pass acceptance rate as low, and this delivery also needed multiple CHANGES REQUESTED loops), call
+   it out explicitly — that's corroborating evidence, not a coincidence. If no scorecard exists yet, note
+   that in the output rather than skipping the section silently.
+
+6. **Produce the retrospective** at `docs/features/<feature-name>/retrospective.md`.
 
 ## Output Format
 
@@ -93,6 +101,12 @@ Delivery status: Complete | Complete with notes | Blocked
 
 ## Patterns Identified
 [Recurring themes across this and prior deliveries, if other retrospectives exist in docs/features/]
+
+## Agent Scorecard Cross-Reference
+[For each agent in this delivery flagged UNDERPERFORMING in the latest docs/agent-metrics/scorecard-*.md:
+note whether this delivery corroborates it. If no scorecard exists yet: "No agent-scorecard has been
+generated yet — see the agent-scorecard skill." If a scorecard exists and flags nothing relevant to this
+delivery's agents: "No corroborating evidence this delivery — see docs/agent-metrics/scorecard-[YYYY-MM].md."]
 ```
 
 ## Guardrails
