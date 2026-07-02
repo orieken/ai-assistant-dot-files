@@ -37,11 +37,10 @@ Analyze what context is currently loaded:
 - Request the user or IDE to close/unload out-of-scope files.
 
 ### 3. Retrieve Domain Knowledge (Proactive RAG)
-Scan the repository and local configurations for, **before** doing independent analysis:
-- Matching **Knowledge Items (KIs)** in `shared/knowledge/` (portable, cross-project) related to the target component or feature area.
-- Matching **KIs** in `.claude/knowledge/` (project-specific).
-- Relevant **ADRs** under `docs/adrs/` that dictate design choices for this scope.
-- Key interfaces/types that define the contract of the target component.
+Invoke `search-ki` with the target component/domain, **before** doing independent analysis — it already
+searches `shared/knowledge/`, `.claude/knowledge/`, and `docs/adrs/` and ranks results, so don't duplicate
+that scan here. Separately, identify key interfaces/types that define the contract of the target component
+(that's a codebase lookup, not a KI search).
 
 ### 4. Estimate the Token Budget
 For each pinned file, estimate tokens (~line count × 8 chars/line ÷ 4 chars/token — a rough heuristic). Sum the total and compare against the consuming agent's tier budget (of a 200k-token context window): Analyst/Architect ≤60%, Developer ≤80%, Reviewer agents ≤40%. Flag `WARNING` if over budget and recommend specific cuts.

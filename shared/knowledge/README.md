@@ -23,14 +23,14 @@ Body: the pattern, decision, or fix — what it is, why it exists, when it appli
 ```
 
 ## How KIs get used
-1. `context-engineer` searches this directory (and `.claude/knowledge/`) by tag/domain match against the
-   active feature or task.
+1. `context-engineer` invokes the `search-ki` skill (tag/domain match against the active feature or task)
+   during manifest creation rather than grepping this directory ad hoc.
 2. Matches are listed in `context-manifest.md` under "Relevant Knowledge Items (KIs) & ADRs" with a reason
    they're relevant.
 3. Downstream agents (analyst, developer) read the manifest and treat the referenced KI as authoritative —
    they should not re-solve a problem a KI already documents.
 
 ## Adding a new KI
-There's no dedicated authoring skill yet (tracked as an open item — see
-`docs/features/context-engineering-framework/TODO.md`, Epic 14). For now, add a markdown file directly to
-this directory following the format above.
+Use the `create-ki` skill (`shared/skills/create-ki/SKILL.md`) — it searches for an existing KI on the same
+topic first (via `search-ki`) so you update rather than duplicate, then writes the file in the format above.
+

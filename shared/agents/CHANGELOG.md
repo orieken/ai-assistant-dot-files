@@ -18,6 +18,14 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-02 — Epic 14 KI infrastructure
+
+| Agent | Version | Change |
+|---|---|---|
+| context-engineer | 1.0.0 -> 1.1.0 | Step 5 (Proactive RAG) now invokes the `search-ki` skill instead of ad-hoc grepping `shared/knowledge/`, `.claude/knowledge/`, and `docs/adrs/` directly — additive, output format unchanged |
+
+---
+
 ## 2026-07-02 — Initial versioning rollout
 All 24 agents in `shared/agents/` set to `1.0.0` — no prior version was tracked before this.
 

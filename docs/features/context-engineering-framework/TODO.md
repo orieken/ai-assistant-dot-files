@@ -141,10 +141,10 @@
 ### Epic 14 — Knowledge Items (KI) infrastructure
 - [x] Create `shared/knowledge/` directory for reusable Knowledge Items
 - [x] Define KI format: markdown file with frontmatter (tags, domain, created date) — see `shared/knowledge/README.md`
-- [ ] Create `shared/skills/create-ki/SKILL.md` — captures a pattern, bug fix, or decision as a searchable KI
-- [ ] Create `shared/skills/search-ki/SKILL.md` — searches KIs by tag/domain before agents start work
-- [x] Wire context-engineer to search KIs during manifest creation (Proactive RAG) — searches `shared/knowledge/` and `.claude/knowledge/`
-- [ ] Seed initial KIs from existing ADRs and runbooks — one example KI added (`context-engineer-must-be-wired-into-pipeline.md`); full migration from ADRs/runbooks not yet done
+- [x] Create `shared/skills/create-ki/SKILL.md` — captures a pattern, bug fix, or decision as a searchable KI
+- [x] Create `shared/skills/search-ki/SKILL.md` — searches KIs by tag/domain before agents start work
+- [x] Wire context-engineer to search KIs during manifest creation (Proactive RAG) — refactored to invoke `search-ki` instead of ad-hoc grepping `shared/knowledge/`/`.claude/knowledge/`/`docs/adrs/` directly (context-engineer bumped to v1.1.0, CHANGELOG updated)
+- [x] Seed initial KIs from existing ADRs and runbooks — 2 more added: `docs-directory-follows-rag-friendly-structure.md` (from ADR-001) and `subagent-isolation-is-a-hard-boundary.md` (from both runbooks); not an exhaustive migration of every ADR/runbook, but the genuinely reusable nuggets are captured
 
 ### Epic 15 — Cross-delivery learning
 - [ ] Create `shared/skills/extract-lessons/SKILL.md` — after delivery, extracts reusable patterns:
