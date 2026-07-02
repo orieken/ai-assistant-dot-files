@@ -212,18 +212,18 @@
 ## Phase 8: Polish & hardening
 
 ### Epic 10 — Health check & self-test
-- [ ] Implement `health-check` skill to verify:
-  - [ ] All symlinks resolve
-  - [ ] All agents have valid frontmatter (name, description, tools, model, version)
-  - [ ] All skills have valid SKILL.md with triggers
-  - [ ] All platform configs generated from current `shared/` (no drift)
-  - [ ] Domain dictionary has no orphaned terms
-  - [ ] All inter-agent contracts exist for pipeline agents
-  - [ ] Agent changelog is up to date (no version mismatches)
-  - [ ] Knowledge Items have valid frontmatter and tags
-- [ ] `install.sh` runs health-check automatically at end
-- [ ] Add `--verbose` flag for detailed diagnostics
-- [ ] Add `--fix` flag to auto-repair common issues (regenerate configs, fix symlinks)
+- [x] Implement `health-check` skill to verify (a `health-check` skill already existed but was stale — referenced the old `./install` script and didn't cover version/contract/changelog/KI checks at all; rewrote it to wrap a new `scripts/health-check.sh`):
+  - [x] All symlinks resolve
+  - [x] All agents have valid frontmatter (name, description, tools, model, version)
+  - [x] All skills have valid SKILL.md with triggers
+  - [x] All platform configs generated from current `shared/` (no drift) — delegates to `check-parity.sh` rather than duplicating it
+  - [x] Domain dictionary has no orphaned terms — best-effort grep-based check across `shared/`+`docs/`; correctly flagged 13 terms with zero in-repo references (mostly Saturday/Sunday framework classes and domain events that are only meaningful in a generated project, not this repo itself)
+  - [x] All inter-agent contracts exist for pipeline agents
+  - [x] Agent changelog is up to date (no version mismatches)
+  - [x] Knowledge Items have valid frontmatter and tags
+- [x] `install.sh` runs health-check automatically at end — skipped on `--dry-run`; tested with a real `--project` install
+- [x] Add `--verbose` flag for detailed diagnostics
+- [x] Add `--fix` flag to auto-repair common issues (regenerate configs, fix symlinks) — found and fixed a real `set -e`/`pipefail` bug while testing (same class as twice before: a `grep` finding zero matches for a domain term killed the script silently)
 
 ### Epic 20 — CI/CD integration
 - [ ] Create `.github/workflows/framework-ci.yml`:

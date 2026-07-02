@@ -281,6 +281,14 @@ else
   fi
 fi
 
+if ! $DRY_RUN; then
+  echo ""
+  echo "========================================"
+  echo "Framework health check"
+  echo "========================================"
+  bash "$REPO_DIR/scripts/health-check.sh" || echo "(health-check reported issues — see above; run 'bash scripts/health-check.sh --verbose --fix' for detail and auto-repair)"
+fi
+
 if $SHOW_TOUR && ! $DRY_RUN; then
   echo ""
   echo "========================================"

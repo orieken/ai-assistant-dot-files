@@ -1,6 +1,6 @@
 ---
 name: health-check
-description: Validates the ai-assistant-dot-files installation — checks symlinks, file references, cross-platform configs, and reports any broken or missing components.
+description: Validates the ai-assistant-dot-files installation — symlinks, agent/skill frontmatter, platform config drift, domain dictionary orphans, inter-agent contracts, changelog/version consistency, and Knowledge Item frontmatter. Wraps scripts/health-check.sh for everything scriptable and adds AI judgment on top for anything that requires reading prose.
 triggers:
   keywords: ["health-check", "health", "check installation", "verify setup", "check setup"]
   intentPatterns: ["Check my setup", "Is everything installed?", "Run health check", "Verify my installation", "/health-check"]
@@ -8,53 +8,47 @@ standalone: true
 ---
 
 ## When To Use
-When the user wants to verify their ai-assistant-dot-files installation is complete and functional. Useful after running `./install`, after a `git pull`, or when agents or skills are not loading as expected.
+After running `install.sh` (it runs this automatically at the end unless `--dry-run`), after a `git pull`,
+or whenever agents/skills aren't loading as expected, or you want an overall health snapshot of the
+framework itself.
 
-Do NOT use for debugging application code — use `/debug-environment` instead.
-Do NOT use for checking code quality — use `/complexity-check` or `/design-review` instead.
+Do NOT use for debugging application code in a project you're building features for — use
+`/debug-environment` instead. Do NOT use for checking code quality — use `/complexity-check` or
+`/design-review` instead.
 
 ## Context To Load First
-1. The `install` script — to understand expected symlink targets
-2. `.claude/agents/` — to enumerate all agents
-3. `.claude/skills/` — to enumerate all skills
+1. `scripts/health-check.sh` — the deterministic backbone this skill wraps
+2. `shared/agents/CHANGELOG.md`, `shared/contracts/`, `DOMAIN_DICTIONARY.md` — for the checks the script
+   performs, in case a finding needs more context than the script's one-line output gives
 
 ## Process
 
-1. **Check symlink integrity** — verify that `~/.claude/agents/` and `~/.claude/skills/` exist and contain valid symlinks pointing back to this repository:
-   - For each file in `.claude/agents/`, confirm `~/.claude/agents/<name>` exists and is a valid symlink
-   - For each directory in `.claude/skills/`, confirm `~/.claude/skills/<name>` exists and is a valid symlink
-   - Report broken symlinks (target missing or link does not exist)
+1. **Run the script**: `bash scripts/health-check.sh --verbose`. This performs 8 checks, all scriptable:
+   - Symlinks (`.claude/{agents,skills,rules}` -> `shared/` equivalents) resolve correctly
+   - Every agent's frontmatter has `name`, `description`, `tools`, `model`, `version`
+   - Every skill's `SKILL.md` has `name`, `description`, `triggers`, `standalone`
+   - Platform configs match `shared/` (delegates to `scripts/check-parity.sh` rather than duplicating it)
+   - Domain dictionary terms that appear nowhere else in `shared/`/`docs/` (best-effort — see Guardrails)
+   - Every contract-bound agent (`shared/contracts/`) has its contract file present
+   - Every agent's current version appears in `shared/agents/CHANGELOG.md`
+   - Every Knowledge Item (`shared/knowledge/`, `.claude/knowledge/`) has valid frontmatter
 
-2. **Check agent file references** — for each agent in `.claude/agents/`:
-   - Verify the agent references files that exist (e.g., `DOMAIN_DICTIONARY.md`, `CLAUDE.md`, `ARCHITECTURE_RULES.md`)
-   - Verify the frontmatter is well-formed (has `name`, `description`, `tools`, `model` fields)
-   - Report any agents referencing non-existent files
+2. **Add judgment the script can't**: for each `WARN` the script reports (it never hard-fails on these,
+   since they need a human/AI read), decide whether it's real:
+   - A domain term with zero references *inside this repo* may still be intentional — some
+     `DOMAIN_DICTIONARY.md` terms (e.g. Saturday/Sunday framework classes like `BaseSite`, `BaseApiClient`)
+     describe patterns that show up in *generated project code*, not in this repo's own `shared/`/`docs/`.
+     Read the term's description before recommending removal.
+   - A version/changelog mismatch warning might mean the changelog entry uses different wording than an
+     exact string match caught — read the actual changelog section for that agent before concluding it's
+     truly undocumented.
 
-3. **Check skill file references** — for each skill in `.claude/skills/`:
-   - Verify `SKILL.md` exists in the skill directory
-   - Verify the frontmatter is well-formed (has `name`, `description`, `triggers`, `standalone` fields)
-   - If a `check.sh` or `run.sh` exists, verify it is executable
+3. **If the user asked for a fix**: re-run with `--fix` — it regenerates configs on drift and recreates
+   broken/missing symlinks. It does not touch anything else (contracts, changelog, KI frontmatter, domain
+   dictionary) since those need human judgment about the *right* fix, not just a mechanical one.
 
-4. **Check cross-platform config files**:
-   - `CLAUDE.md` (root) — exists and is non-empty
-   - `ARCHITECTURE_RULES.md` — exists and is non-empty
-   - `DOMAIN_DICTIONARY.md` — exists (warn if only template exists)
-   - `.cursor/rules/` — directory exists with at least one rule file
-   - `.windsurfrules` — exists and is non-empty
-   - `.openai.md` — exists and is non-empty
-   - `.github/copilot-instructions.md` — exists and is non-empty
-   - `.gemini/antigravity/instructions.md` — exists and is non-empty
-
-5. **Check documentation structure**:
-   - `docs/README.md` — exists
-   - `docs/features/README.md` — exists
-   - `docs/adrs/README.md` — exists
-   - `docs/patterns/README.md` — exists
-   - `docs/runbooks/README.md` — exists
-
-6. **Check settings.json** — verify `.claude/settings.json` is valid JSON and contains expected hook definitions.
-
-7. **Produce the health report** — display inline to the user.
+4. **Produce the health report** — synthesize the script's output plus your judgment calls into the format
+   below; don't just paste the raw script output.
 
 ## Output Format
 
@@ -65,60 +59,39 @@ Date: [YYYY-MM-DD]
 Repository: [path to this repo]
 
 ## Overall Status
-HEALTHY | DEGRADED | BROKEN
+HEALTHY (0 fails) | DEGRADED (warns only) | BROKEN (1+ fails)
 
-## Symlinks
-| Component | Expected | Status |
-|---|---|---|
-| ~/.claude/agents/ | [N] agents | PASS / [N] missing |
-| ~/.claude/skills/ | [N] skills | PASS / [N] missing |
-
-### Missing Symlinks (if any)
-- ~/.claude/agents/[name] — run `./install` to fix
-- ~/.claude/skills/[name] — run `./install` to fix
-
-## Agents ([N] total)
-| Agent | Frontmatter | File References | Status |
+## Results
+| Check | Pass | Warn | Fail |
 |---|---|---|---|
-| analyst | PASS | PASS | HEALTHY |
-| [name] | FAIL — missing model | PASS | DEGRADED |
+| Symlinks | [N] | — | [N] |
+| Agent frontmatter | [N] | — | [N] |
+| Skill frontmatter | [N] | — | [N] |
+| Platform config drift | [N] | — | [N] |
+| Domain dictionary terms | [N] | [N] | — |
+| Inter-agent contracts | [N] | — | [N] |
+| Changelog/version consistency | [N] | [N] | — |
+| Knowledge Item frontmatter | [N] | — | [N] |
 
-## Skills ([N] total)
-| Skill | SKILL.md | Frontmatter | Scripts | Status |
-|---|---|---|---|---|
-| deliver-feature | PASS | PASS | N/A | HEALTHY |
-| [name] | PASS | FAIL | not executable | DEGRADED |
+## Failures (if any)
+- [component] — [what's wrong] — [exact fix: run `scripts/health-check.sh --fix`, or manual steps if not auto-fixable]
 
-## Cross-Platform Configs
-| Platform | File | Status |
-|---|---|---|
-| Claude | CLAUDE.md | PASS |
-| Cursor | .cursor/rules/ | PASS |
-| Windsurf | .windsurfrules | PASS |
-| OpenAI | .openai.md | PASS |
-| Copilot | .github/copilot-instructions.md | PASS |
-| Gemini | .gemini/antigravity/instructions.md | PASS |
+## Warnings Worth a Human Look
+- [term/agent] — [the script's warning] — [your judgment: real issue or expected/benign, and why]
 
-## Documentation Structure
-| Directory | Status |
-|---|---|
-| docs/features/ | PASS |
-| docs/adrs/ | PASS |
-| docs/patterns/ | PASS |
-| docs/runbooks/ | PASS |
-
-## Recommended Fixes
-1. [Specific fix with command to run]
-2. [Another fix]
-
+## Recommended Next Steps
+1. [Specific command or edit]
 — or "No issues found."
 ```
 
 ## Guardrails
-- Never modify any files during the health check — this is a read-only diagnostic.
-- Never suppress warnings. If something is missing, report it even if the system still functions.
-- Always recommend running `./install` as the first fix for symlink issues.
-- If the repository path cannot be determined, ask the user to confirm it.
+- **Never** modify any files yourself beyond what `scripts/health-check.sh --fix` already does — this skill
+  reports and (optionally) triggers the script's narrow auto-repair, it doesn't freelance additional fixes.
+- **Never** suppress a warning without stating why you believe it's benign — "probably fine" isn't a
+  judgment, it's a guess. Read the term/entry in question first.
+- **Always** run the underlying script rather than re-deriving its checks by hand — it's the single source
+  of truth for what "healthy" means here, and re-deriving invites drift between the skill and the script.
 
 ## Standalone Mode
-Works entirely offline. All checks are local filesystem operations. No external services required.
+`scripts/health-check.sh` is pure local filesystem operations — no external services required. The skill's
+judgment layer is local reasoning over the script's output.
