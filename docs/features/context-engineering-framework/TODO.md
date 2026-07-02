@@ -166,12 +166,12 @@
   - Developer: up to 80% (needs code + analysis + architecture)
   - Reviewer agents: up to 40% (focused on specific output)
 - [x] Context-engineer estimates token count per file in manifest
-- [ ] Add `budget_utilization` field to pipeline-trace.json per agent (blocked on Epic 7 — pipeline-trace.json doesn't exist yet)
-- [ ] Create `shared/skills/context-audit/SKILL.md` — analyzes a conversation or pipeline run for context waste:
+- [x] Add `budget_utilization` field to pipeline-trace.json per agent — unblocked now that Epic 7 exists; added as `budgetUtilization` (fraction of the agent's tier ceiling, `null` for agents that don't consume context-manifest.md directly), copied from context-engineer's upfront estimate rather than independently re-measured (no live hook into actual model context usage exists)
+- [x] Create `shared/skills/context-audit/SKILL.md` — analyzes a conversation or pipeline run for context waste:
   - Files loaded but never referenced in output
   - Duplicate information across loaded files
   - Large files loaded when a line-range read would suffice
-- [ ] Create fitness function: "no agent exceeds its token budget tier"
+- [x] Create fitness function: "no agent exceeds its token budget tier" — `scripts/check-context-budget.sh`, operationalized as "no persisted context-manifest.md reports WARNING without actionable cut recommendations" (a live token-usage check isn't possible from a shell script; this enforces context-engineer's own guardrail as a real, testable check instead of trusting prose). Tested all 3 cases (OK / WARNING-with-recommendations / WARNING-without) against a fixture tree — correct pass/fail on each
 
 ### Epic 17 — Context pruning automation
 - [ ] Update context-engineer to auto-prune based on bounded context mapping:

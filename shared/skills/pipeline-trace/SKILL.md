@@ -36,7 +36,8 @@ standalone: true
       "durationSeconds": 600,
       "status": "PASS",
       "iterations": 1,
-      "contractRetries": 0
+      "contractRetries": 0,
+      "budgetUtilization": 0.42
     },
     {
       "agent": "code-reviewer",
@@ -47,13 +48,22 @@ standalone: true
       "durationSeconds": 1800,
       "status": "APPROVED",
       "iterations": 3,
-      "changesRequestedCount": 2
+      "changesRequestedCount": 2,
+      "budgetUtilization": null
     }
   ]
 }
 ```
 
 Field notes:
+- `budgetUtilization`: copied from `context-manifest.md`'s Token Budget section for this agent's tier at the
+  time it ran — estimated tokens for pinned files ÷ that tier's ceiling (Analyst/Architect 60%, Developer
+  80%, Reviewer 40%, of a 200k-token window), expressed as a fraction of the *tier ceiling itself* (so `1.0`
+  means exactly at the tier limit, not at 100% of the full window). This is context-engineer's upfront
+  estimate, not an independently re-measured value — there's no live hook into actual model context usage
+  at runtime. Use `null` for agents that don't consume `context-manifest.md` directly (e.g. code-reviewer,
+  security-reviewer, qa-engineer read specific prior artifacts, not the manifest's Pinpoint Files) rather
+  than fabricating a number.
 - `agentVersion`: that agent's `version:` frontmatter field (`shared/agents/CHANGELOG.md` tracks the
   history) at the time it ran. This is what lets `agent-scorecard` and `pipeline-retrospective` correlate a
   duration or iteration-count trend with a specific prompt edit instead of just observing drift with no

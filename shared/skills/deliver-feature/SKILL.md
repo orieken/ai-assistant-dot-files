@@ -150,7 +150,8 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
       "durationSeconds": 600,
       "status": "PASS",
       "iterations": 1,
-      "contractRetries": 0
+      "contractRetries": 0,
+      "budgetUtilization": 0.42
     },
     {
       "agent": "code-reviewer",
@@ -161,12 +162,17 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
       "durationSeconds": 1800,
       "status": "APPROVED",
       "iterations": 3,
-      "changesRequestedCount": 2
+      "changesRequestedCount": 2,
+      "budgetUtilization": null
     }
   ]
 }
 ```
 
+- `budgetUtilization` is copied from `context-manifest.md`'s Token Budget section for that agent's tier
+  (fraction of the tier ceiling, not of the full window — see `shared/skills/pipeline-trace/SKILL.md` for
+  the exact definition). Use `null` for agents that don't consume the manifest's Pinpoint Files directly
+  rather than fabricating a number.
 - `agentVersion` is that agent's `version:` frontmatter field (see `shared/agents/CHANGELOG.md`) at the time
   it ran — this is what lets `agent-scorecard` and `pipeline-retrospective` correlate a duration or
   iteration-count trend with a specific prompt edit, instead of just observing "it got slower" with no way
