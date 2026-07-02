@@ -30,11 +30,14 @@ Identify which layers, files, and domains are relevant to the requested task. Cl
 - Adapter/Presenter/Controller
 - Infrastructure/Framework/UI (outer-most)
 
-### 2. Audit Current Workspace Context
-Analyze what context is currently loaded:
-- List all open documents in the session.
-- Identify files that are **out of scope** (e.g., from unrelated bounded contexts or different layers).
-- Request the user or IDE to close/unload out-of-scope files.
+### 2. Auto-Prune by Bounded Context and Change Surface
+Apply these by default, not just as a manual suggestion:
+- **Bounded context exclusion**: exclude files from a different Bounded Context than the one identified in
+  step 1 (e.g. task is `billing`, exclude `auth` files) unless the spec/analysis explicitly documents a
+  Context Crossing — in which case include only the specific crossing files, not the whole other context.
+- **Change-surface exclusion**: if the task is UI-only (no data model or API changes), exclude
+  infrastructure/migration files by default.
+- List all open documents in the session and flag any violating either rule above for closing.
 
 ### 3. Retrieve Domain Knowledge (Proactive RAG)
 Invoke `search-ki` with the target component/domain, **before** doing independent analysis — it already

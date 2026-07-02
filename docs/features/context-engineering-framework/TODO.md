@@ -174,11 +174,12 @@
 - [x] Create fitness function: "no agent exceeds its token budget tier" — `scripts/check-context-budget.sh`, operationalized as "no persisted context-manifest.md reports WARNING without actionable cut recommendations" (a live token-usage check isn't possible from a shell script; this enforces context-engineer's own guardrail as a real, testable check instead of trusting prose). Tested all 3 cases (OK / WARNING-with-recommendations / WARNING-without) against a fixture tree — correct pass/fail on each
 
 ### Epic 17 — Context pruning automation
-- [ ] Update context-engineer to auto-prune based on bounded context mapping:
+- [x] Update context-engineer to auto-prune based on bounded context mapping:
   - If task is in `billing` domain, exclude `auth` domain files unless explicitly crossing
   - If task is UI-only, exclude infrastructure/migration files
-- [ ] Add "context decay" — summarize artifacts older than 2 phases in the pipeline instead of passing full text
-- [ ] Create `shared/skills/summarize-artifact/SKILL.md` — produces a 200-word summary of any agent artifact for downstream context compression
+  (context-engineer bumped 1.1.0 -> 1.2.0, standalone skill twin updated to match, CHANGELOG entry added)
+- [x] Add "context decay" — summarize artifacts older than 2 phases in the pipeline instead of passing full text — documented as a general rule in `deliver-feature/SKILL.md`'s new "Context Decay" section, and concretely applied to `qa-engineer` and `tech-writer` (both read `analysis.md` via `summarize-artifact` now instead of in full, since it's 2 phases old by Phase 3) rather than left as prose with no real agent actually doing it
+- [x] Create `shared/skills/summarize-artifact/SKILL.md` — produces a 200-word summary of any agent artifact for downstream context compression
 
 ---
 

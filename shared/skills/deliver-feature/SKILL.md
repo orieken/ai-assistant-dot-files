@@ -185,6 +185,24 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
   other artifact, so `pipeline-retrospective` and `agent-scorecard` can read trace history across many
   past deliveries, not just the current run.
 
+## Context Decay
+
+Phases are numbered 0-4 (Setup, Discovery and Design, Implementation and Review, Verification and
+Shipping, Persistence and Delivery). By the time an agent 2+ phases removed from an artifact's origin phase
+needs it, read a `summarize-artifact` summary instead of the full file — the broad strokes still matter, the
+exact wording usually doesn't, and the full file is still on disk for anyone who needs to dig in.
+
+Concretely: `analysis.md` originates in Phase 1. `qa-engineer`, `sre-engineer`, `tech-writer`, and
+`devops-engineer` run in Phase 3-4 — 2+ phases later — so they read a summary of `analysis.md`, not the full
+file (both `qa-engineer.md` and `tech-writer.md` have been updated to do this explicitly; `sre-engineer.md`
+and `devops-engineer.md` don't currently read `analysis.md` at all, so there's nothing to change there).
+`implementation-notes.md` and `code-review-report.md` (Phase 2) are only 1 phase old from Phase 3 — read
+those in full, not summarized.
+
+This never applies to the artifact an agent is *immediately* reviewing (e.g. `code-reviewer` reading
+`implementation-notes.md`'s Self-Review Checklist needs the literal checked items) — only to older artifacts
+whose gist, not exact wording, is what still matters.
+
 ## Output Format
 
 ### Working Artifacts (temporary)

@@ -26,6 +26,16 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-02 — Epic 17 context decay and bounded-context pruning
+
+| Agent | Version | Change |
+|---|---|---|
+| qa-engineer | 1.0.0 -> 1.1.0 | Step 2 now gets `analysis.md`'s acceptance criteria/edge cases via `summarize-artifact` instead of a full read (Context Decay — 2 phases old by this point) |
+| tech-writer | 1.0.0 -> 1.1.0 | Step 1 now gets `analysis.md`'s scope via `summarize-artifact` instead of a full read (same reason) |
+| context-engineer | 1.1.0 -> 1.2.0 | New step: auto-prune Pinpoint Files by bounded-context mapping (exclude other contexts' files unless the analysis explicitly flags a crossing) and by change surface (exclude infrastructure/migration files for UI-only tasks) |
+
+---
+
 ## 2026-07-02 — Initial versioning rollout
 All 24 agents in `shared/agents/` set to `1.0.0` — no prior version was tracked before this.
 
