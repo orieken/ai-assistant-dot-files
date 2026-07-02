@@ -198,14 +198,14 @@
 - [x] Create `docs/runbooks/editing-agent-prompts.md` — versioning, testing, and changelog requirements — also created `docs/pipeline-retrospectives/README.md` (existed only as a path reference from Epic 7, never actually created) for consistency with `docs/agent-metrics/` and `docs/lessons-learned/`, and linked all runbooks from `docs/runbooks/README.md` (its own stated convention wasn't being followed even for pre-existing runbooks)
 
 ### Epic 19 — Onboarding experience
-- [ ] Create `shared/skills/onboard/SKILL.md` — interactive tour for new users:
+- [x] Create `shared/skills/onboard/SKILL.md` — interactive tour for new users:
   - Explains the three context layers (rules, agents, skills)
   - Shows how to invoke an agent
   - Shows how to trigger a skill
   - Shows how to run a pipeline
   - Lists available approval gates
-- [ ] Add `install.sh --tour` flag that runs the onboarding skill after setup
-- [ ] Create `shared/templates/my-first-feature.md` — a tutorial feature spec that walks through the full pipeline
+- [x] Add `install.sh --tour` flag that runs the onboarding skill after setup — the flag already existed as a parsed-but-unused stub (`SHOW_TOUR` was never checked anywhere); wired it to actually print guidance. A shell script can't invoke an AI skill directly, so it prints the exact `/onboard` invocation and what it covers rather than silently doing nothing. Tested both paths: `--tour --dry-run` correctly suppresses it, a real `--project` install with `--tour` correctly shows it
+- [x] Create `shared/templates/my-first-feature.md` — a tutorial feature spec that walks through the full pipeline — deliberately touches auth + a new data table + a new env var so `architect`, `data-engineer`, `security-reviewer`, and `devops-engineer` all activate alongside the always-on agents, not just the minimal path
 
 ---
 

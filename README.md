@@ -21,10 +21,11 @@ For deeper detail beyond this README:
 ```
 shared/                              <- single source of truth, edit here only
 ├── agents/        (24 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
-├── skills/        (47 skills)       <- .md with trigger keywords/patterns
+├── skills/        (48 skills)       <- .md with trigger keywords/patterns
 ├── rules/                           <- architecture-guardrails.md, design-principles.md, approval-gates.md
 ├── contracts/                       <- required-section contracts for pipeline agent handoffs
 ├── knowledge/                       <- portable Knowledge Items (KIs)
+├── templates/                       <- tutorial/scaffold content, e.g. my-first-feature.md
 ├── ARCHITECTURE_RULES.md
 ├── DOMAIN_DICTIONARY.md
 └── platform-registry.json           <- tier/capability/format per platform
@@ -140,7 +141,7 @@ Full definitions in `shared/agents/`; versions tracked in `shared/agents/CHANGEL
 
 ---
 
-## Skill Catalog (47)
+## Skill Catalog (48)
 
 Full definitions in `shared/skills/<name>/SKILL.md`, including exact trigger keywords/intent patterns.
 Grouped by what they're for:
@@ -163,6 +164,7 @@ Grouped by what they're for:
 ### Feature lifecycle
 | Skill | Trigger on |
 |---|---|
+| `onboard` | "I'm new here", "give me a tour", `/onboard` — new-user walkthrough, ends at `shared/templates/my-first-feature.md` |
 | `new-feature` | Guided spec creation, optionally kicks off delivery |
 | `spec-writer` | `/spec-writer`, "write a spec for \*", "review this spec" |
 | `event-storm` | Collaborative domain modeling before a feature starts |

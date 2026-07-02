@@ -280,4 +280,24 @@ else
     echo "  3. For project-specific setup: ./install.sh --project /path/to/project"
   fi
 fi
+
+if $SHOW_TOUR && ! $DRY_RUN; then
+  echo ""
+  echo "========================================"
+  echo "Onboarding tour"
+  echo "========================================"
+  echo "This script can't invoke an AI skill itself — it's plain bash. To get the tour, open your AI"
+  echo "tool in this repo (or wherever you installed to) and ask it to run the 'onboard' skill:"
+  echo ""
+  echo "  > /onboard"
+  echo ""
+  echo "or in a tool without slash commands:"
+  echo ""
+  echo "  Act as the onboard skill described in shared/skills/onboard/SKILL.md and give me a tour."
+  echo ""
+  echo "It covers: the three context layers (rules/agents/skills), how to invoke an agent, how to"
+  echo "trigger a skill, how to run a full pipeline, and the approval gates that pause for confirmation."
+  echo "It ends by pointing you at shared/templates/my-first-feature.md — a complete, pre-written"
+  echo "feature spec you can run through /deliver-feature immediately to see the whole pipeline for real."
+fi
 echo ""
