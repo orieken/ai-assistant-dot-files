@@ -28,38 +28,48 @@ Do NOT use when the user only wants a single agent's output (e.g., just an analy
 4. **Create the feature archive directory**: `docs/features/<feature-name>/` — this is where all final artifacts are persisted.
 
 ### Phase 1: Discovery and Design
-5. **Invoke analyst** -> produces `analysis.md`. **PAUSE**: show summary to user. Wait for confirmation before continuing.
-6. **Invoke architect** (if analysis.md has Architectural Flags != "None") -> produces `architecture-notes.md`. **PAUSE** if RFC was written — human must acknowledge before developer starts.
-7. **Invoke performance-engineer** (if analysis.md has Performance SLAs or Non-Functional Requirements with latency/throughput targets) -> produces `performance-report.md`.
-8. **Invoke data-engineer** (if analysis.md has Data Model Changes != "None") -> produces `data-engineering-report.md`.
+5. **Invoke context-engineer** -> produces `context-manifest.md` in `.claude/feature-workspace/`. This scopes the bounded context, pins the specific files analyst/developer must read, lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the user which files it recommends cutting before continuing.
+6. **Invoke analyst** -> reads `context-manifest.md` first, then produces `analysis.md`.
+7. **Invoke validate-artifact** against `shared/contracts/analysis-contract.md`. If FAIL: send back to analyst with the specific violations listed; re-validate. Repeat until PASS.
+8. **PAUSE**: show summary to user. Wait for confirmation before continuing.
+9. **Invoke architect** (if analysis.md has Architectural Flags != "None") -> produces `architecture-notes.md`.
+10. **Invoke validate-artifact** against `shared/contracts/architecture-contract.md` (only if architect was invoked). If FAIL: send back to architect; re-validate. **PAUSE** if an RFC was written — human must acknowledge before developer starts.
+11. **Invoke performance-engineer** (if analysis.md has Performance SLAs or Non-Functional Requirements with latency/throughput targets) -> produces `performance-report.md`.
+12. **Invoke data-engineer** (if analysis.md has Data Model Changes != "None") -> produces `data-engineering-report.md`.
 
 ### Phase 2: Implementation and Review
-9. **Invoke developer** -> produces `implementation-notes.md`.
-10. **Invoke code-reviewer** -> produces `code-review-report.md`. If verdict is CHANGES REQUESTED: send back to developer. Repeat until APPROVED.
-11. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `a11y-report.md`.
-12. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`. If Critical findings exist: block pipeline, alert user.
+13. **Invoke developer** -> reads `context-manifest.md` first, then produces `implementation-notes.md`.
+14. **Invoke validate-artifact** against `shared/contracts/implementation-contract.md`. If FAIL: send back to developer; re-validate.
+15. **Invoke code-reviewer** -> produces `code-review-report.md`.
+16. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): send back to code-reviewer; re-validate. If verdict is CHANGES REQUESTED (qualitative, independent of the structural check): send back to developer, repeat from step 13 until APPROVED and structurally valid.
+17. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `a11y-report.md`.
+18. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`.
+19. **Invoke validate-artifact** against `shared/contracts/security-contract.md` (only if security-reviewer was invoked). If FAIL: send back to security-reviewer; re-validate. If Critical findings exist: block pipeline, alert user.
 
 ### Phase 3: Verification and Shipping
-13. **Invoke qa-engineer** -> produces `qa-report.md`. Tests must be green.
-14. **Invoke sre-engineer** -> produces `observability-report.md`.
-15. **Invoke tech-writer** -> produces `docs-report.md`.
-16. **Invoke devops-engineer** -> produces `devops-report.md`.
+20. **Invoke qa-engineer** -> produces `qa-report.md`. Tests must be green.
+21. **Invoke validate-artifact** against `shared/contracts/qa-contract.md`. If FAIL: send back to qa-engineer; re-validate.
+22. **Invoke sre-engineer** -> produces `observability-report.md`.
+23. **Invoke validate-artifact** against `shared/contracts/observability-contract.md`. If FAIL: send back to sre-engineer; re-validate.
+24. **Invoke tech-writer** -> produces `docs-report.md`.
+25. **Invoke devops-engineer** -> produces `devops-report.md`.
 
 ### Phase 4: Persistence and Delivery
-17. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/`.
-18. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
-19. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
-20. **Update feature index** — add the new feature entry to `docs/features/README.md`.
-21. **PAUSE**: show the user the full `docs/features/<feature-name>/` listing. Confirm the documentation is complete.
-22. **Ship to Friday** — ask: "Ship to Friday?" On confirmation ("ship" or "yes"): POST Cucumber JSON to Friday.
+26. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/`.
+27. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
+28. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
+29. **Update feature index** — add the new feature entry to `docs/features/README.md`.
+30. **PAUSE**: show the user the full `docs/features/<feature-name>/` listing. Confirm the documentation is complete.
+31. **Ship to Friday** — ask: "Ship to Friday?" On confirmation ("ship" or "yes"): POST Cucumber JSON to Friday.
 
 ## Human Checkpoints
-- After analyst (step 5): confirm scope before any code is written
-- After architect RFC (step 6): confirm architectural direction before developer starts
-- After code-review CHANGES REQUESTED loop (step 10): confirm all findings resolved
-- After security Critical finding (step 12): explicit "fix confirmed" before QA starts
-- After artifact persistence (step 21): confirm documentation is complete
-- Before shipping to Friday (step 22): explicit "ship" confirmation
+- After context-engineer (step 5): if token budget is WARNING, confirm pruning before analyst starts
+- After analyst passes contract validation (step 8): confirm scope before any code is written
+- After architect RFC (step 10): confirm architectural direction before developer starts
+- After code-review CHANGES REQUESTED loop (step 16): confirm all findings resolved
+- After security Critical finding (step 19): explicit "fix confirmed" before QA starts
+- After artifact persistence (step 30): confirm documentation is complete
+- Before shipping to Friday (step 31): explicit "ship" confirmation
 
 ## Output Format
 
@@ -72,6 +82,7 @@ After pipeline completion, all artifacts are copied to `docs/features/<feature-n
 ```
 docs/features/<feature-name>/
   README.md                  <- index of all artifacts with links
+  context-manifest.md        <- context-engineer output (scope, pinned files, KIs/ADRs, token budget)
   analysis.md                <- analyst output
   architecture-notes.md      <- architect output (if invoked)
   performance-report.md      <- performance-engineer output (if invoked)
@@ -93,20 +104,21 @@ docs/features/<feature-name>/
 # Delivery Summary: [Feature Name]
 
 ## Pipeline Run
-| Agent | Status | Key Output |
-|---|---|---|
-| analyst | PASS | [N acceptance criteria, N architectural flags] |
-| architect | PASS / SKIPPED | [N structural decisions, RFC: yes/no] |
-| performance-engineer | PASS / SKIPPED | [N SLAs verified, N recommendations] |
-| data-engineer | PASS / SKIPPED | [N migrations, expand/contract phase] |
-| developer | PASS | [N files created, N modified, N refactoring ops] |
-| code-reviewer | PASS | [Design score: C/Co/Cu/Cr — APPROVED] |
-| accessibility-engineer | PASS / SKIPPED | [N violations found, N fixed] |
-| security-reviewer | PASS / SKIPPED | [N findings, N critical fixed] |
-| qa-engineer | PASS | [N tests, N passed, SLAs verified: yes/no] |
-| sre-engineer | PASS | [N spans added, N alerts configured] |
-| tech-writer | PASS | [N docs updated] |
-| devops-engineer | PASS | [N CI changes, N env vars] |
+| Agent | Status | Contract | Key Output |
+|---|---|---|---|
+| context-engineer | PASS | n/a | [N files pinned, N KIs/ADRs surfaced, token budget: OK/WARNING] |
+| analyst | PASS | PASS (N retries) | [N acceptance criteria, N architectural flags] |
+| architect | PASS / SKIPPED | PASS (N retries) / n/a | [N structural decisions, RFC: yes/no] |
+| performance-engineer | PASS / SKIPPED | n/a | [N SLAs verified, N recommendations] |
+| data-engineer | PASS / SKIPPED | n/a | [N migrations, expand/contract phase] |
+| developer | PASS | PASS (N retries) | [N files created, N modified, N refactoring ops] |
+| code-reviewer | PASS | PASS (N retries) | [Design score: C/Co/Cu/Cr — APPROVED] |
+| accessibility-engineer | PASS / SKIPPED | n/a | [N violations found, N fixed] |
+| security-reviewer | PASS / SKIPPED | PASS (N retries) / n/a | [N findings, N critical fixed] |
+| qa-engineer | PASS | PASS (N retries) | [N tests, N passed, SLAs verified: yes/no] |
+| sre-engineer | PASS | PASS (N retries) | [N spans added, N alerts configured] |
+| tech-writer | PASS | n/a | [N docs updated] |
+| devops-engineer | PASS | n/a | [N CI changes, N env vars] |
 
 ## Artifacts Persisted
 Location: docs/features/<feature-name>/
@@ -143,8 +155,12 @@ Status: Complete | Complete with notes | Blocked
 ```
 
 ## Guardrails
+- Never skip context-engineer — it always runs before analyst. If it fails or is skipped, analyst and developer fall back to unscoped codebase exploration and MUST note this as a context-debt item in their output
 - Never skip the analyst — it is always first
 - Never let the developer start without analysis.md
+- Never let analyst or developer ignore an existing context-manifest.md — its pinned files and pruning checklist take precedence over ad-hoc exploration
+- Never let an artifact from a contract-bound agent (analyst, architect, developer, code-reviewer, security-reviewer, qa-engineer, sre-engineer) proceed to the next step while `validate-artifact` reports FAIL — send it back to the producing agent with the specific violations listed, and re-validate before continuing
+- The structural contract check (validate-artifact) and the qualitative CHANGES REQUESTED loop (code-reviewer) are independent gates — passing one does not satisfy the other
 - Never send CHANGES REQUESTED code to the security reviewer or QA
 - Never ship to Friday without explicit "ship" or "yes" from the user
 - Never persist artifacts to docs/features/ until the delivery summary is written

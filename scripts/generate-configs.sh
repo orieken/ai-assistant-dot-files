@@ -71,8 +71,8 @@ collect_rules() {
 
 collect_agent_roster() {
   local result=""
-  result+=$'\n'"# Agent / Persona Roster"$'\n'
-  result+=$'\n'"The following specialized personas are available. Invoke them by name when you need domain-specific expertise."$'\n'
+  result+=$'\n'"# Persona Roster"$'\n'
+  result+=$'\n'"The following specialized personas are available. Invoke them by name when you need domain-specific expertise. Note: on this platform these are personas — context frames with no tool access or autonomous pipeline participation, per \`DOMAIN_DICTIONARY.md\`. Full multi-step agent orchestration is only available on Tier 1 (Claude Code)."$'\n'
 
   for agent_file in "$SHARED_DIR/agents/"*.md; do
     local agent_name agent_desc
@@ -132,7 +132,7 @@ $(extract_rule_content "$SHARED_DIR/ARCHITECTURE_RULES.md")"
     "$(extract_rule_content "$SHARED_DIR/rules/approval-gates.md")"
 
   generate_mdc "$rules_dir/agent-roster.mdc" \
-    "Agent/persona roster — ALWAYS check this list before beginning specialized work" \
+    "Persona roster — ALWAYS check this list before beginning specialized work" \
     "true" "" \
     "$(collect_agent_roster)"
 

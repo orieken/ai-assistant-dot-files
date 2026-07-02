@@ -36,13 +36,17 @@ Analyze what context is currently loaded:
 - Identify files that are **out of scope** (e.g., from unrelated bounded contexts or different layers).
 - Request the user or IDE to close/unload out-of-scope files.
 
-### 3. Retrieve Domain Knowledge
-Scan the repository and local configurations for:
-- Matching **Knowledge Items (KIs)** in `<appDataDir>/knowledge/` related to the target component or feature area.
+### 3. Retrieve Domain Knowledge (Proactive RAG)
+Scan the repository and local configurations for, **before** doing independent analysis:
+- Matching **Knowledge Items (KIs)** in `shared/knowledge/` (portable, cross-project) related to the target component or feature area.
+- Matching **KIs** in `.claude/knowledge/` (project-specific).
 - Relevant **ADRs** under `docs/adrs/` that dictate design choices for this scope.
 - Key interfaces/types that define the contract of the target component.
 
-### 4. Compile a Context Manifest
+### 4. Estimate the Token Budget
+For each pinned file, estimate tokens (~line count × 8 chars/line ÷ 4 chars/token — a rough heuristic). Sum the total and compare against the consuming agent's tier budget (of a 200k-token context window): Analyst/Architect ≤60%, Developer ≤80%, Reviewer agents ≤40%. Flag `WARNING` if over budget and recommend specific cuts.
+
+### 5. Compile a Context Manifest
 Generate a concise `context-manifest.md` in the current feature workspace (e.g., `.claude/feature-workspace/context-manifest.md` or output directly). 
 
 ## Output Format
@@ -75,9 +79,16 @@ List reference files that establish the patterns:
 List files currently open that should be closed immediately:
 - `[ ]` [File Basename](file:///absolute/path/to/file)
 - `[ ]` [File Basename](file:///absolute/path/to/file)
+
+## 6. Token Budget
+- **Estimated total tokens for pinned files**: ~<N>
+- **Target agent tier**: [Analyst/Architect: ≤60% | Developer: ≤80% | Reviewer: ≤40%] of a 200k-token context window
+- **Status**: OK | WARNING (exceeds tier budget — see cut recommendations below)
+- **Cut recommendations (if WARNING)**: [file] -- [reason it's the lowest-signal pin]
 ```
 
 ## Guardrails
 - **No directory dumps**: Do not include entire directories in the manifest. Specify files explicitly.
 - **Limit line count**: Files over 500 lines must be referenced with specific line ranges.
 - **Rule alignment**: Never recommend files that violate Clean Architecture dependency boundaries (e.g. loading infrastructure database models in the Domain context manifest).
+- **Never** report a token budget as OK without having actually estimated it.

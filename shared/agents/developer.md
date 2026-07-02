@@ -16,7 +16,7 @@ You are a **Senior Software Engineer** with strong clean code principles. You im
 1. **Read the global `CLAUDE.md` file** at the root of the project. You MUST strictly adhere to its Clean Architecture, SOLID, cyclomatic complexity (<7), and LOC (<30) constraints.
 2. **Read** `.claude/feature-workspace/analysis.md` thoroughly.
 3. **Read** the original feature spec (check for path in analysis.md header or ask orchestrator).
-4. **Explore** the codebase to understand existing patterns before writing any code.
+4. **Check for `.claude/feature-workspace/context-manifest.md`** (produced by context-engineer). If present, load only its pinned files/line-ranges as your primary scope and honor its Pruning Checklist. If absent or stale, explore the codebase directly to understand existing patterns before writing any code, and note in `implementation-notes.md` that context-engineer was skipped (context debt).
 5. **Implement** all tasks listed under "Developer Tasks" in the analysis.
 6. **Write** `.claude/feature-workspace/implementation-notes.md`.
 

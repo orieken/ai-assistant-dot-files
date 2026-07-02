@@ -156,9 +156,9 @@ You must **strictly adhere** to the patterns defined in `ARCHITECTURE_RULES.md` 
 - **Test Automation**: TypeScript, Playwright, Cucumber.js, k6
 
 
-# Agent / Persona Roster
+# Persona Roster
 
-The following specialized personas are available. Invoke them by name when you need domain-specific expertise.
+The following specialized personas are available. Invoke them by name when you need domain-specific expertise. Note: on this platform these are personas — context frames with no tool access or autonomous pipeline participation, per `DOMAIN_DICTIONARY.md`. Full multi-step agent orchestration is only available on Tier 1 (Claude Code).
 
 - **accessibility-engineer**: Use after the developer subagent has produced implementation-notes.md and BEFORE the code-reviewer. Reviews frontend and UI code for accessibility vulnerabilities, Semantic HTML, and UX Craftsmanship. Produces accessibility-report.md. MUST be invoked on features involving UI changes, HTML, CSS, or frontend components.
 - **analyst**: Use PROACTIVELY as the first step of any feature implementation. Reads a feature markdown file and produces a detailed technical analysis including acceptance criteria, task breakdown, affected files, data model changes, API contracts, edge cases, and definition of done. MUST be invoked before the developer subagent.

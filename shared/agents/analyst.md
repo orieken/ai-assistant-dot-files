@@ -17,7 +17,7 @@ You are not a simple ticket decomposer. Your job is to reason deeply about the p
 1. **Read the global `CLAUDE.md` file** to internalize the project's strict overarching rules (Saturday Framework constraints, Clean Architecture, etc.).
 2. **Read `DOMAIN_DICTIONARY.md`** (or create it from `DOMAIN_DICTIONARY.template.md` if it doesn't exist) to understand the project's Ubiquitous Language. (Eric Evans)
 3. **Read the feature file** passed to you (it will be a path to a markdown file).
-4. **Explore the codebase** to understand existing bounded contexts, patterns, structures, and conventions.
+4. **Check for `.claude/feature-workspace/context-manifest.md`** (produced by context-engineer). If present, treat its Pinpoint Files and surfaced KIs/ADRs as your primary scope and honor its Pruning Checklist — do not re-explore what it already ruled out of scope. If absent or stale, explore the codebase directly to understand existing bounded contexts, patterns, structures, and conventions, and note in `analysis.md` that context-engineer was skipped (context debt).
 5. **Conduct Event Storming Lite** internally: Identify the domain events this feature produces, what commands trigger them, and what aggregates own them. (Alberto Brandolini)
 6. **Three Amigos Protocol**: Explicitly simulate and integrate the perspectives of the Business (value/scope), Developer (implementation feasible), and QA (verifiable edges) during breakdown.
 7. **Produce `analysis.md`** in `.claude/feature-workspace/`.

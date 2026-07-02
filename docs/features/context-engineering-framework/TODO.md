@@ -11,19 +11,19 @@
 ## Phase 1: Foundation
 
 ### Epic 1 — Canonical shared layer
-- [ ] Create `shared/rules/` and move `architecture-guardrails.md`, `design-principles.md`, `approval-gates.md` from `.claude/rules/`
-- [ ] Create `shared/agents/` and move all 20+ agent `.md` files from `.claude/agents/`
-- [ ] Create `shared/skills/` and move all 35+ skill directories from `.claude/skills/`
-- [ ] Move `ARCHITECTURE_RULES.md` and `DOMAIN_DICTIONARY.md` into `shared/`
-- [ ] Make `.claude/rules/`, `.claude/agents/`, `.claude/skills/` symlink to `shared/` equivalents
-- [ ] Create `shared/platform-registry.json` with platform name, config path, format, capability tier
-- [ ] Verify existing Claude Code functionality is unbroken after restructure
+- [x] Create `shared/rules/` and move `architecture-guardrails.md`, `design-principles.md`, `approval-gates.md` from `.claude/rules/`
+- [x] Create `shared/agents/` and move all 20+ agent `.md` files from `.claude/agents/` — 24 agents present
+- [x] Create `shared/skills/` and move all 35+ skill directories from `.claude/skills/` — 37 skill dirs present
+- [x] Move `ARCHITECTURE_RULES.md` and `DOMAIN_DICTIONARY.md` into `shared/`
+- [x] Make `.claude/rules/`, `.claude/agents/`, `.claude/skills/` symlink to `shared/` equivalents
+- [x] Create `shared/platform-registry.json` with platform name, config path, format, capability tier
+- [x] Verify existing Claude Code functionality is unbroken after restructure — `scripts/check-parity.sh` passes clean across all 6 platforms (24 agents synced everywhere); found and removed two stale broken symlinks left over from before the tier system (`.openai/agents`, `.openai/skills` — pointed at a relative path missing `../`, and weren't part of the current generator or parity check anyway)
 
 ### Epic 9 — Persona vs. agent formalization
-- [ ] Add **Persona** definition to `DOMAIN_DICTIONARY.md` (context frame, no tools, no autonomy)
-- [ ] Add **Agent** definition clarification (persona + tools + process + pipeline participation)
-- [ ] Add **Capability tier** to domain dictionary (Full / Personas+Rules / System Prompt)
-- [ ] Update platform configs to use correct term per platform capability
+- [x] Add **Persona** definition to `DOMAIN_DICTIONARY.md` (context frame, no tools, no autonomy) — already present under Entities
+- [x] Add **Agent** definition clarification (persona + tools + process + pipeline participation) — already present under Entities
+- [x] Add **Capability tier** to domain dictionary (Full / Personas+Rules / System Prompt) — already present under Entities
+- [x] Update platform configs to use correct term per platform capability — `collect_agent_roster()` in `scripts/generate-configs.sh` was mixing "Agent / Persona Roster" wording even though it's only ever used for Tier 2/3 output; renamed to "Persona Roster" consistently and added a one-line note pointing to `DOMAIN_DICTIONARY.md` and clarifying full agent orchestration is Tier 1 (Claude Code) only. Regenerated all configs and re-ran `check-parity.sh` — clean
 
 ### Epic 3 — Universal install/uninstall
 - [ ] Create `install.sh` with `--global` (symlinks to `~/`) and `--project <path>` (copies to target) modes
@@ -71,21 +71,21 @@
 ## Phase 3: Pipeline hardening
 
 ### Epic 4 — Wire context-engineer into pipeline
-- [ ] Update `deliver-feature/SKILL.md` Phase 0 → add step: invoke context-engineer after setup
-- [ ] Context-engineer produces `context-manifest.md` in `.claude/feature-workspace/`
-- [ ] Downstream agents read manifest for pinpointed file list (not full directory scans)
-- [ ] Add token budget estimation to manifest (flag if > 80% of context window)
+- [x] Update `deliver-feature/SKILL.md` Phase 0 → add step: invoke context-engineer after setup
+- [x] Context-engineer produces `context-manifest.md` in `.claude/feature-workspace/`
+- [x] Downstream agents read manifest for pinpointed file list (not full directory scans) — wired into `analyst.md` and `developer.md`
+- [x] Add token budget estimation to manifest (flag if > 80% of context window) — tiered thresholds (Analyst/Architect 60%, Developer 80%, Reviewer 40%) per Epic 16
 
 ### Epic 5 — Inter-agent contracts
-- [ ] Create `shared/contracts/analysis-contract.md` (required sections for analyst output)
-- [ ] Create `shared/contracts/architecture-contract.md` (required sections for architect output)
-- [ ] Create `shared/contracts/implementation-contract.md` (required sections for developer output)
-- [ ] Create `shared/contracts/review-contract.md` (required sections for code-reviewer output)
-- [ ] Create `shared/contracts/security-contract.md` (required sections for security-reviewer output)
-- [ ] Create `shared/contracts/qa-contract.md` (required sections for qa-engineer output)
-- [ ] Create `shared/contracts/observability-contract.md` (required sections for sre-engineer output)
-- [ ] Create `shared/skills/validate-artifact/SKILL.md` (reads contract + artifact, fails if sections missing)
-- [ ] Wire `validate-artifact` into `deliver-feature` between each agent handoff
+- [x] Create `shared/contracts/analysis-contract.md` (required sections for analyst output)
+- [x] Create `shared/contracts/architecture-contract.md` (required sections for architect output)
+- [x] Create `shared/contracts/implementation-contract.md` (required sections for developer output)
+- [x] Create `shared/contracts/review-contract.md` (required sections for code-reviewer output)
+- [x] Create `shared/contracts/security-contract.md` (required sections for security-reviewer output)
+- [x] Create `shared/contracts/qa-contract.md` (required sections for qa-engineer output)
+- [x] Create `shared/contracts/observability-contract.md` (required sections for sre-engineer output)
+- [x] Create `shared/skills/validate-artifact/SKILL.md` (reads contract + artifact, fails if sections missing) — also enforces a few contract-specific content rules (e.g., Overall Status literal match, Failed: 0, PII status) beyond just heading presence
+- [x] Wire `validate-artifact` into `deliver-feature` between each agent handoff — added as its own numbered step after each of analyst/architect/developer/code-reviewer/security-reviewer/qa-engineer/sre-engineer; not wired for performance-engineer, data-engineer, accessibility-engineer, tech-writer, devops-engineer since they have no contract yet
 
 ### Epic 12 — Pipeline rollback & recovery
 - [ ] Add checkpoint system to `deliver-feature` — persist pipeline state after each phase
@@ -139,12 +139,12 @@
 ## Phase 5: Knowledge & memory
 
 ### Epic 14 — Knowledge Items (KI) infrastructure
-- [ ] Create `shared/knowledge/` directory for reusable Knowledge Items
-- [ ] Define KI format: markdown file with frontmatter (tags, domain, created date)
+- [x] Create `shared/knowledge/` directory for reusable Knowledge Items
+- [x] Define KI format: markdown file with frontmatter (tags, domain, created date) — see `shared/knowledge/README.md`
 - [ ] Create `shared/skills/create-ki/SKILL.md` — captures a pattern, bug fix, or decision as a searchable KI
 - [ ] Create `shared/skills/search-ki/SKILL.md` — searches KIs by tag/domain before agents start work
-- [ ] Wire context-engineer to search KIs during manifest creation (Proactive RAG)
-- [ ] Seed initial KIs from existing ADRs and runbooks
+- [x] Wire context-engineer to search KIs during manifest creation (Proactive RAG) — searches `shared/knowledge/` and `.claude/knowledge/`
+- [ ] Seed initial KIs from existing ADRs and runbooks — one example KI added (`context-engineer-must-be-wired-into-pipeline.md`); full migration from ADRs/runbooks not yet done
 
 ### Epic 15 — Cross-delivery learning
 - [ ] Create `shared/skills/extract-lessons/SKILL.md` — after delivery, extracts reusable patterns:
@@ -161,12 +161,12 @@
 ## Phase 6: Context budget & optimization
 
 ### Epic 16 — Dynamic context budget management
-- [ ] Define token budget per agent tier:
+- [x] Define token budget per agent tier:
   - Analyst/Architect: up to 60% of context window (need broad codebase awareness)
   - Developer: up to 80% (needs code + analysis + architecture)
   - Reviewer agents: up to 40% (focused on specific output)
-- [ ] Context-engineer estimates token count per file in manifest
-- [ ] Add `budget_utilization` field to pipeline-trace.json per agent
+- [x] Context-engineer estimates token count per file in manifest
+- [ ] Add `budget_utilization` field to pipeline-trace.json per agent (blocked on Epic 7 — pipeline-trace.json doesn't exist yet)
 - [ ] Create `shared/skills/context-audit/SKILL.md` — analyzes a conversation or pipeline run for context waste:
   - Files loaded but never referenced in output
   - Duplicate information across loaded files
