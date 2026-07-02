@@ -29,6 +29,10 @@ Do NOT use for a single delivery's narrative (what went well/poorly on this one 
    - Average `durationSeconds` and average `iterations`.
    - Trend: split the N traces into an older half and a newer half (by `completedAt`); compare each
      metric's average between halves. Report `IMPROVING` / `STABLE` / `DEGRADING` (>15% change = not stable).
+   - If `agentVersion` changes partway through the collected traces, check whether the trend boundary lines
+     up with that version change — a DEGRADING (or IMPROVING) trend that starts exactly at a version bump
+     is strong evidence the prompt edit caused it, not noise. A trend with no corresponding version change
+     is weaker evidence (could be caused by the mix of features analyzed getting harder/easier).
 3. Identify the single biggest bottleneck: the agent with the highest average `durationSeconds` across all
    traces.
 4. Identify the single most-retried agent: the agent with the highest average `iterations` (this usually
@@ -48,10 +52,10 @@ Do NOT use for a single delivery's narrative (what went well/poorly on this one 
 - Date range: [oldest completedAt] to [newest completedAt]
 
 ## Per-Agent Trends
-| Agent | Avg Duration | Avg Iterations | Duration Trend | Iteration Trend |
-|---|---|---|---|---|
-| analyst | [Ns] | [N] | IMPROVING/STABLE/DEGRADING | IMPROVING/STABLE/DEGRADING |
-| ... | ... | ... | ... | ... |
+| Agent | Avg Duration | Avg Iterations | Duration Trend | Iteration Trend | Version Change Aligns? |
+|---|---|---|---|---|---|
+| analyst | [Ns] | [N] | IMPROVING/STABLE/DEGRADING | IMPROVING/STABLE/DEGRADING | Yes (v[x.y.z] -> v[x.y.z]) / No version change in window |
+| ... | ... | ... | ... | ... | ... |
 
 ## Biggest Bottleneck
 [agent] — average [Ns] per run, [context on why, e.g. "consistently the longest single step"]

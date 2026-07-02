@@ -143,6 +143,7 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
   "agents": [
     {
       "agent": "analyst",
+      "agentVersion": "1.0.0",
       "step": 7,
       "startedAt": "2026-07-02T10:05:00Z",
       "completedAt": "2026-07-02T10:15:00Z",
@@ -153,6 +154,7 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
     },
     {
       "agent": "code-reviewer",
+      "agentVersion": "1.0.0",
       "step": 16,
       "startedAt": "2026-07-02T10:40:00Z",
       "completedAt": "2026-07-02T11:10:00Z",
@@ -165,6 +167,10 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
 }
 ```
 
+- `agentVersion` is that agent's `version:` frontmatter field (see `shared/agents/CHANGELOG.md`) at the time
+  it ran — this is what lets `agent-scorecard` and `pipeline-retrospective` correlate a duration or
+  iteration-count trend with a specific prompt edit, instead of just observing "it got slower" with no way
+  to tie that to a cause.
 - Record real wall-clock `startedAt`/`completedAt` for each agent invocation — never estimate or fabricate.
 - If an agent re-runs (a validate-artifact retry or a CHANGES REQUESTED loop), don't create a second entry
   for it — update the same entry: add the additional elapsed time to `durationSeconds`, increment
@@ -208,21 +214,25 @@ docs/features/<feature-name>/
 # Delivery Summary: [Feature Name]
 
 ## Pipeline Run
-| Agent | Status | Contract | Key Output |
-|---|---|---|---|
-| context-engineer | PASS | n/a | [N files pinned, N KIs/ADRs surfaced, token budget: OK/WARNING] |
-| analyst | PASS | PASS (N retries) | [N acceptance criteria, N architectural flags] |
-| architect | PASS / SKIPPED | PASS (N retries) / n/a | [N structural decisions, RFC: yes/no] |
-| performance-engineer | PASS / SKIPPED | n/a | [N SLAs verified, N recommendations] |
-| data-engineer | PASS / SKIPPED | n/a | [N migrations, expand/contract phase] |
-| developer | PASS | PASS (N retries) | [N files created, N modified, N refactoring ops] |
-| code-reviewer | PASS | PASS (N retries) | [Design score: C/Co/Cu/Cr — APPROVED] |
-| accessibility-engineer | PASS / SKIPPED | n/a | [N violations found, N fixed] |
-| security-reviewer | PASS / SKIPPED | PASS (N retries) / n/a | [N findings, N critical fixed] |
-| qa-engineer | PASS | PASS (N retries) | [N tests, N passed, SLAs verified: yes/no] |
-| sre-engineer | PASS | PASS (N retries) | [N spans added, N alerts configured] |
-| tech-writer | PASS | n/a | [N docs updated] |
-| devops-engineer | PASS | n/a | [N CI changes, N env vars] |
+| Agent | Version | Status | Contract | Key Output |
+|---|---|---|---|---|
+| context-engineer | [x.y.z] | PASS | n/a | [N files pinned, N KIs/ADRs surfaced, token budget: OK/WARNING] |
+| analyst | [x.y.z] | PASS | PASS (N retries) | [N acceptance criteria, N architectural flags] |
+| architect | [x.y.z] | PASS / SKIPPED | PASS (N retries) / n/a | [N structural decisions, RFC: yes/no] |
+| performance-engineer | [x.y.z] | PASS / SKIPPED | n/a | [N SLAs verified, N recommendations] |
+| data-engineer | [x.y.z] | PASS / SKIPPED | n/a | [N migrations, expand/contract phase] |
+| developer | [x.y.z] | PASS | PASS (N retries) | [N files created, N modified, N refactoring ops] |
+| code-reviewer | [x.y.z] | PASS | PASS (N retries) | [Design score: C/Co/Cu/Cr — APPROVED] |
+| accessibility-engineer | [x.y.z] | PASS / SKIPPED | n/a | [N violations found, N fixed] |
+| security-reviewer | [x.y.z] | PASS / SKIPPED | PASS (N retries) / n/a | [N findings, N critical fixed] |
+| qa-engineer | [x.y.z] | PASS | PASS (N retries) | [N tests, N passed, SLAs verified: yes/no] |
+| sre-engineer | [x.y.z] | PASS | PASS (N retries) | [N spans added, N alerts configured] |
+| tech-writer | [x.y.z] | PASS | n/a | [N docs updated] |
+| devops-engineer | [x.y.z] | PASS | n/a | [N CI changes, N env vars] |
+
+Version is each agent's `version:` frontmatter field in `shared/agents/` at the time it ran — read it fresh
+per run, don't cache it, since a mid-pipeline prompt edit (rare, but possible on a long-running delivery)
+should be reflected accurately rather than assumed stale.
 
 ## Artifacts Persisted
 Location: docs/features/<feature-name>/

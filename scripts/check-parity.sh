@@ -54,7 +54,7 @@ check_agent_roster() {
 
   for agent_file in "$SHARED_DIR/agents/"*.md; do
     local agent_name
-    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//')
+    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
     if [[ -z "$agent_name" ]]; then continue; fi
     ((total_agents++))
 

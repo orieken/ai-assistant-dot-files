@@ -29,6 +29,7 @@ standalone: true
   "agents": [
     {
       "agent": "analyst",
+      "agentVersion": "1.0.0",
       "step": 7,
       "startedAt": "2026-07-02T10:05:00Z",
       "completedAt": "2026-07-02T10:15:00Z",
@@ -39,6 +40,7 @@ standalone: true
     },
     {
       "agent": "code-reviewer",
+      "agentVersion": "1.0.0",
       "step": 16,
       "startedAt": "2026-07-02T10:40:00Z",
       "completedAt": "2026-07-02T11:10:00Z",
@@ -52,6 +54,10 @@ standalone: true
 ```
 
 Field notes:
+- `agentVersion`: that agent's `version:` frontmatter field (`shared/agents/CHANGELOG.md` tracks the
+  history) at the time it ran. This is what lets `agent-scorecard` and `pipeline-retrospective` correlate a
+  duration or iteration-count trend with a specific prompt edit instead of just observing drift with no
+  attributable cause.
 - `iterations`: total number of times this agent's step was executed, including retries (structural
   validate-artifact retries and, for code-reviewer, CHANGES REQUESTED loops).
 - `contractRetries`: present only for contract-bound agents (see `shared/contracts/`) — how many times

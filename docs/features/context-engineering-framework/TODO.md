@@ -128,11 +128,11 @@
 - [x] Track metrics over time: is agent quality improving or degrading after prompt edits? — each scorecard compares against the previous month's file, IMPROVING/STABLE/DEGRADING per metric
 
 ### Epic 8 — Agent versioning & changelog
-- [ ] Add `version: 1.0.0` to every agent's frontmatter
-- [ ] Create `shared/agents/CHANGELOG.md` with initial entries
-- [ ] Create pre-commit hook: agent file change requires version bump + changelog entry
-- [ ] Include agent versions in delivery summary output
-- [ ] Include agent versions in pipeline-trace.json (correlate version to performance)
+- [x] Add `version: 1.0.0` to every agent's frontmatter — all 24 agents in `shared/agents/`
+- [x] Create `shared/agents/CHANGELOG.md` with initial entries — this file has no agent frontmatter, which exposed a real `set -e`/`pipefail` bug in `scripts/check-parity.sh` and `scripts/generate-configs.sh` (the same class of bug as the pre-commit hook's, below): a bare `grep` finding no `name:` line aborted the whole script instead of hitting the existing "skip non-agent files" check further down. Fixed both scripts and confirmed `check-parity.sh` passes clean (still 24 agents, CHANGELOG.md correctly excluded from the roster)
+- [x] Create pre-commit hook: agent file change requires version bump + changelog entry — `scripts/hooks/pre-commit`, bash 3.2 compatible, opt-in (not wired to `.git/hooks/` automatically — git doesn't track its own hooks dir; requires `git config core.hooksPath scripts/hooks`, documented in the hook's header). Tested both the FAIL (no bump / no changelog entry) and PASS paths for real; fixed a real `set -e`/`pipefail` bug found while testing (grep finding no version in HEAD for a brand-new agent was aborting the whole script silently)
+- [x] Include agent versions in delivery summary output — added a Version column to deliver-feature's Pipeline Run table
+- [x] Include agent versions in pipeline-trace.json (correlate version to performance) — added `agentVersion` field to the schema, and wired `pipeline-retrospective` to check whether a duration/iteration trend's boundary lines up with a version change
 
 ---
 

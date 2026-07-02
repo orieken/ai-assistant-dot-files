@@ -76,8 +76,8 @@ collect_agent_roster() {
 
   for agent_file in "$SHARED_DIR/agents/"*.md; do
     local agent_name agent_desc
-    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//')
-    agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//')
+    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
+    agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//' || true)
     if [[ -n "$agent_name" ]]; then
       result+=$'\n'"- **$agent_name**: $agent_desc"
     fi

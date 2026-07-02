@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-commit hook: any staged change to shared/agents/*.md (excluding CHANGELOG.md itself) must:
+#   1. bump the `version:` frontmatter field relative to HEAD, and
+#   2. be accompanied by a staged update to shared/agents/CHANGELOG.md mentioning that agent's name.
+#
+# This is NOT wired up automatically — git doesn't version-control its own hooks directory by default,
+# so this file living in scripts/hooks/ has no effect until you opt in. To enable it, either:
+#   git config core.hooksPath scripts/hooks
+# or symlink it into the standard location:
+#   ln -s ../../scripts/hooks/pre-commit .git/hooks/pre-commit
+#
+# Written for bash 3.2 (macOS default ships no associative arrays — see scripts/test-agents.sh for the
+# same constraint) so it works without requiring a newer bash install.
+
+REPO_DIR="$(git rev-parse --show-toplevel)"
+CHANGELOG="shared/agents/CHANGELOG.md"
+
+STAGED_AGENT_FILES=$(git diff --cached --name-only --diff-filter=ACM -- 'shared/agents/*.md' | grep -v "^${CHANGELOG}$" || true)
+
+if [[ -z "$STAGED_AGENT_FILES" ]]; then
+  exit 0
+fi
+
+CHANGELOG_STAGED=false
+if git diff --cached --name-only --diff-filter=ACM | grep -qF "$CHANGELOG"; then
+  CHANGELOG_STAGED=true
+fi
+
+FAILED=0
+
+get_version() {
+  # $1 = git ref (HEAD, or empty for staged/index), $2 = file path
+  local ref="$1" file="$2"
+  if [[ -z "$ref" ]]; then
+    git show ":$file" 2>/dev/null | grep '^version:' | head -1 | sed 's/version: *//' || true
+  else
+    git show "$ref:$file" 2>/dev/null | grep '^version:' | head -1 | sed 's/version: *//' || true
+  fi
+}
+
+echo "=== Agent Version Check ==="
+
+while IFS= read -r file; do
+  [[ -z "$file" ]] && continue
+
+  agent_name=$(git show ":$file" 2>/dev/null | grep '^name:' | head -1 | sed 's/name: *//')
+  new_version=$(get_version "" "$file")
+  old_version=$(get_version "HEAD" "$file")
+
+  echo "--- $file ($agent_name) ---"
+
+  if [[ -z "$new_version" ]]; then
+    echo "  FAIL: no 'version:' frontmatter field found in the staged content."
+    FAILED=1
+    continue
+  fi
+
+  if [[ -n "$old_version" && "$old_version" == "$new_version" ]]; then
+    echo "  FAIL: version unchanged ($old_version). Bump 'version:' in this file's frontmatter."
+    FAILED=1
+  else
+    echo "  OK: version ${old_version:-<new agent>} -> $new_version"
+  fi
+
+  if [[ "$CHANGELOG_STAGED" == false ]]; then
+    echo "  FAIL: $CHANGELOG is not staged. Add a dated entry for '$agent_name' in the same commit."
+    FAILED=1
+  elif [[ -n "$agent_name" ]] && ! git show ":$CHANGELOG" 2>/dev/null | grep -qF "$agent_name"; then
+    echo "  FAIL: $CHANGELOG is staged but doesn't mention '$agent_name'. Add a row for it."
+    FAILED=1
+  fi
+done <<< "$STAGED_AGENT_FILES"
+
+echo ""
+
+if [[ $FAILED -ne 0 ]]; then
+  echo "Agent version check failed — see FAIL lines above."
+  echo "Every shared/agents/*.md behavior change needs a version bump + a CHANGELOG.md entry in the same commit."
+  exit 1
+fi
+
+echo "Agent version check passed."
