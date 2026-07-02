@@ -64,11 +64,11 @@
 - [x] Add CI fitness function: `check-parity.sh` runs on every PR — satisfied as a side effect of Epic 20's `.github/workflows/framework-ci.yml` (`check-parity` job runs on every push/PR to main), not built separately
 
 ### Epic 11 — Cross-platform agent/persona translation
-- [x] For Cursor: generate `.cursor/rules/<agent-name>.mdc` persona files (all content inlined, short and directive, use ALWAYS/NEVER/CRITICAL keywords, valid YAML frontmatter)
-- [x] For Gemini: generate persona blocks in `.gemini/antigravity/instructions.md`
-- [x] For Copilot: generate persona reference section in `copilot-instructions.md`
+- [x] For Cursor: generate `.cursor/rules/<agent-name>.mdc` persona files (all content inlined, short and directive, use ALWAYS/NEVER/CRITICAL keywords, valid YAML frontmatter) — **this was checked off but didn't actually exist**: `.cursor/rules/` only ever had the 7 always-apply rule files, never one `.mdc` per agent. Built `generate_cursor_personas()` in `scripts/generate-configs.sh`: strips each agent's `.claude/rules/*.md` preamble (a file reference Cursor can't follow) and frontmatter, inlines the body verbatim (matching the existing mechanical pattern the other `.mdc` generators already use — no attempt at LLM-style condensing from a deterministic bash script), `alwaysApply: false` since a persona should be invoked deliberately, not always loaded. Found a real bug while building this: 5 agent descriptions contain embedded double quotes (e.g. dependency-auditor's `"audit dependencies"`), which broke the YAML frontmatter until escaped. Validated all 24 generated files parse as valid YAML via `python3 -c "import yaml..."`, and added a parity check to `check-parity.sh` — verified both its pass path (24/24 present) and fail path (removed one file, confirmed DRIFT reported, restored it)
+- [x] For Gemini: generate persona blocks in `.gemini/antigravity/instructions.md` — verified genuinely present (not a repeat of the Cursor false-positive), a full "Persona Roster" section already existed
+- [x] For Copilot: generate persona reference section in `copilot-instructions.md` — same verification, genuinely present
 - [x] Include agent roster summary in all Tier 2/3 configs ("these are the specialists available — invoke by name")
-- [ ] Test: verify each platform's AI tool acknowledges the persona/agent roster when prompted
+- [ ] Test: verify each platform's AI tool acknowledges the persona/agent roster when prompted — still requires live tools (Cursor IDE, Copilot, Gemini Antigravity) not available in this sandboxed session; cannot be faked or simulated meaningfully
 
 ---
 

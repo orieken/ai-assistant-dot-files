@@ -90,6 +90,15 @@ extract_rule_content() {
   cat "$file"
 }
 
+extract_agent_body() {
+  local file="$1"
+  # Agent files have a preamble line (referencing .claude/rules/*.md — a file reference Cursor can't
+  # follow) before the frontmatter, then the frontmatter itself, then the actual persona body. Skip
+  # everything through the second '---' delimiter; the always-apply rule .mdc files already cover the
+  # preamble's content, so it isn't lost, just not redundantly repeated per persona.
+  awk '/^---$/{delim++; next} delim==2{print}' "$file"
+}
+
 generate_mdc() {
   local dest="$1"
   local description="$2"
@@ -106,6 +115,35 @@ generate_mdc() {
   frontmatter+="---"$'\n'
 
   write_file "$dest" "${frontmatter}${body}"
+}
+
+generate_cursor_personas() {
+  local rules_dir="$1"
+  local persona_count=0
+
+  for agent_file in "$SHARED_DIR/agents/"*.md; do
+    local base
+    base="$(basename "$agent_file")"
+    [[ "$base" == "CHANGELOG.md" ]] && continue
+
+    local agent_name agent_desc agent_desc_safe
+    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
+    agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//' || true)
+    [[ -z "$agent_name" ]] && continue
+
+    # Escape embedded double quotes — several agent descriptions quote example user phrases
+    # (e.g. dependency-auditor: `"audit dependencies"`), which would otherwise terminate the YAML
+    # frontmatter's description string early and produce an invalid .mdc file.
+    agent_desc_safe=$(printf '%s' "$agent_desc" | sed 's/"/\\"/g')
+
+    generate_mdc "$rules_dir/${agent_name}.mdc" \
+      "Persona: $agent_name — $agent_desc_safe" \
+      "false" "" \
+      "$(extract_agent_body "$agent_file")"
+    ((persona_count++)) || true
+  done
+
+  echo "  ($persona_count persona files generated)"
 }
 
 generate_cursor() {
@@ -198,6 +236,8 @@ CRITICAL: Components MUST be < 100 lines. Extract when larger."
     "Vue 3 + Tailwind conventions — Composition API, strict typing, component limits" \
     "false" '["**/*.vue", "**/*.tsx", "**/*.jsx", "**/components/**"]' \
     "$vue_body"
+
+  generate_cursor_personas "$rules_dir"
 }
 
 collect_craftsmanship_section() {
@@ -296,7 +336,8 @@ GENERATED=0
 if should_generate "cursor"; then
   generate_cursor
   generate_cursorrules
-  ((GENERATED += 8))
+  agent_persona_count=$(find "$SHARED_DIR/agents" -name "*.md" -not -name "CHANGELOG.md" | wc -l | tr -d ' ')
+  ((GENERATED += 8 + agent_persona_count))
 fi
 
 if should_generate "windsurf"; then
