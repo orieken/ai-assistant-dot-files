@@ -226,13 +226,13 @@
 - [x] Add `--fix` flag to auto-repair common issues (regenerate configs, fix symlinks) — found and fixed a real `set -e`/`pipefail` bug while testing (same class as twice before: a `grep` finding zero matches for a domain term killed the script silently)
 
 ### Epic 20 — CI/CD integration
-- [ ] Create `.github/workflows/framework-ci.yml`:
+- [x] Create `.github/workflows/framework-ci.yml`:
   - Runs `check-parity.sh` (config drift detection)
   - Runs `test-agents.sh` (agent regression tests)
-  - Runs `health-check` (structural validation)
-  - Validates agent version bumps on agent file changes
-- [ ] Create `Makefile` with targets: `install`, `uninstall`, `generate`, `check`, `test-agents`, `health`
-- [ ] Add badge to README showing CI status
+  - Runs `health-check` (structural validation) — `scripts/health-check.sh --verbose`
+  - Validates agent version bumps on agent file changes — new `scripts/check-agent-versions-ci.sh` (PR-only job; the existing pre-commit hook only handles staged-vs-HEAD, not base-branch-vs-PR-head, so this is a separate script rather than a forced awkward reuse). Verified against real history (`d5b2bd1..9fc90b0`, Epic 14's version bump) before trusting it, not just written and assumed correct
+- [x] Create `Makefile` with targets: `install`, `uninstall`, `generate`, `check`, `test-agents`, `health` — ran `make check`/`generate`/`test-agents`/`health` for real; deliberately did not run `make install`/`uninstall` since those touch the real home directory (install.sh/uninstall.sh already independently verified via `--project` into scratch dirs earlier)
+- [x] Add badge to README showing CI status
 
 ### Epic 21 — Rollout & migration
 - [ ] Create `scripts/migrate-v1-to-v2.sh` — moves existing `.claude/agents/` to `shared/agents/`, creates symlinks

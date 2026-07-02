@@ -138,8 +138,12 @@ scripts/
   check-parity.sh                fitness function: configs match shared/
   test-agents.sh                 golden-file structural tests for agent prompts
   check-context-budget.sh        fitness function: no WARNING manifest without cut recommendations
+  health-check.sh                symlinks, frontmatter, drift, contracts, changelog, KI validity
+  check-agent-versions-ci.sh     CI equivalent of hooks/pre-commit (base-branch vs. PR-head, not staged vs. HEAD)
   hooks/pre-commit                opt-in: agent version bump + changelog gate
 install.sh / uninstall.sh        --global | --project <path>, --copy, --platform, --dry-run
+Makefile                          install, uninstall, generate, check, test-agents, health
+.github/workflows/framework-ci.yml  check-parity, test-agents, health-check, agent-versions (PRs only)
 tests/agents/                    fixtures + expected patterns for golden-file tests
 docs/
   features/<name>/                every delivered feature's full pipeline artifact set

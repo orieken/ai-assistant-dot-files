@@ -1,5 +1,7 @@
 # AI Assistant Dot Files — Context Engineering Framework
 
+[![Framework CI](https://github.com/orieken/ai-assistant-dot-files/actions/workflows/framework-ci.yml/badge.svg)](https://github.com/orieken/ai-assistant-dot-files/actions/workflows/framework-ci.yml)
+
 One canonical set of agents, skills, and rules — written once in `shared/`, generated or symlinked into
 whatever AI coding tool you actually use (Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini Antigravity,
 OpenAI/Codex). Edit `shared/`, run one script, every tool stays in sync — no more hand-copying the same

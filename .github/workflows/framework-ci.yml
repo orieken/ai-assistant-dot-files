@@ -1,0 +1,48 @@
+name: Framework CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-parity:
+    name: Config parity (shared/ vs. generated configs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run check-parity.sh
+        run: bash scripts/check-parity.sh
+
+  test-agents:
+    name: Agent golden-file tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run test-agents.sh
+        run: bash scripts/test-agents.sh
+        # Note: agent invocation itself can't run in CI (no LLM call available here) — this only
+        # validates any actual-output.md fixtures already committed. Everything else reports SKIP,
+        # which is a pass (exit 0), not a failure. See tests/agents/README.md.
+
+  health-check:
+    name: Framework health check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run health-check.sh
+        run: bash scripts/health-check.sh --verbose
+
+  agent-versions:
+    name: Agent version bump + changelog check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run check-agent-versions-ci.sh
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          bash scripts/check-agent-versions-ci.sh "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}"
