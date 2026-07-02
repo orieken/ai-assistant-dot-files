@@ -88,11 +88,11 @@
 - [x] Wire `validate-artifact` into `deliver-feature` between each agent handoff — added as its own numbered step after each of analyst/architect/developer/code-reviewer/security-reviewer/qa-engineer/sre-engineer; not wired for performance-engineer, data-engineer, accessibility-engineer, tech-writer, devops-engineer since they have no contract yet
 
 ### Epic 12 — Pipeline rollback & recovery
-- [ ] Add checkpoint system to `deliver-feature` — persist pipeline state after each phase
-- [ ] Create `shared/skills/resume-pipeline/SKILL.md` — reads checkpoint state, resumes from last successful phase
-- [ ] If an agent produces bad output, allow rollback to previous agent's artifact and re-run
-- [ ] Pipeline state file: `.claude/feature-workspace/pipeline-state.json` (current phase, completed agents, artifact checksums)
-- [ ] Add `--from-phase N` flag to `deliver-feature` for manual resume
+- [x] Add checkpoint system to `deliver-feature` — persist pipeline state after each phase — checkpoints marked at every artifact-producing step (finer-grained than per-phase), plus Phase 0 now checks for an existing state file before touching the workspace
+- [x] Create `shared/skills/resume-pipeline/SKILL.md` — reads checkpoint state, resumes from last successful phase — also handles `--from-phase N` jump and artifact rollback (Modes 1-3)
+- [x] If an agent produces bad output, allow rollback to previous agent's artifact and re-run — via `.claude/feature-workspace/.history/` backups + `resume-pipeline` Mode 3, documented in `deliver-feature`'s new "Rollback" section
+- [x] Pipeline state file: `.claude/feature-workspace/pipeline-state.json` (current phase, completed agents, artifact checksums) — schema documented in `deliver-feature`'s new "Checkpointing & Pipeline State" section
+- [x] Add `--from-phase N` flag to `deliver-feature` for manual resume — implemented as `resume-pipeline` Mode 2 (natural-language equivalent: "resume delivery on <feature> from phase N")
 
 ---
 

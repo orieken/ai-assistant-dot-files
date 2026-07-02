@@ -24,52 +24,104 @@ Do NOT use when the user only wants a single agent's output (e.g., just an analy
 ### Phase 0: Setup
 1. **Read the feature file** — confirm it follows `features/TEMPLATE.md` structure. If not, stop and ask the user to run `/new-feature` first.
 2. **Derive the feature name** — kebab-case from the feature file name (e.g., `features/user-auth.md` becomes `user-auth`).
-3. **Create the feature workspace**: `.claude/feature-workspace/` — clean any prior artifacts.
+3. **Check for an existing `.claude/feature-workspace/pipeline-state.json`.** If one exists for this feature: stop and invoke `resume-pipeline` instead of continuing here — do not blindly clean the workspace out from under an in-progress or crashed run. If the user explicitly asked to start over ("start fresh", "restart delivery"), archive the old state file to `.claude/feature-workspace/.history/pipeline-state.json.<timestamp>` and proceed. If no state file exists, create the feature workspace: `.claude/feature-workspace/` — clean any prior artifacts.
 4. **Create the feature archive directory**: `docs/features/<feature-name>/` — this is where all final artifacts are persisted.
+5. **Initialize `.claude/feature-workspace/pipeline-state.json`** — see "Checkpointing & Pipeline State" below.
 
 ### Phase 1: Discovery and Design
-5. **Invoke context-engineer** -> produces `context-manifest.md` in `.claude/feature-workspace/`. This scopes the bounded context, pins the specific files analyst/developer must read, lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the user which files it recommends cutting before continuing.
-6. **Invoke analyst** -> reads `context-manifest.md` first, then produces `analysis.md`.
-7. **Invoke validate-artifact** against `shared/contracts/analysis-contract.md`. If FAIL: send back to analyst with the specific violations listed; re-validate. Repeat until PASS.
-8. **PAUSE**: show summary to user. Wait for confirmation before continuing.
-9. **Invoke architect** (if analysis.md has Architectural Flags != "None") -> produces `architecture-notes.md`.
-10. **Invoke validate-artifact** against `shared/contracts/architecture-contract.md` (only if architect was invoked). If FAIL: send back to architect; re-validate. **PAUSE** if an RFC was written — human must acknowledge before developer starts.
-11. **Invoke performance-engineer** (if analysis.md has Performance SLAs or Non-Functional Requirements with latency/throughput targets) -> produces `performance-report.md`.
-12. **Invoke data-engineer** (if analysis.md has Data Model Changes != "None") -> produces `data-engineering-report.md`.
+6. **Invoke context-engineer** -> produces `context-manifest.md` in `.claude/feature-workspace/`. This scopes the bounded context, pins the specific files analyst/developer must read, lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the user which files it recommends cutting before continuing. **Checkpoint**: record in `pipeline-state.json`.
+7. **Invoke analyst** -> reads `context-manifest.md` first, then produces `analysis.md`.
+8. **Invoke validate-artifact** against `shared/contracts/analysis-contract.md`. If FAIL: send back to analyst with the specific violations listed; re-validate. Repeat until PASS. **Checkpoint** on PASS.
+9. **PAUSE**: show summary to user. Wait for confirmation before continuing.
+10. **Invoke architect** (if analysis.md has Architectural Flags != "None") -> produces `architecture-notes.md`.
+11. **Invoke validate-artifact** against `shared/contracts/architecture-contract.md` (only if architect was invoked). If FAIL: send back to architect; re-validate. **PAUSE** if an RFC was written — human must acknowledge before developer starts. **Checkpoint** on PASS or SKIP.
+12. **Invoke performance-engineer** (if analysis.md has Performance SLAs or Non-Functional Requirements with latency/throughput targets) -> produces `performance-report.md`. **Checkpoint**.
+13. **Invoke data-engineer** (if analysis.md has Data Model Changes != "None") -> produces `data-engineering-report.md`. **Checkpoint**.
 
 ### Phase 2: Implementation and Review
-13. **Invoke developer** -> reads `context-manifest.md` first, then produces `implementation-notes.md`.
-14. **Invoke validate-artifact** against `shared/contracts/implementation-contract.md`. If FAIL: send back to developer; re-validate.
-15. **Invoke code-reviewer** -> produces `code-review-report.md`.
-16. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): send back to code-reviewer; re-validate. If verdict is CHANGES REQUESTED (qualitative, independent of the structural check): send back to developer, repeat from step 13 until APPROVED and structurally valid.
-17. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `a11y-report.md`.
-18. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`.
-19. **Invoke validate-artifact** against `shared/contracts/security-contract.md` (only if security-reviewer was invoked). If FAIL: send back to security-reviewer; re-validate. If Critical findings exist: block pipeline, alert user.
+14. **Invoke developer** -> reads `context-manifest.md` first, then produces `implementation-notes.md`.
+15. **Invoke validate-artifact** against `shared/contracts/implementation-contract.md`. If FAIL: send back to developer; re-validate. **Checkpoint** on PASS.
+16. **Invoke code-reviewer** -> produces `code-review-report.md`.
+17. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): send back to code-reviewer; re-validate. If verdict is CHANGES REQUESTED (qualitative, independent of the structural check): before sending back to developer, back up the current `implementation-notes.md` and `code-review-report.md` to `.claude/feature-workspace/.history/` (see Rollback), then repeat from step 14 until APPROVED and structurally valid. **Checkpoint** on final PASS+APPROVED, including the retry count.
+18. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `a11y-report.md`. **Checkpoint**.
+19. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`.
+20. **Invoke validate-artifact** against `shared/contracts/security-contract.md` (only if security-reviewer was invoked). If FAIL: send back to security-reviewer; re-validate. If Critical findings exist: block pipeline, alert user. **Checkpoint** on PASS or SKIP.
 
 ### Phase 3: Verification and Shipping
-20. **Invoke qa-engineer** -> produces `qa-report.md`. Tests must be green.
-21. **Invoke validate-artifact** against `shared/contracts/qa-contract.md`. If FAIL: send back to qa-engineer; re-validate.
-22. **Invoke sre-engineer** -> produces `observability-report.md`.
-23. **Invoke validate-artifact** against `shared/contracts/observability-contract.md`. If FAIL: send back to sre-engineer; re-validate.
-24. **Invoke tech-writer** -> produces `docs-report.md`.
-25. **Invoke devops-engineer** -> produces `devops-report.md`.
+21. **Invoke qa-engineer** -> produces `qa-report.md`. Tests must be green.
+22. **Invoke validate-artifact** against `shared/contracts/qa-contract.md`. If FAIL: send back to qa-engineer; re-validate. **Checkpoint** on PASS.
+23. **Invoke sre-engineer** -> produces `observability-report.md`.
+24. **Invoke validate-artifact** against `shared/contracts/observability-contract.md`. If FAIL: send back to sre-engineer; re-validate. **Checkpoint** on PASS.
+25. **Invoke tech-writer** -> produces `docs-report.md`. **Checkpoint**.
+26. **Invoke devops-engineer** -> produces `devops-report.md`. **Checkpoint**.
 
 ### Phase 4: Persistence and Delivery
-26. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/`.
-27. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
-28. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
-29. **Update feature index** — add the new feature entry to `docs/features/README.md`.
-30. **PAUSE**: show the user the full `docs/features/<feature-name>/` listing. Confirm the documentation is complete.
-31. **Ship to Friday** — ask: "Ship to Friday?" On confirmation ("ship" or "yes"): POST Cucumber JSON to Friday.
+27. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/`.
+28. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
+29. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
+30. **Update feature index** — add the new feature entry to `docs/features/README.md`.
+31. **PAUSE**: show the user the full `docs/features/<feature-name>/` listing. Confirm the documentation is complete.
+32. **Ship to Friday** — ask: "Ship to Friday?" On confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
 
 ## Human Checkpoints
-- After context-engineer (step 5): if token budget is WARNING, confirm pruning before analyst starts
-- After analyst passes contract validation (step 8): confirm scope before any code is written
-- After architect RFC (step 10): confirm architectural direction before developer starts
-- After code-review CHANGES REQUESTED loop (step 16): confirm all findings resolved
-- After security Critical finding (step 19): explicit "fix confirmed" before QA starts
-- After artifact persistence (step 30): confirm documentation is complete
-- Before shipping to Friday (step 31): explicit "ship" confirmation
+- After context-engineer (step 6): if token budget is WARNING, confirm pruning before analyst starts
+- After analyst passes contract validation (step 9): confirm scope before any code is written
+- After architect RFC (step 11): confirm architectural direction before developer starts
+- After code-review CHANGES REQUESTED loop (step 17): confirm all findings resolved
+- After security Critical finding (step 20): explicit "fix confirmed" before QA starts
+- After artifact persistence (step 31): confirm documentation is complete
+- Before shipping to Friday (step 32): explicit "ship" confirmation
+
+## Checkpointing & Pipeline State
+
+After every step marked **Checkpoint** above, write/update `.claude/feature-workspace/pipeline-state.json`:
+
+```json
+{
+  "featureName": "user-auth",
+  "featureFile": "features/user-auth.md",
+  "startedAt": "2026-07-02T10:00:00Z",
+  "updatedAt": "2026-07-02T10:45:00Z",
+  "currentPhase": 2,
+  "lastCompletedStep": 15,
+  "completedAgents": [
+    {
+      "agent": "context-engineer",
+      "step": 6,
+      "artifact": "context-manifest.md",
+      "checksum": "sha256:<hash>",
+      "status": "PASS",
+      "completedAt": "2026-07-02T10:05:00Z"
+    },
+    {
+      "agent": "analyst",
+      "step": 8,
+      "artifact": "analysis.md",
+      "checksum": "sha256:<hash>",
+      "contractStatus": "PASS",
+      "contractRetries": 0,
+      "completedAt": "2026-07-02T10:15:00Z"
+    }
+  ]
+}
+```
+
+- Compute the checksum as `sha256` of the artifact's current file content.
+- Before overwriting an artifact that already exists in `.claude/feature-workspace/` (a re-run of the same agent, e.g. after a validate-artifact FAIL or a CHANGES REQUESTED loop), copy the existing version to `.claude/feature-workspace/.history/<artifact-name>.<unix-timestamp>.md` first, so it can be restored by a rollback.
+- Skipped agents (conditional agents whose trigger condition was false) get a `completedAgents` entry with `"status": "SKIPPED"` and no artifact/checksum, so a later resume doesn't try to re-evaluate the skip condition against a possibly-changed `analysis.md`.
+- If an artifact on disk doesn't match the checksum recorded for its step (someone hand-edited a workspace file outside the pipeline), treat that step as **not** completed — re-run the agent rather than trusting stale state.
+
+## Rollback
+
+If an agent's artifact turns out to be wrong (not just a validate-artifact FAIL, which self-heals via the retry loop, but a case where a human or a later agent determines an *earlier* artifact was flawed):
+
+1. Identify the artifact to roll back to its previous version, and find its latest entry in `.claude/feature-workspace/.history/`.
+2. Restore that history file over the current artifact.
+3. In `pipeline-state.json`, remove (or mark `"stale": true` on) every `completedAgents` entry for that agent and every agent after it in the pipeline — they consumed content that no longer exists.
+4. Re-run the pipeline starting at the rolled-back agent's step.
+5. This is a structural/human-triggered rollback, distinct from the automatic validate-artifact and CHANGES REQUESTED retry loops, which don't require rollback because they re-run in place before anything downstream has consumed the bad artifact.
+
+For resuming an interrupted run or replaying from a specific phase, use the `resume-pipeline` skill rather than restarting `deliver-feature` from Phase 0 — it reads `pipeline-state.json` and continues from `lastCompletedStep + 1`, or from the start of an explicitly requested phase ("resume delivery on user-auth from phase 2" / `--from-phase 2`).
 
 ## Output Format
 
@@ -164,7 +216,8 @@ Status: Complete | Complete with notes | Blocked
 - Never send CHANGES REQUESTED code to the security reviewer or QA
 - Never ship to Friday without explicit "ship" or "yes" from the user
 - Never persist artifacts to docs/features/ until the delivery summary is written
-- Pipeline can be resumed from any checkpoint — check which workspace artifacts already exist
+- Never overwrite an existing workspace artifact without first backing it up to `.claude/feature-workspace/.history/` — rollback depends on that history existing
+- Never trust a `pipeline-state.json` entry whose checksum doesn't match the artifact currently on disk — re-run that step instead of resuming past it
 - The feature archive in docs/features/<feature-name>/ is append-only — never delete prior delivery artifacts
 
 ## Standalone Mode
