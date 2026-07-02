@@ -85,6 +85,9 @@ link_or_copy() {
         skip "$dest (already linked)"
         return
       fi
+    elif $USE_COPY && [[ -e "$dest" ]] && diff -rq "$src" "$dest" > /dev/null 2>&1; then
+      skip "$dest (already copied, content identical)"
+      return
     fi
     local backup="${dest}.bak.$(date +%s)"
     if $DRY_RUN; then
@@ -260,6 +263,7 @@ echo "========================================"
 echo "  Agents:    $AGENT_COUNT"
 echo "  Skills:    $SKILL_COUNT"
 echo "  Rules:     $RULE_COUNT"
+echo "  Platforms: ${#DETECTED_PLATFORMS[@]} (${DETECTED_PLATFORMS[*]})"
 echo ""
 
 if $DRY_RUN; then

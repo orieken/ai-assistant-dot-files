@@ -26,15 +26,19 @@
 - [x] Update platform configs to use correct term per platform capability — `collect_agent_roster()` in `scripts/generate-configs.sh` was mixing "Agent / Persona Roster" wording even though it's only ever used for Tier 2/3 output; renamed to "Persona Roster" consistently and added a one-line note pointing to `DOMAIN_DICTIONARY.md` and clarifying full agent orchestration is Tier 1 (Claude Code) only. Regenerated all configs and re-ran `check-parity.sh` — clean
 
 ### Epic 3 — Universal install/uninstall
-- [ ] Create `install.sh` with `--global` (symlinks to `~/`) and `--project <path>` (copies to target) modes
-- [ ] Add platform auto-detection (check for `.cursor/`, `gh copilot`, `gemini` CLI, etc.)
-- [ ] Add `--dry-run` flag
-- [ ] Make idempotent (backup existing, skip if identical)
-- [ ] Create `uninstall.sh` (remove symlinks, restore backups)
-- [ ] Update `scaffold-team.sh` to delegate to `install.sh --project --platform claude`
-- [ ] Print verification summary at end (agent count, skill count, platform count)
-- [ ] Support macOS, Linux, and WSL — no platform-specific dependencies
-- [ ] Add `--copy` mode fallback for Windows (non-WSL) where symlinks don't work
+> Audit note: `install.sh`/`uninstall.sh` already existed before this epic was picked up (built in an
+> earlier, undocumented pass — same situation as Epic 1) and were substantially further along than this
+> checklist suggested. Verified each item against the actual script rather than assuming either "already
+> done" or "needs building from scratch."
+- [x] Create `install.sh` with `--global` (symlinks to `~/`) and `--project <path>` (copies to target) modes — already existed, confirmed working via `--dry-run` and a real `--project` run into a scratch directory
+- [x] Add platform auto-detection (check for `.cursor/`, `gh copilot`, `gemini` CLI, etc.) — already existed (`detect_platforms()`), matches the checklist's exact examples
+- [x] Add `--dry-run` flag — already existed, confirmed it suppresses all real filesystem changes
+- [x] Make idempotent (backup existing, skip if identical) — symlink mode already did this correctly; **found and fixed a real gap** in `--copy` mode, which always backed up + re-copied even when content was byte-identical. Added a `diff -rq` check; verified a second `--copy` run now reports `[skip] (already copied, content identical)` for everything instead of creating a fresh `.bak.<timestamp>` every time
+- [x] Create `uninstall.sh` (remove symlinks, restore backups) — already existed and correctly restores the latest `.bak.<timestamp>` after removing a framework-owned symlink or copy
+- [x] Update `scaffold-team.sh` to delegate to `install.sh --project --platform claude` — already did this, using the registry's actual platform name (`claude-code`, not `claude` as this checklist item literally says)
+- [x] Print verification summary at end (agent count, skill count, platform count) — agent/skill/rule counts already existed; **added the missing platform count line** (`Platforms: 6 (claude-code cursor windsurf github-copilot gemini openai-codex)`)
+- [x] Support macOS, Linux, and WSL — no platform-specific dependencies — audited for bash-4-only syntax (associative arrays, `${var,,}`, `mapfile`) and macOS-only flags (`sed -i ''`, `readlink -f`) — found none; already portable
+- [x] Add `--copy` mode fallback for Windows (non-WSL) where symlinks don't work — already existed, now also properly idempotent (see above)
 
 ---
 
@@ -57,7 +61,7 @@
 - [x] Generate `.gemini/antigravity/instructions.md` (Tier 3 — rules + agent awareness)
 - [x] Generate `.openai.md` (Tier 3 — rules + agent awareness)
 - [x] Extend `scripts/check-parity.sh` to diff generated configs vs. shared rules, fail on drift
-- [ ] Add CI fitness function: `check-parity.sh` runs on every PR
+- [x] Add CI fitness function: `check-parity.sh` runs on every PR — satisfied as a side effect of Epic 20's `.github/workflows/framework-ci.yml` (`check-parity` job runs on every push/PR to main), not built separately
 
 ### Epic 11 — Cross-platform agent/persona translation
 - [x] For Cursor: generate `.cursor/rules/<agent-name>.mdc` persona files (all content inlined, short and directive, use ALWAYS/NEVER/CRITICAL keywords, valid YAML frontmatter)
