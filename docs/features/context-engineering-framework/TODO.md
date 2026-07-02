@@ -99,15 +99,15 @@
 ## Phase 4: Quality & observability
 
 ### Epic 6 — Agent golden-file tests
-- [ ] Create `tests/agents/` directory structure
-- [ ] Create `tests/agents/security-reviewer/` — vulnerable code input + expected findings
-- [ ] Create `tests/agents/code-reviewer/` — smelly code input + expected flags
-- [ ] Create `tests/agents/analyst/` — feature spec input + expected analysis sections
-- [ ] Create `tests/agents/architect/` — analysis input with architectural flags + expected structural decisions
-- [ ] Create `tests/agents/qa-engineer/` — implementation input + expected test plan sections
-- [ ] Create `scripts/test-agents.sh` — runs golden-file tests with fuzzy matching (grep patterns)
-- [ ] Add structural checks: verify agent output contains all contract-required sections
-- [ ] Document: "run `./scripts/test-agents.sh` after editing any agent prompt"
+- [x] Create `tests/agents/` directory structure
+- [x] Create `tests/agents/security-reviewer/` — vulnerable code input + expected findings — smoke-tested end-to-end: ran the real security-reviewer prompt against the fixture, 20/20 checks passed
+- [x] Create `tests/agents/code-reviewer/` — smelly code input + expected flags
+- [x] Create `tests/agents/analyst/` — feature spec input + expected analysis sections
+- [x] Create `tests/agents/architect/` — analysis input with architectural flags + expected structural decisions
+- [x] Create `tests/agents/qa-engineer/` — implementation input + expected test plan sections
+- [x] Create `scripts/test-agents.sh` — runs golden-file tests with fuzzy matching (grep patterns) — bash 3.2 compatible (macOS default has no associative arrays; used a case-based lookup function instead)
+- [x] Add structural checks: verify agent output contains all contract-required sections — reuses `shared/contracts/*.md` from Epic 5 rather than duplicating section lists
+- [x] Document: "run `./scripts/test-agents.sh` after editing any agent prompt" — in `tests/agents/README.md`
 
 ### Epic 7 — Agent observability & feedback loop
 - [ ] Create `shared/skills/pipeline-trace/SKILL.md` — logs agent name, duration, status, iteration count

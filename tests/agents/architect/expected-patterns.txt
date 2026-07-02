@@ -1,0 +1,14 @@
+# Fuzzy content patterns expected in architect's architecture-notes.md when run
+# against input-analysis.md. One extended-regex pattern per line, matched
+# case-insensitively (grep -Ei).
+#
+# Required section headings are checked separately via
+# shared/contracts/architecture-contract.md. This file checks that the architect
+# actually engaged with the specific scenario: a new cross-context integration
+# point with a brand-new external dependency (email provider) that needs a
+# resilience strategy.
+
+fitness function
+notification
+circuit breaker|timeout|retry
+bounded context

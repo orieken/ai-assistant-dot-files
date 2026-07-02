@@ -1,0 +1,14 @@
+# Fuzzy patterns expected in code-reviewer's output when run against
+# input-smelly-code.ts. One extended-regex pattern per line, matched
+# case-insensitively (grep -Ei).
+#
+# The fixture deliberately contains: a method with two responsibilities
+# (calculating a total AND printing/logging it), a domain class directly
+# importing the `pg` Pool (infrastructure leaking into the domain), magic
+# numbers (1.08, 0.9), and a raw for-loop that could be extracted.
+
+CHANGES REQUESTED
+extract function
+magic number
+pool|pg
+coupling

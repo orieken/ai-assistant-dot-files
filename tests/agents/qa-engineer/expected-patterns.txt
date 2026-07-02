@@ -1,0 +1,14 @@
+# Fuzzy content patterns expected in qa-engineer's qa-report.md when run against
+# input-implementation-notes.md. One extended-regex pattern per line, matched
+# case-insensitively (grep -Ei).
+#
+# Required section headings are checked separately via
+# shared/contracts/qa-contract.md. This file checks that the qa-engineer actually
+# wrote tests for the three scenarios called out in "Notes for QA": user
+# enumeration, token expiry, and single-use tokens — plus the "tests must be
+# green" rule from the agent's own contract.
+
+Failed: 0
+enumeration
+expir
+single.use|reus

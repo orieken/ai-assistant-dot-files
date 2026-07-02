@@ -5,6 +5,9 @@
 .claude/feature-workspace/
 features/
 
+# Agent golden-file test outputs (locally generated, not deterministic)
+tests/agents/*/actual-output.md
+
 # Legacy and Backups
 *.bak
 archive/

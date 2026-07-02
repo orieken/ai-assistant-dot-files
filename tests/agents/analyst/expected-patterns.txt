@@ -1,0 +1,12 @@
+# Fuzzy content patterns expected in analyst's analysis.md when run against
+# input-feature-spec.md. One extended-regex pattern per line, matched
+# case-insensitively (grep -Ei).
+#
+# Required section headings (## Summary, ### Acceptance Criteria, etc.) are
+# checked separately by test-agents.sh via shared/contracts/analysis-contract.md
+# — this file only checks that the analyst engaged with the spec's actual content.
+
+expir
+enumeration
+notification
+token

@@ -1,0 +1,14 @@
+# Fuzzy patterns expected in security-reviewer's output when run against
+# input-vulnerable-code.ts. One extended-regex pattern per line, matched
+# case-insensitively (grep -Ei). Lines starting with # are comments.
+#
+# The fixture deliberately contains: SQL injection via string interpolation,
+# a hardcoded Stripe secret key, password logged in plaintext, and user
+# enumeration via differing 404/401 error messages.
+
+CRITICAL|HIGH
+sql injection
+hardcod
+STRIPE_SECRET_KEY
+user enumeration
+password
