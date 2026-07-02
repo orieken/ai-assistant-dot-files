@@ -235,10 +235,10 @@
 - [x] Add badge to README showing CI status
 
 ### Epic 21 — Rollout & migration
-- [ ] Create `scripts/migrate-v1-to-v2.sh` — moves existing `.claude/agents/` to `shared/agents/`, creates symlinks
-- [ ] Document breaking changes from current structure to `shared/` canonical structure
-- [ ] Tag current state as `v1.0.0` before restructure
-- [ ] Tag completed framework as `v2.0.0`
+- [x] Create `scripts/migrate-v1-to-v2.sh` — moves existing `.claude/agents/` to `shared/agents/`, creates symlinks (also handles skills/, rules/, and the two root reference files) — verified against a synthetic v1-style scratch repo: dry-run, real migration with content preservation, and idempotent re-run all confirmed working, not just written and assumed correct
+- [x] Document breaking changes from current structure to `shared/` canonical structure — `docs/MIGRATION.md`
+- [x] Tag current state as `v1.0.0` before restructure — applied retroactively to `e7d5557`, the last commit before `cc841a8` began the restructure (the restructure itself predates this TODO-driven session)
+- [x] Tag completed framework as `v2.0.0` — applied to HEAD after this epic's commit
 
 ---
 

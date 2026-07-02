@@ -15,6 +15,7 @@ For deeper detail beyond this README:
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the `shared/` layer design, tier system, context flow
 - [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — how to add a new agent, skill, rule, or platform
 - [docs/runbooks/](docs/runbooks/) — operational guides, including adding a platform and editing agent prompts
+- [docs/MIGRATION.md](docs/MIGRATION.md) — upgrading a pre-restructure ("v1") checkout to the canonical `shared/` layer ("v2")
 
 ---
 
