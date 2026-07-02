@@ -147,14 +147,14 @@
 - [x] Seed initial KIs from existing ADRs and runbooks — 2 more added: `docs-directory-follows-rag-friendly-structure.md` (from ADR-001) and `subagent-isolation-is-a-hard-boundary.md` (from both runbooks); not an exhaustive migration of every ADR/runbook, but the genuinely reusable nuggets are captured
 
 ### Epic 15 — Cross-delivery learning
-- [ ] Create `shared/skills/extract-lessons/SKILL.md` — after delivery, extracts reusable patterns:
+- [x] Create `shared/skills/extract-lessons/SKILL.md` — after delivery, extracts reusable patterns:
   - Security findings that should become rules
   - Code review rejections that indicate missing guardrails
   - Architecture decisions that should become KIs
-- [ ] Auto-promote recurring security findings (3+ occurrences) to `shared/rules/` as new guardrails
-- [ ] Auto-promote recurring code review patterns to agent prompt improvements
-- [ ] Create `docs/lessons-learned/` directory for persisted lessons
-- [ ] Track: which KIs are actually referenced by agents (usage analytics)
+- [x] Auto-promote recurring security findings (3+ occurrences) to `shared/rules/` as new guardrails — implemented as **draft + require explicit approval**, not silent auto-write. `.claude/rules/approval-gates.md` Gate #7 ("Wiring a New Fitness Function") already requires human sign-off before any `shared/rules/` change, and that gate isn't something this skill can or should route around just because a pattern is well-evidenced.
+- [x] Auto-promote recurring code review patterns to agent prompt improvements — same gating: drafts the prompt edit + version bump + changelog line, requires explicit confirmation before touching `shared/agents/`, consistent with Epic 8's versioning requirement.
+- [x] Create `docs/lessons-learned/` directory for persisted lessons
+- [x] Track: which KIs are actually referenced by agents (usage analytics) — tallies KI references across all `context-manifest.md` files, flags zero-reference KIs
 
 ---
 
