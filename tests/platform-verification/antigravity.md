@@ -1,17 +1,18 @@
 # Gemini Antigravity Verification Protocol
 
-**Update 2026-07-02: Tests 1-4 below are confirmed** — see
-[results/antigravity-2026-07-02.md](results/antigravity-2026-07-02.md) for the full report. Kept here for
-regression testing after future changes, and because one real gap remains open (Test 5).
+**Update 2026-07-02: all 5 tests below are confirmed** — see
+[results/antigravity-2026-07-02.md](results/antigravity-2026-07-02.md) and
+[results/antigravity-test5-2026-07-02.md](results/antigravity-test5-2026-07-02.md) for the full reports.
+Kept here for regression testing after future changes.
 
 ## What was generated, and confirmed status
 | Artifact | Path | Status |
 |---|---|---|
-| ~~Legacy instructions file~~ | ~~`.gemini/antigravity/instructions.md`~~ | **Confirmed NOT read (2026-07-02). Removed.** |
+| ~~Legacy instructions file~~ | ~~`.gemini/antigravity/instructions.md`~~ | **Confirmed NOT read. Removed.** |
 | Cross-tool agents file | `AGENTS.md` (repo root) | **Confirmed read** — injected as `<RULE[AGENTS.md]>` in the system prompt |
-| Skills (global) | `~/.gemini/config/skills/` -> `shared/skills/` (via `install.sh --global`) | **Confirmed** — this is where skills actually loaded from in the 2026-07-02 test |
-| Skills (project) | `.agents/skills/` -> `shared/skills/` (via `install.sh --project`) | **Not yet exercised** — didn't exist at session start in the 2026-07-02 test, so it fell back to the global root. See Test 5. |
-| Rules (project) | `.agents/rules/` -> `shared/rules/` | **Not yet exercised directly** — `AGENTS.md` already carries rules content, so this may be redundant; not contradicted either |
+| Skills (global) | `~/.gemini/config/skills/` -> `shared/skills/` (via `install.sh --global`) | **Confirmed** — where skills loaded from before `.agents/skills/` existed |
+| Skills (project) | `.agents/skills/` -> `shared/skills/` (via `install.sh --project`) | **Confirmed** — a fresh project with `.agents/skills/` present from session start correctly listed this framework's distinctive skill names (`numpath-alignment`, `sunday-test-advisor`, etc.), merged alongside an unrelated global/built-in skill set |
+| Rules (project) | `.agents/rules/` -> `shared/rules/` | Not yet exercised directly — `AGENTS.md` already carries rules content, so this may be redundant; not contradicted either |
 
 ## Test 1 — Does it read AGENTS.md?
 **CONFIRMED 2026-07-02.** With the installed directory open in Antigravity, start a new agent session and ask:
@@ -44,21 +45,15 @@ against the real thresholds), not a generic ad-hoc review.
 **Observed**: flagged the Clean Architecture dependency violation, missing HTTP timeout, `interface{}`
 instead of a typed return, swallowed errors, and the SQL injection risk — all five planted issues.
 
-## Test 5 — Does project-level `.agents/skills/` work when it exists from the start? (OPEN)
-The one thing 2026-07-02's test didn't confirm: whether `.agents/skills/`/`.agents/rules/` (the
-**project**-scoped convention, as opposed to the global root that was actually exercised) works when present
-*before* Antigravity's session starts.
-
-1. Run `./install.sh --project /path/to/a/fresh/scratch/dir --platform gemini` **first**, confirming
-   `.agents/skills/` and `.agents/rules/` exist in that directory before you open it.
-2. Open that directory fresh in Antigravity (not this repo, and not a directory that already had a session
-   running before the install completed).
-3. Repeat Test 3's questions. If it lists skills from `.agents/skills/` specifically (rather than falling
-   back to the global root, if that's even distinguishable), that confirms the project-scoped path too.
+## Test 5 — Does project-level `.agents/skills/` work when it exists from the start?
+**CONFIRMED 2026-07-02** (`results/antigravity-test5-2026-07-02.md`), via `./install.sh --project
+~/antigravity-test --platform gemini` followed by a fresh Antigravity session on that new directory. Also
+confirmed exact fidelity to skill file content in the process: `complexity-check` invocation quoted that
+skill's own literal example threshold (`gocyclo -over 6`, mathematically identical to this project's "< 7"
+rule, just phrased the other way) and wrote its report to the exact path `complexity-check/SKILL.md`
+specifies (`.claude/feature-workspace/complexity-report.md`) — not generic or approximate behavior.
 
 ## Report back
-```
-- [ ] Test 5 (project-level skills): confirmed working from session start? Y/N
-- Antigravity version used: ___
-- Anything unexpected: ___
-```
+All five tests are confirmed as of 2026-07-02 — nothing outstanding for this protocol. Re-run any of them
+after future changes to `shared/skills/`, `AGENTS.md` generation, or `install.sh`'s Antigravity handling, to
+catch regressions.
