@@ -44,12 +44,16 @@ step 6.
 
 ## 5. Test it
 
-If `tests/agents/<name>/` has a fixture:
-1. Invoke the agent against `tests/agents/<name>/input-*` in a live Claude Code session (agent invocation
-   can't be scripted — see `tests/agents/README.md` for why).
+If `tests/agents/<name>/` has a fixture, prefer the automated path: invoke the `agent-eval` skill
+(`shared/skills/agent-eval/SKILL.md`) against `<name>` — it acts as the agent, grades the output against
+both `expected-patterns.txt` and `eval-rubric.md` (if one exists), and flags any regression against the last
+recorded eval in `docs/agent-metrics/evals/`.
+
+Manual fallback:
+1. Invoke the agent against `tests/agents/<name>/input-*` in a live Claude Code session.
 2. Save the output to `tests/agents/<name>/actual-output.md`.
 3. Run `scripts/test-agents.sh` — it checks the output against `expected-patterns.txt` and the agent's
-   contract (if one exists).
+   contract (if one exists). This only covers the structural check, not `eval-rubric.md`.
 
 If there's no fixture yet and this agent is likely to regress silently on future edits, consider adding one
 (see [CONTRIBUTING.md](../CONTRIBUTING.md), "Adding a new agent," step 6 — the same guidance applies to

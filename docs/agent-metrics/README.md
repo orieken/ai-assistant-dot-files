@@ -15,6 +15,9 @@ section for exactly what's measured and why.
 This is distinct from:
 - `docs/features/<name>/retrospective.md` — a single delivery's qualitative narrative.
 - `docs/pipeline-retrospectives/` — cross-delivery timing/iteration trends (not quality judgments).
+- `docs/agent-metrics/evals/` (`agent-eval`) — a fixed fixture + rubric regression check for one agent right
+  after a prompt edit, not a monthly trend across real deliveries. See `evals/README.md`.
 
-`agent-scorecard` is the only one of the three that says whether an agent's *output* was actually good, not
-just how long it took or how the process felt for one feature.
+`agent-scorecard` is the only one of these that says whether an agent's *output* was actually good across
+real deliveries, not just how long it took, how the process felt for one feature, or how it handles one
+fixed test case.
