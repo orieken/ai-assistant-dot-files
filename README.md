@@ -98,10 +98,10 @@ To remove: `./uninstall.sh --global` (or `--project <path>`) restores whatever w
 | Platform | Tier | Capability | Format | Terminology |
 |---|---|---|---|---|
 | **Claude Code** | 1 — Full | Agents (tool access, autonomous process, pipeline participation), skills, rules, hooks, subagent orchestration | Markdown + YAML frontmatter, symlinked from `shared/` | Agent |
-| **Cursor** | 2 — Personas + Rules | Persona-level context + rule files, no native orchestration | `.mdc` per concern, YAML frontmatter, content inlined (Cursor can't follow file references) | Persona |
+| **Cursor** | 2 — Personas + Rules | Persona-level context + rule files, no native orchestration | `.mdc` per concern + one per agent persona (28 files), YAML frontmatter, content inlined (Cursor can't follow file references). Only `approval-gates.mdc`/`agent-roster.mdc` are `alwaysApply`; the rest Auto Attach on relevant file globs to stay near Cursor's own ~2,000-token always-apply budget | Persona |
 | **Windsurf** | 2 — Personas + Rules | Same as Cursor | Single flat `.windsurfrules`, inlined | Persona |
-| **GitHub Copilot** | 3 — System Prompt | Single instruction file only | `.github/copilot-instructions.md`, rules + roster inlined | Persona |
-| **Gemini (Antigravity)** | 3 — System Prompt | Single instruction file only | `.gemini/antigravity/instructions.md`, inlined | Persona |
+| **GitHub Copilot** | 2 — Personas + Rules | Repo-wide instructions + path-scoped rule files (confirmed via [GitHub's docs](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions-in-your-ide/add-repository-instructions-in-your-ide), 2026-07) | `.github/copilot-instructions.md` (roster + rules inlined) **plus** `.github/instructions/{testing,go-backend,vue-frontend}.instructions.md` with `applyTo` globs — both combine | Persona |
+| **Gemini (Antigravity)** | 3 — hybrid, medium confidence | `.gemini/antigravity/instructions.md` kept as a fallback; research suggests the real mechanism is `AGENTS.md` (project root) + `.agents/skills/`/`.agents/rules/` (symlinked to `shared/`, like Claude Code) — not confirmed against primary docs, verify locally | `.gemini/antigravity/instructions.md`, `AGENTS.md`, `.agents/skills/`, `.agents/rules/` | Persona |
 | **OpenAI / Codex** | 3 — System Prompt | Single instruction file only | `.openai.md`, inlined | Persona |
 
 Full definitions of **Agent**, **Persona**, and **Capability Tier** live in `DOMAIN_DICTIONARY.md`. The

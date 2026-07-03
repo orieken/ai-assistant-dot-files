@@ -64,41 +64,46 @@
     },
     {
       "name": "github-copilot",
-      "tier": 3,
-      "tierLabel": "System Prompt",
+      "tier": 2,
+      "tierLabel": "Personas + Rules",
       "capabilities": {
         "agents": false,
         "skills": false,
-        "rules": false,
+        "rules": true,
         "hooks": false,
         "subAgentOrchestration": false
       },
       "configPaths": {
-        "systemPrompt": ".github/copilot-instructions.md"
+        "systemPrompt": ".github/copilot-instructions.md",
+        "scopedInstructions": ".github/instructions/"
       },
       "format": "markdown",
       "installStrategy": "generate-inline",
       "globalConfigDir": null,
-      "notes": "Single instruction file. Include rules and agent roster inline for awareness."
+      "notes": "Repo-wide copilot-instructions.md (Tier 3 style) PLUS path-scoped .github/instructions/NAME.instructions.md files with an `applyTo` glob frontmatter field (comma-separated patterns, e.g. `applyTo: \"**/*.go\"` — not an array like Cursor's globs). Both coexist and combine per GitHub's own docs. Upgraded from Tier 3 to Tier 2 (2026-07) after confirming this via official docs: https://docs.github.com/en/copilot/how-tos/configure-custom-instructions-in-your-ide/add-repository-instructions-in-your-ide"
     },
     {
       "name": "gemini",
       "tier": 3,
-      "tierLabel": "System Prompt",
+      "tierLabel": "System Prompt (hybrid — see notes)",
       "capabilities": {
         "agents": false,
-        "skills": false,
-        "rules": false,
+        "skills": true,
+        "rules": true,
         "hooks": false,
         "subAgentOrchestration": false
       },
       "configPaths": {
-        "systemPrompt": ".gemini/antigravity/instructions.md"
+        "systemPrompt": ".gemini/antigravity/instructions.md",
+        "agentsFile": "AGENTS.md",
+        "skills": ".agents/skills/",
+        "rules": ".agents/rules/",
+        "globalRules": "~/.gemini/GEMINI.md"
       },
       "format": "markdown",
-      "installStrategy": "generate-inline",
-      "globalConfigDir": null,
-      "notes": "Single instruction file for Antigravity IDE. Include rules and agent roster inline."
+      "installStrategy": "hybrid — generate-inline for systemPrompt/agentsFile, symlink for skills/rules",
+      "globalConfigDir": "~/.gemini/",
+      "notes": "MEDIUM CONFIDENCE (2026-07): secondary sources (a Google codelab, not primary reference docs — the official antigravity.google/docs page didn't return usable content via fetch) suggest Antigravity primarily reads AGENTS.md (project root) and ~/.gemini/GEMINI.md (global), and supports directory-based skills at .agents/skills/<name>/SKILL.md — a format that looks compatible with this repo's own shared/skills/ convention. Kept generating the original .gemini/antigravity/instructions.md as a harmless fallback in case that path is also read. Verify locally with the actual tool installed before fully trusting this; the previous Tier-3-only treatment may turn out to have been closer to correct."
     },
     {
       "name": "openai-codex",

@@ -164,6 +164,30 @@ for entry in "${TIER3_FILES[@]}"; do
 done
 
 echo ""
+echo "--- GitHub Copilot scoped instructions ---"
+for scoped_file in "testing" "go-backend" "vue-frontend"; do
+  full_path="$REPO_DIR/.github/instructions/${scoped_file}.instructions.md"
+  if [[ -f "$full_path" ]]; then
+    if head -1 "$full_path" | grep -q '^---$' && grep -q '^applyTo:' "$full_path"; then
+      pass "${scoped_file}.instructions.md"
+    else
+      fail "${scoped_file}.instructions.md" "missing applyTo frontmatter"
+    fi
+  else
+    miss "${scoped_file}.instructions.md"
+  fi
+done
+
+echo ""
+echo "--- AGENTS.md (cross-tool convention, also read by Gemini Antigravity per current research) ---"
+if [[ -f "$REPO_DIR/AGENTS.md" ]]; then
+  check_concept_coverage "$REPO_DIR/AGENTS.md" "AGENTS.md"
+  check_agent_roster "$REPO_DIR/AGENTS.md" "AGENTS.md"
+else
+  miss "AGENTS.md"
+fi
+
+echo ""
 echo "--- Claude Code symlinks ---"
 for symlink in ".claude/agents" ".claude/skills" ".claude/rules"; do
   full_path="$REPO_DIR/$symlink"

@@ -1,6 +1,7 @@
 ---
 description: "Architecture guardrails — Clean Architecture, SOLID, no hardcoded secrets, expand/contract migrations"
-alwaysApply: true
+alwaysApply: false
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.go", "**/*.py", "**/*.java"]
 ---
 # Architecture Guardrails
 

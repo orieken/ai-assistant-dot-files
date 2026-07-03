@@ -160,6 +160,22 @@ should_install() {
   fi
 }
 
+install_antigravity() {
+  log ""
+  log "--- Gemini Antigravity (skills + rules symlinks — medium confidence, see platform-registry.json) ---"
+
+  local dest_root
+  if [[ "$MODE" == "global" ]]; then
+    dest_root="$HOME"
+  else
+    dest_root="$TARGET_DIR"
+  fi
+
+  mkdir -p "$dest_root/.agents" 2>/dev/null || true
+  link_or_copy "$SHARED_DIR/skills" "$dest_root/.agents/skills"
+  link_or_copy "$SHARED_DIR/rules" "$dest_root/.agents/rules"
+}
+
 install_claude_code() {
   log ""
   log "--- Claude Code (Tier 1: Full) ---"
@@ -252,6 +268,10 @@ echo ""
 
 if should_install "claude-code"; then
   install_claude_code
+fi
+
+if should_install "gemini"; then
+  install_antigravity
 fi
 
 install_generated_configs

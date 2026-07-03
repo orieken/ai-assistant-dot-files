@@ -99,6 +99,63 @@ extract_agent_body() {
   awk '/^---$/{delim++; next} delim==2{print}' "$file"
 }
 
+testing_rules_body() {
+  echo "# Testing Rules
+
+## Saturday Framework (E2E / UI Testing)
+ALWAYS use the Site-Centric pattern: \`BaseSite\`, \`BasePage\`, \`BaseElement\`, \`BaseFlow\`.
+NEVER use traditional Page Object Model (POM).
+ALWAYS use Playwright driven by Cucumber.js for UI automation.
+ALWAYS include OpenTelemetry instrumentation for every BDD scenario.
+
+## Sunday Framework (API Testing)
+ALWAYS use Vitest for unit tests and Playwright for integration/E2E API tests.
+ALWAYS use the custom \`api\` fixture and fluent matchers (\`toHaveStatus\`, \`toBeSuccessful\`, \`toRespondWithin\`).
+ALWAYS extend \`BaseApiClient\` for domain-specific API clients.
+ALWAYS validate schemas with Zod (\`validateSchema()\`).
+NEVER use custom retry loops — use \`CircuitBreaker\` or \`ExponentialBackoffStrategy\`.
+
+## Test Quality
+CRITICAL: Test coverage MUST be >= 85%.
+CRITICAL: Cyclomatic complexity per function MUST be < 7.
+ALWAYS practice TDD/BDD — Red-Green-Refactor.
+NEVER write feature code without tests."
+}
+
+go_backend_rules_body() {
+  echo "# Go Backend Conventions
+
+ALWAYS follow Clean Architecture layers: Entities → Use Cases → Adapters → Frameworks.
+NEVER let domain entities import adapter or framework packages.
+ALWAYS define interfaces in the use-case layer, implement in adapters.
+ALWAYS use structured logging with low-cardinality message strings.
+NEVER use \`any\` or \`interface{}\` — use typed interfaces.
+ALWAYS handle errors explicitly — no silent swallows.
+ALWAYS set explicit timeouts on network calls.
+NEVER use raw SQL without parameterized queries.
+ALWAYS use the expand/contract pattern for database migrations."
+}
+
+vue_frontend_rules_body() {
+  echo "# Vue 3 + Tailwind Frontend Conventions
+
+ALWAYS use Vue 3 Composition API with \`<script setup>\`.
+NEVER use Options API in new components.
+ALWAYS use Tailwind CSS utility classes — no custom CSS unless absolutely necessary.
+ALWAYS extract reusable UI into composables (\`use*.ts\`) or components.
+NEVER put business logic in components — extract to composables or services.
+ALWAYS use TypeScript with strict mode.
+NEVER use \`any\` types — use \`unknown\` with Zod validation at boundaries.
+ALWAYS co-locate component tests alongside components.
+CRITICAL: Components MUST be < 100 lines. Extract when larger."
+}
+
+# Broad glob covering common source file extensions across this framework's supported stacks
+# (TypeScript, Go, Python, Java) — used to Auto Attach rules that should apply whenever code is
+# being edited, without paying their token cost on every single request (Cursor's own guidance:
+# combined alwaysApply rules should stay under ~2,000 tokens; architecture.mdc alone exceeds that).
+CODE_FILE_GLOBS='["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.go", "**/*.py", "**/*.java"]'
+
 generate_mdc() {
   local dest="$1"
   local description="$2"
@@ -152,16 +209,23 @@ generate_cursor() {
 
   local rules_dir="$OUTPUT_DIR/.cursor/rules"
 
+  # Only approval-gates and agent-roster stay alwaysApply: true — both are cheap (a few KB) and
+  # safety/awareness-critical regardless of what the user is doing (chatting, planning, or coding).
+  # architecture.mdc and design-principles.mdc are large (architecture.mdc alone inlines the full
+  # ARCHITECTURE_RULES.md) and code-editing-specific, so they're Auto Attached via CODE_FILE_GLOBS
+  # instead — loaded when actually touching source, not on every single request. Cursor's own
+  # guidance: combined alwaysApply rules should stay under ~2,000 tokens; the previous all-four-
+  # always-apply setup was 2-3x over that.
   generate_mdc "$rules_dir/architecture.mdc" \
     "Architecture guardrails — Clean Architecture, SOLID, no hardcoded secrets, expand/contract migrations" \
-    "true" "" \
+    "false" "$CODE_FILE_GLOBS" \
     "$(extract_rule_content "$SHARED_DIR/rules/architecture-guardrails.md")
 
 $(extract_rule_content "$SHARED_DIR/ARCHITECTURE_RULES.md")"
 
   generate_mdc "$rules_dir/design-principles.mdc" \
     "Design principles — Kent Beck simple design, Fowler refactoring, Sandi Metz limits, Boy Scout Rule" \
-    "true" "" \
+    "false" "$CODE_FILE_GLOBS" \
     "$(extract_rule_content "$SHARED_DIR/rules/design-principles.md")"
 
   generate_mdc "$rules_dir/approval-gates.mdc" \
@@ -174,68 +238,20 @@ $(extract_rule_content "$SHARED_DIR/ARCHITECTURE_RULES.md")"
     "true" "" \
     "$(collect_agent_roster)"
 
-  local testing_body
-  testing_body="# Testing Rules
-
-## Saturday Framework (E2E / UI Testing)
-ALWAYS use the Site-Centric pattern: \`BaseSite\`, \`BasePage\`, \`BaseElement\`, \`BaseFlow\`.
-NEVER use traditional Page Object Model (POM).
-ALWAYS use Playwright driven by Cucumber.js for UI automation.
-ALWAYS include OpenTelemetry instrumentation for every BDD scenario.
-
-## Sunday Framework (API Testing)
-ALWAYS use Vitest for unit tests and Playwright for integration/E2E API tests.
-ALWAYS use the custom \`api\` fixture and fluent matchers (\`toHaveStatus\`, \`toBeSuccessful\`, \`toRespondWithin\`).
-ALWAYS extend \`BaseApiClient\` for domain-specific API clients.
-ALWAYS validate schemas with Zod (\`validateSchema()\`).
-NEVER use custom retry loops — use \`CircuitBreaker\` or \`ExponentialBackoffStrategy\`.
-
-## Test Quality
-CRITICAL: Test coverage MUST be >= 85%.
-CRITICAL: Cyclomatic complexity per function MUST be < 7.
-ALWAYS practice TDD/BDD — Red-Green-Refactor.
-NEVER write feature code without tests."
-
   generate_mdc "$rules_dir/testing.mdc" \
     "Testing framework rules — Saturday (E2E) and Sunday (API) conventions" \
     "false" '["**/*.spec.*", "**/*.test.*", "**/*.feature", "**/steps/**"]' \
-    "$testing_body"
-
-  local go_body
-  go_body="# Go Backend Conventions
-
-ALWAYS follow Clean Architecture layers: Entities → Use Cases → Adapters → Frameworks.
-NEVER let domain entities import adapter or framework packages.
-ALWAYS define interfaces in the use-case layer, implement in adapters.
-ALWAYS use structured logging with low-cardinality message strings.
-NEVER use \`any\` or \`interface{}\` — use typed interfaces.
-ALWAYS handle errors explicitly — no silent swallows.
-ALWAYS set explicit timeouts on network calls.
-NEVER use raw SQL without parameterized queries.
-ALWAYS use the expand/contract pattern for database migrations."
+    "$(testing_rules_body)"
 
   generate_mdc "$rules_dir/go-backend.mdc" \
     "Go backend conventions — Clean Architecture, error handling, migrations" \
     "false" '["**/*.go", "**/go.mod", "**/go.sum"]' \
-    "$go_body"
-
-  local vue_body
-  vue_body="# Vue 3 + Tailwind Frontend Conventions
-
-ALWAYS use Vue 3 Composition API with \`<script setup>\`.
-NEVER use Options API in new components.
-ALWAYS use Tailwind CSS utility classes — no custom CSS unless absolutely necessary.
-ALWAYS extract reusable UI into composables (\`use*.ts\`) or components.
-NEVER put business logic in components — extract to composables or services.
-ALWAYS use TypeScript with strict mode.
-NEVER use \`any\` types — use \`unknown\` with Zod validation at boundaries.
-ALWAYS co-locate component tests alongside components.
-CRITICAL: Components MUST be < 100 lines. Extract when larger."
+    "$(go_backend_rules_body)"
 
   generate_mdc "$rules_dir/vue-frontend.mdc" \
     "Vue 3 + Tailwind conventions — Composition API, strict typing, component limits" \
     "false" '["**/*.vue", "**/*.tsx", "**/*.jsx", "**/components/**"]' \
-    "$vue_body"
+    "$(vue_frontend_rules_body)"
 
   generate_cursor_personas "$rules_dir"
 }
@@ -319,6 +335,60 @@ generate_tier3() {
   write_file "$dest_path" "$content"
 }
 
+generate_instructions_md() {
+  local dest="$1"
+  local apply_to="$2"
+  local body="$3"
+
+  local frontmatter="---"$'\n'
+  frontmatter+="applyTo: \"$apply_to\""$'\n'
+  frontmatter+="---"$'\n'
+
+  write_file "$dest" "${frontmatter}${body}"
+}
+
+generate_copilot_scoped_instructions() {
+  local dest_dir="$OUTPUT_DIR/.github/instructions"
+
+  # Path-scoped instructions coexist with and combine with copilot-instructions.md (the Tier 3
+  # style file generated separately) — per GitHub's docs, both apply when a file matches. Mirrors
+  # Cursor's testing/go-backend/vue-frontend .mdc files; applyTo uses comma-separated glob patterns
+  # in a single quoted string, not an array like Cursor's `globs` field.
+  generate_instructions_md "$dest_dir/testing.instructions.md" \
+    '**/*.spec.*,**/*.test.*,**/*.feature' \
+    "$(testing_rules_body)"
+
+  generate_instructions_md "$dest_dir/go-backend.instructions.md" \
+    '**/*.go,**/go.mod,**/go.sum' \
+    "$(go_backend_rules_body)"
+
+  generate_instructions_md "$dest_dir/vue-frontend.instructions.md" \
+    '**/*.vue,**/*.tsx,**/*.jsx' \
+    "$(vue_frontend_rules_body)"
+}
+
+generate_agents_md() {
+  local dest_path="$OUTPUT_DIR/AGENTS.md"
+
+  local content=""
+  content+="# AGENTS.md"$'\n'
+  content+=$'\n'
+  content+="Cross-tool agent instructions, following the https://agents.md convention. Also the file Gemini"$'\n'
+  content+="Antigravity is believed to read as its project-level rules (medium confidence — see the"$'\n'
+  content+="\`gemini\` entry's notes in \`shared/platform-registry.json\` for the caveat)."$'\n'
+  content+=$'\n'
+  content+="## AI Feature Team & Global Rules"$'\n'
+  content+="You are part of the Saturday Multi-Agent Feature Team. Before beginning any complex task, architectural decision, or feature delivery, you MUST adhere to the rules below."$'\n'
+  content+=$'\n'
+  content+="$(collect_rules)"
+  content+=$'\n'
+  content+="$(collect_craftsmanship_section)"
+  content+=$'\n'
+  content+="$(collect_agent_roster)"
+
+  write_file "$dest_path" "$content"
+}
+
 echo ""
 echo "Context Engineering Framework — Config Generator"
 echo "================================================="
@@ -347,20 +417,22 @@ fi
 
 if should_generate "github-copilot"; then
   echo ""
-  echo "--- GitHub Copilot (Tier 3: System Prompt) ---"
+  echo "--- GitHub Copilot (Tier 2: Personas + Rules) ---"
   generate_tier3 "github-copilot" \
     "$OUTPUT_DIR/.github/copilot-instructions.md" \
     "# Copilot Instructions (Saturday Framework)"
-  ((GENERATED++))
+  generate_copilot_scoped_instructions
+  ((GENERATED += 4))
 fi
 
 if should_generate "gemini"; then
   echo ""
-  echo "--- Gemini / Antigravity (Tier 3: System Prompt) ---"
+  echo "--- Gemini / Antigravity (Tier 3, hybrid — see platform-registry.json notes) ---"
   generate_tier3 "gemini" \
     "$OUTPUT_DIR/.gemini/antigravity/instructions.md" \
     "# Antigravity Instructions (Saturday Framework)"
-  ((GENERATED++))
+  generate_agents_md
+  ((GENERATED += 2))
 fi
 
 if should_generate "openai-codex"; then

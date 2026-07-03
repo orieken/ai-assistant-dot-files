@@ -1,0 +1,14 @@
+---
+applyTo: "**/*.go,**/go.mod,**/go.sum"
+---
+# Go Backend Conventions
+
+ALWAYS follow Clean Architecture layers: Entities → Use Cases → Adapters → Frameworks.
+NEVER let domain entities import adapter or framework packages.
+ALWAYS define interfaces in the use-case layer, implement in adapters.
+ALWAYS use structured logging with low-cardinality message strings.
+NEVER use `any` or `interface{}` — use typed interfaces.
+ALWAYS handle errors explicitly — no silent swallows.
+ALWAYS set explicit timeouts on network calls.
+NEVER use raw SQL without parameterized queries.
+ALWAYS use the expand/contract pattern for database migrations.

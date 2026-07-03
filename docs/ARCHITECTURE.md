@@ -45,8 +45,16 @@ of three tiers, and `DOMAIN_DICTIONARY.md` defines exactly what each tier means:
 | Tier | Label | Capabilities | Platforms | Terminology |
 |---|---|---|---|---|
 | **1** | Full | Agents with tool access, autonomous multi-step process, pipeline participation, hooks | Claude Code | **Agent** |
-| **2** | Personas + Rules | Persona-level context shaping + rule files, no native orchestration | Cursor, Windsurf | **Persona** |
-| **3** | System Prompt | Single instruction file, everything inlined | GitHub Copilot, Gemini, OpenAI/Codex | **Persona** |
+| **2** | Personas + Rules | Persona-level context shaping + rule files, no native orchestration | Cursor, Windsurf, GitHub Copilot | **Persona** |
+| **3** | System Prompt (Gemini: hybrid, medium confidence) | Single instruction file, everything inlined | Gemini/Antigravity, OpenAI/Codex | **Persona** |
+
+Copilot moved from Tier 3 to Tier 2 in 2026-07 after confirming (via GitHub's own docs) that it supports
+path-scoped `.github/instructions/*.instructions.md` files alongside the repo-wide instructions file — the
+same "multiple rule files, no orchestration" shape Cursor/Windsurf already had. Gemini/Antigravity's tier is
+provisional: secondary-source research suggests it may actually read `AGENTS.md` + `.agents/skills/` +
+`.agents/rules/` rather than the single inlined file this framework generates for it — see
+`shared/platform-registry.json`'s `gemini` entry for the full caveat. Both the old and new mechanisms are
+generated/symlinked so whichever turns out correct, it works.
 
 The distinction matters because it's enforced in the generated output, not just documented: `Persona` is a
 context frame with no tool access and no autonomous workflow (see `DOMAIN_DICTIONARY.md`'s Entity table) —
@@ -57,13 +65,23 @@ actually runs multi-step orchestration with tool access.
 ### Generation strategy per tier
 - **Tier 1 (Claude Code)**: symlink. `install.sh` creates `.claude/{agents,rules,skills}` -> `shared/`
   equivalents. Always current after a `git pull`; no generation step needed.
-- **Tier 2 (Cursor, Windsurf)**: generate-inline. Cursor gets one `.mdc` file per concern
-  (`architecture.mdc`, `design-principles.mdc`, `agent-roster.mdc`, `testing.mdc`, etc.) with YAML
-  frontmatter (`alwaysApply`, `globs`) and content fully inlined — Cursor silently ignores a `.mdc` file with
-  invalid frontmatter, so `generate_mdc()` in `generate-configs.sh` is careful about exact YAML shape.
-  Windsurf gets one flat `.windsurfrules` (no per-file globs support).
-- **Tier 3 (Copilot, Gemini, OpenAI)**: generate-inline, single file. `generate_tier3()` concatenates rules +
-  craftsmanship section + persona roster into one instruction file per platform.
+- **Tier 2 (Cursor, Windsurf, GitHub Copilot)**: generate-inline, multi-file.
+  - Cursor gets one `.mdc` file per rule concern (`architecture.mdc`, `design-principles.mdc`,
+    `agent-roster.mdc`, `testing.mdc`, etc.) **plus one `.mdc` per agent persona** (28 files total).
+    `approval-gates.mdc` and `agent-roster.mdc` are the only `alwaysApply: true` files — `architecture.mdc`
+    and `design-principles.mdc` Auto Attach on a broad source-file glob instead, since combined they'd
+    otherwise blow well past Cursor's own recommended ~2,000-token always-apply budget. Cursor silently
+    ignores a `.mdc` file with invalid frontmatter, so `generate_mdc()` is careful about exact YAML shape.
+  - Windsurf gets one flat `.windsurfrules` (no per-file globs support in the legacy format).
+  - Copilot gets the Tier-3-style `copilot-instructions.md` (roster + rules inlined) **plus**
+    `.github/instructions/{testing,go-backend,vue-frontend}.instructions.md`, each with an `applyTo`
+    frontmatter field (comma-separated glob string, not an array like Cursor's `globs`) — both coexist and
+    combine per GitHub's docs.
+- **Tier 3 (Gemini, OpenAI)**: generate-inline, single file. `generate_tier3()` concatenates rules +
+  craftsmanship section + persona roster into one instruction file per platform. Gemini additionally gets a
+  generated root `AGENTS.md` (the [agents.md](https://agents.md) cross-tool convention) and, via `install.sh`,
+  symlinked `.agents/skills/` -> `shared/skills/` and `.agents/rules/` -> `shared/rules/` — the same
+  treatment Tier 1 gets, in case Antigravity's real skill format turns out to be as compatible as it looks.
 
 ---
 
