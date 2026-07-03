@@ -154,7 +154,7 @@ CRITICAL: Components MUST be < 100 lines. Extract when larger."
 # (TypeScript, Go, Python, Java) — used to Auto Attach rules that should apply whenever code is
 # being edited, without paying their token cost on every single request (Cursor's own guidance:
 # combined alwaysApply rules should stay under ~2,000 tokens; architecture.mdc alone exceeds that).
-CODE_FILE_GLOBS='["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.go", "**/*.py", "**/*.java"]'
+CODE_FILE_GLOBS='["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.vue", "**/*.go", "**/*.py", "**/*.java"]'
 
 generate_mdc() {
   local dest="$1"

@@ -1,7 +1,7 @@
 ---
 description: "Design principles — Kent Beck simple design, Fowler refactoring, Sandi Metz limits, Boy Scout Rule"
 alwaysApply: false
-globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.go", "**/*.py", "**/*.java"]
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.vue", "**/*.go", "**/*.py", "**/*.java"]
 ---
 # Design Principles
 
