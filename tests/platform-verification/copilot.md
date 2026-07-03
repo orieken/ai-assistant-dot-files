@@ -1,11 +1,10 @@
 # GitHub Copilot Verification Protocol
 
-**Update 2026-07-02**: Tests 1 and 2 are confirmed — see
-[results/copilot-2026-07-02.md](results/copilot-2026-07-02.md). Test 3 (`.test.ts`) came back inconclusive:
-the original expected guidance ("behavior over implementation, descriptive names, mocking") was written
-generically enough that a capable reviewer would say the same thing whether or not
-`testing.instructions.md` actually loaded — not a distinctive enough signal. Replaced with a sharper
-question below.
+**Update 2026-07-02: all tests below are confirmed** — see
+[results/copilot-2026-07-02.md](results/copilot-2026-07-02.md) for the full report, including how Test 3's
+first attempt came back inconclusive (the original expected guidance was written generically enough that a
+capable reviewer would say the same thing whether or not `testing.instructions.md` actually loaded) before
+the sharper re-run below definitively confirmed it. Kept here for regression testing after future changes.
 
 Confirms `.github/copilot-instructions.md` (repo-wide) and the `.github/instructions/*.instructions.md`
 (path-scoped) files both load and combine as GitHub's docs claim. Path-scoped instructions are documented as
@@ -38,28 +37,24 @@ Repeat with `tests/platform-verification/fixtures/sample.vue` — expect and con
 (Composition API with `<script setup>`, Tailwind instead of custom CSS, extracting business logic to a
 composable/service) matching `vue-frontend.instructions.md`.
 
-## Test 3 — Does `testing.instructions.md` actually attach to `.test.*` files? (needs a sharper prompt)
-Don't just ask "review this file" against `sample.test.ts` — its planted violations (vague name, testing
-private-looking state, no mock) are generic enough that any capable reviewer flags them with or without
-`testing.instructions.md` loaded, which is exactly what made the first run of this test inconclusive. Ask
-instead, with the file open:
+## Test 3 — Does `testing.instructions.md` actually attach to `.test.*` files?
+**CONFIRMED 2026-07-02**, on the second attempt — the first "review this file" prompt was inconclusive
+because `sample.test.ts`'s planted violations are generic enough that any capable reviewer flags them
+without the scoped file loaded at all. The disambiguating question, asked with the file open:
 
 > What testing framework or pattern does this project's rules say I should use for this file? Name it specifically.
 
-**Expected if `testing.instructions.md` is genuinely attaching**: it should name the **Saturday Framework**,
-**Site-Centric pattern** (`BaseSite`/`BasePage`/`BaseElement`/`BaseFlow`), **Vitest**, the custom `api`
-fixture, `BaseApiClient`, `CircuitBreaker`, or the **85% coverage threshold** — something specific from the
-actual file content. If it can't name any of these, the scoped file isn't attaching for `.test.*` files in
-whatever surface you're using, even though `.go`/`.vue` clearly did.
+**Observed**: correctly named the **Sunday Framework** (Vitest for unit tests, Playwright for
+integration/E2E), citing `testing.instructions.md`, and — unprompted — correctly distinguished that a UI/E2E
+file would instead need the **Saturday Framework**'s Site-Centric pattern, naming all four classes
+(`BaseSite`/`BasePage`/`BaseElement`/`BaseFlow`). No generic AI response invents these specific
+day-of-week-themed framework names or class names — definitive confirmation the scoped file is genuinely
+read for `.test.*` files, not just `.go`/`.vue`.
 
 ## Test 4 — Confirm which surface actually reads path-scoped files
-If Test 2 or Test 3 don't show scoped guidance, try the same fixture + prompt in a different Copilot surface
-(VS Code Copilot Chat vs. Copilot code review on a PR vs. GitHub.com chat) — GitHub's docs say support
-varies by surface. Note which surface you tested in either case.
+Not needed this run — VS Code Copilot Chat confirmed all three scoped files directly. Keep this test in
+reserve if a future check in a different surface (code review, GitHub.com chat) comes back negative.
 
 ## Report back
-```
-- [ ] Test 3 (.test.ts, sharper prompt): did it name a specific Saturday/Sunday Framework term? Y/N — which one?
-- Copilot surface(s) tested (VS Code Chat / code review / GitHub.com / other): ___
-- Anything unexpected: ___
-```
+All tests confirmed as of 2026-07-02 — nothing outstanding for this protocol. Re-run after future changes to
+`.github/instructions/*.instructions.md` generation to catch regressions.
