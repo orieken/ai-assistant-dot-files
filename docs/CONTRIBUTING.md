@@ -29,9 +29,9 @@ by the next `scripts/generate-configs.sh` run.
    "Adding a contract" below) and wiring `validate-artifact` into `deliver-feature` after its step.
 5. Add a `## 2026-MM-DD — <reason>` entry to `shared/agents/CHANGELOG.md` in the same commit — the
    pre-commit hook (`scripts/hooks/pre-commit`, opt-in) checks for this if it's enabled.
-6. Consider a golden-file fixture in `tests/agents/<name>/` (see
-   [editing-agent-prompts.md](runbooks/editing-agent-prompts.md)) if this agent is likely to regress
-   silently on future edits.
+6. Consider a golden-file fixture in `tests/agents/<name>/` plus an `eval-rubric.md` (see
+   [editing-agent-prompts.md](runbooks/editing-agent-prompts.md) and the `agent-eval` skill) if this agent is
+   likely to regress silently on future edits.
 7. Run `scripts/check-parity.sh` and `scripts/generate-configs.sh` — the new agent needs to show up in
    every platform's persona roster.
 
@@ -90,5 +90,6 @@ testing requirements.
 
 - `scripts/check-parity.sh` — no drift between `shared/` and generated configs
 - `scripts/test-agents.sh` — if you touched an agent with a `tests/agents/` fixture
+- the `agent-eval` skill — if that fixture also has an `eval-rubric.md`, for the qualitative regression check
 - `scripts/check-context-budget.sh` — if you touched `context-engineer` or its output format
 - A `shared/agents/CHANGELOG.md` entry — if you touched any `shared/agents/*.md` behavior

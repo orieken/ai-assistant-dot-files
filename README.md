@@ -31,9 +31,8 @@ shared/                              <- single source of truth, edit here only
 ├── templates/                       <- tutorial/scaffold content, e.g. my-first-feature.md
 ├── ARCHITECTURE_RULES.md
 ├── DOMAIN_DICTIONARY.md
+├── TEAM_TOPOLOGY.md               <- Bounded Context -> team/type/interaction-mode registry (Skelton & Pais)
 └── platform-registry.json           <- tier/capability/format per platform
-
-TEAM_TOPOLOGY.md (repo root)         <- Bounded Context -> team/type/interaction-mode registry, read by architect and team-topology-check
 
         │  scripts/generate-configs.sh (reads shared/ + platform-registry.json)
         ▼
