@@ -118,3 +118,6 @@ delivery's agents: "No corroborating evidence this delivery — see docs/agent-m
 
 ## Standalone Mode
 Works entirely offline. Reads only local markdown files. No external services required.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

@@ -73,3 +73,6 @@ Safe ✅ / Unsafe ⚠️ [reason — DB migration state]
 
 ## Standalone Mode
 Pure reasoning and templates. No external tools required during active incident. All commands are standard git/pnpm/kubectl operations.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

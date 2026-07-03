@@ -37,3 +37,6 @@ A summary of generated files and a link to the new feature documentation.
 - Use `operationId` for naming if available; otherwise, use `[Method][Path]`.
 - Ensure all generated code adheres to the 30-line function limit.
 - Do not overwrite custom modifications in existing clients; use `.generated.ts/go` suffixes or separate folders.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

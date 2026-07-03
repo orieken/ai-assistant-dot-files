@@ -103,3 +103,6 @@ Write `.claude/feature-workspace/release-plan.md`:
 - If the git history contains commits that do not follow conventional commit format, flag them and ask the user to classify them before proceeding.
 - Release notes must never expose internal implementation details, security vulnerability specifics, or infrastructure credentials.
 - Always include a rollback plan. A release without a rollback plan is not ready.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

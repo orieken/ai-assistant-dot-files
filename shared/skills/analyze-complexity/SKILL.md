@@ -48,3 +48,6 @@ If errors are found, output a markdown list of violations:
 
 ## Standalone Mode
 If `check.sh` is unavailable or fails to execute, manually review the code using static analysis: Count the `if`, `else`, `for`, `while`, `switch` statements to estimate cyclomatic complexity. Count lines of code manually. 
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

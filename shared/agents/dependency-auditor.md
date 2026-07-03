@@ -129,3 +129,6 @@ Project: [project name from manifest]
 - If a vulnerability has no fix available, recommend a mitigation strategy (pin version, patch, replace, or accept risk with documented rationale).
 - License analysis must account for transitive dependencies, not just direct ones.
 - If `govulncheck`, `pip-audit`, or equivalent tools are not installed, fall back to manifest analysis and flag the missing tool as a setup recommendation.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

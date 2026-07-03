@@ -179,3 +179,6 @@ Trust boundaries crossed by this feature:
 - Do NOT re-run tests — that is QA's job. You verify security properties by reading code, not by executing it
 - If the feature has no auth, no user input, no external calls, and no sensitive data — say so explicitly and keep the report brief
 - Security theater (adding checks that don't actually prevent anything) is worse than no check — be precise about what each control actually prevents
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

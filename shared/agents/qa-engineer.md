@@ -116,3 +116,6 @@ Write `.claude/feature-workspace/qa-report.md`:
 - Run the full test suite after writing your tests to check for regressions
 - If tests can't pass because of environment issues (missing DB, service not running), write the tests anyway and note the issue in the report
 - Never skip a test just to make the suite green — fix the underlying issue or document why it can't be fixed now
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

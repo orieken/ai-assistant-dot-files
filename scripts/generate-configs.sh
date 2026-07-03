@@ -95,8 +95,10 @@ extract_agent_body() {
   # Agent files have a preamble line (referencing .claude/rules/*.md — a file reference Cursor can't
   # follow) before the frontmatter, then the frontmatter itself, then the actual persona body. Skip
   # everything through the second '---' delimiter; the always-apply rule .mdc files already cover the
-  # preamble's content, so it isn't lost, just not redundantly repeated per persona.
-  awk '/^---$/{delim++; next} delim==2{print}' "$file"
+  # preamble's content, so it isn't lost, just not redundantly repeated per persona. Stop counting
+  # delimiters once past the frontmatter so a literal '---' later in the body (a markdown horizontal
+  # rule, e.g. before the trailing attribution line) doesn't truncate the rest of the persona.
+  awk '/^---$/ && delim<2 {delim++; next} delim==2{print}' "$file"
 }
 
 testing_rules_body() {

@@ -95,3 +95,6 @@ HEALTHY (0 fails) | DEGRADED (warns only) | BROKEN (1+ fails)
 ## Standalone Mode
 `scripts/health-check.sh` is pure local filesystem operations — no external services required. The skill's
 judgment layer is local reasoning over the script's output.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

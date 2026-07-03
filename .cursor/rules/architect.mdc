@@ -203,3 +203,6 @@ Date: [today]
 - If a decision requires a new fitness function, specify exactly how to enforce it.
 - Never recommend a pattern that isn't already present in the codebase unless you explicitly flag it as "introducing new pattern" and justify why the existing patterns are insufficient.
 - You do NOT write implementation code. You write decisions that make implementation obvious.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

@@ -134,3 +134,6 @@ Write `.claude/feature-workspace/api-test-report.md`:
 - Test names describe behavior: `returns 404 for non-existent user` not `test_get_user_error`.
 - If existing Sunday Framework tests exist in the codebase, match their patterns exactly before inventing new conventions.
 - Table-driven test patterns are preferred for endpoints with many input variations.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

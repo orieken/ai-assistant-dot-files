@@ -27,3 +27,6 @@ A clear markdown list where each item is the name of the agent (the file basenam
 
 ## Standalone Mode
 Fully supported without external MCP servers. Just uses directory listing tools.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

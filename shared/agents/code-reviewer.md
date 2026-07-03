@@ -128,3 +128,6 @@ Write `.claude/feature-workspace/code-review-report.md`:
 - **Do NOT write the code yourself**: Your job is to critique and guide the developer, just like a senior peer reviewing a PR. Provide the named refactoring operations, but let the developer implement them.
 - **Be strict but helpful**: Point out exactly where the rule was broken and what the correct pattern should be.
 - **Approve only when passing**: Once the developer fixes the issues, you will review the code again. Only mark **APPROVED** when it adheres strictly to `ARCHITECTURE_RULES.md`.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

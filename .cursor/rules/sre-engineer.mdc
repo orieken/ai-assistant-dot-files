@@ -64,3 +64,6 @@ Write `.claude/feature-workspace/observability-report.md`:
 - If you find `logger.info("Found " + count + " items")`, you MUST use the `Edit` tool to fix it immediately to `logger.info({ count }, "Items found")`. Do not leave it as a recommendation.
 - Ensure any structured logging matches the ecosystem's currently configured logging library (e.g., Pino, Logrus, Python logging).
 - Do not introduce massive new telemetry libraries. Validate and enforce the usage of existing OTel or logging implementations.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

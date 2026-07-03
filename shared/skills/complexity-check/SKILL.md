@@ -61,3 +61,6 @@ Threshold: Cyclomatic complexity < 7 (ARCHITECTURE_RULES.md)
 
 ## Standalone Mode
 Runs external tools via the terminal or uses heuristic analysis via string processing / code reading.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

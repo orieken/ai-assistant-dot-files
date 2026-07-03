@@ -151,3 +151,6 @@ Write `.claude/feature-workspace/implementation-notes.md`:
 - Do NOT modify CI/CD configuration. That is the DevOps engineer's job.
 - If you discover the analysis is wrong or incomplete, note it in "Deviations" and proceed with your best judgment.
 - Run lint and existing tests before completing. Report results in your notes.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

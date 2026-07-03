@@ -97,3 +97,6 @@ Write `.claude/feature-workspace/devops-report.md`:
 - If you're uncertain about infrastructure, describe what's needed in notes rather than guessing
 - Always validate YAML syntax if editing CI files: `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"`
 - Match the existing deploy strategy — don't introduce new patterns (e.g., don't add Docker if the project deploys with systemd)
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

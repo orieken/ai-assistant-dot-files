@@ -63,3 +63,6 @@ Write `.claude/feature-workspace/data-engineering-notes.md`:
 - ALWAYS reject destructive migrations (`DROP`, `RENAME`).
 - If you find a destructive operation, rewrite the migration to use the Expand pattern (add new column) instead.
 - Leave the application layer implementation to the developer, but provide crystal clear instructions on the database access patterns they must use.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

@@ -28,3 +28,6 @@ A summary list of the executed changes, and a short recap of test passing/failin
 
 ## Standalone Mode
 Supported, relies on the ability to run shell commands to execute the test suite repeatedly.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

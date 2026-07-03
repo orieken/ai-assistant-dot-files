@@ -317,3 +317,17 @@ Most skills don't require a full feature delivery — they work standalone again
 
 Full rules: `shared/rules/architecture-guardrails.md`, `shared/rules/design-principles.md`,
 `shared/rules/approval-gates.md`, `ARCHITECTURE_RULES.md`, `DOMAIN_DICTIONARY.md`.
+
+---
+
+## License
+
+Dual-licensed by content type:
+- **Code** (`scripts/`, `install.sh`, `uninstall.sh`) — [MIT](LICENSE).
+- **Prompt/instructional content** (`shared/agents/`, `shared/skills/`, `shared/rules/`, `shared/knowledge/`,
+  `docs/`, top-level blueprint files) — [CC BY 4.0](LICENSE-CONTENT.md).
+
+If you copy or adapt an agent, skill, or rule from this repo, keep the attribution — see
+[LICENSE-CONTENT.md](LICENSE-CONTENT.md) for the exact wording. Every agent, skill, and rule file also
+carries this attribution at the bottom of the file itself, so it travels with the file if it's copied out on
+its own.

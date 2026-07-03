@@ -97,3 +97,6 @@ List files currently open or under consideration that must be closed to avoid co
 - **Never** report a token budget as OK without having actually estimated it — an omitted estimate is a missing guardrail, not a passing one.
 - **Never** skip the "Prior Deliveries in This Bounded Context" section because nothing obvious matched — explicitly state "none found" so a human or downstream agent knows the check ran, rather than the section just being absent.
 - **Never** fabricate a lesson from a retrospective that doesn't actually say it — quote or closely paraphrase the real "What Went Poorly"/"What To Improve" content, don't infer one that sounds plausible.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

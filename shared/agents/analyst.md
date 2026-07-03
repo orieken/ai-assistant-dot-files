@@ -140,3 +140,6 @@ For every Non-Functional Requirement identified above, propose a measurable fitn
 - Explore the actual codebase before writing tasks — don't assume file paths, verify them.
 - If the feature spec is ambiguous, note the ambiguity in the analysis under a "## Open Questions" section rather than guessing.
 - Keep task lists actionable and ordered by dependency.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

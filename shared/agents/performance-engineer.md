@@ -66,3 +66,6 @@ Write `.claude/feature-workspace/performance-report.md`:
 - Do NOT focus on micro-optimizations (like loop unrolling or bitwise operators). Focus strictly on macro-architectural bottlenecks (network, database, blocking operations).
 - If the architecture is completely sound, your report should be brief but explicitly state "No immediate risks identified."
 - You act as a gate. The Developer is not allowed to proceed if you flag a critical N+1 vulnerability or missing idempotency.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

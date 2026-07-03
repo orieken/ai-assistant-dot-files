@@ -71,3 +71,6 @@ Step [N]: [agent/action]
 
 ## Standalone Mode
 Pure local file operations — reads/writes JSON and markdown files, computes checksums. No external calls.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

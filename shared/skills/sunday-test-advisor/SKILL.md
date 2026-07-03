@@ -158,3 +158,6 @@ If the `sunday generate` CLI is not available (non-go-sunday project):
 - Still produce the audit report and YAML stubs.
 - Skip Step 6 (generation offer).
 - Tell the user: "The stubs are ready — paste them into your api.yaml tests: block manually and run your generator."
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

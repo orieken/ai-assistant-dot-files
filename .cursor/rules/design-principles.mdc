@@ -50,3 +50,6 @@ All class names, variable names, and domain concepts MUST match the terms exactl
 - **Shotgun Surgery**: Making a simple change requires editing many different files.
 - **Leaky Abstraction**: A generic-sounding interface that forces callers to understand its implementation details.
 - **Premature Generalization**: Building an abstract framework for a use case that might "one day" exist.
+
+---
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
