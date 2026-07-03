@@ -1,6 +1,6 @@
 ---
 name: context-engineer
-description: Optimizes the agent's context window by pruning unrelated files, identifying relevant Knowledge Items (KIs), and compiling a precise context manifest.
+description: Use PROACTIVELY before starting any task that touches 3+ files, a new feature area, or unfamiliar code — invoke this yourself, don't wait for the user to explicitly ask. Optimizes the agent's context window by pruning unrelated files, identifying relevant Knowledge Items (KIs), and compiling a precise context manifest.
 triggers:
   keywords: ["optimize-context", "prune-context", "context-engineering", "context", "manifest"]
   intentPatterns: ["/optimize-context", "Optimize my context", "Help me build context for *", "Clean up context"]
@@ -8,10 +8,15 @@ standalone: true
 ---
 
 ## When To Use
-Use this skill when:
-- You are about to start a new feature execution or a complex bug fix.
+**Use PROACTIVELY, not just on request** — self-invoke before:
+- Starting a new feature, a complex bug fix, or any task touching 3+ files.
+- Working in a codebase area you haven't already scoped this session.
 - The active context is crowded with unrelated files or terminal outputs.
-- You want to ensure you are aligning with the latest Knowledge Items (KIs) and Architecture Decision Records (ADRs) without loading unnecessary code.
+
+This applies outside `deliver-feature` too — an ad-hoc session ("fix this bug," "add this endpoint") gets
+no context engineering at all unless this skill decides to run itself. Don't wait for the user to say
+"optimize my context" — that phrasing is a fallback trigger for humans who know this skill exists, not the
+primary way it's supposed to fire.
 
 Do NOT use when:
 - Performing simple, single-file edits that do not require architectural planning.

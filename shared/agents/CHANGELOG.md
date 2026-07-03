@@ -36,6 +36,14 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-02 — Proactive self-invocation
+
+| Agent | Version | Change |
+|---|---|---|
+| context-engineer | 1.2.0 -> 1.3.0 | Description now says "Use PROACTIVELY before starting any task that touches 3+ files, a new feature area, or unfamiliar code" instead of only firing on explicit request — closes the gap where context engineering only ever applied inside `deliver-feature`, never in ad-hoc sessions. Additive framing change, no process/output format change |
+
+---
+
 ## 2026-07-02 — Initial versioning rollout
 All 24 agents in `shared/agents/` set to `1.0.0` — no prior version was tracked before this.
 

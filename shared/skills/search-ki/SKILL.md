@@ -19,16 +19,25 @@ KI corpus (`shared/knowledge/`, `.claude/knowledge/`) and `docs/adrs/`.
 2. `docs/adrs/*.md`
 
 ## Process
+This is judgment-based semantic search, not a grep — you're an LLM reading the corpus, not a regex engine.
+Tag/domain matching below is a *pre-filter* to keep the read-through cheap as the corpus grows, never the
+final relevance decision. A KI can be the right match even when it uses none of the query's words.
+
 1. **Parse the query** into candidate tags/domain/keywords. If the caller gave explicit tags (e.g. from
    context-engineer's bounded-context mapping), use those directly; otherwise extract likely tags from the
    free-text question.
-2. **Scan KI frontmatter** in both `shared/knowledge/` and `.claude/knowledge/` for `tags:` or `domain:`
-   matches. A KI matches if any candidate tag/domain overlaps.
-3. **Fall back to full-text grep** across KI bodies (not just frontmatter) if the tag/domain scan finds
-   nothing — a KI's body may use different wording than its own tags.
-4. **Scan `docs/adrs/`** the same way — ADRs aren't KIs but often answer "why did we choose X" questions a
+2. **Pre-filter cheaply**: scan KI frontmatter in `shared/knowledge/` and `.claude/knowledge/` for `tags:`/
+   `domain:` overlap with the candidates from step 1. If the corpus is small (roughly under ~30 KIs total),
+   skip this step and just read everything — the pre-filter exists to avoid reading a large corpus in full,
+   not to replace judgment on a small one.
+3. **Read the candidate KIs' full bodies** (not just frontmatter) and judge relevance by actual meaning —
+   a KI titled `subagent-isolation-is-a-hard-boundary` is the right answer to "why can't my agent see what
+   the last one did" even though neither phrase appears in the query. This is the step a plain grep can't
+   do; don't skip straight from tag-matching to "no match."
+4. **Read `docs/adrs/` the same way** — ADRs aren't KIs but often answer "why did we choose X" questions a
    KI search is really asking.
-5. **Rank results**: exact tag match > domain match > full-text body match. Cap at the 5 most relevant.
+5. **Rank by actual relevance to the question**, not by tag-match count — a KI with one matching tag but
+   directly on-point beats one with three matching tags that's tangential. Cap at the 5 most relevant.
 
 ## Output Format
 ```markdown
@@ -45,10 +54,16 @@ solution turns out to be reusable."]
 
 ## Guardrails
 - **Never** fabricate a match — if nothing in the corpus is actually relevant, say so plainly rather than
-  stretching a tenuous connection.
+  stretching a tenuous connection just because a tag happened to overlap.
 - **Read-only**: this skill never writes to `shared/knowledge/` or `.claude/knowledge/` — use `create-ki`
   for that.
 - Cap results at 5 — a long list defeats the point of a high-signal search.
+- **No embeddings/vector search, by design**: this framework's skills keep the intelligence in the markdown
+  and treat API calls as plumbing (see `SKILL_TEMPLATE.md`'s Standalone Mode guidance) — adding an
+  embeddings dependency for a corpus this size would trade a real architectural change for a problem lexical
+  search doesn't actually have yet. If the KI corpus grows into the hundreds and pre-filter-then-read stops
+  being affordable, that tradeoff is worth revisiting then, not now.
 
 ## Standalone Mode
-Pure local file reads (frontmatter parsing + grep). No external calls.
+Pure local file reads (frontmatter parsing for the pre-filter, full reads for judgment). No external calls,
+no embeddings API, no vector index to keep in sync.

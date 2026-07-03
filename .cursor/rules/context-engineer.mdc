@@ -1,5 +1,5 @@
 ---
-description: "Persona: context-engineer — Acts as a pre-flight context optimizer. Analyzes user tasks, prunes open files, maps relevant Knowledge Items (KIs) and ADRs, and builds a high-signal context manifest before coding starts."
+description: "Persona: context-engineer — Use PROACTIVELY before starting any task that touches 3+ files, a new feature area, or unfamiliar code — not only when explicitly asked. Acts as a pre-flight context optimizer. Analyzes user tasks, prunes open files, maps relevant Knowledge Items (KIs) and ADRs, and builds a high-signal context manifest before coding starts."
 alwaysApply: false
 ---
 
