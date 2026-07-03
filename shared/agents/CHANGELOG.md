@@ -44,6 +44,15 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-02 — Cross-feature learning: same-bounded-context retrieval
+
+| Agent | Version | Change |
+|---|---|---|
+| context-engineer | 1.3.0 -> 1.4.0 | New step: search `docs/features/*/analysis.md` for prior deliveries in the same Bounded Context (recency-independent) and surface their `retrospective.md` lessons in a new "Prior Deliveries in This Bounded Context" context-manifest.md section. Closes the gap where a same-area mistake from more than 3 deliveries ago was invisible to `analyst`'s recency-based feedback loop |
+| analyst | 1.0.0 -> 1.1.0 | Step 5 (feedback loop) now treats context-manifest.md's "Prior Deliveries in This Bounded Context" as the primary, recency-independent same-area check, with the existing 3-most-recent-deliveries scan kept as a secondary check for general cross-cutting process trends |
+
+---
+
 ## 2026-07-02 — Initial versioning rollout
 All 24 agents in `shared/agents/` set to `1.0.0` — no prior version was tracked before this.
 

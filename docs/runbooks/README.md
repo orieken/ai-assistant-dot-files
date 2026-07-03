@@ -62,5 +62,6 @@ Each runbook follows this structure:
 - [agent-workflows-and-context-engineering.md](agent-workflows-and-context-engineering.md) — internal mechanics of the multi-agent pipeline, hooks, and context engineering together
 - [adding-a-new-platform.md](adding-a-new-platform.md) — wiring a new AI tool into the `shared/` -> generated-config pipeline
 - [editing-agent-prompts.md](editing-agent-prompts.md) — versioning, changelog, and testing workflow for `shared/agents/` edits
+- [scaling-cross-feature-learning.md](scaling-cross-feature-learning.md) — when and how to replace `context-engineer`'s grep-based same-bounded-context lookup with a real index, once the feature archive has grown enough to need one
 
 General runbook summaries are also available in `/docs/RUNBOOKS.md`. As new individual runbooks are created, add them to this directory and link them here.

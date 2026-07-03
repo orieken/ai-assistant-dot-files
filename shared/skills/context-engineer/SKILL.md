@@ -50,10 +50,18 @@ searches `shared/knowledge/`, `.claude/knowledge/`, and `docs/adrs/` and ranks r
 that scan here. Separately, identify key interfaces/types that define the contract of the target component
 (that's a codebase lookup, not a KI search).
 
-### 4. Estimate the Token Budget
+### 4. Search Prior Deliveries in the Same Bounded Context (Recency-Independent)
+Grep `docs/features/*/analysis.md` for a `**Owning Context**` entry matching the Bounded Context from step 1.
+For every match with a `retrospective.md`, pull its "What Went Poorly"/"What To Improve" sections. This is
+deliberately independent of recency — a same-area feature from 20 deliveries ago still surfaces here, unlike
+`analyst`'s own feedback loop (which only reads the 3 *most recent* deliveries regardless of area). At small
+scale a direct grep is fine; once the archive grows past ~15-20 features, see
+`docs/runbooks/scaling-cross-feature-learning.md`.
+
+### 5. Estimate the Token Budget
 For each pinned file, estimate tokens (~line count × 8 chars/line ÷ 4 chars/token — a rough heuristic). Sum the total and compare against the consuming agent's tier budget (of a 200k-token context window): Analyst/Architect ≤60%, Developer ≤80%, Reviewer agents ≤40%. Flag `WARNING` if over budget and recommend specific cuts.
 
-### 5. Compile a Context Manifest
+### 6. Compile a Context Manifest
 Generate a concise `context-manifest.md` in the current feature workspace (e.g., `.claude/feature-workspace/context-manifest.md` or output directly). 
 
 ## Output Format
@@ -82,12 +90,16 @@ List reference files that establish the patterns:
 - [KI Name](file:///absolute/path/to/ki/artifact) -- [Summary of relevance]
 - [ADR Name](file:///absolute/path/to/adr) -- [Decision context]
 
-## 5. Prune Recommendations (To Close)
+## 5. Prior Deliveries in This Bounded Context
+- [Feature Name](docs/features/<name>/) -- [key lesson from its retrospective.md, or "no retrospective.md exists" if none]
+— or "No prior deliveries found in this bounded context" if none match
+
+## 6. Prune Recommendations (To Close)
 List files currently open that should be closed immediately:
 - `[ ]` [File Basename](file:///absolute/path/to/file)
 - `[ ]` [File Basename](file:///absolute/path/to/file)
 
-## 6. Token Budget
+## 7. Token Budget
 - **Estimated total tokens for pinned files**: ~<N>
 - **Target agent tier**: [Analyst/Architect: ≤60% | Developer: ≤80% | Reviewer: ≤40%] of a 200k-token context window
 - **Status**: OK | WARNING (exceeds tier budget — see cut recommendations below)
@@ -99,3 +111,5 @@ List files currently open that should be closed immediately:
 - **Limit line count**: Files over 500 lines must be referenced with specific line ranges.
 - **Rule alignment**: Never recommend files that violate Clean Architecture dependency boundaries (e.g. loading infrastructure database models in the Domain context manifest).
 - **Never** report a token budget as OK without having actually estimated it.
+- **Never** skip the "Prior Deliveries" section silently — state "none found" explicitly so it's clear the check ran.
+- **Never** fabricate a lesson from a retrospective that doesn't actually say it.
