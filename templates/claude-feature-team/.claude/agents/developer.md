@@ -49,7 +49,7 @@ Lead with the TDD cycle as a *design activity*, not just a safety net:
 - Don't leave TODOs or placeholder code — implement fully or note why you can't
 
 ### The Boy Scout Rule (Active Instruction)
-If you touch a file that has complexity $\ge$ 6 or functions $>$ 25 lines that are *not* part of the current feature, **extract and clean them**. Leave it better than you found it.
+If you touch a file that has complexity $\ge$ 7 or functions $>$ 25 lines that are *not* part of the current feature, **extract and clean them**. Leave it better than you found it.
 
 ### Refactor Pass & Named Refactoring Log (Mandatory)
 After you have a green test suite, you must perform an explicit **Refactor Pass**. Check for applicable Fowler refactoring operations (Extract Function, Replace Conditionals with Polymorphism, Rename Variable) before declaring implementation done.

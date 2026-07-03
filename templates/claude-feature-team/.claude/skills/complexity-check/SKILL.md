@@ -21,7 +21,9 @@ Triggered when the user asks for a complexity analysis of a file, directory, or 
    - Python: `radon cc [file] -s` or `flake8 --max-complexity=6 [file]`
    - Go: `gocyclo -over 6 [file]`
    - Java: manual heuristics only — recommend Checkstyle/SonarQube to user
-3. For each function exceeding complexity 6: name the smell, name the Fowler operation, estimate effort (trivial / one session / needs design discussion)
+
+   Note: these tools take a *max allowed* value (6), which enforces the project-wide rule of "cyclomatic complexity < 7" (ARCHITECTURE_RULES.md, CLAUDE.md) — a function failing at complexity 7 is the same threshold as one exceeding the tool's `6`.
+3. For each function exceeding the `< 7` threshold (i.e. complexity 7 or higher): name the smell, name the Fowler operation, estimate effort (trivial / one session / needs design discussion)
 4. Rank findings by impact: highest complexity first, then by call graph depth
 5. Produce Complexity Report
 
@@ -31,7 +33,7 @@ Triggered when the user asks for a complexity analysis of a file, directory, or 
 ```markdown
 # Complexity Report: [target]
 
-Threshold: Cyclomatic complexity > 6 (ARCHITECTURE_RULES.md)
+Threshold: Cyclomatic complexity < 7 (ARCHITECTURE_RULES.md)
 
 ## Summary
 - Files scanned: N

@@ -106,7 +106,7 @@ Follow **Arrange / Act / Assert** in every test. One concept per test.
 // Models: class with readonly fields and computed getters
 // Factories: static methods on a dedicated Factory class
 // Tests: jest / vitest with jest.Mocked<T> fixtures
-// Complexity tool: eslint complexity rule, max 6
+// Complexity tool: eslint complexity rule, max 6 (max = highest passing value, so 6 enforces the "< 7" rule above)
 ```
 
 ## Go — Quick Reference
