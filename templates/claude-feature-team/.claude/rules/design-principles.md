@@ -28,7 +28,7 @@ In priority order:
 
 ## 4. The Boy Scout Rule
 **Leave the camp better than you found it.**
-If you touch a file that has structural issues, complexity $\ge$ 6, or functions $>$ 25 lines, extract and clean them up *within the same commit*. Do not leave messes for the next person.
+If you touch a file that has structural issues, complexity $\ge$ 7, or functions $>$ 25 lines, extract and clean them up *within the same commit*. Do not leave messes for the next person.
 
 ## 5. Naming Standards
 - **Intention-Revealing Names**: Stop using `process`, `handle`, `manage`, `data`, `info`. Be specific.

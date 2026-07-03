@@ -137,7 +137,7 @@ Evolutionary architecture requires continuous validation. **Fitness Functions** 
 Every significant architectural decision should produce a fitness function to ensure the constraint isn't violated over time.
 
 Examples relevant to the Saturday/Sunday ecosystem:
-1. **Cyclomatic Complexity Limits**: `eslint complexity rule (max 6)` fails the build if code is too complex to maintain.
+1. **Cyclomatic Complexity Limits**: `eslint complexity rule (max 6)` fails the build if code is too complex to maintain. (eslint's `max` option is the highest *passing* value — `6` is what enforces this document's `< 7` rule from Section IV.)
 2. **Dependency Direction**: `eslint-plugin-boundaries` ensures that the Domain layer (Entities) never imports from the Infrastructure layer.
 3. **Test Coverage Thresholds**: `nyc` or `jest --coverage` fails the build if domain logic drops below 85% test coverage.
 4. **Performance Thresholds**: Playwright tests that fail if critical UI workflows (like login or checkout) take longer than 2000ms.
