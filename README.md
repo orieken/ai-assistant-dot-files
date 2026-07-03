@@ -24,7 +24,7 @@ For deeper detail beyond this README:
 ```
 shared/                              <- single source of truth, edit here only
 ├── agents/        (24 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
-├── skills/        (48 skills)       <- .md with trigger keywords/patterns
+├── skills/        (50 skills)       <- .md with trigger keywords/patterns
 ├── rules/                           <- architecture-guardrails.md, design-principles.md, approval-gates.md
 ├── contracts/                       <- required-section contracts for pipeline agent handoffs
 ├── knowledge/                       <- portable Knowledge Items (KIs)
@@ -32,6 +32,8 @@ shared/                              <- single source of truth, edit here only
 ├── ARCHITECTURE_RULES.md
 ├── DOMAIN_DICTIONARY.md
 └── platform-registry.json           <- tier/capability/format per platform
+
+TEAM_TOPOLOGY.md (repo root)         <- Bounded Context -> team/type/interaction-mode registry, read by architect and team-topology-check
 
         │  scripts/generate-configs.sh (reads shared/ + platform-registry.json)
         ▼
@@ -145,7 +147,7 @@ Full definitions in `shared/agents/`; versions tracked in `shared/agents/CHANGEL
 
 ---
 
-## Skill Catalog (48)
+## Skill Catalog (50)
 
 Full definitions in `shared/skills/<name>/SKILL.md`, including exact trigger keywords/intent patterns.
 Grouped by what they're for:
@@ -159,6 +161,7 @@ Grouped by what they're for:
 | `pipeline-trace` | "How long did \* take", ad-hoc single-run timing/iteration questions |
 | `pipeline-retrospective` | Cross-delivery trend analysis — is an agent getting slower or more retried over time |
 | `agent-scorecard` | Monthly quality scoring per agent (security TPR, first-pass acceptance, completeness, fitness coverage) |
+| `agent-eval` | Acts as an agent against its `tests/agents/` fixture and grades the output against a qualitative rubric — the automated, LLM-as-judge half of prompt regression testing |
 | `retrospective` | "How did \* go?" — single-delivery narrative, auto-invoked every 5th delivery |
 | `extract-lessons` | Cross-delivery pattern extraction — recurring findings that should become rules/prompt changes/KIs |
 | `context-audit` | Context waste analysis — unused pins, duplicates, unconstrained large reads |
@@ -181,6 +184,7 @@ Grouped by what they're for:
 | `refactor-to-pattern` | Rewriting procedural code into a named GoF/Enterprise pattern |
 | `check-ubiquitous-language` | Flags synonym drift against `DOMAIN_DICTIONARY.md` |
 | `verify-dependencies` | Clean Architecture import-boundary checks |
+| `team-topology-check` | Flags a stale Collaboration mode or a bypassed Platform team at a Bounded Context crossing, per `TEAM_TOPOLOGY.md` |
 | `review-pr` | Coordinates code-reviewer + security-reviewer + accessibility-engineer on a PR |
 
 ### Testing

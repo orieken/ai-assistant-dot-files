@@ -139,7 +139,9 @@ If you touch a file that has structural issues, complexity $\ge$ 7, or functions
 All class names, variable names, and domain concepts MUST match the terms exactly as defined in `DOMAIN_DICTIONARY.md`.
 
 ## 7. Anti-Pattern Radar
-- **Distributed Monolith**: Microservices that communicate synchronously and break together.
+- **Distributed Monolith**: Microservices that communicate synchronously and break together. The same shape
+  can appear at the team level — see `TEAM_TOPOLOGY.md` and the `team-topology-check` skill for a
+  Conway's-Law-flavored version of this check.
 - **Anemic Domain Model**: Domain entities have only getters/setters; all logic is in "Service" classes.
 - **God Object**: A class that knows too much or does too much.
 - **Shotgun Surgery**: Making a simple change requires editing many different files.

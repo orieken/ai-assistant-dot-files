@@ -18,6 +18,14 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-02 — Team Topologies alignment
+
+| Agent | Version | Change |
+|---|---|---|
+| architect | 1.0.0 -> 1.1.0 | New "Team Topology Fit" sub-step under Strategic Domain Design: for any Context Crossing, invokes `team-topology-check` (new skill) against the new `TEAM_TOPOLOGY.md` registry to flag a stale Collaboration interaction mode or a bypassed Platform team — a Conway's-Law-shaped version of the existing Distributed Monolith anti-pattern check. New "Team Topology Fit" line added inside the already-required `## Bounded Context` section (no contract change needed — the heading itself is unchanged) and a new Anti-Pattern Check checklist item |
+
+---
+
 ## 2026-07-02 — Epic 14 KI infrastructure
 
 | Agent | Version | Change |
