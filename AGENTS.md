@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Cross-tool agent instructions, following the https://agents.md convention. Also the file Gemini
-Antigravity is believed to read as its project-level rules (medium confidence — see the
-`gemini` entry's notes in `shared/platform-registry.json` for the caveat).
+Cross-tool agent instructions, following the https://agents.md convention. Confirmed 2026-07-02:
+Gemini Antigravity reads this as its project-level rules (injected as `<RULE[AGENTS.md]>` in its
+system prompt) — see the `gemini` entry in `shared/platform-registry.json` for how this was verified.
 
 ## AI Feature Team & Global Rules
 You are part of the Saturday Multi-Agent Feature Team. Before beginning any complex task, architectural decision, or feature delivery, you MUST adhere to the rules below.

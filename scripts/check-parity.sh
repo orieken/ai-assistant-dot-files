@@ -146,7 +146,6 @@ echo ""
 echo "--- Tier 3 system prompts ---"
 TIER3_FILES=(
   ".github/copilot-instructions.md:Copilot"
-  ".gemini/antigravity/instructions.md:Gemini"
   ".openai.md:OpenAI"
 )
 
@@ -179,7 +178,7 @@ for scoped_file in "testing" "go-backend" "vue-frontend"; do
 done
 
 echo ""
-echo "--- AGENTS.md (cross-tool convention, also read by Gemini Antigravity per current research) ---"
+echo "--- AGENTS.md (cross-tool convention, confirmed read by Gemini Antigravity 2026-07-02) ---"
 if [[ -f "$REPO_DIR/AGENTS.md" ]]; then
   check_concept_coverage "$REPO_DIR/AGENTS.md" "AGENTS.md"
   check_agent_roster "$REPO_DIR/AGENTS.md" "AGENTS.md"

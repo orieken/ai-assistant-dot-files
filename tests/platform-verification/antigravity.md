@@ -1,81 +1,64 @@
 # Gemini Antigravity Verification Protocol
 
-**This is the important one.** Everything generated for Antigravity is based on secondary sources (a Google
-codelab, not primary reference docs — the official `antigravity.google/docs` page didn't return usable
-content when fetched), so this protocol is designed to figure out which of the four generated/symlinked
-artifacts actually gets read, not just confirm a single expected behavior. Please run all four tests if you
-can — partial "it kind of worked" results are exactly the diagnostic signal needed here.
+**Update 2026-07-02: Tests 1-4 below are confirmed** — see
+[results/antigravity-2026-07-02.md](results/antigravity-2026-07-02.md) for the full report. Kept here for
+regression testing after future changes, and because one real gap remains open (Test 5).
 
-## What was generated, and why each exists
-| Artifact | Path | Confidence |
+## What was generated, and confirmed status
+| Artifact | Path | Status |
 |---|---|---|
-| Legacy instructions file | `.gemini/antigravity/instructions.md` | This is what the framework generated *before* this investigation — kept as a fallback |
-| Cross-tool agents file | `AGENTS.md` (repo root) | Medium — secondary sources say Antigravity reads this as its project rules file |
-| Symlinked skills | `.agents/skills/` -> `shared/skills/` | Medium — a codelab described `.agents/skills/<name>/SKILL.md` as Antigravity's skill format, which looks structurally identical to this repo's own `SKILL.md` convention |
-| Symlinked rules | `.agents/rules/` -> `shared/rules/` | Medium — same codelab, less detail given |
-
-Note: `.agents/skills/` and `.agents/rules/` are only created by `install.sh --project`/`--global`, not
-present in this repo's own root (they're an install-time artifact, not a generated-and-committed one — see
-`docs/MIGRATION.md`'s convention). **Run `./install.sh --project /path/to/a/scratch/dir --platform gemini`
-first** (or `--global` if you're comfortable symlinking into `~/.agents/`), then open *that* directory in
-Antigravity — not this repo directly — unless you also want to test from `~/.gemini/` conventions.
+| ~~Legacy instructions file~~ | ~~`.gemini/antigravity/instructions.md`~~ | **Confirmed NOT read (2026-07-02). Removed.** |
+| Cross-tool agents file | `AGENTS.md` (repo root) | **Confirmed read** — injected as `<RULE[AGENTS.md]>` in the system prompt |
+| Skills (global) | `~/.gemini/config/skills/` -> `shared/skills/` (via `install.sh --global`) | **Confirmed** — this is where skills actually loaded from in the 2026-07-02 test |
+| Skills (project) | `.agents/skills/` -> `shared/skills/` (via `install.sh --project`) | **Not yet exercised** — didn't exist at session start in the 2026-07-02 test, so it fell back to the global root. See Test 5. |
+| Rules (project) | `.agents/rules/` -> `shared/rules/` | **Not yet exercised directly** — `AGENTS.md` already carries rules content, so this may be redundant; not contradicted either |
 
 ## Test 1 — Does it read AGENTS.md?
-With the installed directory open in Antigravity, start a new agent session and ask:
+**CONFIRMED 2026-07-02.** With the installed directory open in Antigravity, start a new agent session and ask:
 
 > What are the approval gates defined in this project's rules?
 
-**Expected if AGENTS.md is read**: it should list the gates (commits, deploys, migrations, external API
-calls) — `AGENTS.md` inlines all of `shared/rules/approval-gates.md`.
+**Expected and observed**: lists all 8 gates, matching `shared/rules/approval-gates.md` exactly.
 
 ## Test 2 — Does it read the legacy instructions.md?
-Ask the same question a different way:
+**CONFIRMED NOT READ, 2026-07-02** — the file has been removed from generation. Skip this test on future runs
+unless verifying the removal didn't regress anything.
 
-> Does this project have a file at .gemini/antigravity/instructions.md, and if so, what does it say about
-> approval gates?
-
-**Expected if the legacy path is read**: same content as Test 1, sourced from the other file. If Test 1
-already worked, this tells us whether *both* are being read (redundant but harmless) or just one.
-
-## Test 3 — Does it recognize skills?
-Ask:
+## Test 3 — Does it recognize and invoke skills?
+**CONFIRMED 2026-07-02**, via the global root. Ask:
 
 > What skills or capabilities are available to you in this project?
 
-**Expected if `.agents/skills/` is recognized**: Antigravity should list some subset of the 48 skills from
-`shared/skills/` (e.g. `deliver-feature`, `complexity-check`, `threat-model`) using their `name`/`description`
-frontmatter — the same format Claude Code's skills use. If it lists nothing or says it has no project-level
-skills, the symlink likely isn't being picked up, or Antigravity's actual skill format differs from what the
-codelab described.
-
-If it does recognize skills, try invoking one directly:
+**Observed**: listed all 48 skills correctly (e.g. `deliver-feature`, `complexity-check`, `threat-model`).
 
 > Run the complexity-check skill against tests/platform-verification/fixtures/sample.go
 
-**Expected**: it should follow `shared/skills/analyze-complexity/SKILL.md`'s process (or `complexity-check`'s,
-whichever name it resolves) rather than just doing a generic ad-hoc review.
+**Observed**: genuinely executed `analyze-complexity`'s actual process (heuristic complexity/LOC evaluation
+against the real thresholds), not a generic ad-hoc review.
 
-## Test 4 — Does it recognize rules?
-Open `tests/platform-verification/fixtures/sample.go` (copy it into the installed directory if needed) and
-ask:
+## Test 4 — Does it recognize rules on a fixture?
+**CONFIRMED 2026-07-02.** Open `tests/platform-verification/fixtures/sample.go` and ask:
 
 > Review this file for issues.
 
-**Expected if `.agents/rules/` is read**: flags on the same issues as the Cursor/Copilot protocols (typed
-interfaces, parameterized queries, timeouts, error handling) — sourced from `shared/rules/` content.
+**Observed**: flagged the Clean Architecture dependency violation, missing HTTP timeout, `interface{}`
+instead of a typed return, swallowed errors, and the SQL injection risk — all five planted issues.
+
+## Test 5 — Does project-level `.agents/skills/` work when it exists from the start? (OPEN)
+The one thing 2026-07-02's test didn't confirm: whether `.agents/skills/`/`.agents/rules/` (the
+**project**-scoped convention, as opposed to the global root that was actually exercised) works when present
+*before* Antigravity's session starts.
+
+1. Run `./install.sh --project /path/to/a/fresh/scratch/dir --platform gemini` **first**, confirming
+   `.agents/skills/` and `.agents/rules/` exist in that directory before you open it.
+2. Open that directory fresh in Antigravity (not this repo, and not a directory that already had a session
+   running before the install completed).
+3. Repeat Test 3's questions. If it lists skills from `.agents/skills/` specifically (rather than falling
+   back to the global root, if that's even distinguishable), that confirms the project-scoped path too.
 
 ## Report back
-This is the one where "none of it worked" or "only AGENTS.md worked, not skills" is genuinely useful
-information, not a failure — it tells us whether to keep the current hybrid approach, simplify to just
-`AGENTS.md`, or investigate further.
-
 ```
-- [ ] Test 1 (AGENTS.md): approval gates listed? Y/N
-- [ ] Test 2 (legacy instructions.md): also read, or only AGENTS.md, or neither? ___
-- [ ] Test 3 (skills recognized): did it list any shared/skills/ entries? Y/N — which ones?
-- [ ] Test 3 (skill invocation): did invoking one actually follow that skill's process? Y/N
-- [ ] Test 4 (rules recognized): flagged sample.go issues? Y/N — which ones?
+- [ ] Test 5 (project-level skills): confirmed working from session start? Y/N
 - Antigravity version used: ___
-- Installed via --project or --global: ___
 - Anything unexpected: ___
 ```

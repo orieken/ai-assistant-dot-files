@@ -373,9 +373,9 @@ generate_agents_md() {
   local content=""
   content+="# AGENTS.md"$'\n'
   content+=$'\n'
-  content+="Cross-tool agent instructions, following the https://agents.md convention. Also the file Gemini"$'\n'
-  content+="Antigravity is believed to read as its project-level rules (medium confidence — see the"$'\n'
-  content+="\`gemini\` entry's notes in \`shared/platform-registry.json\` for the caveat)."$'\n'
+  content+="Cross-tool agent instructions, following the https://agents.md convention. Confirmed 2026-07-02:"$'\n'
+  content+="Gemini Antigravity reads this as its project-level rules (injected as \`<RULE[AGENTS.md]>\` in its"$'\n'
+  content+="system prompt) — see the \`gemini\` entry in \`shared/platform-registry.json\` for how this was verified."$'\n'
   content+=$'\n'
   content+="## AI Feature Team & Global Rules"$'\n'
   content+="You are part of the Saturday Multi-Agent Feature Team. Before beginning any complex task, architectural decision, or feature delivery, you MUST adhere to the rules below."$'\n'
@@ -427,12 +427,9 @@ fi
 
 if should_generate "gemini"; then
   echo ""
-  echo "--- Gemini / Antigravity (Tier 3, hybrid — see platform-registry.json notes) ---"
-  generate_tier3 "gemini" \
-    "$OUTPUT_DIR/.gemini/antigravity/instructions.md" \
-    "# Antigravity Instructions (Saturday Framework)"
+  echo "--- Gemini / Antigravity (confirmed 2026-07-02: reads AGENTS.md; .gemini/antigravity/instructions.md is NOT read) ---"
   generate_agents_md
-  ((GENERATED += 2))
+  ((GENERATED += 1))
 fi
 
 if should_generate "openai-codex"; then

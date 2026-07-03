@@ -85,7 +85,7 @@
     {
       "name": "gemini",
       "tier": 3,
-      "tierLabel": "System Prompt (hybrid — see notes)",
+      "tierLabel": "System Prompt (AGENTS.md) + real skill invocation",
       "capabilities": {
         "agents": false,
         "skills": true,
@@ -94,16 +94,16 @@
         "subAgentOrchestration": false
       },
       "configPaths": {
-        "systemPrompt": ".gemini/antigravity/instructions.md",
         "agentsFile": "AGENTS.md",
-        "skills": ".agents/skills/",
-        "rules": ".agents/rules/",
+        "skillsGlobal": "~/.gemini/config/skills/",
+        "skillsProject": ".agents/skills/",
+        "rulesProject": ".agents/rules/",
         "globalRules": "~/.gemini/GEMINI.md"
       },
       "format": "markdown",
-      "installStrategy": "hybrid — generate-inline for systemPrompt/agentsFile, symlink for skills/rules",
+      "installStrategy": "generate-inline for AGENTS.md, symlink for skills (project or global depending on install mode)",
       "globalConfigDir": "~/.gemini/",
-      "notes": "MEDIUM CONFIDENCE (2026-07): secondary sources (a Google codelab, not primary reference docs — the official antigravity.google/docs page didn't return usable content via fetch) suggest Antigravity primarily reads AGENTS.md (project root) and ~/.gemini/GEMINI.md (global), and supports directory-based skills at .agents/skills/<name>/SKILL.md — a format that looks compatible with this repo's own shared/skills/ convention. Kept generating the original .gemini/antigravity/instructions.md as a harmless fallback in case that path is also read. Verify locally with the actual tool installed before fully trusting this; the previous Tier-3-only treatment may turn out to have been closer to correct."
+      "notes": "CONFIRMED 2026-07-02 via tests/platform-verification/antigravity.md (Antigravity v2.1.1, --project install): AGENTS.md is read and injected as `<RULE[AGENTS.md]>` in the system prompt — confirmed by asking it to list approval gates, which matched shared/rules/approval-gates.md exactly. The previously-generated .gemini/antigravity/instructions.md is CONFIRMED NOT READ — removed entirely (was speculative, generated before this verification). Skills ARE recognized and genuinely invoked (not just described) — running complexity-check against a fixture correctly applied the actual complexity/LOC thresholds. In this test .agents/skills/ didn't exist yet at session start, so skills loaded from the global root ~/.gemini/config/skills/ instead (a path a Google codelab also named as the global scope) — install.sh now symlinks shared/skills/ there for --global installs. Project-level .agents/skills/ and .agents/rules/ (used for --project installs) were NOT directly exercised by this test — kept since nothing confirmed so far contradicts them, but not yet verified the way AGENTS.md and the global skills path are. subAgentOrchestration/hooks remain unconfirmed either way — no evidence for or against."
     },
     {
       "name": "openai-codex",

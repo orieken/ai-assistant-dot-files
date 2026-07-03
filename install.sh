@@ -162,18 +162,26 @@ should_install() {
 
 install_antigravity() {
   log ""
-  log "--- Gemini Antigravity (skills + rules symlinks — medium confidence, see platform-registry.json) ---"
+  log "--- Gemini Antigravity (confirmed 2026-07-02 via tests/platform-verification/antigravity.md) ---"
 
-  local dest_root
   if [[ "$MODE" == "global" ]]; then
-    dest_root="$HOME"
+    # Confirmed: Antigravity's global skills root is ~/.gemini/config/skills/ — NOT ~/.agents/skills/
+    # (that was an earlier, unconfirmed guess). Global rules use a single ~/.gemini/GEMINI.md file per
+    # secondary-source research, not yet confirmed the way the skills path and AGENTS.md have been —
+    # left unhandled here rather than generating unconfirmed content.
+    if ! $DRY_RUN; then mkdir -p "$HOME/.gemini/config" 2>/dev/null || true; fi
+    link_or_copy "$SHARED_DIR/skills" "$HOME/.gemini/config/skills"
   else
-    dest_root="$TARGET_DIR"
+    # Confirmed: project-level AGENTS.md is read for rules (generated separately, see
+    # generate_agents_md in scripts/generate-configs.sh). Project-level .agents/skills/ and
+    # .agents/rules/ are the documented convention but weren't directly exercised by the 2026-07-02
+    # test (no .agents/ existed at session start, so it fell back to the global skills root) — kept
+    # since they match the codelab's documented project-scope convention and don't contradict anything
+    # confirmed so far.
+    if ! $DRY_RUN; then mkdir -p "$TARGET_DIR/.agents" 2>/dev/null || true; fi
+    link_or_copy "$SHARED_DIR/skills" "$TARGET_DIR/.agents/skills"
+    link_or_copy "$SHARED_DIR/rules" "$TARGET_DIR/.agents/rules"
   fi
-
-  mkdir -p "$dest_root/.agents" 2>/dev/null || true
-  link_or_copy "$SHARED_DIR/skills" "$dest_root/.agents/skills"
-  link_or_copy "$SHARED_DIR/rules" "$dest_root/.agents/rules"
 }
 
 install_claude_code() {
@@ -182,13 +190,13 @@ install_claude_code() {
 
   if [[ "$MODE" == "global" ]]; then
     local claude_dir="$HOME/.claude"
-    mkdir -p "$claude_dir" 2>/dev/null || true
+    if ! $DRY_RUN; then mkdir -p "$claude_dir" 2>/dev/null || true; fi
     link_or_copy "$SHARED_DIR/agents" "$claude_dir/agents"
     link_or_copy "$SHARED_DIR/skills" "$claude_dir/skills"
     link_or_copy "$SHARED_DIR/rules" "$claude_dir/rules"
   else
     local claude_dir="$TARGET_DIR/.claude"
-    mkdir -p "$claude_dir" 2>/dev/null || true
+    if ! $DRY_RUN; then mkdir -p "$claude_dir" 2>/dev/null || true; fi
     link_or_copy "$SHARED_DIR/agents" "$claude_dir/agents"
     link_or_copy "$SHARED_DIR/skills" "$claude_dir/skills"
     link_or_copy "$SHARED_DIR/rules" "$claude_dir/rules"

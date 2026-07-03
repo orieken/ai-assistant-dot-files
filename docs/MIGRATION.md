@@ -36,7 +36,7 @@ shared/
 ARCHITECTURE_RULES.md            <- now a symlink to shared/ARCHITECTURE_RULES.md
 DOMAIN_DICTIONARY.md             <- now a symlink to shared/DOMAIN_DICTIONARY.md
 .cursor/rules/*.mdc, .windsurfrules, .github/copilot-instructions.md,
-.gemini/antigravity/instructions.md, .openai.md   <- now generated from shared/, never hand-edited
+.github/instructions/*.instructions.md, AGENTS.md, .openai.md   <- now generated from shared/, never hand-edited
 ```
 
 ## Is this a breaking change for me?

@@ -46,15 +46,20 @@ of three tiers, and `DOMAIN_DICTIONARY.md` defines exactly what each tier means:
 |---|---|---|---|---|
 | **1** | Full | Agents with tool access, autonomous multi-step process, pipeline participation, hooks | Claude Code | **Agent** |
 | **2** | Personas + Rules | Persona-level context shaping + rule files, no native orchestration | Cursor, Windsurf, GitHub Copilot | **Persona** |
-| **3** | System Prompt (Gemini: hybrid, medium confidence) | Single instruction file, everything inlined | Gemini/Antigravity, OpenAI/Codex | **Persona** |
+| **3** | System Prompt (rules); real skill invocation confirmed on top | Single rules file (`AGENTS.md`), plus genuine skill execution — not just description | Gemini/Antigravity, OpenAI/Codex | **Persona** |
 
 Copilot moved from Tier 3 to Tier 2 in 2026-07 after confirming (via GitHub's own docs) that it supports
 path-scoped `.github/instructions/*.instructions.md` files alongside the repo-wide instructions file — the
-same "multiple rule files, no orchestration" shape Cursor/Windsurf already had. Gemini/Antigravity's tier is
-provisional: secondary-source research suggests it may actually read `AGENTS.md` + `.agents/skills/` +
-`.agents/rules/` rather than the single inlined file this framework generates for it — see
-`shared/platform-registry.json`'s `gemini` entry for the full caveat. Both the old and new mechanisms are
-generated/symlinked so whichever turns out correct, it works.
+same "multiple rule files, no orchestration" shape Cursor/Windsurf already had.
+
+Gemini/Antigravity was live-tested 2026-07-02 (see `tests/platform-verification/antigravity.md` and its
+results file) rather than left on secondary-source guesswork: it reads `AGENTS.md` for rules (confirmed —
+asking it to list approval gates returned an exact match against `shared/rules/approval-gates.md`), and it
+genuinely *invokes* skills rather than just describing them (asking it to run `complexity-check` against a
+fixture correctly applied the real thresholds). The framework's previous best guess —
+`.gemini/antigravity/instructions.md` — was confirmed **not** read at all and has been removed. Skills
+loaded from `~/.gemini/config/skills/` (the global root) in this test since project-level `.agents/skills/`
+didn't exist yet at session start; that project-level path itself remains unconfirmed, not contradicted.
 
 The distinction matters because it's enforced in the generated output, not just documented: `Persona` is a
 context frame with no tool access and no autonomous workflow (see `DOMAIN_DICTIONARY.md`'s Entity table) —
@@ -77,11 +82,13 @@ actually runs multi-step orchestration with tool access.
     `.github/instructions/{testing,go-backend,vue-frontend}.instructions.md`, each with an `applyTo`
     frontmatter field (comma-separated glob string, not an array like Cursor's `globs`) — both coexist and
     combine per GitHub's docs.
-- **Tier 3 (Gemini, OpenAI)**: generate-inline, single file. `generate_tier3()` concatenates rules +
-  craftsmanship section + persona roster into one instruction file per platform. Gemini additionally gets a
-  generated root `AGENTS.md` (the [agents.md](https://agents.md) cross-tool convention) and, via `install.sh`,
-  symlinked `.agents/skills/` -> `shared/skills/` and `.agents/rules/` -> `shared/rules/` — the same
-  treatment Tier 1 gets, in case Antigravity's real skill format turns out to be as compatible as it looks.
+- **Tier 3 (OpenAI)**: generate-inline, single file. `generate_tier3()` concatenates rules + craftsmanship
+  section + persona roster into one instruction file.
+- **Gemini/Antigravity**: generates root `AGENTS.md` only (the [agents.md](https://agents.md) cross-tool
+  convention — confirmed read, see above). `install.sh` symlinks `shared/skills/` to
+  `~/.gemini/config/skills/` on a `--global` install (confirmed global skills root) or to
+  `.agents/skills/`/`shared/rules/` to `.agents/rules/` on a `--project` install (documented project-scope
+  convention, not yet directly exercised by testing).
 
 ---
 
