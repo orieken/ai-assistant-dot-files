@@ -68,7 +68,7 @@
 - [x] For Gemini: generate persona blocks in `.gemini/antigravity/instructions.md` — verified genuinely present (not a repeat of the Cursor false-positive), a full "Persona Roster" section already existed
 - [x] For Copilot: generate persona reference section in `copilot-instructions.md` — same verification, genuinely present
 - [x] Include agent roster summary in all Tier 2/3 configs ("these are the specialists available — invoke by name")
-- [ ] Test: verify each platform's AI tool acknowledges the persona/agent roster when prompted — still requires live tools (Cursor IDE, Copilot, Gemini Antigravity) not available in this sandboxed session; cannot be faked or simulated meaningfully
+- [ ] Test: verify each platform's AI tool acknowledges the persona/agent roster when prompted — **Cursor confirmed 2026-07-02** (see `tests/platform-verification/results/cursor-2026-07-02.md`): always-apply rules, glob-triggered Auto Attach, and manual `@developer.mdc` persona invocation all behave correctly, verified against actual rule/roster content, not just plausible-sounding output. Copilot and Antigravity still pending — protocols ready at `tests/platform-verification/{copilot,antigravity}.md`
 
 ---
 
