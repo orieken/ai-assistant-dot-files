@@ -56,10 +56,10 @@ check_agent_roster() {
     local agent_name
     agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
     if [[ -z "$agent_name" ]]; then continue; fi
-    ((total_agents++))
+    ((total_agents++)) || true
 
     if ! grep -q "$agent_name" "$file" 2>/dev/null; then
-      ((missing_agents++))
+      ((missing_agents++)) || true
     fi
   done
 

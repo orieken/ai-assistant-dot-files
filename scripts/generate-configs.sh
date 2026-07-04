@@ -414,7 +414,7 @@ fi
 
 if should_generate "windsurf"; then
   generate_windsurfrules
-  ((GENERATED++))
+  ((GENERATED++)) || true
 fi
 
 if should_generate "github-copilot"; then
@@ -440,7 +440,7 @@ if should_generate "openai-codex"; then
   generate_tier3 "openai-codex" \
     "$OUTPUT_DIR/.openai.md" \
     "# OpenAI / Codex Instructions (Saturday Framework)"
-  ((GENERATED++))
+  ((GENERATED++)) || true
 fi
 
 echo ""
