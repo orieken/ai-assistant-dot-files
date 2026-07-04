@@ -3,7 +3,7 @@
 
 # Feature Team Workspace Outputs
 .claude/feature-workspace/
-features/
+/features/
 
 # Agent golden-file test outputs (locally generated, not deterministic)
 tests/agents/*/actual-output.md

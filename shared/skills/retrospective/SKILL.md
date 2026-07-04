@@ -29,7 +29,7 @@ Do NOT use for root cause analysis of a specific bug — use `/five-whys` instea
    - `implementation-notes.md` — what was built
    - `code-review-report.md` — review findings and cycles
    - `security-report.md` — security findings (if present)
-   - `a11y-report.md` — accessibility findings (if present)
+   - `accessibility-report.md` — accessibility findings (if present)
    - `qa-report.md` — test results
    - `observability-report.md` — OTel coverage (if present)
    - `docs-report.md` — documentation updates

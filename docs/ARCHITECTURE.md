@@ -73,7 +73,8 @@ actually runs multi-step orchestration with tool access.
   equivalents. Always current after a `git pull`; no generation step needed.
 - **Tier 2 (Cursor, Windsurf, GitHub Copilot)**: generate-inline, multi-file.
   - Cursor gets one `.mdc` file per rule concern (`architecture.mdc`, `design-principles.mdc`,
-    `agent-roster.mdc`, `testing.mdc`, etc.) **plus one `.mdc` per agent persona** (28 files total).
+    `agent-roster.mdc`, `approval-gates.mdc`, `testing.mdc`, `go-backend.mdc`, `vue-frontend.mdc` — 7 total)
+    **plus one `.mdc` per agent persona** (24) — 31 files total.
     `approval-gates.mdc` and `agent-roster.mdc` are the only `alwaysApply: true` files — `architecture.mdc`
     and `design-principles.mdc` Auto Attach on a broad source-file glob instead, since combined they'd
     otherwise blow well past Cursor's own recommended ~2,000-token always-apply budget. Cursor silently

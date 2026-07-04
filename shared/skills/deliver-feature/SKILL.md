@@ -37,14 +37,14 @@ Do NOT use when the user only wants a single agent's output (e.g., just an analy
 11. **Invoke architect** (if analysis.md has Architectural Flags != "None") -> produces `architecture-notes.md`.
 12. **Invoke validate-artifact** against `shared/contracts/architecture-contract.md` (only if architect was invoked). If FAIL: send back to architect; re-validate. **PAUSE** if an RFC was written — human must acknowledge before developer starts. **Checkpoint** on PASS or SKIP.
 13. **Invoke performance-engineer** (if analysis.md has Performance SLAs or Non-Functional Requirements with latency/throughput targets) -> produces `performance-report.md`. **Checkpoint**.
-14. **Invoke data-engineer** (if analysis.md has Data Model Changes != "None") -> produces `data-engineering-report.md`. **Checkpoint**.
+14. **Invoke data-engineer** (if analysis.md has Data Model Changes != "None") -> produces `data-engineering-notes.md`. **Checkpoint**.
 
 ### Phase 2: Implementation and Review
 15. **Invoke developer** -> reads `context-manifest.md` first, then produces `implementation-notes.md`.
 16. **Invoke validate-artifact** against `shared/contracts/implementation-contract.md`. If FAIL: send back to developer; re-validate. **Checkpoint** on PASS.
 17. **Invoke code-reviewer** -> produces `code-review-report.md`.
 18. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): send back to code-reviewer; re-validate. If verdict is CHANGES REQUESTED (qualitative, independent of the structural check): before sending back to developer, back up the current `implementation-notes.md` and `code-review-report.md` to `.claude/feature-workspace/.history/` (see Rollback), then repeat from step 15 until APPROVED and structurally valid. **Checkpoint** on final PASS+APPROVED, including the retry count.
-19. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `a11y-report.md`. **Checkpoint**.
+19. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `accessibility-report.md`. **Checkpoint**.
 20. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`.
 21. **Invoke validate-artifact** against `shared/contracts/security-contract.md` (only if security-reviewer was invoked). If FAIL: send back to security-reviewer; re-validate. If Critical findings exist: block pipeline, alert user. **Checkpoint** on PASS or SKIP.
 
@@ -220,10 +220,10 @@ docs/features/<feature-name>/
   analysis.md                <- analyst output
   architecture-notes.md      <- architect output (if invoked)
   performance-report.md      <- performance-engineer output (if invoked)
-  data-engineering-report.md <- data-engineer output (if invoked)
+  data-engineering-notes.md  <- data-engineer output (if invoked)
   implementation-notes.md    <- developer output
   code-review-report.md      <- code-reviewer output
-  a11y-report.md             <- accessibility-engineer output (if invoked)
+  accessibility-report.md    <- accessibility-engineer output (if invoked)
   security-report.md         <- security-reviewer output (if invoked)
   qa-report.md               <- qa-engineer output
   observability-report.md    <- sre-engineer output
