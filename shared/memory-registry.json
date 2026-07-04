@@ -1,0 +1,87 @@
+{
+  "optionalPaths": [".claude/knowledge/"],
+  "sources": [
+    {
+      "name": "knowledge-items",
+      "type": "KI",
+      "paths": ["shared/knowledge/", ".claude/knowledge/"],
+      "owner": "memory-engineer (curation, dedup, expiration) + create-ki (authoring)",
+      "portable": {
+        "shared/knowledge/": true,
+        ".claude/knowledge/": false
+      },
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown-frontmatter",
+      "frontmatterFields": ["name", "tags", "domain", "created"],
+      "notes": "Portable KIs apply across any project using this framework; project KIs are local to one codebase. See shared/knowledge/README.md."
+    },
+    {
+      "name": "adrs",
+      "type": "ADR",
+      "paths": ["docs/adrs/"],
+      "owner": "adr / badr skills (authoring), memory-engineer (staleness review only — ADRs are a historical record, never edited after the fact)",
+      "portable": false,
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown",
+      "notes": "Answers 'why did we choose X over Y' — never expired or deleted, only superseded by a newer ADR that references it."
+    },
+    {
+      "name": "feature-archive",
+      "type": "Feature Delivery Record",
+      "paths": ["docs/features/"],
+      "owner": "deliver-feature (writes), memory-engineer (does not curate — this is an immutable historical record, not memory subject to expiration)",
+      "portable": false,
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown (multiple files per feature directory)",
+      "notes": "Retrieved via context-engineer's bounded-context grep (recency-independent) and analyst's 3-most-recent scan (recency-based) — see docs/runbooks/context-engineering.md section 2."
+    },
+    {
+      "name": "lessons-learned",
+      "type": "Lesson",
+      "paths": ["docs/lessons-learned/"],
+      "owner": "extract-lessons (authoring, cross-delivery patterns), promote-memory (authoring, single-delivery triage)",
+      "portable": false,
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown",
+      "notes": "Gated by shared/rules/approval-gates.md — a lesson becoming a rule/prompt change requires explicit human approval."
+    },
+    {
+      "name": "domain-dictionary",
+      "type": "Glossary",
+      "paths": ["shared/DOMAIN_DICTIONARY.md"],
+      "owner": "analyst (adds new terms), memory-engineer (flags orphaned/unused terms — see scripts/health-check.sh)",
+      "portable": true,
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown table",
+      "notes": "Never expired — terms are removed only when the concept they name is fully removed from the codebase."
+    },
+    {
+      "name": "team-topology",
+      "type": "Topology",
+      "paths": ["shared/TEAM_TOPOLOGY.md"],
+      "owner": "architect (reads), human (fills in team names/ownership)",
+      "portable": true,
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown table",
+      "notes": "Registry entry exists for completeness; this is org-structure data, not a candidate for the promotion/expiration lifecycle."
+    }
+  ],
+  "retrievalBackends": {
+    "lexical": {
+      "status": "active",
+      "description": "Tag/domain pre-filter over frontmatter, then full-body LLM judgment read. No embeddings, no vector index — see search-ki's own guardrails for why this is a deliberate choice, not a gap.",
+      "usedBy": ["search-ki", "query-memory"]
+    },
+    "lightrag": {
+      "status": "disabled",
+      "description": "Optional future retrieval backend. Markdown remains canonical regardless of status — any LightRAG result must be verified against its source markdown file before being trusted. See docs/runbooks/lightrag-integration.md for when and how to enable this; not built yet because no source in this registry has outgrown lexical search.",
+      "usedBy": []
+    }
+  }
+}

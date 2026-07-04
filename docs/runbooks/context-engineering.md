@@ -86,12 +86,18 @@ other — each answers a different question about the past.
 
 | Mechanism | Answers | Stored In | Retrieved By | Distinct From |
 |---|---|---|---|---|
-| Knowledge Items (KIs) | "Has this pattern/bug/decision already been solved?" | `shared/knowledge/` (portable), `.claude/knowledge/` (project-specific) | `search-ki` — tag/domain pre-filter, then LLM judgment read, no embeddings (see `search-ki`'s own guardrails for why) | ADRs — a KI is a reusable pattern or fix, not a rationale for a specific past choice |
+| `shared/memory-registry.json` | "What memory sources exist, and what's each one's retrieval backend?" | `shared/memory-registry.json` | Read by `search-ki`, `query-memory`, and `memory-engineer` before they do anything else | Not itself searchable content — a catalog of where the other rows in this table live |
+| Knowledge Items (KIs) | "Has this pattern/bug/decision already been solved?" | `shared/knowledge/` (portable), `.claude/knowledge/` (project-specific) | `search-ki` — tag/domain pre-filter, then LLM judgment read, no embeddings (see `search-ki`'s own guardrails for why); `query-memory` when the question isn't specifically KI/ADR-shaped | ADRs — a KI is a reusable pattern or fix, not a rationale for a specific past choice |
 | ADRs | "Why did we choose X over Y?" | `docs/adrs/` | `search-ki` (same call, treated as first-class alongside KIs) | KIs |
-| `DOMAIN_DICTIONARY.md` | "What's the correct term for this concept?" | `shared/DOMAIN_DICTIONARY.md` | Read directly by every agent at a fixed process step | `TEAM_TOPOLOGY.md` — vocabulary, not org structure |
+| `DOMAIN_DICTIONARY.md` | "What's the correct term for this concept?" | `shared/DOMAIN_DICTIONARY.md` | Read directly by every agent at a fixed process step; also covered by `query-memory` | `TEAM_TOPOLOGY.md` — vocabulary, not org structure |
 | `TEAM_TOPOLOGY.md` | "Who owns this bounded context, and how should a crossing into it work?" | `shared/TEAM_TOPOLOGY.md` | `architect` (Context Crossings) and `team-topology-check` | `DOMAIN_DICTIONARY.md` |
-| `docs/features/` archive | "What actually happened when we built this before?" | `docs/features/<name>/` (all persisted pipeline artifacts, including `retrospective.md`) | Two complementary checks: `context-engineer` step 4 greps for prior deliveries in the *same bounded context*, recency-independent; `analyst` step 5 separately skims the 3 *most recent* deliveries for general process trends (see `docs/runbooks/scaling-cross-feature-learning.md` for how the bounded-context lookup scales) | `pipeline-state.json`/`pipeline-trace.json` — ephemeral, per-run only, not a durable narrative |
+| `docs/features/` archive | "What actually happened when we built this before?" | `docs/features/<name>/` (all persisted pipeline artifacts, including `retrospective.md`) | Two complementary checks: `context-engineer` step 4 greps for prior deliveries in the *same bounded context*, recency-independent; `analyst` step 5 separately skims the 3 *most recent* deliveries for general process trends (see `docs/runbooks/scaling-cross-feature-learning.md` for how the bounded-context lookup scales); also covered by `query-memory` | `pipeline-state.json`/`pipeline-trace.json` — ephemeral, per-run only, not a durable narrative |
 | `pipeline-state.json` / `pipeline-trace.json` | "Where did this specific run get to, and how long did each step take?" | `.claude/feature-workspace/` (ephemeral, one active run at a time) | `resume-pipeline` (state, for resuming/rolling back), `pipeline-retrospective` + `agent-scorecard` (trace, aggregated across many runs) | `docs/features/` — this is raw per-run data, not a written narrative |
+
+Curating the KI corpus itself (finding duplicates, flagging stale entries for expiration, keeping the
+registry accurate) is `memory-engineer`'s job — a periodic sweep, not a per-task retrieval concern. See
+[memory-engineering.md](memory-engineering.md) for the full lifecycle (Capture→Candidate→Audit→Approve→
+Index→Retrieve→Expire) and promotion/expiration criteria.
 
 ---
 
@@ -108,6 +114,7 @@ of over-engineering for a mechanism most features don't need triggered that ofte
 | `agent-scorecard` | "Was an agent's *output* actually good this month, across real deliveries?" | Manual, monthly | `docs/agent-metrics/scorecard-<YYYY-MM>.md` | `agent-eval` — real deliveries, not a fixed fixture |
 | `agent-eval` | "Did editing this agent's prompt just regress it on a known case?" | Run right after editing a `shared/agents/*.md` file | `docs/agent-metrics/evals/<agent>-eval-<date>.md` | `agent-scorecard` — one fixed fixture, not a trend across real deliveries |
 | `extract-lessons` | "Is there a recurring finding across many deliveries worth promoting to a rule, prompt change, or new KI?" | Manual, periodic | `docs/lessons-learned/` (gated by `shared/rules/approval-gates.md`) | `retrospective` — cross-delivery pattern mining, not one delivery's story |
+| `promote-memory` | "Is anything in *this one* retrospective worth promoting right now?" | Run immediately after each `retrospective.md` is produced | A Candidate Record for human review (see [memory-engineering.md](memory-engineering.md)'s Memory Contract) — not written directly to `shared/knowledge/` until approved | `extract-lessons` — one delivery, immediate, not a cross-delivery recurring-pattern threshold |
 
 The through-line: `retrospective` and `docs/features/` (Memory) capture what happened; `pipeline-retrospective`
 and `agent-scorecard` judge whether it's trending better or worse; `agent-eval` catches an immediate prompt

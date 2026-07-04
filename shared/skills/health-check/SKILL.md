@@ -1,6 +1,6 @@
 ---
 name: health-check
-description: Validates the ai-assistant-dot-files installation — symlinks, agent/skill frontmatter, platform config drift, domain dictionary orphans, inter-agent contracts, changelog/version consistency, and Knowledge Item frontmatter. Wraps scripts/health-check.sh for everything scriptable and adds AI judgment on top for anything that requires reading prose.
+description: Validates the ai-assistant-dot-files installation — symlinks, agent/skill frontmatter, platform config drift, domain dictionary orphans, inter-agent contracts, changelog/version consistency, Knowledge Item frontmatter, and memory registry integrity. Wraps scripts/health-check.sh for everything scriptable and adds AI judgment on top for anything that requires reading prose.
 triggers:
   keywords: ["health-check", "health", "check installation", "verify setup", "check setup"]
   intentPatterns: ["Check my setup", "Is everything installed?", "Run health check", "Verify my installation", "/health-check"]
@@ -23,7 +23,7 @@ Do NOT use for debugging application code in a project you're building features 
 
 ## Process
 
-1. **Run the script**: `bash scripts/health-check.sh --verbose`. This performs 8 checks, all scriptable:
+1. **Run the script**: `bash scripts/health-check.sh --verbose`. This performs 9 checks, all scriptable:
    - Symlinks (`.claude/{agents,skills,rules}` -> `shared/` equivalents) resolve correctly
    - Every agent's frontmatter has `name`, `description`, `tools`, `model`, `version`
    - Every skill's `SKILL.md` has `name`, `description`, `triggers`, `standalone`
@@ -32,6 +32,8 @@ Do NOT use for debugging application code in a project you're building features 
    - Every contract-bound agent (`shared/contracts/`) has its contract file present
    - Every agent's current version appears in `shared/agents/CHANGELOG.md`
    - Every Knowledge Item (`shared/knowledge/`, `.claude/knowledge/`) has valid frontmatter
+   - `shared/memory-registry.json` is valid, every non-optional path it declares exists, and no two KIs
+     share an exact frontmatter `name:` (a deterministic subset of what `memory-engineer` judges more fully)
 
 2. **Add judgment the script can't**: for each `WARN` the script reports (it never hard-fails on these,
    since they need a human/AI read), decide whether it's real:

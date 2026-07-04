@@ -48,7 +48,10 @@ Apply these by default, not just as a manual suggestion:
 Invoke `search-ki` with the target component/domain, **before** doing independent analysis — it already
 searches `shared/knowledge/`, `.claude/knowledge/`, and `docs/adrs/` and ranks results, so don't duplicate
 that scan here. Separately, identify key interfaces/types that define the contract of the target component
-(that's a codebase lookup, not a KI search).
+(that's a codebase lookup, not a KI search). If the task's question isn't specifically KI/ADR-shaped (e.g. it
+might be answered by a past feature's retrospective or a `DOMAIN_DICTIONARY.md` term instead), invoke
+`query-memory` in place of `search-ki` — check `shared/memory-registry.json` if unsure which memory sources
+exist. This is additive: the default, proven path (`search-ki` for KI/ADR questions) is unchanged.
 
 ### 4. Search Prior Deliveries in the Same Bounded Context (Recency-Independent)
 Grep `docs/features/*/analysis.md` for a `**Owning Context**` entry matching the Bounded Context from step 1.

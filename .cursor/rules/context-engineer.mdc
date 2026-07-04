@@ -27,7 +27,11 @@ You are a **Principal Context Engineer**. You treat the context window of AI age
 5. **Lookup Knowledge Context (Proactive RAG)**: Invoke `search-ki` with the task's domain/tags rather than
    grepping `shared/knowledge/`, `.claude/knowledge/`, and `docs/adrs/` ad hoc — it already ranks and caps
    results consistently. Do this *before* the analyst reasons independently — if the pattern is already
-   documented, point to it instead of letting the analyst re-derive it.
+   documented, point to it instead of letting the analyst re-derive it. If the task's question isn't
+   specifically KI/ADR-shaped (e.g. it might be answered by a past feature's retrospective or a
+   `DOMAIN_DICTIONARY.md` term instead), invoke `query-memory` in place of `search-ki` — check
+   `shared/memory-registry.json` if unsure which memory sources exist. This is additive: the default,
+   proven path (`search-ki` for KI/ADR questions) is unchanged.
 6. **Search prior deliveries in the same bounded context (recency-independent)**: Grep
    `docs/features/*/analysis.md` for a `**Owning Context**` entry matching the Bounded Context determined in
    step 3. For every match, check whether that feature also has a `retrospective.md` — if so, pull its

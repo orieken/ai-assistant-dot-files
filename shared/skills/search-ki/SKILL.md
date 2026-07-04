@@ -12,11 +12,16 @@ standalone: true
 - Any agent or human can invoke it directly: "has anyone solved rate-limiting on the login endpoint before?"
 
 Do NOT use to search application source code — use `Grep`/`Glob` directly for that. This only searches the
-KI corpus (`shared/knowledge/`, `.claude/knowledge/`) and `docs/adrs/`.
+KI corpus (`shared/knowledge/`, `.claude/knowledge/`) and `docs/adrs/`. Do NOT use when the question could be
+answered by the feature archive or `DOMAIN_DICTIONARY.md` too, not just KIs/ADRs — use `query-memory` for a
+search across every registered memory source; it delegates the KI/ADR portion to this skill, so nothing here
+needs to change to support that.
 
 ## Context To Load First
-1. `shared/knowledge/*.md` and `.claude/knowledge/*.md` (if the latter directory exists)
-2. `docs/adrs/*.md`
+1. `shared/memory-registry.json` — confirms the KI/ADR retrieval backend is `lexical` (no embeddings) before
+   proceeding; this skill is that backend's implementation
+2. `shared/knowledge/*.md` and `.claude/knowledge/*.md` (if the latter directory exists)
+3. `docs/adrs/*.md`
 
 ## Process
 This is judgment-based semantic search, not a grep — you're an LLM reading the corpus, not a regex engine.
@@ -62,7 +67,11 @@ solution turns out to be reusable."]
   and treat API calls as plumbing (see `SKILL_TEMPLATE.md`'s Standalone Mode guidance) — adding an
   embeddings dependency for a corpus this size would trade a real architectural change for a problem lexical
   search doesn't actually have yet. If the KI corpus grows into the hundreds and pre-filter-then-read stops
-  being affordable, that tradeoff is worth revisiting then, not now.
+  being affordable, that tradeoff is worth revisiting then, not now. `shared/memory-registry.json` tracks
+  this decision explicitly — its `lightrag` backend entry stays `"status": "disabled"` until that day comes
+  (see `docs/runbooks/lightrag-integration.md`).
+- **Duplicate/stale KIs are `memory-engineer`'s job, not this skill's** — if search results feel noisy or
+  redundant, that's a signal to run a memory sweep, not a reason to change how this skill ranks results.
 
 ## Standalone Mode
 Pure local file reads (frontmatter parsing for the pre-filter, full reads for judgment). No external calls,

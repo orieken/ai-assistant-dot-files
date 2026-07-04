@@ -211,6 +211,58 @@ for ki_dir in "$SHARED_DIR/knowledge" "$REPO_DIR/.claude/knowledge"; do
 done
 echo ""
 
+echo "--- Memory Registry (shared/memory-registry.json) ---"
+REGISTRY="$SHARED_DIR/memory-registry.json"
+if [[ -f "$REGISTRY" ]]; then
+  if python3 -c "import json; json.load(open('$REGISTRY'))" 2>/dev/null; then
+    pass "memory-registry.json is valid JSON"
+  else
+    fail "memory-registry.json is not valid JSON"
+  fi
+
+  # Every path each source declares must actually exist.
+  registry_paths=$(python3 -c "
+import json
+data = json.load(open('$REGISTRY'))
+for s in data.get('sources', []):
+    for p in s.get('paths', []):
+        print(p)
+" 2>/dev/null || true)
+  optional_paths=$(python3 -c "
+import json
+data = json.load(open('$REGISTRY'))
+for p in data.get('optionalPaths', []):
+    print(p)
+" 2>/dev/null || true)
+  while IFS= read -r rpath; do
+    [[ -z "$rpath" ]] && continue
+    full_path="$REPO_DIR/$rpath"
+    if [[ -e "$full_path" ]]; then
+      pass "registry path exists: $rpath"
+    elif echo "$optional_paths" | grep -qxF "$rpath"; then
+      warn "registry path missing (marked optional): $rpath"
+    else
+      fail "registry path missing: $rpath"
+    fi
+  done <<< "$registry_paths"
+
+  # No two KIs should share an exact frontmatter name: — a real duplicate, not just an overlap
+  # memory-engineer would judge more subtly; this is the cheap, deterministic half of that check.
+  ki_names=$( (grep -h '^name:' "$SHARED_DIR"/knowledge/*.md "$REPO_DIR"/.claude/knowledge/*.md 2>/dev/null || true) | sed 's/^name: *//' | sort)
+  dupe_names=$(echo "$ki_names" | uniq -d || true)
+  if [[ -z "$dupe_names" ]]; then
+    pass "no duplicate KI frontmatter names"
+  else
+    while IFS= read -r dname; do
+      [[ -z "$dname" ]] && continue
+      fail "duplicate KI frontmatter name: $dname — memory-engineer should audit these for a merge"
+    done <<< "$dupe_names"
+  fi
+else
+  warn "shared/memory-registry.json not found — skipping Memory Registry checks"
+fi
+echo ""
+
 echo "==========================================="
 echo "Results: $PASS_COUNT passed, $WARN_COUNT warned, $FAIL_COUNT failed"
 if ! $VERBOSE; then

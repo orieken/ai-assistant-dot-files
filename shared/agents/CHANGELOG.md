@@ -18,6 +18,14 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-04 — Memory Engineering epic (v2 scope, split from AOS/v3 prototyping)
+
+| Agent | Version | Change |
+|---|---|---|
+| context-engineer | 2.0.0 -> 2.1.0 | New: Proactive RAG step now checks whether the task's question is KI/ADR-shaped (invoke `search-ki`, unchanged default) or broader (invoke the new `query-memory` skill instead, which also covers the feature archive and DOMAIN_DICTIONARY.md). Additive — existing behavior and output format unchanged. Applied identically to both the agent and its `shared/skills/context-engineer/SKILL.md` twin in the same edit, to avoid repeating the twin-drift bugs found across three independent audits this session |
+
+---
+
 ## 2026-07-03 — Cross-agent audit fixes (independent review via docs/runbooks/self-audit-prompt.md)
 
 | Agent | Version | Change |

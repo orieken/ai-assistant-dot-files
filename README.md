@@ -24,7 +24,7 @@ For deeper detail beyond this README:
 ```
 shared/                              <- single source of truth, edit here only
 ├── agents/        (24 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
-├── skills/        (50 skills)       <- .md with trigger keywords/patterns
+├── skills/        (53 skills)       <- .md with trigger keywords/patterns
 ├── rules/                           <- architecture-guardrails.md, design-principles.md, approval-gates.md
 ├── contracts/                       <- required-section contracts for pipeline agent handoffs
 ├── knowledge/                       <- portable Knowledge Items (KIs)
@@ -32,6 +32,7 @@ shared/                              <- single source of truth, edit here only
 ├── ARCHITECTURE_RULES.md
 ├── DOMAIN_DICTIONARY.md
 ├── TEAM_TOPOLOGY.md               <- Bounded Context -> team/type/interaction-mode registry (Skelton & Pais)
+├── memory-registry.json           <- catalog of every durable memory source + retrieval backend
 └── platform-registry.json           <- tier/capability/format per platform
 
         │  scripts/generate-configs.sh (reads shared/ + platform-registry.json)
@@ -146,7 +147,7 @@ Full definitions in `shared/agents/`; versions tracked in `shared/agents/CHANGEL
 
 ---
 
-## Skill Catalog (50)
+## Skill Catalog (53)
 
 Full definitions in `shared/skills/<name>/SKILL.md`, including exact trigger keywords/intent patterns.
 Grouped by what they're for:
@@ -166,6 +167,9 @@ Grouped by what they're for:
 | `context-audit` | Context waste analysis — unused pins, duplicates, unconstrained large reads |
 | `summarize-artifact` | Condensing an older pipeline artifact for a downstream agent (context decay) |
 | `search-ki` / `create-ki` | Searching/authoring Knowledge Items in `shared/knowledge/` |
+| `query-memory` | Registry-aware search across *every* memory source (KIs/ADRs plus feature archive, glossary, topology), not just KIs/ADRs |
+| `memory-engineer` | Periodic sweep of the KI corpus for duplicates and expiration candidates; keeps `shared/memory-registry.json` accurate |
+| `promote-memory` | Evaluates one delivery's `retrospective.md` immediately for promotion-worthy content — KI, ADR, rule change, or lesson |
 
 ### Feature lifecycle
 | Skill | Trigger on |
