@@ -1,6 +1,9 @@
 # Mac OS
 .DS_Store
 
+# Editor-generated local history (e.g. VS Code/Copilot "Local History" extension) — can appear at any depth
+.history/
+
 # Feature Team Workspace Outputs
 .claude/feature-workspace/
 /features/
