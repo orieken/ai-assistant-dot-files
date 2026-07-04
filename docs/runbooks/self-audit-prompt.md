@@ -42,12 +42,17 @@ Your job is not to summarize what the framework claims to do. It's to verify whe
 by checking the source files against each other. Do not accept a skill's or agent's own description as
 proof it's correct — read the file it describes, and read the files it references, and confirm they agree.
 
+Do not modify files during this audit unless the user explicitly asks for fixes. Produce findings only.
+
 Audit these specific dimensions:
 
 1. **shared/ is the single source of truth.** Every generated platform config (.cursor/, .github/,
    .windsurfrules, .openai.md, AGENTS.md, .claude/ symlinks) should be derivable from shared/ with no
    drift. If scripts/check-parity.sh exists, run it — but also spot-check by hand, since an automated
-   check can itself have a blind spot.
+   check can itself have a blind spot: at minimum, check one rule file, one generated persona file, one flat
+   prompt file, and one symlink target against shared/ directly, rather than trusting a green run alone.
+   When any validation script passes, inspect what it actually checks and name at least one class of drift
+   it does not cover — a passing script proves the checks it runs are clean, not that nothing is wrong.
 
 2. **"Twin" files must actually match.** Where an agent has both a shared/agents/<name>.md (native agent)
    and a shared/skills/<name>/SKILL.md (standalone version), their Output Format sections — exact headings,
@@ -55,10 +60,13 @@ Audit these specific dimensions:
    fail against the other.
 
 3. **Every pipeline handoff that has a contract is actually validated, and every artifact that should have
-   a contract does.** List every artifact deliver-feature's agents produce. For each one, check: (a) does
-   shared/contracts/ have a matching *-contract.md, (b) does validate-artifact's mapping table include it,
-   (c) does deliver-feature actually invoke validate-artifact against it at the right step. Flag any
-   artifact missing any of the three — especially early-pipeline artifacts everything downstream depends on.
+   a contract does.** Before reporting findings for this dimension, build and show the inventory you worked
+   from — a table with one row per artifact deliver-feature's agents produce:
+   `Artifact | Producer | Produced at step | Contract exists? | validate-artifact mapping? | deliver-feature invocation? | Status`.
+   Building this table first (rather than jumping straight to findings) is what catches an artifact that
+   isn't obviously broken but is still missing coverage — and it lets a human check the audit itself quickly.
+   Flag any artifact missing any of the three columns — especially early-pipeline artifacts everything
+   downstream depends on.
 
 4. **Numbered steps stay internally consistent.** If deliver-feature (or any other skill) has numbered
    process steps, confirm every cross-reference to "step N" elsewhere in the same file (and in other files
@@ -67,7 +75,11 @@ Audit these specific dimensions:
 5. **Documentation matches current reality, not a past version of the repo.** For every runbook/doc, check:
    does it reference files, scripts, or paths that still exist? Does it describe the current agent/skill
    count, current pipeline shape, current platform list? A doc that was accurate when written but never
-   updated as the repo grew is worse than no doc, because it's trusted by default.
+   updated as the repo grew is worse than no doc, because it's trusted by default. Separate active
+   docs/runbooks from clearly archived or historical planning material first — this repo has both (e.g. old
+   prompt-engineering templates, a pre-restructure legacy tree kept as a historical snapshot). Report stale
+   archived material only if it's still linked from somewhere as current operational guidance; otherwise it's
+   intentionally preserved history, not a bug.
 
 6. **Skills with overlapping-sounding purposes actually disambiguate correctly.** Where multiple skills
    sound similar (e.g. anything with "retrospective," "score," "audit," or "eval" in the name), check that
@@ -106,7 +118,9 @@ inconsistency that turns out to be correct on inspection is worse than no findin
 A well-run audit produces a short list (typically under 10) of findings that are each independently
 checkable in under a minute by opening the two files it names. If the report reads as a restatement of each
 file's own description rather than a cross-check between files, the audit didn't actually do its job —
-re-run with an explicit reminder to quote actual file content, not summarize intent.
+re-run with an explicit reminder to quote actual file content, not summarize intent. Dimension 3's artifact
+matrix should be present in the report itself, not just implied by the findings — its absence is a sign the
+auditor skipped straight to conclusions.
 
 ## Escalation / Acting on Results
 - Treat every CONFIRMED finding as real; verify PLAUSIBLE findings yourself before acting (read both files
