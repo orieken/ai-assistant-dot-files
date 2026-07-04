@@ -69,7 +69,7 @@ Generate a concise `context-manifest.md` in the current feature workspace (e.g.,
 The skill produces a `context-manifest.md` matching this structure:
 
 ```markdown
-# Context Manifest: [Task/Feature Name]
+# Context Manifest: [Feature/Task Name]
 
 ## 1. Scope and Boundaries
 - **Target Component**: [e.g., billing-service, user-auth]

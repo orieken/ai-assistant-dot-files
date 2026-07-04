@@ -22,7 +22,10 @@ Incident logs, alerts, deployment info.
 2. Check for a recent deploy: `git log --oneline -10`
    If yes → rollback decision: "Is reverting the last deploy safe and faster than a hotfix?"
 3. Rollback or hotfix decision tree:
-   - Rollback: `git revert HEAD` or redeploy previous image — safe if no DB migration in deploy
+   - Rollback: `git revert HEAD` (a commit — requires the user to say "commit" or "approve commit" per
+     `shared/rules/approval-gates.md` Gate #2) or redeploy previous image (a deploy — requires "deploy" per
+     Gate #8) — safe if no DB migration in deploy. Incident urgency does not waive these gates; state the
+     proposed action and get the explicit confirmation word before executing it, even under time pressure.
    - Hotfix: only if rollback is not safe (migration already ran) or fix is trivially small
 4. Communicate: draft the incident message (who, what, ETA)
 5. Once stable: capture timeline for the Five Whys session
@@ -70,6 +73,9 @@ Safe ✅ / Unsafe ⚠️ [reason — DB migration state]
 - Never recommend a complex fix when a rollback is safe
 - Never lower a fitness function threshold to make a failing check green
 - Rollback + Five Whys is almost always better than hotfix under pressure
+- **Never** execute the rollback commit or redeploy without the explicit "commit"/"deploy" confirmation
+  `shared/rules/approval-gates.md` requires — incident urgency shortens the number of questions asked, it
+  does not remove the approval gate itself
 
 ## Standalone Mode
 Pure reasoning and templates. No external tools required during active incident. All commands are standard git/pnpm/kubectl operations.

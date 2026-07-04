@@ -8,9 +8,10 @@ standalone: true
 ---
 
 ## When To Use
-Monthly cadence (manually triggered, or wire up via the `schedule` skill if the user wants it automatic — not
-auto-invoked by `deliver-feature` itself, unlike `/retrospective`). Also on-demand whenever the user asks how
-a specific agent, or the pipeline generally, is performing.
+Monthly cadence (manually triggered, or wire up via the host tool's own scheduling capability — e.g. Claude
+Code's `schedule` skill — if the user wants it automatic; this is a platform capability, not one of this
+repo's `shared/skills/`, so it isn't auto-invoked by `deliver-feature` itself the way `/retrospective` is).
+Also on-demand whenever the user asks how a specific agent, or the pipeline generally, is performing.
 
 Do NOT use for a single delivery's story (what happened on this one feature) — use `/retrospective`. Do NOT
 use for cross-delivery timing/iteration trends without a quality judgment attached — use

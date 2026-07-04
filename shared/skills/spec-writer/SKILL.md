@@ -39,7 +39,11 @@ Do NOT use when the user wants a guided feature creation experience with directo
 ## Output Format
 
 ### Write Mode Output
-- `features/<kebab-title>.md` — the spec file following the template structure
+- `features/<kebab-title>.md` — Write Mode delegates to the `spec-writer` agent (see Process step 1 above),
+  so the actual spec follows that agent's `## Output Format` exactly (frontmatter + Summary/Acceptance
+  Criteria/Domain Language/Trust Boundaries/etc.) — not a separately-defined structure. This section isn't
+  duplicating that template here to avoid two copies drifting apart; see `shared/agents/spec-writer.md`
+  directly, or the installed `features/TEMPLATE.md`, for the actual shape.
 
 ### Review Mode Output
 Inline critique displayed to the user:

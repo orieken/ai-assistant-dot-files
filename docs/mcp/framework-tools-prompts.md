@@ -245,7 +245,7 @@ Make the ranking interface-driven so it can be swapped for vector/semantic searc
 
 ### Integration point
 
-The context-engineer agent will call `search_knowledge` during manifest creation (Phase 0 of `deliver-feature`). The wiring happens in the context-engineer skill, not here.
+The context-engineer agent will call `search_knowledge` during manifest creation (step 6, Phase 1 of `deliver-feature` — check `shared/skills/deliver-feature/SKILL.md` for the current step number, since it shifts as steps are added). The wiring happens in the context-engineer skill, not here.
 
 Verify:
 ```bash
