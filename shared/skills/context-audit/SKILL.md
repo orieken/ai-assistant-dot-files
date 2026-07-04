@@ -26,7 +26,7 @@ whether an agent's *output* was good — that's `agent-scorecard`. This skill on
 ## Process
 
 ### 1. Unused pins
-For each file in `context-manifest.md`'s "Pinpoint Files to Open," check whether the consuming artifact
+For each file in `context-manifest.md`'s "2. Pinpoint Files (To Keep Open)," check whether the consuming artifact
 (`analysis.md` for analyst, `implementation-notes.md` for developer) actually references it — cites a
 specific finding, pattern, or interface from it, not just a generic mention. A pinned file with zero
 identifiable influence on the output is waste: it consumed budget context-engineer estimated as necessary,

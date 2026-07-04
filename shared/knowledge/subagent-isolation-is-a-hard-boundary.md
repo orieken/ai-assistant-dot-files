@@ -20,5 +20,4 @@ almost never "let it see more of the conversation" — it's "put that informatio
 actually reads" (the feature spec, `analysis.md`, `context-manifest.md`, etc.), or wire it in via
 `context-manifest.md`'s Pinpoint Files.
 
-See: `docs/runbooks/agent-workflows-and-context-engineering.md` ("Subagent Boundaries"),
-`docs/runbooks/context-engineering.md` ("Isolation of Subagent Boundaries").
+See: `docs/runbooks/context-engineering.md`, section 1, "Isolation of Subagent Boundaries."

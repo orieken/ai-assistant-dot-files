@@ -25,7 +25,7 @@ Body: the pattern, decision, or fix — what it is, why it exists, when it appli
 ## How KIs get used
 1. `context-engineer` invokes the `search-ki` skill (tag/domain match against the active feature or task)
    during manifest creation rather than grepping this directory ad hoc.
-2. Matches are listed in `context-manifest.md` under "Relevant Knowledge Items (KIs) & ADRs" with a reason
+2. Matches are listed in `context-manifest.md` under "4. Knowledge Items & ADRs (To Load)" with a reason
    they're relevant.
 3. Downstream agents (analyst, developer) read the manifest and treat the referenced KI as authoritative —
    they should not re-solve a problem a KI already documents.

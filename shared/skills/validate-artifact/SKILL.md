@@ -8,9 +8,10 @@ standalone: true
 ---
 
 ## When To Use
-Invoked automatically by `deliver-feature` immediately after analyst, architect, developer, code-reviewer,
-security-reviewer, qa-engineer, or sre-engineer produce their artifact — before the pipeline proceeds to
-the next step. Can also be run standalone: "validate analysis.md against its contract".
+Invoked automatically by `deliver-feature` immediately after context-engineer, analyst, architect,
+developer, code-reviewer, security-reviewer, qa-engineer, or sre-engineer produce their artifact — before
+the pipeline proceeds to the next step. Can also be run standalone: "validate analysis.md against its
+contract".
 
 Do NOT use for agents without a contract yet: performance-engineer, data-engineer, accessibility-engineer,
 tech-writer, devops-engineer. Their outputs are consumed directly without a structural gate (tracked as an
@@ -23,6 +24,7 @@ open item in `docs/features/context-engineering-framework/TODO.md`, Epic 5).
 ## Contract Mapping
 | Agent | Artifact | Contract |
 |---|---|---|
+| context-engineer | `.claude/feature-workspace/context-manifest.md` | `shared/contracts/context-manifest-contract.md` |
 | analyst | `.claude/feature-workspace/analysis.md` | `shared/contracts/analysis-contract.md` |
 | architect | `.claude/feature-workspace/architecture-notes.md` | `shared/contracts/architecture-contract.md` |
 | developer | `.claude/feature-workspace/implementation-notes.md` | `shared/contracts/implementation-contract.md` |

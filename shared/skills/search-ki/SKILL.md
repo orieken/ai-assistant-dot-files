@@ -1,6 +1,6 @@
 ---
 name: search-ki
-description: Searches Knowledge Items by tag, domain, or keyword across shared/knowledge/ (portable) and .claude/knowledge/ (project-specific) before an agent does independent analysis. The mechanism context-engineer's Proactive RAG step and analyst's feedback-loop step both call into.
+description: Searches Knowledge Items by tag, domain, or keyword across shared/knowledge/ (portable), .claude/knowledge/ (project-specific), and docs/adrs/ (why a past decision was made) before an agent does independent analysis. The mechanism context-engineer's Proactive RAG step and analyst's feedback-loop step both call into.
 triggers:
   keywords: ["search-ki", "find knowledge item", "has this been solved before", "search knowledge"]
   intentPatterns: ["Search KIs for *", "Has * been solved before", "/search-ki *"]

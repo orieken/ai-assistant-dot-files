@@ -18,6 +18,14 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-03 — Context Engineering audit: contract + agent/skill heading realignment
+
+| Agent | Version | Change |
+|---|---|---|
+| context-engineer | 1.4.0 -> 2.0.0 | **Major**: `shared/agents/context-engineer.md`'s Output Format headings (`## Scope & Boundaries`, `## Relevant Knowledge Items (KIs) & ADRs`, `## Pinpoint Files to Open...`, `## Pruning Checklist...`) had drifted from its own "standalone twin" in `shared/skills/context-engineer/SKILL.md` (`## 1. Scope and Boundaries` ... `## 7. Token Budget`) and was missing a `## 3. Global Rules and Constraints` section entirely. Realigned the agent's headings to match the skill's numbered format exactly, and added the missing section. This was found while adding `shared/contracts/context-manifest-contract.md` (see below) — the contract would have failed every real run against the agent's old headings. New contract added: `context-manifest.md` now gets the same `validate-artifact` structural gate every other pipeline artifact already had; wired into `deliver-feature` as new step 7 (renumbering all subsequent steps by one). |
+
+---
+
 ## 2026-07-02 — Team Topologies alignment
 
 | Agent | Version | Change |

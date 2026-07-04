@@ -56,7 +56,7 @@ should be a KI so future architects reference it instead of re-deciding it. Invo
 
 ### 4. KI usage analytics
 Tally, across all `context-manifest.md` files, how many times each KI in `shared/knowledge/` and
-`.claude/knowledge/` was actually listed under "Relevant Knowledge Items (KIs) & ADRs." Flag:
+`.claude/knowledge/` was actually listed under "4. Knowledge Items & ADRs (To Load)." Flag:
 - KIs referenced 0 times across all available history — candidates for removal or re-tagging (maybe its
   tags don't match how tasks actually get described).
 - KIs referenced frequently — evidence the KI system is paying for itself.
