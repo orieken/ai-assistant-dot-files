@@ -96,8 +96,8 @@ List reference files that establish the patterns:
 
 ## 6. Prune Recommendations (To Close)
 List files currently open that should be closed immediately:
-- `[ ]` [File Basename](file:///absolute/path/to/file)
-- `[ ]` [File Basename](file:///absolute/path/to/file)
+- [ ] [File Basename](file:///absolute/path/to/file) -- [Unrelated context / different architecture layer]
+- [ ] [File Basename](file:///absolute/path/to/file) -- [Unrelated context / different architecture layer]
 
 ## 7. Token Budget
 - **Estimated total tokens for pinned files**: ~<N>

@@ -145,7 +145,7 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
     {
       "agent": "analyst",
       "agentVersion": "1.0.0",
-      "step": 7,
+      "step": 8,
       "startedAt": "2026-07-02T10:05:00Z",
       "completedAt": "2026-07-02T10:15:00Z",
       "durationSeconds": 600,
@@ -157,7 +157,7 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
     {
       "agent": "code-reviewer",
       "agentVersion": "1.0.0",
-      "step": 16,
+      "step": 17,
       "startedAt": "2026-07-02T10:40:00Z",
       "completedAt": "2026-07-02T11:10:00Z",
       "durationSeconds": 1800,

@@ -183,18 +183,18 @@ Write a critique in this format — always direct, never vague:
 ## Spec Readiness Critique: [Title]
 
 ### Verdict
-READY ✅ | NEEDS WORK ⚠️
+READY | NEEDS WORK
 
 ### Agent Readiness
 
 | Agent | Status | Gap (if any) |
 |---|---|---|
-| Analyst | ✅ / ⚠️ | [specific gap or "—"] |
-| Architect | ✅ / ⚠️ | [specific gap or "—"] |
-| Developer | ✅ / ⚠️ | [specific gap or "—"] |
-| QA | ✅ / ⚠️ | [specific gap or "—"] |
-| Security | ✅ / ⚠️ | [specific gap or "—"] |
-| DevOps | ✅ / ⚠️ | [specific gap or "—"] |
+| Analyst | PASS / FAIL | [specific gap or "—"] |
+| Architect | PASS / FAIL | [specific gap or "—"] |
+| Developer | PASS / FAIL | [specific gap or "—"] |
+| QA | PASS / FAIL | [specific gap or "—"] |
+| Security | PASS / FAIL | [specific gap or "—"] |
+| DevOps | PASS / FAIL | [specific gap or "—"] |
 
 ### Required Changes
 (Only present if verdict is NEEDS WORK)

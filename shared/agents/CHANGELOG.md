@@ -18,6 +18,23 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-03 — Cross-agent audit fixes (independent review via docs/runbooks/self-audit-prompt.md)
+
+| Agent | Version | Change |
+|---|---|---|
+| spec-writer | 1.0.0 -> 1.1.0 | Twin drift fix: the agent's Critique Report used emoji verdicts (`READY ✅ \| NEEDS WORK ⚠️`, `✅/⚠️` per row) while `shared/skills/spec-writer/SKILL.md` used plain text (`READY \| NEEDS WORK`, `PASS/FAIL`). Standardized both to plain text — matches the `PASS/FAIL` vocabulary used everywhere else in the framework (`validate-artifact`, contracts) and avoids emoji-rendering inconsistency across the 6 target platforms |
+| architect | 1.1.0 -> 1.1.1 | Patch: removed a self-contradictory parenthetical ("read at step 3 as per instructions") on what is actually step 2 of its own process list — wording fix, no behavior change |
+
+Also (no version bump — pure renames/config changes, not agent behavior changes):
+- `modernization-swarm.md` -> `modernization-supervisor.md`, `test-driven-development-agent.md` ->
+  `test-driven-developer.md`: filenames now match their own `name:` frontmatter field, like every other
+  agent in `shared/agents/`.
+- `context-engineer`'s skill twin (`shared/skills/context-engineer/SKILL.md`) had its Prune Recommendations
+  bullet format aligned to match the agent's (proper `- [ ]` instead of backtick-wrapped `` `[ ]` ``, plus
+  the reason column the skill was missing).
+
+---
+
 ## 2026-07-03 — Context Engineering audit: contract + agent/skill heading realignment
 
 | Agent | Version | Change |

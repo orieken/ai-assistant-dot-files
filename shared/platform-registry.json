@@ -97,8 +97,7 @@
         "agentsFile": "AGENTS.md",
         "skillsGlobal": "~/.gemini/config/skills/",
         "skillsProject": ".agents/skills/",
-        "rulesProject": ".agents/rules/",
-        "globalRules": "~/.gemini/GEMINI.md"
+        "rulesProject": ".agents/rules/"
       },
       "format": "markdown",
       "installStrategy": "generate-inline for AGENTS.md, symlink for skills (project or global depending on install mode)",

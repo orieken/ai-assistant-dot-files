@@ -15,5 +15,7 @@ skill (`deliver-feature/SKILL.md`) to confirm it's actually invoked at the right
 consuming agents (here: `analyst`, `developer`) have an explicit step to read that agent's output. Otherwise
 the capability silently rots.
 
-Fixed by: adding context-engineer as step 5 of `deliver-feature` Phase 0 (before analyst), and adding a
+Fixed by: adding context-engineer as step 6 of `deliver-feature` Phase 1 (before analyst), and adding a
 manifest-check step to `analyst.md` and `developer.md`'s process before their "explore the codebase" step.
+(Exact step/phase numbers drift as the pipeline grows — check `deliver-feature/SKILL.md` directly for the
+current numbers rather than trusting this note long-term; the lesson, not the number, is what matters.)

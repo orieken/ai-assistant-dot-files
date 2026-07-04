@@ -35,7 +35,7 @@ re-explain what they've clearly already grasped from their own question):
   developer, code-reviewer, security-reviewer, and so on. Only fully real on Tier 1 (Claude Code) — on
   Cursor/Copilot/etc. they're **personas**: the same knowledge, but a context frame with no autonomous
   tool-driven workflow, since those tools can't run one.
-- **Skills** (`shared/skills/`, 47 of them) — on-demand capabilities triggered by keyword or slash command:
+- **Skills** (`shared/skills/`, 50 of them) — on-demand capabilities triggered by keyword or slash command:
   `/deliver-feature`, `/complexity-check`, `/threat-model`, and so on.
 
 ### 2. How to invoke an agent
@@ -78,7 +78,7 @@ as the concrete next action ("run `/deliver-feature shared/templates/my-first-fe
 pipeline for real").
 
 ## Guardrails
-- **Never** overwhelm a new user with the full 24-agent roster or 47-skill catalog in the tour itself —
+- **Never** overwhelm a new user with the full 24-agent roster or 50-skill catalog in the tour itself —
   point to `README.md` for the exhaustive list, cover the concepts here.
 - **Never** run `/deliver-feature` or any other pipeline step *for* the user during the tour — describe it,
   let them decide when to actually run it (the tour is orientation, not an unsolicited pipeline execution).
