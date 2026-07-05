@@ -22,13 +22,14 @@ Capture -> Candidate -> Audit -> Approve -> Index -> Retrieve -> Expire
 ```
 
 1. **Capture** — a pattern, bug fix, or decision happens somewhere: a delivery's `retrospective.md`, a
-   recurring finding `extract-lessons` notices across many deliveries, or a human directly asking to
-   remember something.
+   recurring finding `extract-lessons` notices across many deliveries, an ad-hoc session that never went
+   through `deliver-feature` at all, or a human directly asking to remember something.
 2. **Candidate** — the raw capture becomes a structured candidate with the fields in "Memory Contract"
-   below. Produced by `promote-memory` (single retrospective, immediate) or `extract-lessons` (recurring
-   pattern across many deliveries, periodic) — never written directly to `shared/knowledge/` without passing
-   through a candidate first, even for a single-line fix, so there's always a paper trail of *why* something
-   was captured.
+   below. Produced by `promote-memory` (single retrospective, immediate), `extract-lessons` (recurring
+   pattern across many deliveries, periodic), or `documentation-manager` (an ad-hoc session `promote-memory`
+   never saw, since no `retrospective.md` exists for it) — never written directly to `shared/knowledge/`
+   without passing through a candidate first, even for a single-line fix, so there's always a paper trail of
+   *why* something was captured.
 3. **Audit** — `memory-engineer` checks the candidate against the existing corpus: is this a duplicate of an
    existing KI (in which case, update the existing one rather than create a near-copy)? Is it too narrow or
    too speculative to be reusable (reject)? Does it belong as a KI, or does it actually belong as a rule
@@ -48,7 +49,7 @@ Capture -> Candidate -> Audit -> Approve -> Index -> Retrieve -> Expire
 
 Follows the same spirit as `shared/contracts/` — a required-field check, not free-form prose.
 
-**Candidate fields** (produced by `promote-memory` / `extract-lessons`):
+**Candidate fields** (produced by `promote-memory` / `extract-lessons` / `documentation-manager`):
 - **Source**: which delivery/retrospective/pattern this came from
 - **Type**: KI | ADR-worthy | Rule-change-worthy | Lesson | Reject
 - **Evidence**: the specific finding/quote that justifies capturing this

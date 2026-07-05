@@ -212,16 +212,21 @@ deployment — the "Cost Fitness Function" it proposes is a recommendation for a
 something this framework verifies itself.
 
 ### 21. `documentation-manager`
-**Role**: Persistent, cross-session agent — extracts architectural decisions, debugging insights, and gotchas
-from past sessions and updates long-lived docs (`ARCHITECTURE.md`, `RUNBOOKS.md`, `GOTCHAS.md`, `ONBOARDING.md`).
-**Counterbalance**: None. No contract, no downstream review, no human gate beyond normal commit approval.
-**Gap — and a real overlap worth naming plainly**: this agent's responsibility overlaps substantially with
-`memory-engineer`, `promote-memory`, and `extract-lessons` (all added later, in the Memory Engineering epic) —
-all four are, in different shapes, "extract durable knowledge from what just happened and write it somewhere
-lasting." The boundary between them isn't currently documented anywhere, and `docs/GOTCHAS.md` (one of the
-four files this agent is meant to maintain) doesn't exist in this repo — this capability appears dormant.
-Worth resolving deliberately (either narrow this agent's scope explicitly, or retire it in favor of the
-memory-engineering skills) rather than leaving both running with an undocumented boundary.
+**Role** *(redesigned 2026-07-05, v1.0.0 -> v2.0.0)*: The ad-hoc-session counterpart to `promote-memory` —
+extracts durable knowledge from a session that never went through `deliver-feature` (so no `retrospective.md`
+exists for `promote-memory` to act on) and produces Candidate Records for human review, exactly like
+`promote-memory` does for pipeline deliveries.
+**Counterbalance**: **Human approval gate** — same as `promote-memory`, it never writes a KI, ADR, rule
+change, or living-doc edit directly; it produces a Candidate Record (Source, Type, Evidence, Tags,
+Expiration condition) and only applies the specific approved candidate(s) after explicit sign-off.
+**Resolved**: this entry previously flagged a real, undocumented overlap with `memory-engineer`/
+`promote-memory`/`extract-lessons`, and a dormant capability (`docs/GOTCHAS.md`, one of its four original
+targets, never existed in this repo). Both are fixed now: gotchas route through `create-ki` like any other
+KI (no separate file), and the boundary is explicit — `promote-memory` covers pipeline deliveries,
+`extract-lessons` covers recurring cross-delivery patterns, `documentation-manager` covers everything else
+(ad-hoc sessions with no `retrospective.md`). Deliberately still manual/on-demand, not hooked to run after
+every session — see `docs/runbooks/context-engineering.md`'s Learning section for why that would be its own
+kind of over-engineering.
 
 ### 22. `modernization-supervisor`
 **Role**: Coordinates three parallel modernization workstreams (dependency updates, pattern refactors, test
@@ -268,9 +273,11 @@ Reading all 24 agents together, three patterns stand out:
    (`finops-engineer`, `dx-engineer`, `dependency-auditor`) have no check beyond a human reading the report —
    which may be the right amount of ceremony for their risk level, or may not; that's a judgment call this
    doc surfaces rather than settles.
-3. **`documentation-manager` vs. the memory-engineering skills is a real, unresolved boundary**, and
-   `test-driven-developer`'s bypass of the whole review chain is a real, significant tradeoff — both are
-   worth a deliberate decision rather than staying as-is by default.
+3. **`documentation-manager` vs. the memory-engineering skills was a real boundary problem, now resolved**
+   (see its entry above — redesigned as the ad-hoc-session counterpart to `promote-memory`, same Candidate
+   Record contract, `GOTCHAS.md` retired in favor of KIs). `test-driven-developer`'s bypass of the whole
+   review chain is still a real, significant tradeoff, deliberately left as-is — worth a conscious choice
+   each time it's reached for, not a default one.
 
 ---
 *Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

@@ -166,7 +166,7 @@ documented gap), see [docs/AGENT_REFERENCE.md](docs/AGENT_REFERENCE.md).
 | **chaos-engineer** | Designs fault-injection experiments to verify resilience patterns actually work. |
 | **dx-engineer** | Developer-experience: build times, flaky tests, local dev loop friction. |
 | **finops-engineer** | Reviews architecture/code changes for cost implications as a first-class metric. |
-| **documentation-manager** | Persistent agent that extracts long-lived architectural/debugging knowledge from sessions over time. |
+| **documentation-manager** | Ad-hoc-session counterpart to `promote-memory` -- captures durable knowledge from sessions that never went through `deliver-feature`, via the same Candidate Record + human-approval flow. |
 | **modernization-supervisor** | Coordinates parallel legacy-modernization workstreams (dependencies, patterns, test coverage). |
 | **api-test-generator** | Generates Sunday Framework API test suites (Playwright + Vitest + Zod) from a spec. |
 | **test-driven-developer** | Autonomous red-green-refactor loop: writes tests first, iterates until green. |

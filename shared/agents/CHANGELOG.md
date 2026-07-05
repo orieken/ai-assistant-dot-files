@@ -18,6 +18,14 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-05 — documentation-manager narrowed to ad-hoc-session counterpart of promote-memory
+
+| Agent | Version | Change |
+|---|---|---|
+| documentation-manager | 1.0.0 -> 2.0.0 | **Major**: changed output contract entirely. Previously wrote directly to `ARCHITECTURE.md`/`RUNBOOKS.md`/`GOTCHAS.md`/`ONBOARDING.md` with no review step -- an undocumented overlap with `memory-engineer`/`promote-memory`/`extract-lessons` (added later, in the Memory Engineering epic) that `docs/AGENT_REFERENCE.md` flagged explicitly. Redesigned as the ad-hoc-session counterpart to `promote-memory`: now produces Candidate Records (Source/Type/Evidence/Tags/Expiration) via the same Memory Contract, requires explicit human approval before any KI/ADR/rule/living-doc edit, and retires `GOTCHAS.md` as a target (gotchas are Knowledge Items now, via `create-ki`). Still manual/on-demand, not hooked to auto-run after every session. |
+
+---
+
 ## 2026-07-04 — Memory Engineering epic (v2 scope, split from AOS/v3 prototyping)
 
 | Agent | Version | Change |
