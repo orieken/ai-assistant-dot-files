@@ -8,14 +8,10 @@ standalone: true
 ---
 
 ## When To Use
-Invoked automatically by `deliver-feature` immediately after context-engineer, analyst, architect,
-developer, code-reviewer, security-reviewer, qa-engineer, or sre-engineer produce their artifact — before
-the pipeline proceeds to the next step. Can also be run standalone: "validate analysis.md against its
-contract".
-
-Do NOT use for agents without a contract yet: performance-engineer, data-engineer, accessibility-engineer,
-tech-writer, devops-engineer. Their outputs are consumed directly without a structural gate (tracked as an
-open item in `docs/features/context-engineering-framework/TODO.md`, Epic 5).
+Invoked automatically by `deliver-feature` immediately after every contract-bound agent produces its
+artifact — before the pipeline proceeds to the next step. Every pipeline agent now has a contract (Epic 5,
+closed 2026-07-04 — see the Contract Mapping below). Can also be run standalone: "validate analysis.md
+against its contract".
 
 ## Context To Load First
 1. The contract file for the artifact being validated (see mapping below)
@@ -27,11 +23,16 @@ open item in `docs/features/context-engineering-framework/TODO.md`, Epic 5).
 | context-engineer | `.claude/feature-workspace/context-manifest.md` | `shared/contracts/context-manifest-contract.md` |
 | analyst | `.claude/feature-workspace/analysis.md` | `shared/contracts/analysis-contract.md` |
 | architect | `.claude/feature-workspace/architecture-notes.md` | `shared/contracts/architecture-contract.md` |
+| performance-engineer | `.claude/feature-workspace/performance-report.md` | `shared/contracts/performance-contract.md` |
+| data-engineer | `.claude/feature-workspace/data-engineering-notes.md` | `shared/contracts/data-engineering-contract.md` |
 | developer | `.claude/feature-workspace/implementation-notes.md` | `shared/contracts/implementation-contract.md` |
 | code-reviewer | `.claude/feature-workspace/code-review-report.md` | `shared/contracts/review-contract.md` |
+| accessibility-engineer | `.claude/feature-workspace/accessibility-report.md` | `shared/contracts/accessibility-contract.md` |
 | security-reviewer | `.claude/feature-workspace/security-report.md` | `shared/contracts/security-contract.md` |
 | qa-engineer | `.claude/feature-workspace/qa-report.md` | `shared/contracts/qa-contract.md` |
 | sre-engineer | `.claude/feature-workspace/observability-report.md` | `shared/contracts/observability-contract.md` |
+| tech-writer | `.claude/feature-workspace/docs-report.md` | `shared/contracts/docs-contract.md` |
+| devops-engineer | `.claude/feature-workspace/devops-report.md` | `shared/contracts/devops-contract.md` |
 
 ## Process
 1. Read the contract's "Required Sections" list.

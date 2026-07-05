@@ -149,19 +149,26 @@ fi
 echo ""
 
 # --- 6. Inter-agent contracts exist for pipeline agents ---------------------
+# Parsed directly from validate-artifact/SKILL.md's Contract Mapping table rather than a second
+# hardcoded list here -- this list drifted out of sync with that table twice already (missed
+# context-engineer, then the 5 agents added in Epic 5) before switching to a single source of truth.
 echo "--- Inter-Agent Contracts ---"
-for pair in "analyst:analysis-contract.md" "architect:architecture-contract.md" \
-            "developer:implementation-contract.md" "code-reviewer:review-contract.md" \
-            "security-reviewer:security-contract.md" "qa-engineer:qa-contract.md" \
-            "sre-engineer:observability-contract.md"; do
-  agent="${pair%%:*}"
-  contract="${pair##*:}"
-  if [[ -f "$SHARED_DIR/contracts/$contract" ]]; then
-    pass "$agent -> $contract"
-  else
-    fail "$agent has no contract at shared/contracts/$contract"
-  fi
-done
+VALIDATE_ARTIFACT_SKILL="$SHARED_DIR/skills/validate-artifact/SKILL.md"
+if [[ -f "$VALIDATE_ARTIFACT_SKILL" ]]; then
+  mapping_rows=$(grep -E '^\| [a-z-]+ \| .*shared/contracts/[a-z-]+\.md' "$VALIDATE_ARTIFACT_SKILL" || true)
+  while IFS= read -r row; do
+    [[ -z "$row" ]] && continue
+    agent=$(echo "$row" | awk -F'|' '{print $2}' | tr -d ' ')
+    contract=$(echo "$row" | grep -oE 'shared/contracts/[a-z-]+\.md' | xargs basename)
+    if [[ -f "$SHARED_DIR/contracts/$contract" ]]; then
+      pass "$agent -> $contract"
+    else
+      fail "$agent has no contract at shared/contracts/$contract"
+    fi
+  done <<< "$mapping_rows"
+else
+  fail "shared/skills/validate-artifact/SKILL.md not found — cannot verify inter-agent contracts"
+fi
 echo ""
 
 # --- 7. Agent changelog up to date (no version mismatches) -----------------

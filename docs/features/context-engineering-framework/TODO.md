@@ -89,7 +89,9 @@
 - [x] Create `shared/contracts/qa-contract.md` (required sections for qa-engineer output)
 - [x] Create `shared/contracts/observability-contract.md` (required sections for sre-engineer output)
 - [x] Create `shared/skills/validate-artifact/SKILL.md` (reads contract + artifact, fails if sections missing) — also enforces a few contract-specific content rules (e.g., Overall Status literal match, Failed: 0, PII status) beyond just heading presence
-- [x] Wire `validate-artifact` into `deliver-feature` between each agent handoff — added as its own numbered step after each of analyst/architect/developer/code-reviewer/security-reviewer/qa-engineer/sre-engineer; not wired for performance-engineer, data-engineer, accessibility-engineer, tech-writer, devops-engineer since they have no contract yet
+- [x] Create `shared/contracts/context-manifest-contract.md` (required sections for context-engineer output) — added 2026-07-04 after this exact gap was independently flagged by all 3 of Antigravity/Codex/Copilot's audits
+- [x] Create `shared/contracts/{performance,data-engineering,accessibility,docs,devops}-contract.md` and close the last 5 agents' contract gap (performance-engineer, data-engineer, accessibility-engineer, tech-writer, devops-engineer) — added 2026-07-04, same rationale
+- [x] Wire `validate-artifact` into `deliver-feature` between every agent handoff, including context-engineer and the 5 above — every pipeline agent now has a contract; nothing left uncovered
 
 ### Epic 12 — Pipeline rollback & recovery
 - [x] Add checkpoint system to `deliver-feature` — persist pipeline state after each phase — checkpoints marked at every artifact-producing step (finer-grained than per-phase), plus Phase 0 now checks for an existing state file before touching the workspace
