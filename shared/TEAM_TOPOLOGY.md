@@ -27,17 +27,27 @@ audits it standalone. Update this file whenever a bounded context changes owners
 
 ## Registry
 
+**Current state: solo (pre-multi-team).** One person — Oscar Rieken — owns every bounded context below, so
+every row's Team column is the same name. The Team Type / Interaction Mode columns still earn their keep
+even solo: they're a discipline device for which *hat* you're wearing and how rigorously to treat a boundary
+you're crossing, not just an org chart. Treating "Craftsmanship Governance" work with Platform-team
+X-as-a-Service discipline (a real, stable contract other contexts depend on) instead of ad hoc Collaboration
+(informal, can change on a whim) is a real distinction even when the same person sits on both sides of it.
+
 | Bounded Context | Team | Team Type | Primary Interaction Mode | Notes |
 |---|---|---|---|---|
-| Agent Orchestration | _(fill in)_ | Stream-aligned | — | Owns `shared/agents/`, `shared/skills/`, pipeline orchestration |
-| Craftsmanship Governance | _(fill in)_ | Platform | X-as-a-Service | Owns `shared/rules/`, fitness functions, CI gates consumed by every other context |
-| Test Automation | _(fill in)_ | Complicated-subsystem | X-as-a-Service | Saturday/Sunday Framework internals — deep specialist knowledge, consumed via `BaseSite`/`BaseApiClient` as a stable API |
-| Feature Delivery | _(fill in)_ | Stream-aligned | — | Owns the `deliver-feature` pipeline and `docs/features/` archive |
-| Documentation Knowledge Base | _(fill in)_ | Enabling | Facilitating | Helps other contexts write KIs/ADRs/runbooks; should stay lightweight, not become a bottleneck |
+| Agent Orchestration | Oscar Rieken | Stream-aligned | — | Owns `shared/agents/`, `shared/skills/`, pipeline orchestration |
+| Craftsmanship Governance | Oscar Rieken | Platform | X-as-a-Service | Owns `shared/rules/`, fitness functions, CI gates consumed by every other context |
+| Test Automation | Oscar Rieken | Complicated-subsystem | X-as-a-Service | Saturday/Sunday Framework internals — deep specialist knowledge, consumed via `BaseSite`/`BaseApiClient` as a stable API |
+| Feature Delivery | Oscar Rieken | Stream-aligned | — | Owns the `deliver-feature` pipeline and `docs/features/` archive |
+| Documentation Knowledge Base | Oscar Rieken | Enabling | Facilitating | Helps other contexts write KIs/ADRs/runbooks; should stay lightweight, not become a bottleneck |
 
-Replace the `_(fill in)_` placeholders with your actual team names once you adopt this framework in a
-multi-team org. The row shapes above (type + interaction mode) are a reasonable starting default for this
-framework's own bounded contexts — adjust if your org's structure differs.
+**When this actually matters**: once a second person or team picks up ownership of any single row, split that
+row's Team column to the real name and re-check whether the declared Team Type and Interaction Mode still
+fit — a boundary that was fine to cross informally solo may need to become a real X-as-a-Service contract
+the moment someone else is on the other side of it. `architect` and `team-topology-check` only produce
+meaningful findings once rows actually diverge; with one owner across every row, there's no crossing to
+flag.
 
 ## What "mismatch" means in practice
 `architect` and `team-topology-check` flag two situations, both under the existing Anti-Pattern Radar
