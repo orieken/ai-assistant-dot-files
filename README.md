@@ -19,6 +19,26 @@ For deeper detail beyond this README:
 
 ---
 
+## The Framework at a Glance
+
+```mermaid
+flowchart LR
+    You(["You"]) -- "edit once" --> Shared["shared/\nagents + skills + rules"]
+
+    Shared -- generate-configs.sh --> Tools["Claude Code, Cursor, Windsurf,\nGitHub Copilot, Gemini/Antigravity, OpenAI/Codex"]
+
+    Tools --> Pipeline[["deliver-feature\n14-agent delivery pipeline"]]
+    Pipeline --> CML[["Context + Memory + Learning\n(gets smarter every delivery)"]]
+    CML -. "prompt/rule edits,\nnew Knowledge Items" .-> Shared
+```
+
+One canonical source, six tools kept in sync automatically, one governed pipeline, and a feedback loop that
+improves the framework itself over time — see [context-engineering.md](docs/runbooks/context-engineering.md)
+for how the Context/Memory/Learning loop actually works, and the pipeline diagram further down for the full
+14-agent sequence.
+
+---
+
 ## Architecture (Shared Layer → Platform Configs → Project Install)
 
 ```

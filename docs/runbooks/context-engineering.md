@@ -17,6 +17,43 @@ says nothing about whether the framework is *learning* from that run for next ti
 Memory (Knowledge Items, ADRs, prior deliveries) to build a better manifest, but does not itself produce
 Learning — that's a separate, mostly-periodic set of mechanisms covered in section 3 below.
 
+```mermaid
+flowchart TB
+    Task(["Feature Task"]) --> CE["context-engineer"]
+
+    subgraph MEM["2. Memory (durable, outlives any single run)"]
+        KI["Knowledge Items + ADRs"]
+        DICT["DOMAIN_DICTIONARY.md /\nTEAM_TOPOLOGY.md"]
+        ARCHIVE["docs/features/ archive\n(incl. retrospective.md)"]
+        REG["memory-registry.json"]
+    end
+
+    CE -- "search-ki / query-memory\n(Proactive RAG)" --> MEM
+    CE --> Manifest["context-manifest.md\n(1. Context)"]
+    Manifest --> Pipeline["deliver-feature pipeline"]
+    Pipeline --> Retro["retrospective.md"]
+
+    subgraph LEARN["3. Learning (feedback loops)"]
+        PM["promote-memory\n(this delivery)"]
+        EL["extract-lessons\n(recurring pattern)"]
+        PR["pipeline-retrospective /\nagent-scorecard"]
+        AE["agent-eval\n(after a prompt edit)"]
+    end
+
+    Retro --> PM
+    PM -- "approved KI / ADR / Lesson" --> MEM
+    Pipeline -. "trace + state" .-> PR
+    EL -- "rule or prompt change" --> Rules["shared/rules/ +\nshared/agents/"]
+    AE -- "regression check" --> Rules
+    Rules -.-> CE
+
+    ME["memory-engineer\n(periodic sweep: dedupe, expire)"] -. curates .-> MEM
+```
+
+Memory feeds Context (via `search-ki`/`query-memory`); a delivery produces Learning signals; approved
+Learning writes back into Memory (new KIs) and into the agents/rules themselves (a prompt or rule edit) —
+which is what actually makes the *next* Context-building pass better, closing the loop.
+
 ---
 
 ## 1. Context
