@@ -86,6 +86,16 @@ decision).
 See [docs/runbooks/editing-agent-prompts.md](runbooks/editing-agent-prompts.md) — versioning, changelog, and
 testing requirements.
 
+## Before you push
+
+- `scripts/ci-check.sh` — runs `check-parity.sh`, `test-agents.sh`, and `health-check.sh` inside a container
+  matching the actual CI runner (ubuntu-latest, modern bash), not just your local shell. Requires Docker.
+  This exists because macOS's default bash (3.2) silently tolerates some `set -e` + arithmetic bugs that
+  modern bash treats as failures — a local pass on macOS proves nothing about whether CI will pass (see the
+  2026-07-04 incident where this exact gap broke CI for several commits before anyone noticed). Run this
+  before every push that touches `scripts/`, `shared/`, or `.github/workflows/` — a plain local run of the
+  individual scripts below isn't sufficient for those.
+
 ## Before you commit
 
 - `scripts/check-parity.sh` — no drift between `shared/` and generated configs

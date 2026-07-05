@@ -53,6 +53,9 @@ Audit these specific dimensions:
    prompt file, and one symlink target against shared/ directly, rather than trusting a green run alone.
    When any validation script passes, inspect what it actually checks and name at least one class of drift
    it does not cover — a passing script proves the checks it runs are clean, not that nothing is wrong.
+   Concretely: a plain local run of these scripts is not proof they pass in CI — if Docker is available, run
+   `scripts/ci-check.sh`, which executes them inside the same OS/bash version the CI runner uses (this repo
+   already hit a bash-version-specific bug that a local macOS run couldn't detect at all).
 
 2. **"Twin" files must actually match.** Where an agent has both a shared/agents/<name>.md (native agent)
    and a shared/skills/<name>/SKILL.md (standalone version), their Output Format sections — exact headings,
