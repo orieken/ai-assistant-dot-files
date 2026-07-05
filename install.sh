@@ -18,12 +18,16 @@ Usage: install.sh [OPTIONS]
 Install the Context Engineering Framework on this machine.
 
 Modes (pick one):
-  --global              Symlink configs to ~/  (always current)
-  --project <path>      Copy configs to a target project directory
-  --project             Copy configs to current directory
+  --global              Symlink configs to ~/  (always current after a git pull)
+  --project <path>      Symlink configs into a target project directory (also always current --
+                         the target keeps depending on this repo's checkout staying where it is)
+  --project             Symlink configs into the current directory
 
 Options:
-  --copy                Use copies instead of symlinks (Windows/WSL fallback)
+  --copy                Use real copies instead of symlinks -- required on Windows/WSL (symlinks need
+                         elevated permissions there), and also the way to make a --project install
+                         independent of this repo's checkout (a symlinked project install breaks if
+                         this repo is later moved or deleted)
   --platform <name>     Only install for a specific platform (claude-code, cursor, etc.)
   --dry-run             Show what would be installed without doing it
   --tour                Run the onboarding skill after install

@@ -70,7 +70,7 @@ cd ai-assistant-dot-files
 # Install globally (symlinks shared/ into ~/.claude, ~/.cursor, etc. — always current after a git pull)
 ./install.sh --global
 
-# Or install into one specific project (copies configs, doesn't require this repo to stay on disk)
+# Or install into one specific project (also symlinked by default -- see note below)
 ./install.sh --project /path/to/your-project
 
 # Verify everything is wired correctly
@@ -78,8 +78,11 @@ scripts/check-parity.sh
 ```
 
 Both `--global` and `--project` auto-detect which of the six platforms you actually have installed and only
-generate configs for those (`--platform <name>` to force a single one). `--copy` falls back to copying
-instead of symlinking (needed on Windows without WSL, where symlinks require elevated permissions).
+generate configs for those (`--platform <name>` to force a single one), and both **symlink by default** —
+a `--project` install still depends on this repo's checkout staying where it is, exactly like `--global`
+does. Pass `--copy` if you want a project install that's a real, independent copy instead (also required on
+Windows without WSL, where symlinks need elevated permissions). Add `--tour` to either mode to run the
+`onboard` skill walkthrough right after install.
 
 Once installed:
 ```bash
