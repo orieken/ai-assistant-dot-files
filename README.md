@@ -13,6 +13,7 @@ craftsmanship principles of Robert C. Martin, Martin Fowler, Kent Beck, and Neal
 
 For deeper detail beyond this README:
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the `shared/` layer design, tier system, context flow
+- [docs/AGENT_REFERENCE.md](docs/AGENT_REFERENCE.md) — every agent's role and what actually checks its work today
 - [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — how to add a new agent, skill, rule, or platform
 - [docs/runbooks/](docs/runbooks/) — operational guides, including adding a platform and editing agent prompts
 - [docs/MIGRATION.md](docs/MIGRATION.md) — upgrading a pre-restructure ("v1") checkout to the canonical `shared/` layer ("v2")
@@ -139,7 +140,9 @@ that's what those tools are actually capable of running.
 
 ## Agent Roster (24)
 
-Full definitions in `shared/agents/`; versions tracked in `shared/agents/CHANGELOG.md`.
+Full definitions in `shared/agents/`; versions tracked in `shared/agents/CHANGELOG.md`. For what actually
+checks each agent's work today (a contract, a downstream reviewer, a human approval gate, or an honestly
+documented gap), see [docs/AGENT_REFERENCE.md](docs/AGENT_REFERENCE.md).
 
 | Agent | What it does |
 |---|---|

@@ -2,7 +2,8 @@
 
 This document explains how `shared/` becomes six different platform configs, and how context flows through
 the agent pipeline once a feature is being delivered. For "how do I add X," see
-[CONTRIBUTING.md](CONTRIBUTING.md). For a narrative walkthrough, see the [README](../README.md).
+[CONTRIBUTING.md](CONTRIBUTING.md). For a narrative walkthrough, see the [README](../README.md). For what
+each individual agent does and what checks its work, see [AGENT_REFERENCE.md](AGENT_REFERENCE.md).
 
 ---
 
