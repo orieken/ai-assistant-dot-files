@@ -248,6 +248,102 @@
 
 ---
 
+## Phase 9: Memory engineering and governance polish (post-v2.0.0)
+
+> Work done after the Epic 21 `v2.0.0` tag, driven by three independent external audits (Antigravity,
+> Codex, GitHub Copilot) run against `docs/runbooks/self-audit-prompt.md`, plus a scoping decision to bring
+> memory-engineering prompts into this same v2 space rather than deferring them to the separate `docs/aos/`
+> v3 prototyping effort. Backfilled here because this checklist is supposed to be this feature's single
+> source of truth for scope, and it had drifted out of sync with real repo state — the exact class of doc
+> drift `docs/runbooks/self-audit-prompt.md` dimension 5 exists to catch, just pointed at itself this time.
+
+### Epic 22 — Memory Engineering (v2 scope, split from AOS/v3)
+- [x] Create `shared/memory-registry.json` — catalog of every memory source (KIs, ADRs, feature archive,
+      lessons-learned, `DOMAIN_DICTIONARY.md`, `TEAM_TOPOLOGY.md`) with owner/portability/retrieval-backend
+      metadata, plus an `optionalPaths` list for conditionally-existing paths like `.claude/knowledge/`
+- [x] Write `docs/runbooks/memory-engineering.md` — the Capture → Candidate → Audit → Approve → Index →
+      Retrieve → Expire lifecycle, plus the Memory Contract (Candidate/Audit required fields)
+- [x] Create `shared/skills/memory-engineer/SKILL.md` — periodic KI-corpus duplicate/expiration sweep
+- [x] Create `shared/skills/promote-memory/SKILL.md` — evaluates one retrospective immediately (distinct
+      from `extract-lessons`' cross-delivery pattern threshold)
+- [x] Create `shared/skills/query-memory/SKILL.md` — registry-aware search, delegates KI/ADR lookups to
+      `search-ki` instead of duplicating that logic
+- [x] Update `search-ki` and `context-engineer` (agent + skill twin, bumped 2.0.0 -> 2.1.0) with memory
+      registry awareness
+- [x] Extend `scripts/health-check.sh` with a Memory Registry check (valid JSON, every path exists or is
+      marked optional, no duplicate KI frontmatter names)
+- [x] Write `docs/runbooks/lightrag-integration.md` as a deliberately deferred "when and how" runbook — no
+      LightRAG code or dependency added; YAGNI until the KI corpus actually outgrows lexical search
+- [x] Cross-reference from `context-engineering.md`, `DOMAIN_DICTIONARY.md`, README.md, `runbooks/README.md`
+
+### Epic 23 — Contract completeness closure (Epic 5 follow-through)
+- [x] Add `shared/contracts/context-manifest-contract.md` — closed a gap independently flagged by all 3
+      external audits (context-engineer's own output had no contract)
+- [x] Add the last 5 pipeline agents' contracts: `performance-contract.md`, `data-engineering-contract.md`,
+      `accessibility-contract.md`, `docs-contract.md`, `devops-contract.md` — read each producing agent's
+      actual current Output Format headings fresh rather than assuming
+- [x] Wire all 5 into `validate-artifact`'s Contract Mapping table and `deliver-feature` (renumbered the
+      pipeline from 34 to 39 steps, fixed every cross-reference including two stale trace-JSON examples)
+- [x] Rewrite `scripts/health-check.sh`'s "Inter-Agent Contracts" check to parse `validate-artifact`'s own
+      table directly instead of maintaining a second, independently-drifting hardcoded agent/contract list
+
+### Epic 24 — Agent Reference documentation
+- [x] Create `docs/AGENT_REFERENCE.md` — Role, Counterbalance (Structural contract / Downstream agent
+      review / Human approval gate / Aggregate-delayed metric), and an explicit Gap for all 24 agents,
+      built by reading every `shared/agents/*.md` file fresh and cross-referencing `deliver-feature`,
+      `validate-artifact`, and `shared/rules/approval-gates.md`
+- [x] Link it from README.md's Agent Roster section and "For deeper detail" list
+
+### Epic 25 — Team Topologies real ownership
+- [x] Fill in `shared/TEAM_TOPOLOGY.md`'s placeholder team names — all 5 bounded-context rows set to the
+      actual (solo) owner, with an explicit "current state: solo, pre-multi-team" framing and a stated
+      trigger for when Team Type/Interaction Mode discipline starts mattering for real
+
+### Epic 26 — documentation-manager narrowed to ad-hoc-session counterpart of promote-memory
+- [x] Redesign `documentation-manager` (1.0.0 -> 2.0.0, **major**): previously wrote directly to
+      `ARCHITECTURE.md`/`RUNBOOKS.md`/`GOTCHAS.md`/`ONBOARDING.md` with no review step — an undocumented
+      overlap with the Epic 22 memory-engineering skills flagged in `docs/AGENT_REFERENCE.md`. Now produces
+      Candidate Records via the same Memory Contract as `promote-memory`, requires explicit human approval
+      before any KI/ADR/rule/living-doc edit, and retires `GOTCHAS.md` as a target (gotchas are Knowledge
+      Items now, via `create-ki`)
+- [x] Update `docs/runbooks/memory-engineering.md`, `shared/DOMAIN_DICTIONARY.md`'s Candidate Record entry,
+      and `docs/AGENT_REFERENCE.md`'s entry to reflect `documentation-manager` as a third Candidate producer
+
+### Epic 27 — CI-parity verification tooling
+- [x] Create `scripts/ci-check.sh` — runs `check-parity.sh`, `test-agents.sh`, and `health-check.sh
+      --verbose` inside a `docker run ubuntu:24.04` container matching the actual GitHub Actions runner,
+      instead of trusting a local run that might be on a different bash version. Built after a real
+      CI-breaking bug (`((var++))` evaluating to a "false" exit status under `set -e` when the pre-increment
+      value is 0 — invisible on macOS's bundled bash 3.2, real on Ubuntu's bash 5.2.21) shipped past a local
+      check. BATS was considered and explicitly rejected: CI was already correctly catching the bug on every
+      push, so the real gap was not checking CI status, not a testing-coverage gap
+- [x] Document it in `docs/CONTRIBUTING.md`'s new "Before you push" section
+
+### Epic 28 — Framework diagrams
+- [x] Add a "The Framework at a Glance" Mermaid diagram to README.md (shared/ → 6 tools → deliver-feature
+      pipeline → Context/Memory/Learning loop feeding back into shared/)
+- [x] Add a Context/Memory/Learning cycle Mermaid diagram to `docs/runbooks/context-engineering.md`
+- [x] Validate both via a real render pass (`@mermaid-js/mermaid-cli` through a headless browser), not just
+      syntax linting
+
+### Epic 29 — External audit fixes (2026-07-05)
+- [x] Remove hardcoded personal machine paths from `scripts/api-generator/index.ts` — CLI args or
+      `API_GENERATOR_GO_DIR`/`API_GENERATOR_TS_DIR` env vars instead
+- [x] Mark `scripts/api-generator` explicitly experimental/unsupported (new README.md + package.json
+      description) rather than leaving its lack of tests/CI integration unstated
+- [x] Make `context-engineer`'s Prior-Deliveries lookup case-insensitive (2.1.0 -> 2.1.1) — the archived
+      `context-engineering-framework/analysis.md` uses `**Owning context**` (lowercase c), which the old
+      exact-match grep silently missed. Left the archived doc itself untouched — the feature archive is
+      treated as an immutable historical record elsewhere in this framework
+- [x] Delete `docs/files.zip`, `docs/spec-writer.zip`, `docs/dotfiles-additions.zip` — unreferenced anywhere
+      in the repo, contents fully superseded by canonical `shared/agents/` files. Left
+      `docs/clean-code-guidelines.docx` alone since it's deliberately referenced from `CLAUDE.md`
+- [x] Add a "Known Judgment Calls" section to `docs/runbooks/self-audit-prompt.md` recording two findings
+      (uneven standalone-agent governance depth, some platform behaviors marked unconfirmed) that were
+      reviewed and confirmed as already-deliberate tradeoffs, so a future audit doesn't re-flag them as new
+
+---
+
 ## Summary: Gap Coverage Matrix
 
 | Gap Identified | Epic(s) | Phase |
@@ -267,6 +363,14 @@
 | No onboarding experience | Epic 18, 19 | 7 |
 | No CI for the framework itself | Epic 20 | 8 |
 | No migration path from current structure | Epic 21 | 8 |
+| No durable memory lifecycle (capture/audit/expire) beyond raw KIs | Epic 22 | 9 |
+| Contract coverage incomplete (context-engineer + 5 pipeline agents) | Epic 23 | 9 |
+| No single reference for agent Role/Counterbalance/Gap | Epic 24 | 9 |
+| Team Topology registry still all placeholders | Epic 25 | 9 |
+| documentation-manager overlapped memory-engineering with no review gate | Epic 26 | 9 |
+| Local script runs didn't match CI's actual OS/bash version | Epic 27 | 9 |
+| No visual diagram of how the framework fits together | Epic 28 | 9 |
+| Machine-specific paths, casing drift, stale binary artifacts | Epic 29 | 9 |
 
 ---
 
