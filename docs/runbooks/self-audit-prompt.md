@@ -125,9 +125,30 @@ re-run with an explicit reminder to quote actual file content, not summarize int
 matrix should be present in the report itself, not just implied by the findings — its absence is a sign the
 auditor skipped straight to conclusions.
 
+## Known Judgment Calls (Reviewed — Do Not Re-Flag As New Findings)
+Some things an audit surfaces are real observations but not gaps — they're already-documented, deliberate
+tradeoffs. Before treating one of these as a new finding, check whether it's already covered here:
+
+- **Standalone agents have uneven governance depth** (some, like `finops-engineer`/`dx-engineer`/
+  `dependency-auditor`, have no check beyond a human reading the report). Reviewed 2026-07-05: this is
+  already called out explicitly in `docs/AGENT_REFERENCE.md`'s "What this survey actually shows" section
+  (#2) as a conscious judgment call tied to each agent's blast radius, not an oversight. Only re-flag this
+  if a *specific* standalone agent's risk profile has changed (e.g. it gained the ability to take an
+  irreversible action) since that entry was written.
+- **Some platform behaviors in `docs/ARCHITECTURE.md` are marked unconfirmed rather than confirmed.**
+  Reviewed 2026-07-05: this is intentional disclosure of actual verification status (confirmed = live-tested
+  against that platform; unconfirmed = documented honestly rather than assumed), not an unaddressed gap.
+  Building automated fixtures for every claimed platform path isn't proportionate — most of these require a
+  live account/session on a third-party tool to verify. Only re-flag a *specific* line if the platform's
+  actual behavior has since been confirmed to contradict what's written.
+
+If a future audit re-raises one of these unchanged, treat it as confirmation the existing documentation is
+correct, not a new action item — cite this section back rather than re-litigating from scratch.
+
 ## Escalation / Acting on Results
 - Treat every CONFIRMED finding as real; verify PLAUSIBLE findings yourself before acting (read both files
-  the same way the audit was supposed to).
+  the same way the audit was supposed to). Check "Known Judgment Calls" above first — a finding that matches
+  one exactly isn't new.
 - Fix findings in the same spirit as the framework's own conventions: bump affected agent versions and add
   a `shared/agents/CHANGELOG.md` entry (see [editing-agent-prompts.md](editing-agent-prompts.md)), re-run
   `scripts/check-parity.sh` and `scripts/health-check.sh` after any fix, and commit per logical unit of work
