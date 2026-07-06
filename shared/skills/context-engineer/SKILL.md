@@ -54,7 +54,8 @@ might be answered by a past feature's retrospective or a `DOMAIN_DICTIONARY.md` 
 exist. This is additive: the default, proven path (`search-ki` for KI/ADR questions) is unchanged.
 
 ### 4. Search Prior Deliveries in the Same Bounded Context (Recency-Independent)
-Grep `docs/features/*/analysis.md` for a `**Owning Context**` entry matching the Bounded Context from step 1.
+Grep (case-insensitive — older archived analyses use `**Owning context**`, newer ones `**Owning Context**`)
+`docs/features/*/analysis.md` for an Owning Context entry matching the Bounded Context from step 1.
 For every match with a `retrospective.md`, pull its "What Went Poorly"/"What To Improve" sections. This is
 deliberately independent of recency — a same-area feature from 20 deliveries ago still surfaces here, unlike
 `analyst`'s own feedback loop (which only reads the 3 *most recent* deliveries regardless of area). At small

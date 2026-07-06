@@ -18,6 +18,21 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-05 — External audit fixes (api-generator portability, context-engineer casing tolerance)
+
+| Agent | Version | Change |
+|---|---|---|
+| context-engineer | 2.1.0 -> 2.1.1 | **Patch**: an external audit found that step 6's Prior-Deliveries grep for `**Owning Context**` exact-matches, but the archived `docs/features/context-engineering-framework/analysis.md` uses `**Owning context**` (lowercase c) — a real historical drift that would silently miss that feature's retrospective. Fixed by making the lookup case-insensitive (documented in both the agent and `shared/skills/context-engineer/SKILL.md` twin) instead of retroactively editing the archived doc, since the feature archive is treated as an immutable historical record elsewhere in this framework. No output format change. |
+
+Also (no agent version bump, non-agent fixes from the same external audit):
+- `scripts/api-generator/index.ts`: removed hardcoded personal machine paths (`/Users/oscarrieken/...`) for
+  Go/TS client output dirs — now CLI args or `API_GENERATOR_GO_DIR`/`API_GENERATOR_TS_DIR` env vars.
+- `scripts/api-generator/package.json` + new `scripts/api-generator/README.md`: marked the tool explicitly
+  experimental/unsupported (it has no tests and isn't wired into `scripts/ci-check.sh` or CI) instead of
+  leaving that unstated.
+
+---
+
 ## 2026-07-05 — documentation-manager narrowed to ad-hoc-session counterpart of promote-memory
 
 | Agent | Version | Change |

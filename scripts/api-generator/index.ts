@@ -7,19 +7,20 @@ import { emitGo } from './emitters/go-emitter';
 async function main() {
   const args = process.argv.slice(2);
   const url = args[0];
-  
-  if (!url) {
-    console.error('Usage: ts-node index.ts <swagger-url>');
+  const goDir = args[1] ?? process.env.API_GENERATOR_GO_DIR;
+  const tsDir = args[2] ?? process.env.API_GENERATOR_TS_DIR;
+
+  if (!url || !goDir || !tsDir) {
+    console.error('Usage: ts-node index.ts <swagger-url> <go-output-dir> <ts-output-dir>');
+    console.error('Go/TS output dirs may also be set via API_GENERATOR_GO_DIR / API_GENERATOR_TS_DIR.');
     process.exit(1);
   }
 
   try {
     console.log(`🚀 Ingesting API from: ${url}`);
     const spec = await parseOpenApi(url);
-    
+
     const rootDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../');
-    const goDir = '/Users/oscarrieken/Projects/Rieken/go-sunday';
-    const tsDir = '/Users/oscarrieken/Projects/Rieken/sunday-monorepo/packages/clients';
 
     console.log(`rootDir: ${rootDir}`);
     console.log(`Docs output: ${path.join(rootDir, 'docs')}`);

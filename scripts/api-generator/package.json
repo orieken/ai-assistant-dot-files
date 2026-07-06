@@ -4,13 +4,13 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"experimental: no tests yet, see README.md\"",
     "ingest": "node --loader ts-node/esm index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "EXPERIMENTAL: OpenAPI-to-client generator. Not integrated into framework CI, not covered by scripts/ci-check.sh, not a supported framework tool -- personal utility, use at your own risk.",
   "dependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.6.0",
