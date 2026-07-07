@@ -342,6 +342,49 @@
       (uneven standalone-agent governance depth, some platform behaviors marked unconfirmed) that were
       reviewed and confirmed as already-deliberate tradeoffs, so a future audit doesn't re-flag them as new
 
+### Epic 30 — Cursor native skills/agents parity (2026-07-06/07)
+> Cursor shipped native Agent Skills (`.cursor/skills/*/SKILL.md`) and subagent (`.cursor/agents/*.md`)
+> support, using the same open standard `shared/agents/`/`shared/skills/` already follow (confirmed
+> against `cursor.com/docs/subagents`, `cursor.com/docs/skills`). This closed most of the gap between
+> Cursor's Tier 2 classification and Claude Code's Tier 1 — see the updated Tier system section in
+> `docs/ARCHITECTURE.md` and `shared/platform-registry.json`'s Cursor entry.
+- [x] **Phase 1 — prerequisite frontmatter fixes (all 24 agents)**: `model: sonnet` -> `model: inherit`
+      (both Claude Code and Cursor default to `inherit` when the field is omitted, and both accept the
+      literal keyword) and relocated a "read these rule files" preamble that sat *before* the opening
+      `---` on 23 of 24 agents into the body, using canonical `shared/rules/` paths instead of the
+      Claude-Code-only `.claude/rules/` prefix. Invisible to Claude Code's tolerant loader and
+      `health-check.sh`'s lenient grep-anywhere frontmatter check, but would have broken Cursor's
+      stricter parser once agents were symlinked directly in Phase 3. All 24 patch-bumped, one
+      CHANGELOG entry.
+- [x] **Phase 2 — symlink feasibility check**: discovered `.cursor/agents`/`.cursor/skills` already
+      existed in this repo as symlinks, committed 2026-04-09 (`d0b54d3`, "expanded to work for all
+      platforms") — an earlier, forgotten attempt at this exact idea that predates the whole Tier
+      system and was never wired into `check-parity.sh`/`platform-registry.json`/docs. User confirmed
+      live in Cursor that the `analyst` subagent and `search-ki` skill both load and behave correctly
+      (not just generically) via this mechanism.
+- [x] **Phase 3 — retire the old workaround, wire up the new one**: removed
+      `generate_cursor_personas()` and the now-dead `extract_agent_body()` helper from
+      `scripts/generate-configs.sh` (Cursor's generate step now only produces the 7 always-apply/
+      glob-triggered rule `.mdc` files — rules still require inlining, agents/skills don't). Added
+      `install_cursor()` to `install.sh` (symlinks `.cursor/agents`/`.cursor/skills` -> `shared/`,
+      mirroring `install_claude_code()`) and matching removal logic to `uninstall.sh` — both verified
+      with real installs to a scratch directory, not just `--dry-run`. Replaced
+      `check-parity.sh`'s 24-persona-file existence check with a symlink-resolution check. Fixed this
+      repo's own pre-existing symlinks to point directly at `../shared/{agents,skills}` instead of
+      double-hopping through `../.claude/`. Deleted the 24 now-orphaned persona `.mdc` files.
+- [x] **Phase 4 — registry and doc sync**: updated `shared/platform-registry.json`'s Cursor
+      capabilities (`agents`/`skills`/`subAgentOrchestration` -> `true`, `hooks` stays `false`),
+      `docs/ARCHITECTURE.md`'s Tier system section and generation-strategy bullet,
+      `README.md`'s Platform Capability Matrix, `shared/DOMAIN_DICTIONARY.md`'s Capability Tier entry
+      (now documents Cursor as a mixed profile, not a clean single tier), and
+      `docs/CONTRIBUTING.md`'s agent-creation frontmatter example (`model: inherit`, explicit
+      "must start with `---` on line 1" requirement). Documented the one real permanent gap: Cursor
+      subagents have no `tools:` allowlist — they inherit all parent tools with only a coarse
+      `readonly: true/false`.
+- [x] Verified throughout: `check-parity.sh`, `health-check.sh --verbose` (159 passed/0 failed),
+      `test-agents.sh`, real `install.sh`/`uninstall.sh` cycles to scratch directories — all green at
+      every phase, committed and pushed separately per phase.
+
 ---
 
 ## Summary: Gap Coverage Matrix
@@ -371,6 +414,7 @@
 | Local script runs didn't match CI's actual OS/bash version | Epic 27 | 9 |
 | No visual diagram of how the framework fits together | Epic 28 | 9 |
 | Machine-specific paths, casing drift, stale binary artifacts | Epic 29 | 9 |
+| Cursor's Tier 2 classification was stale -- native agents/skills unrecognized | Epic 30 | 9 |
 
 ---
 
