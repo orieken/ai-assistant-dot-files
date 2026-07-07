@@ -385,6 +385,30 @@
       `test-agents.sh`, real `install.sh`/`uninstall.sh` cycles to scratch directories — all green at
       every phase, committed and pushed separately per phase.
 
+### Epic 31 — Language/framework convention files (scoped 2026-07-06, not yet built)
+> Found while discussing whether the framework should document preferred packages and project
+> structure per language: `go_backend_rules_body()`, `vue_frontend_rules_body()`, and
+> `testing_rules_body()` in `scripts/generate-configs.sh` already give architectural *patterns* (Clean
+> Architecture layers, Composition API, Site-Centric pattern) but zero concrete *package* or
+> *directory-structure* guidance -- and, more importantly, none of that content is actually sourced
+> from `shared/rules/` (which only has 3 files: `approval-gates.md`, `architecture-guardrails.md`,
+> `design-principles.md`). It's hardcoded as literal bash strings inside the generator script, reaching
+> Cursor and Copilot but **not Claude Code** (no `shared/rules/go-conventions.md` for `.claude/rules/`
+> to symlink) -- a single-source-of-truth gap for this one content type specifically.
+- [ ] Create `shared/rules/go-conventions.md`, `shared/rules/vue-conventions.md`,
+      `shared/rules/testing-conventions.md` (naming TBD) with concrete preferred packages and
+      directory/structure conventions added to the patterns already in the three `*_rules_body()`
+      functions -- scoped to the stack actually declared in the Tech Stack section (Go, Vue 3 +
+      Tailwind, Saturday/Sunday test frameworks), not the broader TypeScript/Go/Python/Java set the
+      CLAUDE.md Quick Reference covers generically
+- [ ] Update `go_backend_rules_body()`/`vue_frontend_rules_body()`/`testing_rules_body()` to read from
+      those files via `extract_rule_content` (the same mechanism `architecture.mdc` already uses)
+      instead of embedding literal strings
+- [ ] Confirm Claude Code now receives this content too (via the `.claude/rules` symlink, once real
+      files exist in `shared/rules/`) -- it currently doesn't get it at all
+- [ ] Verify: `check-parity.sh`, `health-check.sh --verbose`, regenerate configs, confirm no content
+      lost from the existing Cursor/Copilot output
+
 ---
 
 ## Summary: Gap Coverage Matrix
