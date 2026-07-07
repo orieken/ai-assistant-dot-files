@@ -11,18 +11,29 @@ by the next `scripts/generate-configs.sh` run.
 
 ## Adding a new agent
 
-1. Create `shared/agents/<name>.md` following an existing agent as a template. Required frontmatter:
+1. Create `shared/agents/<name>.md` following an existing agent as a template. The file **must start with
+   `---` on line 1** — no preamble text before the frontmatter block. Claude Code tolerates a preamble (it
+   scans for the block wherever it is), but Cursor's stricter parser doesn't, and `.cursor/agents/` is a
+   direct symlink to this same file (see `install.sh`'s `install_cursor()`), so anything that breaks
+   Cursor's parsing breaks there too. Required frontmatter:
    ```yaml
    ---
    name: your-agent-name
    description: When to use it — be specific enough that an orchestrator or human can decide without guessing.
-   tools: Read, Write, Edit, Bash, Glob, Grep   # only what it actually needs
-   model: sonnet
+   tools: Read, Write, Edit, Bash, Glob, Grep   # only what it actually needs -- ignored by Cursor's
+                                                # subagent parser (no per-agent tools allowlist there;
+                                                # it inherits all parent tools), but still enforced by
+                                                # Claude Code
+   model: inherit   # matches whatever model the operator's own session is running, on both Claude Code
+                     # and Cursor -- only hardcode a specific model (sonnet/opus/haiku/etc.) if this agent
+                     # genuinely needs a specific capability regardless of session model
    version: 1.0.0
    ---
    ```
 2. Write the persona, process, output format, and rules sections — see any existing agent for the expected
-   shape. Keep the process numbered and concrete; vague steps produce vague output.
+   shape. Keep the process numbered and concrete; vague steps produce vague output. If the agent needs to
+   read `shared/rules/*.md` before starting, say so as the first line of the body (not before the
+   frontmatter) — see `shared/agents/analyst.md` for the pattern.
 3. If this agent participates in `deliver-feature`, decide where in the pipeline it runs and update
    `shared/skills/deliver-feature/SKILL.md`'s numbered steps accordingly.
 4. If its output is consumed by other agents, consider adding a contract in `shared/contracts/` (see
