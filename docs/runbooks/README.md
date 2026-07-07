@@ -65,5 +65,6 @@ Each runbook follows this structure:
 - [self-audit-prompt.md](self-audit-prompt.md) — a reusable prompt for having a *different* agent independently audit this framework's internal consistency (twin-file drift, missing contracts, stale docs, dead references)
 - [memory-engineering.md](memory-engineering.md) — the Capture→Candidate→Audit→Approve→Index→Retrieve→Expire lifecycle for durable memory (mainly Knowledge Items), promotion rules, and expiration criteria
 - [lightrag-integration.md](lightrag-integration.md) — when and how to add an optional LightRAG retrieval backend later; not built yet, documented so the "not now" decision is deliberate and reversible
+- [blog-content-brief.md](blog-content-brief.md) — a reusable prompt for handing off blog-post drafting (context engineering, memory engineering, and other framework highlights) to a fresh agent once an epic cycle wraps, with candidate topics and grounding-source pointers so drafts stay evidence-based
 
 General runbook summaries are also available in `/docs/RUNBOOKS.md`. As new individual runbooks are created, add them to this directory and link them here.
