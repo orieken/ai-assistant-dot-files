@@ -90,17 +90,6 @@ extract_rule_content() {
   cat "$file"
 }
 
-extract_agent_body() {
-  local file="$1"
-  # Agent files have a preamble line (referencing .claude/rules/*.md — a file reference Cursor can't
-  # follow) before the frontmatter, then the frontmatter itself, then the actual persona body. Skip
-  # everything through the second '---' delimiter; the always-apply rule .mdc files already cover the
-  # preamble's content, so it isn't lost, just not redundantly repeated per persona. Stop counting
-  # delimiters once past the frontmatter so a literal '---' later in the body (a markdown horizontal
-  # rule, e.g. before the trailing attribution line) doesn't truncate the rest of the persona.
-  awk '/^---$/ && delim<2 {delim++; next} delim==2{print}' "$file"
-}
-
 testing_rules_body() {
   echo "# Testing Rules
 
@@ -176,38 +165,9 @@ generate_mdc() {
   write_file "$dest" "${frontmatter}${body}"
 }
 
-generate_cursor_personas() {
-  local rules_dir="$1"
-  local persona_count=0
-
-  for agent_file in "$SHARED_DIR/agents/"*.md; do
-    local base
-    base="$(basename "$agent_file")"
-    [[ "$base" == "CHANGELOG.md" ]] && continue
-
-    local agent_name agent_desc agent_desc_safe
-    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
-    agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//' || true)
-    [[ -z "$agent_name" ]] && continue
-
-    # Escape embedded double quotes — several agent descriptions quote example user phrases
-    # (e.g. dependency-auditor: `"audit dependencies"`), which would otherwise terminate the YAML
-    # frontmatter's description string early and produce an invalid .mdc file.
-    agent_desc_safe=$(printf '%s' "$agent_desc" | sed 's/"/\\"/g')
-
-    generate_mdc "$rules_dir/${agent_name}.mdc" \
-      "Persona: $agent_name — $agent_desc_safe" \
-      "false" "" \
-      "$(extract_agent_body "$agent_file")"
-    ((persona_count++)) || true
-  done
-
-  echo "  ($persona_count persona files generated)"
-}
-
 generate_cursor() {
   echo ""
-  echo "--- Cursor (Tier 2: Personas + Rules) ---"
+  echo "--- Cursor (Tier 1-equivalent for agents/skills, Tier 2 for rules) ---"
 
   local rules_dir="$OUTPUT_DIR/.cursor/rules"
 
@@ -255,7 +215,12 @@ $(extract_rule_content "$SHARED_DIR/ARCHITECTURE_RULES.md")"
     "false" '["**/*.vue", "**/*.tsx", "**/*.jsx", "**/components/**"]' \
     "$(vue_frontend_rules_body)"
 
-  generate_cursor_personas "$rules_dir"
+  # Agents and skills are NOT generated here. Cursor natively reads .cursor/agents/*.md and
+  # .cursor/skills/*/SKILL.md using the same open standard shared/agents/ and shared/skills/ already
+  # follow (confirmed against cursor.com/docs/subagents and cursor.com/docs/skills, 2026-07-06) --
+  # install.sh symlinks those directories directly, the same way it does for Claude Code, instead of
+  # this script flattening each agent into a standalone .mdc persona file (the old workaround, retired
+  # now that real subagent/skill loading exists).
 }
 
 collect_craftsmanship_section() {

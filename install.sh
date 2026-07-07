@@ -188,6 +188,27 @@ install_antigravity() {
   fi
 }
 
+install_cursor() {
+  log ""
+  log "--- Cursor (native agents/skills confirmed 2026-07-06, rules still generated inline) ---"
+
+  # Cursor reads .cursor/agents/*.md and .cursor/skills/*/SKILL.md using the same open standard
+  # shared/agents/ and shared/skills/ already follow -- symlink directly instead of flattening into
+  # .mdc personas (the retired Epic 11 workaround). Rules still go through generate-configs.sh
+  # (install_generated_configs) since Cursor Rules can't follow file references, only agents/skills can.
+  if [[ "$MODE" == "global" ]]; then
+    local cursor_dir="$HOME/.cursor"
+    if ! $DRY_RUN; then mkdir -p "$cursor_dir" 2>/dev/null || true; fi
+    link_or_copy "$SHARED_DIR/agents" "$cursor_dir/agents"
+    link_or_copy "$SHARED_DIR/skills" "$cursor_dir/skills"
+  else
+    local cursor_dir="$TARGET_DIR/.cursor"
+    if ! $DRY_RUN; then mkdir -p "$cursor_dir" 2>/dev/null || true; fi
+    link_or_copy "$SHARED_DIR/agents" "$cursor_dir/agents"
+    link_or_copy "$SHARED_DIR/skills" "$cursor_dir/skills"
+  fi
+}
+
 install_claude_code() {
   log ""
   log "--- Claude Code (Tier 1: Full) ---"
@@ -280,6 +301,10 @@ echo ""
 
 if should_install "claude-code"; then
   install_claude_code
+fi
+
+if should_install "cursor"; then
+  install_cursor
 fi
 
 if should_install "gemini"; then

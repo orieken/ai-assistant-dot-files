@@ -108,27 +108,27 @@ if [[ -d "$CURSOR_DIR" ]]; then
   check_rule_content "$CURSOR_DIR/design-principles.mdc" "design-principles.mdc" "design-principles.md"
   check_rule_content "$CURSOR_DIR/approval-gates.mdc" "approval-gates.mdc" "approval-gates.md"
   check_agent_roster "$CURSOR_DIR/agent-roster.mdc" "agent-roster.mdc"
-
-  persona_missing=0
-  persona_total=0
-  for agent_file in "$SHARED_DIR/agents/"*.md; do
-    agent_base="$(basename "$agent_file")"
-    [[ "$agent_base" == "CHANGELOG.md" ]] && continue
-    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
-    [[ -z "$agent_name" ]] && continue
-    ((persona_total++)) || true
-    if [[ ! -f "$CURSOR_DIR/${agent_name}.mdc" ]]; then
-      ((persona_missing++)) || true
-    fi
-  done
-  if [[ $persona_missing -eq 0 ]]; then
-    pass "per-agent persona files ($persona_total/$persona_total present)"
-  else
-    fail "per-agent persona files" "$persona_missing of $persona_total missing"
-  fi
 else
   miss ".cursor/rules/ directory"
 fi
+
+echo ""
+echo "--- Cursor agents/skills symlinks ---"
+for symlink in ".cursor/agents" ".cursor/skills"; do
+  full_path="$REPO_DIR/$symlink"
+  if [[ -L "$full_path" ]]; then
+    target=$(readlink "$full_path")
+    if [[ "$target" == *"shared"* ]]; then
+      pass "$symlink -> $target"
+    else
+      fail "$symlink" "points to $target (expected shared/ directly, not a double-hop through .claude/)"
+    fi
+  elif [[ -d "$full_path" ]]; then
+    fail "$symlink" "is a directory, not a symlink to shared/"
+  else
+    miss "$symlink"
+  fi
+done
 
 echo ""
 echo "--- Flat rule files ---"
