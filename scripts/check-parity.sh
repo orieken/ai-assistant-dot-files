@@ -91,7 +91,7 @@ check_rule_content() {
 echo "--- Cursor .mdc files ---"
 CURSOR_DIR="$REPO_DIR/.cursor/rules"
 if [[ -d "$CURSOR_DIR" ]]; then
-  for expected_mdc in architecture design-principles approval-gates agent-roster testing go-backend vue-frontend; do
+  for expected_mdc in architecture design-principles approval-gates agent-roster testing go-backend vue-frontend typescript-conventions python-conventions csharp-conventions java-conventions; do
     local_file="$CURSOR_DIR/${expected_mdc}.mdc"
     if [[ -f "$local_file" ]]; then
       if ! head -1 "$local_file" | grep -q '^---$'; then
@@ -108,6 +108,12 @@ if [[ -d "$CURSOR_DIR" ]]; then
   check_rule_content "$CURSOR_DIR/design-principles.mdc" "design-principles.mdc" "design-principles.md"
   check_rule_content "$CURSOR_DIR/approval-gates.mdc" "approval-gates.mdc" "approval-gates.md"
   check_agent_roster "$CURSOR_DIR/agent-roster.mdc" "agent-roster.mdc"
+  check_rule_content "$CURSOR_DIR/testing.mdc" "testing.mdc" "testing-conventions.md"
+  check_rule_content "$CURSOR_DIR/go-backend.mdc" "go-backend.mdc" "go-conventions.md"
+  check_rule_content "$CURSOR_DIR/typescript-conventions.mdc" "typescript-conventions.mdc" "typescript-conventions.md"
+  check_rule_content "$CURSOR_DIR/python-conventions.mdc" "python-conventions.mdc" "python-conventions.md"
+  check_rule_content "$CURSOR_DIR/csharp-conventions.mdc" "csharp-conventions.mdc" "csharp-conventions.md"
+  check_rule_content "$CURSOR_DIR/java-conventions.mdc" "java-conventions.mdc" "java-conventions.md"
 else
   miss ".cursor/rules/ directory"
 fi
@@ -164,7 +170,7 @@ done
 
 echo ""
 echo "--- GitHub Copilot scoped instructions ---"
-for scoped_file in "testing" "go-backend" "vue-frontend"; do
+for scoped_file in "testing" "go-backend" "vue-frontend" "typescript-conventions" "python-conventions" "csharp-conventions" "java-conventions"; do
   full_path="$REPO_DIR/.github/instructions/${scoped_file}.instructions.md"
   if [[ -f "$full_path" ]]; then
     if head -1 "$full_path" | grep -q '^---$' && grep -q '^applyTo:' "$full_path"; then

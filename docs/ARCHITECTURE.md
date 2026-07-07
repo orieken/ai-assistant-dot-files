@@ -94,19 +94,22 @@ actually runs multi-step orchestration with tool access.
     real skill/agent loading), which used to flatten each agent into a standalone `.cursor/rules/<name>.mdc`
     persona file.
   - Rules still can't follow file references (no evidence Cursor Rules support them, unlike agents/skills),
-    so `generate-configs.sh` still generates 7 `.mdc` files for rules: `architecture.mdc`,
+    so `generate-configs.sh` still generates 11 `.mdc` files for rules: `architecture.mdc`,
     `design-principles.mdc`, `agent-roster.mdc`, `approval-gates.mdc`, `testing.mdc`, `go-backend.mdc`,
-    `vue-frontend.mdc`. `approval-gates.mdc` and `agent-roster.mdc` are the only `alwaysApply: true` files —
-    `architecture.mdc` and `design-principles.mdc` Auto Attach on a broad source-file glob instead, since
-    combined they'd otherwise blow well past Cursor's own recommended ~2,000-token always-apply budget.
-    Cursor silently ignores a `.mdc` file with invalid frontmatter, so `generate_mdc()` is careful about
-    exact YAML shape.
+    `vue-frontend.mdc`, plus `typescript-conventions.mdc`, `python-conventions.mdc`,
+    `csharp-conventions.mdc`, `java-conventions.mdc` (Epic 31, 2026-07-07 — preferred packages/structure
+    per language, sourced from `shared/rules/<language>-conventions.md`). `approval-gates.mdc` and
+    `agent-roster.mdc` are the only `alwaysApply: true` files — the rest Auto Attach on a language-specific
+    or broad source-file glob instead, since combined they'd otherwise blow well past Cursor's own
+    recommended ~2,000-token always-apply budget. Cursor silently ignores a `.mdc` file with invalid
+    frontmatter, so `generate_mdc()` is careful about exact YAML shape.
 - **Tier 2 (Windsurf, GitHub Copilot)**: generate-inline, multi-file.
   - Windsurf gets one flat `.windsurfrules` (no per-file globs support in the legacy format).
-  - Copilot gets the Tier-3-style `copilot-instructions.md` (roster + rules inlined) **plus**
-    `.github/instructions/{testing,go-backend,vue-frontend}.instructions.md`, each with an `applyTo`
-    frontmatter field (comma-separated glob string, not an array like Cursor's `globs`) — both coexist and
-    combine per GitHub's docs.
+  - Copilot gets the Tier-3-style `copilot-instructions.md` (roster + rules inlined) **plus** the same
+    7 scoped `.github/instructions/*.instructions.md` files as Cursor's non-agent-roster `.mdc` set
+    (`testing`, `go-backend`, `vue-frontend`, `typescript-conventions`, `python-conventions`,
+    `csharp-conventions`, `java-conventions`), each with an `applyTo` frontmatter field (comma-separated
+    glob string, not an array like Cursor's `globs`) — both coexist and combine per GitHub's docs.
 - **Tier 3 (OpenAI)**: generate-inline, single file. `generate_tier3()` concatenates rules + craftsmanship
   section + persona roster into one instruction file.
 - **Gemini/Antigravity**: generates root `AGENTS.md` only (the [agents.md](https://agents.md) cross-tool

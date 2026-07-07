@@ -1,6 +1,3 @@
----
-applyTo: "**/*.go,**/go.mod,**/go.sum"
----
 # Go Conventions
 
 ## Architecture

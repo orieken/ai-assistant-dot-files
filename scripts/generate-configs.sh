@@ -91,40 +91,27 @@ extract_rule_content() {
 }
 
 testing_rules_body() {
-  echo "# Testing Rules
-
-## Saturday Framework (E2E / UI Testing)
-ALWAYS use the Site-Centric pattern: \`BaseSite\`, \`BasePage\`, \`BaseElement\`, \`BaseFlow\`.
-NEVER use traditional Page Object Model (POM).
-ALWAYS use Playwright driven by Cucumber.js for UI automation.
-ALWAYS include OpenTelemetry instrumentation for every BDD scenario.
-
-## Sunday Framework (API Testing)
-ALWAYS use Vitest for unit tests and Playwright for integration/E2E API tests.
-ALWAYS use the custom \`api\` fixture and fluent matchers (\`toHaveStatus\`, \`toBeSuccessful\`, \`toRespondWithin\`).
-ALWAYS extend \`BaseApiClient\` for domain-specific API clients.
-ALWAYS validate schemas with Zod (\`validateSchema()\`).
-NEVER use custom retry loops — use \`CircuitBreaker\` or \`ExponentialBackoffStrategy\`.
-
-## Test Quality
-CRITICAL: Test coverage MUST be >= 85%.
-CRITICAL: Cyclomatic complexity per function MUST be < 7.
-ALWAYS practice TDD/BDD — Red-Green-Refactor.
-NEVER write feature code without tests."
+  extract_rule_content "$SHARED_DIR/rules/testing-conventions.md"
 }
 
 go_backend_rules_body() {
-  echo "# Go Backend Conventions
+  extract_rule_content "$SHARED_DIR/rules/go-conventions.md"
+}
 
-ALWAYS follow Clean Architecture layers: Entities → Use Cases → Adapters → Frameworks.
-NEVER let domain entities import adapter or framework packages.
-ALWAYS define interfaces in the use-case layer, implement in adapters.
-ALWAYS use structured logging with low-cardinality message strings.
-NEVER use \`any\` or \`interface{}\` — use typed interfaces.
-ALWAYS handle errors explicitly — no silent swallows.
-ALWAYS set explicit timeouts on network calls.
-NEVER use raw SQL without parameterized queries.
-ALWAYS use the expand/contract pattern for database migrations."
+typescript_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/typescript-conventions.md"
+}
+
+python_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/python-conventions.md"
+}
+
+csharp_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/csharp-conventions.md"
+}
+
+java_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/java-conventions.md"
 }
 
 vue_frontend_rules_body() {
@@ -214,6 +201,26 @@ $(extract_rule_content "$SHARED_DIR/ARCHITECTURE_RULES.md")"
     "Vue 3 + Tailwind conventions — Composition API, strict typing, component limits" \
     "false" '["**/*.vue", "**/*.tsx", "**/*.jsx", "**/components/**"]' \
     "$(vue_frontend_rules_body)"
+
+  generate_mdc "$rules_dir/typescript-conventions.mdc" \
+    "TypeScript conventions — package tooling, faker/factory libraries (non-Vue-component files)" \
+    "false" '["**/*.ts"]' \
+    "$(typescript_conventions_body)"
+
+  generate_mdc "$rules_dir/python-conventions.mdc" \
+    "Python conventions — uv/ruff/pytest tooling, faker/factory libraries" \
+    "false" '["**/*.py"]' \
+    "$(python_conventions_body)"
+
+  generate_mdc "$rules_dir/csharp-conventions.mdc" \
+    "C# conventions — .NET tooling, xUnit/Reqnroll, faker/factory libraries" \
+    "false" '["**/*.cs"]' \
+    "$(csharp_conventions_body)"
+
+  generate_mdc "$rules_dir/java-conventions.mdc" \
+    "Java conventions — build tooling, JUnit/Mockito, faker/factory libraries" \
+    "false" '["**/*.java"]' \
+    "$(java_conventions_body)"
 
   # Agents and skills are NOT generated here. Cursor natively reads .cursor/agents/*.md and
   # .cursor/skills/*/SKILL.md using the same open standard shared/agents/ and shared/skills/ already
@@ -319,8 +326,9 @@ generate_copilot_scoped_instructions() {
 
   # Path-scoped instructions coexist with and combine with copilot-instructions.md (the Tier 3
   # style file generated separately) — per GitHub's docs, both apply when a file matches. Mirrors
-  # Cursor's testing/go-backend/vue-frontend .mdc files; applyTo uses comma-separated glob patterns
-  # in a single quoted string, not an array like Cursor's `globs` field.
+  # Cursor's per-concern .mdc files (testing, go-backend, vue-frontend, plus the four
+  # <language>-conventions.mdc files); applyTo uses comma-separated glob patterns in a single quoted
+  # string, not an array like Cursor's `globs` field.
   generate_instructions_md "$dest_dir/testing.instructions.md" \
     '**/*.spec.*,**/*.test.*,**/*.feature' \
     "$(testing_rules_body)"
@@ -332,6 +340,22 @@ generate_copilot_scoped_instructions() {
   generate_instructions_md "$dest_dir/vue-frontend.instructions.md" \
     '**/*.vue,**/*.tsx,**/*.jsx' \
     "$(vue_frontend_rules_body)"
+
+  generate_instructions_md "$dest_dir/typescript-conventions.instructions.md" \
+    '**/*.ts' \
+    "$(typescript_conventions_body)"
+
+  generate_instructions_md "$dest_dir/python-conventions.instructions.md" \
+    '**/*.py' \
+    "$(python_conventions_body)"
+
+  generate_instructions_md "$dest_dir/csharp-conventions.instructions.md" \
+    '**/*.cs' \
+    "$(csharp_conventions_body)"
+
+  generate_instructions_md "$dest_dir/java-conventions.instructions.md" \
+    '**/*.java' \
+    "$(java_conventions_body)"
 }
 
 generate_agents_md() {

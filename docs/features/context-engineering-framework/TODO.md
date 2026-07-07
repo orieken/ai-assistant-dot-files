@@ -385,29 +385,45 @@
       `test-agents.sh`, real `install.sh`/`uninstall.sh` cycles to scratch directories — all green at
       every phase, committed and pushed separately per phase.
 
-### Epic 31 — Language/framework convention files (scoped 2026-07-06, not yet built)
-> Found while discussing whether the framework should document preferred packages and project
+### Epic 31 — Language/framework convention files (2026-07-06/07)
+> Scoped while discussing whether the framework should document preferred packages and project
 > structure per language: `go_backend_rules_body()`, `vue_frontend_rules_body()`, and
-> `testing_rules_body()` in `scripts/generate-configs.sh` already give architectural *patterns* (Clean
+> `testing_rules_body()` in `scripts/generate-configs.sh` already gave architectural *patterns* (Clean
 > Architecture layers, Composition API, Site-Centric pattern) but zero concrete *package* or
-> *directory-structure* guidance -- and, more importantly, none of that content is actually sourced
-> from `shared/rules/` (which only has 3 files: `approval-gates.md`, `architecture-guardrails.md`,
-> `design-principles.md`). It's hardcoded as literal bash strings inside the generator script, reaching
-> Cursor and Copilot but **not Claude Code** (no `shared/rules/go-conventions.md` for `.claude/rules/`
-> to symlink) -- a single-source-of-truth gap for this one content type specifically.
-- [ ] Create `shared/rules/go-conventions.md`, `shared/rules/vue-conventions.md`,
-      `shared/rules/testing-conventions.md` (naming TBD) with concrete preferred packages and
-      directory/structure conventions added to the patterns already in the three `*_rules_body()`
-      functions -- scoped to the stack actually declared in the Tech Stack section (Go, Vue 3 +
-      Tailwind, Saturday/Sunday test frameworks), not the broader TypeScript/Go/Python/Java set the
-      CLAUDE.md Quick Reference covers generically
-- [ ] Update `go_backend_rules_body()`/`vue_frontend_rules_body()`/`testing_rules_body()` to read from
-      those files via `extract_rule_content` (the same mechanism `architecture.mdc` already uses)
-      instead of embedding literal strings
-- [ ] Confirm Claude Code now receives this content too (via the `.claude/rules` symlink, once real
-      files exist in `shared/rules/`) -- it currently doesn't get it at all
-- [ ] Verify: `check-parity.sh`, `health-check.sh --verbose`, regenerate configs, confirm no content
-      lost from the existing Cursor/Copilot output
+> *directory-structure* guidance -- and, more importantly, none of that content was actually sourced
+> from `shared/rules/` (which only had 3 files). It was hardcoded as literal bash strings inside the
+> generator script, reaching Cursor and Copilot but **not Claude Code** (no `shared/rules/go-
+> conventions.md` for `.claude/rules/` to symlink) -- a single-source-of-truth gap for this one content
+> type specifically. Scope expanded from the original Go/Vue/testing-only plan to 5 languages (Go,
+> TypeScript, Python, C#, Java) with an explicit testing-tooling checklist per language: fake-data
+> (faker-equivalent), factories/fixtures (fishery-equivalent), Playwright bindings, k6, unit test
+> framework, and reporting tools.
+- [x] Fixed the sourcing gap: `testing_rules_body()` and `go_backend_rules_body()` now read from real
+      `shared/rules/testing-conventions.md` / `shared/rules/go-conventions.md` files via
+      `extract_rule_content` instead of embedding literal strings -- content unchanged for
+      `testing_rules_body()`, expanded with a Testing & QA Tooling section for `go-conventions.md`
+- [x] Created 4 new files: `shared/rules/typescript-conventions.md`, `python-conventions.md`,
+      `csharp-conventions.md`, `java-conventions.md`. Python and C# grounded directly against
+      `saturday-monorepo-python`'s and `saturday-monorepo-csharp`'s own READMEs (uv/ruff/pytest/
+      pytest-bdd/Faker/polyfactory for Python; .NET 8/NuGet CPM/Reqnroll+xUnit/Bogus/AutoFixture/
+      `Saturday.K6Exporter`/`Saturday.Reporting` for C#) -- not assumed. Java has no internal reference
+      repo yet, so it's explicitly labeled as industry-standard picks (DataFaker, Instancio, JUnit5+
+      Mockito, Allure) rather than a confirmed internal decision. TypeScript fills the one gap the
+      existing Saturday/Sunday docs hadn't named yet: `@faker-js/faker` + `fishery` specifically.
+- [x] Wired 4 new `generate_mdc()` calls into `generate_cursor()` (glob-scoped per language: `**/*.ts`,
+      `**/*.py`, `**/*.cs`, `**/*.java` -- `.ts` deliberately excludes `.tsx`/`.vue`, which stay under
+      the existing `vue-frontend.mdc`) and 4 new `generate_instructions_md()` calls into
+      `generate_copilot_scoped_instructions()`. Cursor's rule-file count: 7 -> 11. Copilot's scoped
+      instructions: 3 -> 7.
+- [x] Claude Code confirmed receiving all of this content now via the existing `.claude/rules` symlink
+      (verified: `ls .claude/rules/` shows all 9 files, zero extra wiring needed -- the whole point of
+      fixing the sourcing gap).
+- [x] Updated `check-parity.sh` (4 new `.mdc` existence + content checks, 4 new scoped-instructions
+      checks), `docs/ARCHITECTURE.md`'s generation-strategy section, and `README.md`'s Platform
+      Capability Matrix (Cursor's file count, Copilot's scoped-instructions list) to match.
+- [x] Verified: `check-parity.sh`, `health-check.sh --verbose` (159 passed/0 failed), `test-agents.sh`,
+      and a direct YAML-frontmatter parse check on all 8 new generated files (4 `.mdc` + 4
+      `.instructions.md`) -- all valid.
 
 ---
 
@@ -439,6 +455,7 @@
 | No visual diagram of how the framework fits together | Epic 28 | 9 |
 | Machine-specific paths, casing drift, stale binary artifacts | Epic 29 | 9 |
 | Cursor's Tier 2 classification was stale -- native agents/skills unrecognized | Epic 30 | 9 |
+| No preferred-package/structure guidance per language, and Claude Code never received what little existed | Epic 31 | 9 |
 
 ---
 

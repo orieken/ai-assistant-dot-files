@@ -1,6 +1,3 @@
----
-applyTo: "**/*.spec.*,**/*.test.*,**/*.feature"
----
 # Testing Rules
 
 Cross-language testing principles and the Saturday/Sunday framework conventions. Language-specific
