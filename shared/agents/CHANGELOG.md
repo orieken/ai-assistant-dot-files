@@ -18,6 +18,56 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-06 — Cursor native skills/agents compatibility (Epic 30, Phase 1)
+
+Cursor shipped native Agent Skills (`.cursor/skills/*/SKILL.md`) and subagent (`.cursor/agents/*.md`)
+support using the same open standard this repo's `shared/skills/`/`shared/agents/` already follow
+(confirmed against `cursor.com/docs/skills` and `cursor.com/docs/subagents`). Scoping that integration
+surfaced two prerequisite issues affecting all 24 agents, fixed together here since both touch the
+same files in the same pass:
+
+1. **`model: sonnet` → `model: inherit`**: every agent hardcoded a specific model regardless of what
+   the user's own session was running. Both Claude Code and Cursor subagents default to `inherit` when
+   the field is omitted and accept the literal keyword explicitly — confirmed via Cursor's own docs and
+   a live Claude Code frontmatter check this session. `inherit` lets each subagent match whatever model
+   the operator already chose for their session instead of forcing Sonnet unconditionally.
+2. **Frontmatter preamble relocated**: 23 of 24 agents (every one except `documentation-manager`) had
+   a "Read `.claude/rules/design-principles.md`..." instruction *before* their opening `---`, which is
+   invisible to `health-check.sh`'s lenient grep-anywhere frontmatter check and tolerated by Claude
+   Code's loader, but would very likely break Cursor's stricter parser once agents are symlinked
+   directly (a planned later phase of this epic). Moved into the body as the agent's own first
+   instruction, using canonical `shared/rules/` paths instead of the Claude-Code-only `.claude/rules/`
+   prefix, so every file now starts with `---` on line 1.
+
+| Agent | Version | Change |
+|---|---|---|
+| accessibility-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| analyst | 1.1.0 -> 1.1.1 | Patch: preamble relocated, model: inherit |
+| api-test-generator | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| architect | 1.1.1 -> 1.1.2 | Patch: preamble relocated, model: inherit |
+| chaos-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| code-reviewer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| context-engineer | 2.1.1 -> 2.1.2 | Patch: preamble relocated, model: inherit |
+| data-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| dependency-auditor | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| developer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| devops-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| documentation-manager | 2.0.0 -> 2.0.1 | Patch: model: inherit (already had correct frontmatter placement from its 2026-07-05 rewrite -- no preamble to relocate) |
+| dx-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| finops-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| modernization-supervisor | 1.0.0 -> 1.0.1 | Patch: preamble relocated (2-file variant: design-principles.md + ARCHITECTURE_RULES.md), model: inherit |
+| performance-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| product-owner | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| qa-engineer | 1.1.0 -> 1.1.1 | Patch: preamble relocated, model: inherit |
+| release-manager | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| security-reviewer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| spec-writer | 1.1.0 -> 1.1.1 | Patch: preamble relocated, model: inherit |
+| sre-engineer | 1.0.0 -> 1.0.1 | Patch: preamble relocated, model: inherit |
+| tech-writer | 1.1.0 -> 1.1.1 | Patch: preamble relocated, model: inherit |
+| test-driven-developer | 1.0.0 -> 1.0.1 | Patch: preamble relocated (2-file variant: design-principles.md + ARCHITECTURE_RULES.md), model: inherit |
+
+---
+
 ## 2026-07-05 — External audit fixes (api-generator portability, context-engineer casing tolerance)
 
 | Agent | Version | Change |

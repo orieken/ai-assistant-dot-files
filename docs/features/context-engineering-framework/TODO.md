@@ -342,6 +342,136 @@
       (uneven standalone-agent governance depth, some platform behaviors marked unconfirmed) that were
       reviewed and confirmed as already-deliberate tradeoffs, so a future audit doesn't re-flag them as new
 
+### Epic 30 — Cursor native skills/agents parity (2026-07-06/07)
+> Cursor shipped native Agent Skills (`.cursor/skills/*/SKILL.md`) and subagent (`.cursor/agents/*.md`)
+> support, using the same open standard `shared/agents/`/`shared/skills/` already follow (confirmed
+> against `cursor.com/docs/subagents`, `cursor.com/docs/skills`). This closed most of the gap between
+> Cursor's Tier 2 classification and Claude Code's Tier 1 — see the updated Tier system section in
+> `docs/ARCHITECTURE.md` and `shared/platform-registry.json`'s Cursor entry.
+- [x] **Phase 1 — prerequisite frontmatter fixes (all 24 agents)**: `model: sonnet` -> `model: inherit`
+      (both Claude Code and Cursor default to `inherit` when the field is omitted, and both accept the
+      literal keyword) and relocated a "read these rule files" preamble that sat *before* the opening
+      `---` on 23 of 24 agents into the body, using canonical `shared/rules/` paths instead of the
+      Claude-Code-only `.claude/rules/` prefix. Invisible to Claude Code's tolerant loader and
+      `health-check.sh`'s lenient grep-anywhere frontmatter check, but would have broken Cursor's
+      stricter parser once agents were symlinked directly in Phase 3. All 24 patch-bumped, one
+      CHANGELOG entry.
+- [x] **Phase 2 — symlink feasibility check**: discovered `.cursor/agents`/`.cursor/skills` already
+      existed in this repo as symlinks, committed 2026-04-09 (`d0b54d3`, "expanded to work for all
+      platforms") — an earlier, forgotten attempt at this exact idea that predates the whole Tier
+      system and was never wired into `check-parity.sh`/`platform-registry.json`/docs. User confirmed
+      live in Cursor that the `analyst` subagent and `search-ki` skill both load and behave correctly
+      (not just generically) via this mechanism.
+- [x] **Phase 3 — retire the old workaround, wire up the new one**: removed
+      `generate_cursor_personas()` and the now-dead `extract_agent_body()` helper from
+      `scripts/generate-configs.sh` (Cursor's generate step now only produces the 7 always-apply/
+      glob-triggered rule `.mdc` files — rules still require inlining, agents/skills don't). Added
+      `install_cursor()` to `install.sh` (symlinks `.cursor/agents`/`.cursor/skills` -> `shared/`,
+      mirroring `install_claude_code()`) and matching removal logic to `uninstall.sh` — both verified
+      with real installs to a scratch directory, not just `--dry-run`. Replaced
+      `check-parity.sh`'s 24-persona-file existence check with a symlink-resolution check. Fixed this
+      repo's own pre-existing symlinks to point directly at `../shared/{agents,skills}` instead of
+      double-hopping through `../.claude/`. Deleted the 24 now-orphaned persona `.mdc` files.
+- [x] **Phase 4 — registry and doc sync**: updated `shared/platform-registry.json`'s Cursor
+      capabilities (`agents`/`skills`/`subAgentOrchestration` -> `true`, `hooks` stays `false`),
+      `docs/ARCHITECTURE.md`'s Tier system section and generation-strategy bullet,
+      `README.md`'s Platform Capability Matrix, `shared/DOMAIN_DICTIONARY.md`'s Capability Tier entry
+      (now documents Cursor as a mixed profile, not a clean single tier), and
+      `docs/CONTRIBUTING.md`'s agent-creation frontmatter example (`model: inherit`, explicit
+      "must start with `---` on line 1" requirement). Documented the one real permanent gap: Cursor
+      subagents have no `tools:` allowlist — they inherit all parent tools with only a coarse
+      `readonly: true/false`.
+- [x] Verified throughout: `check-parity.sh`, `health-check.sh --verbose` (159 passed/0 failed),
+      `test-agents.sh`, real `install.sh`/`uninstall.sh` cycles to scratch directories — all green at
+      every phase, committed and pushed separately per phase.
+
+### Epic 31 — Language/framework convention files (2026-07-06/07)
+> Scoped while discussing whether the framework should document preferred packages and project
+> structure per language: `go_backend_rules_body()`, `vue_frontend_rules_body()`, and
+> `testing_rules_body()` in `scripts/generate-configs.sh` already gave architectural *patterns* (Clean
+> Architecture layers, Composition API, Site-Centric pattern) but zero concrete *package* or
+> *directory-structure* guidance -- and, more importantly, none of that content was actually sourced
+> from `shared/rules/` (which only had 3 files). It was hardcoded as literal bash strings inside the
+> generator script, reaching Cursor and Copilot but **not Claude Code** (no `shared/rules/go-
+> conventions.md` for `.claude/rules/` to symlink) -- a single-source-of-truth gap for this one content
+> type specifically. Scope expanded from the original Go/Vue/testing-only plan to 5 languages (Go,
+> TypeScript, Python, C#, Java) with an explicit testing-tooling checklist per language: fake-data
+> (faker-equivalent), factories/fixtures (fishery-equivalent), Playwright bindings, k6, unit test
+> framework, and reporting tools.
+- [x] Fixed the sourcing gap: `testing_rules_body()` and `go_backend_rules_body()` now read from real
+      `shared/rules/testing-conventions.md` / `shared/rules/go-conventions.md` files via
+      `extract_rule_content` instead of embedding literal strings -- content unchanged for
+      `testing_rules_body()`, expanded with a Testing & QA Tooling section for `go-conventions.md`
+- [x] Created 4 new files: `shared/rules/typescript-conventions.md`, `python-conventions.md`,
+      `csharp-conventions.md`, `java-conventions.md`. Python and C# grounded directly against
+      `saturday-monorepo-python`'s and `saturday-monorepo-csharp`'s own READMEs (uv/ruff/pytest/
+      pytest-bdd/Faker/polyfactory for Python; .NET 8/NuGet CPM/Reqnroll+xUnit/Bogus/AutoFixture/
+      `Saturday.K6Exporter`/`Saturday.Reporting` for C#) -- not assumed. Java has no internal reference
+      repo yet, so it's explicitly labeled as industry-standard picks (DataFaker, Instancio, JUnit5+
+      Mockito, Allure) rather than a confirmed internal decision. TypeScript fills the one gap the
+      existing Saturday/Sunday docs hadn't named yet: `@faker-js/faker` + `fishery` specifically.
+- [x] Wired 4 new `generate_mdc()` calls into `generate_cursor()` (glob-scoped per language: `**/*.ts`,
+      `**/*.py`, `**/*.cs`, `**/*.java` -- `.ts` deliberately excludes `.tsx`/`.vue`, which stay under
+      the existing `vue-frontend.mdc`) and 4 new `generate_instructions_md()` calls into
+      `generate_copilot_scoped_instructions()`. Cursor's rule-file count: 7 -> 11. Copilot's scoped
+      instructions: 3 -> 7.
+- [x] Claude Code confirmed receiving all of this content now via the existing `.claude/rules` symlink
+      (verified: `ls .claude/rules/` shows all 9 files, zero extra wiring needed -- the whole point of
+      fixing the sourcing gap).
+- [x] Updated `check-parity.sh` (4 new `.mdc` existence + content checks, 4 new scoped-instructions
+      checks), `docs/ARCHITECTURE.md`'s generation-strategy section, and `README.md`'s Platform
+      Capability Matrix (Cursor's file count, Copilot's scoped-instructions list) to match.
+- [x] Verified: `check-parity.sh`, `health-check.sh --verbose` (159 passed/0 failed), `test-agents.sh`,
+      and a direct YAML-frontmatter parse check on all 8 new generated files (4 `.mdc` + 4
+      `.instructions.md`) -- all valid.
+
+### Epic 32 — Install verification matrix (2026-07-08)
+> Prompted by an external audit (`docs/audits/perplex-audit.md`, Perplexity) flagging that the repo's
+> multi-platform support claims were stronger on metadata/static checks than on real
+> installation/runtime verification. Several of that audit's other suggestions turned out to already
+> exist under different names (`health-check.sh --fix` is its "doctor command"; `agent-scorecard` +
+> `agent-eval` + `tests/agents/` collectively are its "prompt quality benchmark suite";
+> `docs/AGENT_REFERENCE.md` is most of its "agent coverage report") -- this was the one genuinely new,
+> well-motivated gap: `check-parity.sh` only validates this repo's own already-generated output, never
+> a fresh install into a real target project.
+- [x] Created `scripts/test-install.sh` -- runs a real `install.sh --project <scratch-dir> --platform
+      <name>` for all 6 platforms and asserts the expected symlinks/files exist and resolve correctly
+      (24-agent/53-skill/9-rule symlinks for Claude Code/Cursor/Gemini, 11 `.mdc` files for Cursor, 7
+      `.instructions.md` files for Copilot, flat files for Windsurf/OpenAI). Verified both the pass path
+      (32/32 checks green on a real install) and the fail path (deliberately broke a symlink and a file,
+      confirmed both were caught) before trusting it.
+- [x] Wired into `scripts/ci-check.sh` as a 4th check, running inside the same Docker container as the
+      other three -- writes to the container's own `/tmp`, not the read-only `/repo` mount, so it's safe
+      there without changing the mount's permissions.
+- [x] Deliberately NOT added to `.github/workflows/framework-ci.yml` yet -- that's a real CI/CD pipeline
+      change, gated by `shared/rules/approval-gates.md` #7 ("Wiring a New Fitness Function"). Flagged to
+      the user as a separate, explicit decision rather than bundled into this commit.
+- [x] Updated `docs/CONTRIBUTING.md`'s "Before you push" section to describe the new check.
+
+### Epic 33 — docs/ cleanup (2026-07-08)
+> A user-directed cleanup pass, not audit-driven. `docs/dotfiles-additions/` and `docs/spec-writer/`
+> turned out to be extracted, still-tracked copies of the exact zips already deleted in Epic 29
+> (`dotfiles-additions.zip`, `spec-writer.zip`) -- Epic 29 only deleted the archives, missing that the
+> unzipped directories were sitting right next to them, equally stale. Investigated and removed
+> alongside them: `build-out-prompts.md`/`master-build-out-prompts.md`/`dotfiles-remediation.md`
+> (2,531 lines of March-era "hand this prompt to Claude Code" bootstrap scratch, fully superseded by
+> `CONTRIBUTING.md`'s actual current process), `thoughtworks-specialist.md` (mostly redundant with
+> `shared/rules/design-principles.md`), `docs/mcp/framework-tools-prompts.md` + `rag-example.md`
+> (build-out prompts for an MCP server at `mcp/` that was never created in this repo -- confirmed via
+> `git log --all`, no history for that path -- superseded by the separate `aakg-mcp` integration
+> instead), and `docs/patterns/README.md` (a stub describing a "Reusable Patterns" directory that was
+> never actually populated -- `docs/README.md` falsely claimed agents read it).
+- [x] Deleted all of the above (verified each was unreferenced by any current operational doc before
+      removing -- only the already-stale `docs/README.md` pointed at any of it)
+- [x] Rewrote `docs/README.md` to reflect the actual current `docs/` structure (it hadn't been updated
+      since a very early snapshot -- missing `AGENT_REFERENCE.md`, `MIGRATION.md`, `agent-metrics/`,
+      `lessons-learned/`, `pipeline-retrospectives/`, `runbooks/`, `blog-posts/`, `audits/`, and
+      pointing at everything just deleted)
+- [ ] **Not yet built**: populate `docs/patterns/` with real pattern documentation (Site-Centric
+      Saturday patterns, Sunday API patterns, Clean Architecture layer patterns -- the categories the
+      deleted stub's own template described). Tracked here instead of silently dropping the idea when
+      the empty stub was removed.
+
 ---
 
 ## Summary: Gap Coverage Matrix
@@ -371,6 +501,10 @@
 | Local script runs didn't match CI's actual OS/bash version | Epic 27 | 9 |
 | No visual diagram of how the framework fits together | Epic 28 | 9 |
 | Machine-specific paths, casing drift, stale binary artifacts | Epic 29 | 9 |
+| Cursor's Tier 2 classification was stale -- native agents/skills unrecognized | Epic 30 | 9 |
+| No preferred-package/structure guidance per language, and Claude Code never received what little existed | Epic 31 | 9 |
+| No verification that a fresh install actually produces correct output, only that this repo's own output is in sync | Epic 32 | 9 |
+| docs/ accumulated fully-superseded early bootstrap material, and docs/README.md itself was stale | Epic 33 | 9 |
 
 ---
 

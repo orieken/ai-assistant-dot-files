@@ -9,20 +9,27 @@ This directory is the central knowledge base for the ai-assistant-dot-files repo
 ```
 docs/
   README.md              -- This file. Index and navigation guide.
-  CLAUDE.md              -- Claude Code agent configuration reference.
-  ONBOARDING.md          -- New contributor onboarding guide.
-  RUNBOOKS.md            -- Operational runbook summaries.
-  build-out-prompts.md   -- Prompt engineering templates.
-  master-build-out-prompts.md -- Extended prompt catalog.
-  thoughtworks-specialist.md  -- Specialist agent configuration.
-  dotfiles-remediation.md     -- Remediation notes for dotfile configs.
-  dotfiles-additions/         -- Supplementary dotfile configurations.
-  spec-writer/                -- Spec-writer agent assets.
-  features/              -- Pipeline artifacts for delivered features.
-  patterns/              -- Reusable design and framework pattern docs.
+  ARCHITECTURE.md         -- The shared/ canonical layer, the Capability Tier system.
+  AGENT_REFERENCE.md      -- Every agent's role and counterbalance (contract, reviewer, gate, metric).
+  CLAUDE.md               -- Claude Code agent configuration reference.
+  CONTRIBUTING.md         -- How to add a new agent, skill, rule, or platform.
+  MIGRATION.md            -- Breaking changes from pre-shared/ structure.
+  ONBOARDING.md           -- New contributor onboarding guide.
+  RUNBOOKS.md             -- Operational runbook summaries.
+  clean-code-guidelines.docx -- Full language-example reference, cited from CLAUDE.md.
   adrs/                  -- Architecture Decision Records.
-  runbooks/              -- Operational runbooks and guides.
+  agent-metrics/          -- Monthly agent-scorecard output, evals subdirectory.
+  features/              -- Pipeline artifacts for delivered features (permanent archive).
+  lessons-learned/        -- Persisted output from extract-lessons.
+  pipeline-retrospectives/ -- Cross-delivery trend analysis output.
+  runbooks/               -- Operational runbooks and guides (see runbooks/README.md for the index).
+  blog-posts/             -- Draft blog content about the framework (see blog-content-brief.md).
+  audits/                 -- Ad-hoc external audit reports -- scratch inputs, not permanent
+                             documentation; act on findings, then delete once resolved.
 ```
+
+`docs/aos/` (v3/AOS prototyping material) deliberately doesn't live on `main` -- see the `v3-aos`
+branch.
 
 ---
 
@@ -31,9 +38,9 @@ docs/
 Agents load specific subdirectories as context depending on the task at hand:
 
 - **Feature delivery agents** read `/docs/features/<feature-name>/` to understand prior decisions, architecture notes, and review reports for a given feature.
-- **Pattern-aware agents** read `/docs/patterns/` to apply consistent design patterns across the codebase (Saturday Framework, Sunday Framework, Clean Architecture).
 - **Architecture agents** read `/docs/adrs/` to understand past decisions and their rationale before proposing new ones.
 - **Operational agents** read `/docs/runbooks/` for troubleshooting procedures and setup instructions.
+- **Memory/learning skills** (`agent-scorecard`, `extract-lessons`, `pipeline-retrospective`) read and write `/docs/agent-metrics/`, `/docs/lessons-learned/`, `/docs/pipeline-retrospectives/`.
 
 Each subdirectory is self-contained. Agents can load a single directory without pulling the entire docs tree.
 
@@ -42,7 +49,8 @@ Each subdirectory is self-contained. Agents can load a single directory without 
 ## How Humans Use These Docs
 
 - **New contributors** start with `ONBOARDING.md` for setup instructions and `RUNBOOKS.md` for operational context.
-- **Architects and leads** review `/docs/adrs/` for decision history and `/docs/patterns/` for established conventions.
+- **Anyone extending the framework** reads `CONTRIBUTING.md` and `ARCHITECTURE.md` before adding an agent, skill, or rule.
+- **Architects and leads** review `/docs/adrs/` for decision history.
 - **Feature reviewers** check `/docs/features/<feature-name>/` for the full artifact trail of any delivered feature.
 
 ---

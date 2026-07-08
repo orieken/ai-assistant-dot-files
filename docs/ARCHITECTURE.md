@@ -48,12 +48,26 @@ of three tiers, and `DOMAIN_DICTIONARY.md` defines exactly what each tier means:
 | Tier | Label | Capabilities | Platforms | Terminology |
 |---|---|---|---|---|
 | **1** | Full | Agents with tool access, autonomous multi-step process, pipeline participation, hooks | Claude Code | **Agent** |
-| **2** | Personas + Rules | Persona-level context shaping + rule files, no native orchestration | Cursor, Windsurf, GitHub Copilot | **Persona** |
+| **2** | Personas + Rules | Persona-level context shaping + rule files, no native orchestration | Windsurf, GitHub Copilot | **Persona** |
+| **2*** | Personas + Rules, agents/skills now Tier-1-equivalent | Real subagent + skill loading (confirmed 2026-07-06) via `.cursor/agents/`/`.cursor/skills/`, plus rule files (still inlined, no orchestration at the rules layer) | Cursor | **Agent** for `.cursor/agents/`, **Persona** for `.cursor/rules/` |
 | **3** | System Prompt (rules); real skill invocation confirmed on top | Single rules file (`AGENTS.md`), plus genuine skill execution — not just description | Gemini/Antigravity, OpenAI/Codex | **Persona** |
+
+Cursor is the one platform whose tier number alone no longer tells the whole story: it shipped native
+Agent Skills (`.cursor/skills/*/SKILL.md`) and subagents (`.cursor/agents/*.md`) using the same open
+standard `shared/agents/`/`shared/skills/` already follow (confirmed 2026-07-06 against
+`cursor.com/docs/subagents`, `cursor.com/docs/skills`, and a live check in this repo — the analyst subagent
+and search-ki skill both loaded and behaved correctly, not just generically). `install.sh` now symlinks
+`.cursor/agents/`/`.cursor/skills/` directly, the same zero-drift mechanism Claude Code has always used —
+see `shared/platform-registry.json`'s `capabilities` object, which is what's actually authoritative per
+capability now, not the single `tier` number. Cursor Rules (`.mdc`) are unaffected by this — still fully
+inlined, still no orchestration at that layer, still genuinely Tier 2. One real, permanent capability gap
+versus Claude Code: Cursor subagents have no `tools:` allowlist field — they inherit *all* of the parent's
+tools (MCP tools included) with only a coarse `readonly: true/false` available, so `shared/agents/*.md`'s
+`tools:` frontmatter is simply ignored by Cursor's parser.
 
 Copilot moved from Tier 3 to Tier 2 in 2026-07 after confirming (via GitHub's own docs) that it supports
 path-scoped `.github/instructions/*.instructions.md` files alongside the repo-wide instructions file — the
-same "multiple rule files, no orchestration" shape Cursor/Windsurf already had.
+same "multiple rule files, no orchestration" shape Windsurf already had.
 
 Gemini/Antigravity was live-tested 2026-07-02 (see `tests/platform-verification/antigravity.md` and its
 results file) rather than left on secondary-source guesswork: it reads `AGENTS.md` for rules (confirmed —
@@ -73,19 +87,29 @@ actually runs multi-step orchestration with tool access.
 ### Generation strategy per tier
 - **Tier 1 (Claude Code)**: symlink. `install.sh` creates `.claude/{agents,rules,skills}` -> `shared/`
   equivalents. Always current after a `git pull`; no generation step needed.
-- **Tier 2 (Cursor, Windsurf, GitHub Copilot)**: generate-inline, multi-file.
-  - Cursor gets one `.mdc` file per rule concern (`architecture.mdc`, `design-principles.mdc`,
-    `agent-roster.mdc`, `approval-gates.mdc`, `testing.mdc`, `go-backend.mdc`, `vue-frontend.mdc` — 7 total)
-    **plus one `.mdc` per agent persona** (24) — 31 files total.
-    `approval-gates.mdc` and `agent-roster.mdc` are the only `alwaysApply: true` files — `architecture.mdc`
-    and `design-principles.mdc` Auto Attach on a broad source-file glob instead, since combined they'd
-    otherwise blow well past Cursor's own recommended ~2,000-token always-apply budget. Cursor silently
-    ignores a `.mdc` file with invalid frontmatter, so `generate_mdc()` is careful about exact YAML shape.
+- **Cursor (mixed strategy)**: symlink for agents/skills, generate-inline for rules.
+  - `install.sh`'s `install_cursor()` symlinks `.cursor/agents` -> `shared/agents` and `.cursor/skills` ->
+    `shared/skills` directly — same zero-drift mechanism as Tier 1, confirmed working 2026-07-06. This
+    retired the earlier `generate_cursor_personas()` workaround (built in Epic 11, before Cursor could do
+    real skill/agent loading), which used to flatten each agent into a standalone `.cursor/rules/<name>.mdc`
+    persona file.
+  - Rules still can't follow file references (no evidence Cursor Rules support them, unlike agents/skills),
+    so `generate-configs.sh` still generates 11 `.mdc` files for rules: `architecture.mdc`,
+    `design-principles.mdc`, `agent-roster.mdc`, `approval-gates.mdc`, `testing.mdc`, `go-backend.mdc`,
+    `vue-frontend.mdc`, plus `typescript-conventions.mdc`, `python-conventions.mdc`,
+    `csharp-conventions.mdc`, `java-conventions.mdc` (Epic 31, 2026-07-07 — preferred packages/structure
+    per language, sourced from `shared/rules/<language>-conventions.md`). `approval-gates.mdc` and
+    `agent-roster.mdc` are the only `alwaysApply: true` files — the rest Auto Attach on a language-specific
+    or broad source-file glob instead, since combined they'd otherwise blow well past Cursor's own
+    recommended ~2,000-token always-apply budget. Cursor silently ignores a `.mdc` file with invalid
+    frontmatter, so `generate_mdc()` is careful about exact YAML shape.
+- **Tier 2 (Windsurf, GitHub Copilot)**: generate-inline, multi-file.
   - Windsurf gets one flat `.windsurfrules` (no per-file globs support in the legacy format).
-  - Copilot gets the Tier-3-style `copilot-instructions.md` (roster + rules inlined) **plus**
-    `.github/instructions/{testing,go-backend,vue-frontend}.instructions.md`, each with an `applyTo`
-    frontmatter field (comma-separated glob string, not an array like Cursor's `globs`) — both coexist and
-    combine per GitHub's docs.
+  - Copilot gets the Tier-3-style `copilot-instructions.md` (roster + rules inlined) **plus** the same
+    7 scoped `.github/instructions/*.instructions.md` files as Cursor's non-agent-roster `.mdc` set
+    (`testing`, `go-backend`, `vue-frontend`, `typescript-conventions`, `python-conventions`,
+    `csharp-conventions`, `java-conventions`), each with an `applyTo` frontmatter field (comma-separated
+    glob string, not an array like Cursor's `globs`) — both coexist and combine per GitHub's docs.
 - **Tier 3 (OpenAI)**: generate-inline, single file. `generate_tier3()` concatenates rules + craftsmanship
   section + persona roster into one instruction file.
 - **Gemini/Antigravity**: generates root `AGENTS.md` only (the [agents.md](https://agents.md) cross-tool

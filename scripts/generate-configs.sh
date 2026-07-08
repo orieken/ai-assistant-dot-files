@@ -90,52 +90,28 @@ extract_rule_content() {
   cat "$file"
 }
 
-extract_agent_body() {
-  local file="$1"
-  # Agent files have a preamble line (referencing .claude/rules/*.md — a file reference Cursor can't
-  # follow) before the frontmatter, then the frontmatter itself, then the actual persona body. Skip
-  # everything through the second '---' delimiter; the always-apply rule .mdc files already cover the
-  # preamble's content, so it isn't lost, just not redundantly repeated per persona. Stop counting
-  # delimiters once past the frontmatter so a literal '---' later in the body (a markdown horizontal
-  # rule, e.g. before the trailing attribution line) doesn't truncate the rest of the persona.
-  awk '/^---$/ && delim<2 {delim++; next} delim==2{print}' "$file"
-}
-
 testing_rules_body() {
-  echo "# Testing Rules
-
-## Saturday Framework (E2E / UI Testing)
-ALWAYS use the Site-Centric pattern: \`BaseSite\`, \`BasePage\`, \`BaseElement\`, \`BaseFlow\`.
-NEVER use traditional Page Object Model (POM).
-ALWAYS use Playwright driven by Cucumber.js for UI automation.
-ALWAYS include OpenTelemetry instrumentation for every BDD scenario.
-
-## Sunday Framework (API Testing)
-ALWAYS use Vitest for unit tests and Playwright for integration/E2E API tests.
-ALWAYS use the custom \`api\` fixture and fluent matchers (\`toHaveStatus\`, \`toBeSuccessful\`, \`toRespondWithin\`).
-ALWAYS extend \`BaseApiClient\` for domain-specific API clients.
-ALWAYS validate schemas with Zod (\`validateSchema()\`).
-NEVER use custom retry loops — use \`CircuitBreaker\` or \`ExponentialBackoffStrategy\`.
-
-## Test Quality
-CRITICAL: Test coverage MUST be >= 85%.
-CRITICAL: Cyclomatic complexity per function MUST be < 7.
-ALWAYS practice TDD/BDD — Red-Green-Refactor.
-NEVER write feature code without tests."
+  extract_rule_content "$SHARED_DIR/rules/testing-conventions.md"
 }
 
 go_backend_rules_body() {
-  echo "# Go Backend Conventions
+  extract_rule_content "$SHARED_DIR/rules/go-conventions.md"
+}
 
-ALWAYS follow Clean Architecture layers: Entities → Use Cases → Adapters → Frameworks.
-NEVER let domain entities import adapter or framework packages.
-ALWAYS define interfaces in the use-case layer, implement in adapters.
-ALWAYS use structured logging with low-cardinality message strings.
-NEVER use \`any\` or \`interface{}\` — use typed interfaces.
-ALWAYS handle errors explicitly — no silent swallows.
-ALWAYS set explicit timeouts on network calls.
-NEVER use raw SQL without parameterized queries.
-ALWAYS use the expand/contract pattern for database migrations."
+typescript_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/typescript-conventions.md"
+}
+
+python_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/python-conventions.md"
+}
+
+csharp_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/csharp-conventions.md"
+}
+
+java_conventions_body() {
+  extract_rule_content "$SHARED_DIR/rules/java-conventions.md"
 }
 
 vue_frontend_rules_body() {
@@ -176,38 +152,9 @@ generate_mdc() {
   write_file "$dest" "${frontmatter}${body}"
 }
 
-generate_cursor_personas() {
-  local rules_dir="$1"
-  local persona_count=0
-
-  for agent_file in "$SHARED_DIR/agents/"*.md; do
-    local base
-    base="$(basename "$agent_file")"
-    [[ "$base" == "CHANGELOG.md" ]] && continue
-
-    local agent_name agent_desc agent_desc_safe
-    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
-    agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//' || true)
-    [[ -z "$agent_name" ]] && continue
-
-    # Escape embedded double quotes — several agent descriptions quote example user phrases
-    # (e.g. dependency-auditor: `"audit dependencies"`), which would otherwise terminate the YAML
-    # frontmatter's description string early and produce an invalid .mdc file.
-    agent_desc_safe=$(printf '%s' "$agent_desc" | sed 's/"/\\"/g')
-
-    generate_mdc "$rules_dir/${agent_name}.mdc" \
-      "Persona: $agent_name — $agent_desc_safe" \
-      "false" "" \
-      "$(extract_agent_body "$agent_file")"
-    ((persona_count++)) || true
-  done
-
-  echo "  ($persona_count persona files generated)"
-}
-
 generate_cursor() {
   echo ""
-  echo "--- Cursor (Tier 2: Personas + Rules) ---"
+  echo "--- Cursor (Tier 1-equivalent for agents/skills, Tier 2 for rules) ---"
 
   local rules_dir="$OUTPUT_DIR/.cursor/rules"
 
@@ -255,7 +202,32 @@ $(extract_rule_content "$SHARED_DIR/ARCHITECTURE_RULES.md")"
     "false" '["**/*.vue", "**/*.tsx", "**/*.jsx", "**/components/**"]' \
     "$(vue_frontend_rules_body)"
 
-  generate_cursor_personas "$rules_dir"
+  generate_mdc "$rules_dir/typescript-conventions.mdc" \
+    "TypeScript conventions — package tooling, faker/factory libraries (non-Vue-component files)" \
+    "false" '["**/*.ts"]' \
+    "$(typescript_conventions_body)"
+
+  generate_mdc "$rules_dir/python-conventions.mdc" \
+    "Python conventions — uv/ruff/pytest tooling, faker/factory libraries" \
+    "false" '["**/*.py"]' \
+    "$(python_conventions_body)"
+
+  generate_mdc "$rules_dir/csharp-conventions.mdc" \
+    "C# conventions — .NET tooling, xUnit/Reqnroll, faker/factory libraries" \
+    "false" '["**/*.cs"]' \
+    "$(csharp_conventions_body)"
+
+  generate_mdc "$rules_dir/java-conventions.mdc" \
+    "Java conventions — build tooling, JUnit/Mockito, faker/factory libraries" \
+    "false" '["**/*.java"]' \
+    "$(java_conventions_body)"
+
+  # Agents and skills are NOT generated here. Cursor natively reads .cursor/agents/*.md and
+  # .cursor/skills/*/SKILL.md using the same open standard shared/agents/ and shared/skills/ already
+  # follow (confirmed against cursor.com/docs/subagents and cursor.com/docs/skills, 2026-07-06) --
+  # install.sh symlinks those directories directly, the same way it does for Claude Code, instead of
+  # this script flattening each agent into a standalone .mdc persona file (the old workaround, retired
+  # now that real subagent/skill loading exists).
 }
 
 collect_craftsmanship_section() {
@@ -354,8 +326,9 @@ generate_copilot_scoped_instructions() {
 
   # Path-scoped instructions coexist with and combine with copilot-instructions.md (the Tier 3
   # style file generated separately) — per GitHub's docs, both apply when a file matches. Mirrors
-  # Cursor's testing/go-backend/vue-frontend .mdc files; applyTo uses comma-separated glob patterns
-  # in a single quoted string, not an array like Cursor's `globs` field.
+  # Cursor's per-concern .mdc files (testing, go-backend, vue-frontend, plus the four
+  # <language>-conventions.mdc files); applyTo uses comma-separated glob patterns in a single quoted
+  # string, not an array like Cursor's `globs` field.
   generate_instructions_md "$dest_dir/testing.instructions.md" \
     '**/*.spec.*,**/*.test.*,**/*.feature' \
     "$(testing_rules_body)"
@@ -367,6 +340,22 @@ generate_copilot_scoped_instructions() {
   generate_instructions_md "$dest_dir/vue-frontend.instructions.md" \
     '**/*.vue,**/*.tsx,**/*.jsx' \
     "$(vue_frontend_rules_body)"
+
+  generate_instructions_md "$dest_dir/typescript-conventions.instructions.md" \
+    '**/*.ts' \
+    "$(typescript_conventions_body)"
+
+  generate_instructions_md "$dest_dir/python-conventions.instructions.md" \
+    '**/*.py' \
+    "$(python_conventions_body)"
+
+  generate_instructions_md "$dest_dir/csharp-conventions.instructions.md" \
+    '**/*.cs' \
+    "$(csharp_conventions_body)"
+
+  generate_instructions_md "$dest_dir/java-conventions.instructions.md" \
+    '**/*.java' \
+    "$(java_conventions_body)"
 }
 
 generate_agents_md() {

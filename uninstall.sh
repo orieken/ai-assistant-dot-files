@@ -121,6 +121,8 @@ if [[ "$MODE" == "global" ]]; then
 
   log ""
   log "--- Cursor ---"
+  remove_if_framework "$HOME/.cursor/agents"
+  remove_if_framework "$HOME/.cursor/skills"
   remove_if_framework "$HOME/.cursor/rules/global.mdc"
   for mdc in architecture design-principles approval-gates agent-roster testing go-backend vue-frontend; do
     remove_if_framework "$HOME/.cursor/rules/${mdc}.mdc"
@@ -152,6 +154,8 @@ else
 
   log ""
   log "--- Cursor ---"
+  remove_if_framework "$TARGET_DIR/.cursor/agents"
+  remove_if_framework "$TARGET_DIR/.cursor/skills"
   remove_if_framework "$TARGET_DIR/.cursor/rules/global.mdc"
   for mdc in architecture design-principles approval-gates agent-roster testing go-backend vue-frontend; do
     remove_if_framework "$TARGET_DIR/.cursor/rules/${mdc}.mdc"
