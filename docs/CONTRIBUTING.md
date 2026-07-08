@@ -99,8 +99,12 @@ testing requirements.
 
 ## Before you push
 
-- `scripts/ci-check.sh` — runs `check-parity.sh`, `test-agents.sh`, and `health-check.sh` inside a container
-  matching the actual CI runner (ubuntu-latest, modern bash), not just your local shell. Requires Docker.
+- `scripts/ci-check.sh` — runs `check-parity.sh`, `test-agents.sh`, `health-check.sh`, and
+  `test-install.sh` inside a container matching the actual CI runner (ubuntu-latest, modern bash), not
+  just your local shell. `test-install.sh` (2026-07-08) is an install verification matrix -- it runs a
+  real `install.sh --project <scratch-dir> --platform <name>` for every platform and asserts the
+  expected symlinks/files actually exist, complementing `check-parity.sh` (which only checks this
+  repo's own already-generated output, not what a fresh install produces elsewhere). Requires Docker.
   This exists because macOS's default bash (3.2) silently tolerates some `set -e` + arithmetic bugs that
   modern bash treats as failures — a local pass on macOS proves nothing about whether CI will pass (see the
   2026-07-04 incident where this exact gap broke CI for several commits before anyone noticed). Run this

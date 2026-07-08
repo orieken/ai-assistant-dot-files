@@ -425,6 +425,29 @@
       and a direct YAML-frontmatter parse check on all 8 new generated files (4 `.mdc` + 4
       `.instructions.md`) -- all valid.
 
+### Epic 32 — Install verification matrix (2026-07-08)
+> Prompted by an external audit (`docs/audits/perplex-audit.md`, Perplexity) flagging that the repo's
+> multi-platform support claims were stronger on metadata/static checks than on real
+> installation/runtime verification. Several of that audit's other suggestions turned out to already
+> exist under different names (`health-check.sh --fix` is its "doctor command"; `agent-scorecard` +
+> `agent-eval` + `tests/agents/` collectively are its "prompt quality benchmark suite";
+> `docs/AGENT_REFERENCE.md` is most of its "agent coverage report") -- this was the one genuinely new,
+> well-motivated gap: `check-parity.sh` only validates this repo's own already-generated output, never
+> a fresh install into a real target project.
+- [x] Created `scripts/test-install.sh` -- runs a real `install.sh --project <scratch-dir> --platform
+      <name>` for all 6 platforms and asserts the expected symlinks/files exist and resolve correctly
+      (24-agent/53-skill/9-rule symlinks for Claude Code/Cursor/Gemini, 11 `.mdc` files for Cursor, 7
+      `.instructions.md` files for Copilot, flat files for Windsurf/OpenAI). Verified both the pass path
+      (32/32 checks green on a real install) and the fail path (deliberately broke a symlink and a file,
+      confirmed both were caught) before trusting it.
+- [x] Wired into `scripts/ci-check.sh` as a 4th check, running inside the same Docker container as the
+      other three -- writes to the container's own `/tmp`, not the read-only `/repo` mount, so it's safe
+      there without changing the mount's permissions.
+- [x] Deliberately NOT added to `.github/workflows/framework-ci.yml` yet -- that's a real CI/CD pipeline
+      change, gated by `shared/rules/approval-gates.md` #7 ("Wiring a New Fitness Function"). Flagged to
+      the user as a separate, explicit decision rather than bundled into this commit.
+- [x] Updated `docs/CONTRIBUTING.md`'s "Before you push" section to describe the new check.
+
 ---
 
 ## Summary: Gap Coverage Matrix
@@ -456,6 +479,7 @@
 | Machine-specific paths, casing drift, stale binary artifacts | Epic 29 | 9 |
 | Cursor's Tier 2 classification was stale -- native agents/skills unrecognized | Epic 30 | 9 |
 | No preferred-package/structure guidance per language, and Claude Code never received what little existed | Epic 31 | 9 |
+| No verification that a fresh install actually produces correct output, only that this repo's own output is in sync | Epic 32 | 9 |
 
 ---
 

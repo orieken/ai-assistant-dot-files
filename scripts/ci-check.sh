@@ -14,6 +14,10 @@ set -uo pipefail
 # on pull requests and needs a real base-ref + head SHA from the PR event -- not reproducible standalone
 # without a PR to compare against. If you want to check it locally, run
 # scripts/check-agent-versions-ci.sh <base-ref> <head-sha> directly against a real branch comparison.
+#
+# Also runs test-install.sh (not yet a real CI job -- see approval-gates.md gate #7, adding it to
+# .github/workflows/framework-ci.yml needs explicit sign-off first). It writes to scratch dirs under
+# the container's own /tmp, not to the read-only /repo mount, so it's safe to run here regardless.
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="ubuntu:24.04"  # matches ubuntu-latest at the time this script was written; bump if GitHub moves LTS
@@ -58,6 +62,7 @@ run_check() {
 run_check "check-parity.sh" "bash scripts/check-parity.sh"
 run_check "test-agents.sh" "bash scripts/test-agents.sh"
 run_check "health-check.sh --verbose" "bash scripts/health-check.sh --verbose"
+run_check "test-install.sh" "bash scripts/test-install.sh"
 
 echo "==========================================="
 echo "Results: $PASS_COUNT passed, $FAIL_COUNT failed"
