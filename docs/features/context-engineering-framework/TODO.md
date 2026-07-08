@@ -448,6 +448,30 @@
       the user as a separate, explicit decision rather than bundled into this commit.
 - [x] Updated `docs/CONTRIBUTING.md`'s "Before you push" section to describe the new check.
 
+### Epic 33 — docs/ cleanup (2026-07-08)
+> A user-directed cleanup pass, not audit-driven. `docs/dotfiles-additions/` and `docs/spec-writer/`
+> turned out to be extracted, still-tracked copies of the exact zips already deleted in Epic 29
+> (`dotfiles-additions.zip`, `spec-writer.zip`) -- Epic 29 only deleted the archives, missing that the
+> unzipped directories were sitting right next to them, equally stale. Investigated and removed
+> alongside them: `build-out-prompts.md`/`master-build-out-prompts.md`/`dotfiles-remediation.md`
+> (2,531 lines of March-era "hand this prompt to Claude Code" bootstrap scratch, fully superseded by
+> `CONTRIBUTING.md`'s actual current process), `thoughtworks-specialist.md` (mostly redundant with
+> `shared/rules/design-principles.md`), `docs/mcp/framework-tools-prompts.md` + `rag-example.md`
+> (build-out prompts for an MCP server at `mcp/` that was never created in this repo -- confirmed via
+> `git log --all`, no history for that path -- superseded by the separate `aakg-mcp` integration
+> instead), and `docs/patterns/README.md` (a stub describing a "Reusable Patterns" directory that was
+> never actually populated -- `docs/README.md` falsely claimed agents read it).
+- [x] Deleted all of the above (verified each was unreferenced by any current operational doc before
+      removing -- only the already-stale `docs/README.md` pointed at any of it)
+- [x] Rewrote `docs/README.md` to reflect the actual current `docs/` structure (it hadn't been updated
+      since a very early snapshot -- missing `AGENT_REFERENCE.md`, `MIGRATION.md`, `agent-metrics/`,
+      `lessons-learned/`, `pipeline-retrospectives/`, `runbooks/`, `blog-posts/`, `audits/`, and
+      pointing at everything just deleted)
+- [ ] **Not yet built**: populate `docs/patterns/` with real pattern documentation (Site-Centric
+      Saturday patterns, Sunday API patterns, Clean Architecture layer patterns -- the categories the
+      deleted stub's own template described). Tracked here instead of silently dropping the idea when
+      the empty stub was removed.
+
 ---
 
 ## Summary: Gap Coverage Matrix
@@ -480,6 +504,7 @@
 | Cursor's Tier 2 classification was stale -- native agents/skills unrecognized | Epic 30 | 9 |
 | No preferred-package/structure guidance per language, and Claude Code never received what little existed | Epic 31 | 9 |
 | No verification that a fresh install actually produces correct output, only that this repo's own output is in sync | Epic 32 | 9 |
+| docs/ accumulated fully-superseded early bootstrap material, and docs/README.md itself was stale | Epic 33 | 9 |
 
 ---
 
