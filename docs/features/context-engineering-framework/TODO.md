@@ -443,9 +443,11 @@
 - [x] Wired into `scripts/ci-check.sh` as a 4th check, running inside the same Docker container as the
       other three -- writes to the container's own `/tmp`, not the read-only `/repo` mount, so it's safe
       there without changing the mount's permissions.
-- [x] Deliberately NOT added to `.github/workflows/framework-ci.yml` yet -- that's a real CI/CD pipeline
-      change, gated by `shared/rules/approval-gates.md` #7 ("Wiring a New Fitness Function"). Flagged to
-      the user as a separate, explicit decision rather than bundled into this commit.
+- [x] Initially held back from `.github/workflows/framework-ci.yml` since that's a real CI/CD pipeline
+      change, gated by `shared/rules/approval-gates.md` #7 ("Wiring a New Fitness Function") -- flagged
+      to the user as a separate, explicit decision rather than bundled into the original commit.
+      Approved 2026-07-08: added as a 5th `test-install` job in `framework-ci.yml`, running alongside
+      `check-parity`/`test-agents`/`health-check` on every push and PR.
 - [x] Updated `docs/CONTRIBUTING.md`'s "Before you push" section to describe the new check.
 
 ### Epic 33 — docs/ cleanup (2026-07-08)

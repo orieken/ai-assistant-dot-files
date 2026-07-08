@@ -34,6 +34,18 @@ jobs:
       - name: Run health-check.sh
         run: bash scripts/health-check.sh --verbose
 
+  test-install:
+    name: Install verification matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run test-install.sh
+        run: bash scripts/test-install.sh
+        # Runs a real `install.sh --project <scratch-dir> --platform <name>` for all 6 platforms and
+        # asserts the expected symlinks/files exist and resolve correctly. Writes to runner-local /tmp,
+        # not the checked-out repo, so it's safe to run alongside the other jobs. See Epic 32 in
+        # docs/features/context-engineering-framework/TODO.md for why this exists.
+
   agent-versions:
     name: Agent version bump + changelog check
     runs-on: ubuntu-latest
