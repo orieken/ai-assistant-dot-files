@@ -21,6 +21,7 @@ docs/
   agent-metrics/          -- Monthly agent-scorecard output, evals subdirectory.
   features/              -- Pipeline artifacts for delivered features (permanent archive).
   lessons-learned/        -- Persisted output from extract-lessons.
+  patterns/               -- Reusable design and framework pattern docs (Saturday/Sunday/GoF/Clean Architecture).
   pipeline-retrospectives/ -- Cross-delivery trend analysis output.
   runbooks/               -- Operational runbooks and guides (see runbooks/README.md for the index).
   blog-posts/             -- Draft blog content about the framework (see blog-content-brief.md).
@@ -38,6 +39,7 @@ branch.
 Agents load specific subdirectories as context depending on the task at hand:
 
 - **Feature delivery agents** read `/docs/features/<feature-name>/` to understand prior decisions, architecture notes, and review reports for a given feature.
+- **Pattern-aware agents** read `/docs/patterns/` to apply consistent design patterns across the codebase (Saturday Framework, Sunday Framework, Clean Architecture).
 - **Architecture agents** read `/docs/adrs/` to understand past decisions and their rationale before proposing new ones.
 - **Operational agents** read `/docs/runbooks/` for troubleshooting procedures and setup instructions.
 - **Memory/learning skills** (`agent-scorecard`, `extract-lessons`, `pipeline-retrospective`) read and write `/docs/agent-metrics/`, `/docs/lessons-learned/`, `/docs/pipeline-retrospectives/`.

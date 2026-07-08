@@ -469,10 +469,16 @@
       since a very early snapshot -- missing `AGENT_REFERENCE.md`, `MIGRATION.md`, `agent-metrics/`,
       `lessons-learned/`, `pipeline-retrospectives/`, `runbooks/`, `blog-posts/`, `audits/`, and
       pointing at everything just deleted)
-- [ ] **Not yet built**: populate `docs/patterns/` with real pattern documentation (Site-Centric
-      Saturday patterns, Sunday API patterns, Clean Architecture layer patterns -- the categories the
-      deleted stub's own template described). Tracked here instead of silently dropping the idea when
-      the empty stub was removed.
+- [x] Populated `docs/patterns/` for real (2026-07-08): `gang-of-four-patterns.md` (adds
+      structure/example/trade-off detail to `CLAUDE.md`'s existing one-line decision table, doesn't
+      duplicate it), `saturday-framework-patterns.md` (`BaseSite`/`BasePage`/`BaseElement`/`BaseFlow`/
+      `Filters`/`SiteManager`/`TabManager`), `sunday-framework-patterns.md` (`BaseApiClient`/
+      `IHttpAdapter`/Fluent Matchers/Schema Validation/Resilience Primitives), and
+      `clean-architecture-layers.md` (expands `architecture-guardrails.md`'s dependency-direction rule
+      per layer). Grouped by category rather than one file per pattern -- most individual patterns are a
+      few paragraphs, splitting each into its own file would've added navigation cost with no real
+      benefit. `docs/README.md`'s directory listing and "How Agents Use These Docs" section updated to
+      reference `patterns/` again now that it has real content.
 
 ---
 
