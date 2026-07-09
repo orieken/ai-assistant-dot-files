@@ -32,6 +32,19 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
 - [twelve-factor-app.md](twelve-factor-app.md) — all 12 factors (Codebase through Admin Processes). The
   one axis nothing else here covers: how a service should actually run in production, not how its code
   is organized.
+- [security-patterns.md](security-patterns.md) — STRIDE threat modeling, Secure by Default, Defense in
+  Depth, Least Privilege, Paved Road / Golden Path. `security-reviewer.md` names Adam Shostack as an
+  influence and already has a fully worked STRIDE table in its own contract.
+- [observability-patterns.md](observability-patterns.md) — SLI, SLO, Error Budget, Low-Cardinality
+  Logging, Structured Tracing, No PII in Telemetry. `sre-engineer.md`'s entire mandate; SLO/Error Budget
+  are the one layer above the already-required SLI that wasn't named yet.
+- [expand-contract-migrations.md](expand-contract-migrations.md) — the full pattern plus its own named
+  approval gate, upgraded from "a rule that's referenced" to a documented pattern with the same
+  Context/Structure/Example/Trade-offs treatment Circuit Breaker got in `stability-patterns.md`.
+- [api-design-patterns.md](api-design-patterns.md) — Resource-Oriented Design, Idempotency Keys, Status
+  Code Discipline, Pagination by Default, User Enumeration Prevention, Schema-First Contract. The
+  `openapi` skill already enforces all of these per-endpoint; never written down as a standalone
+  reference until now.
 
 All terminology matches `shared/DOMAIN_DICTIONARY.md` exactly — that's the canonical definition source;
 these docs go deeper into context, structure, and trade-offs, not redefine the terms.

@@ -522,6 +522,35 @@
       new pattern docs), `check-parity.sh`, and a cross-reference resolution check confirming every
       backtick-quoted filename across all `docs/patterns/*.md` resolves to a real file in the repo.
 
+### Epic 35 — Second pattern catalog round: Security, Observability, Expand/Contract, API Design (2026-07-08/09)
+> Same "already-practiced-but-undocumented" prioritization as Epic 34, applied to a second round of
+> candidates. Two more agents turned out to have fully-worked frameworks locked inside their own prompts:
+> `security-reviewer.md`'s complete STRIDE table with Saturday/Sunday-specific examples, and
+> `sre-engineer.md`'s four governing observability principles.
+- [x] `security-patterns.md` -- STRIDE (full 6-category table with concrete example gaps, lifted
+      directly from `security-reviewer.md`'s own contract), Secure by Default, Defense in Depth, Least
+      Privilege, Paved Road / Golden Path. Least Privilege cross-referenced against Cursor's `readonly`
+      subagent flag and `shared/agents/*.md`'s own `tools:` allowlist as real, already-shipped instances.
+- [x] `observability-patterns.md` -- SLI (already-required, lifted from `sre-engineer.md`'s own
+      contract), plus SLO and Error Budget -- the one layer above SLI this repo uses the foundation of
+      without ever naming. Low-Cardinality Logging, Structured Tracing, and No PII in Telemetry lifted
+      directly from `sre-engineer.md`'s governing principles, including its own bad/good logging example.
+- [x] `expand-contract-migrations.md` -- upgraded from "a rule that's referenced" to a full pattern doc,
+      same treatment Circuit Breaker got in Epic 34's `stability-patterns.md`. Uses `db-migration/
+      SKILL.md`'s own worked example (`lockout_expires_at` -> `locked_until`) verbatim, and documents its
+      own named approval gate (`approval-gates.md` #4, the Contract-phase-specific one) as part of the
+      pattern, not just the migration mechanics.
+- [x] `api-design-patterns.md` -- Resource-Oriented Design, Idempotency Keys, Status Code Discipline,
+      Pagination by Default, User Enumeration Prevention, Schema-First Contract -- every one of these is
+      already an enforced guardrail inside `openapi/SKILL.md`, just never extracted as a standalone
+      reference. Cross-references `security-patterns.md` (User Enumeration Prevention is literally
+      STRIDE's Information Disclosure category applied to API design) and `sunday-framework-patterns.md`
+      (the skill's own "Sunday Framework Mapping" output section connects API design directly to
+      `BaseApiClient`/Zod schema conventions).
+- [x] Verified: `health-check.sh --verbose`, `check-parity.sh`, cross-reference resolution across all 9
+      `docs/patterns/*.md` files, and a direct quote-check against `approval-gates.md` #4's exact gate
+      text before citing it.
+
 ---
 
 ## Summary: Gap Coverage Matrix
@@ -556,6 +585,7 @@
 | No verification that a fresh install actually produces correct output, only that this repo's own output is in sync | Epic 32 | 9 |
 | docs/ accumulated fully-superseded early bootstrap material, and docs/README.md itself was stale | Epic 33 | 9 |
 | Pattern catalog covered GoF/Saturday/Sunday/Clean Architecture but not DDD, EIP, Stability Patterns, or 12-Factor -- three of which were already named influences in architect.md with no documentation | Epic 34 | 9 |
+| STRIDE and SLI/observability principles were fully worked out inside security-reviewer.md/sre-engineer.md but never extracted as standalone references; Expand/Contract and API design guardrails existed only as rules, not documented patterns | Epic 35 | 9 |
 
 ---
 
