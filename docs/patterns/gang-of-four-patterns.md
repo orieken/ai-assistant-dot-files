@@ -101,5 +101,54 @@ needing to know what the operation actually does.
 things a plain function call can't give you: queuing, undo, or a uniform audit log of "what operations
 happened," not just as a wrapper for its own sake.
 
+## Template Method
+
+**Not in `CLAUDE.md`'s table** — added here because this repo's own Saturday framework already uses it,
+unnamed. Included for recognition, not as a new recommendation to reach for.
+
+**When**: an algorithm has a fixed overall shape, but specific steps need to vary by subclass.
+
+**Structure**: A base class defines the skeleton of an operation and calls out to methods subclasses
+override for the parts that vary; the sequence itself stays fixed in the base class.
+
+**Example**: `BasePage`/`BaseFlow` (see `saturday-framework-patterns.md`) are Template Method in
+practice — the base classes define how a page action or a multi-step flow is structured and sequenced;
+each concrete `LoginPage` or `CompleteCheckoutFlow` overrides the specific steps, not the shape.
+
+**Trade-offs**: Subclasses are constrained to the base class's fixed sequence — if a subclass genuinely
+needs a different order of operations, Template Method is the wrong pattern; that's usually a sign
+Strategy (a swappable whole algorithm, not just its steps) fits better.
+
+## Composite
+
+**Not in `CLAUDE.md`'s table** — same as Template Method, named here for recognition.
+
+**When**: part-whole hierarchies need to be treated uniformly, whether a caller is holding one leaf
+object or a whole tree of them.
+
+**Structure**: A common interface shared by both individual objects and groups of them, so client code
+doesn't need to know which one it's holding.
+
+**Example**: `BaseElement` (see `saturday-framework-patterns.md`) is Composite in practice — a complex
+`BaseElement` like a data table is built from smaller `BaseElement`s, and both the simple and composite
+cases expose the same interaction interface to the `BasePage` that uses them.
+
+## State
+
+**Not in `CLAUDE.md`'s table** — named here for recognition; two existing mechanisms are already
+concrete instances of it.
+
+**When**: an object's behavior needs to change based on its internal state, without a pile of
+conditionals checking that state everywhere the behavior is needed. `CLAUDE.md`'s own complexity ladder
+names this directly (step 4: "Replace `switch` on type with polymorphism (Strategy, State)").
+
+**Structure**: Each state is its own class implementing a shared interface; transitioning state means
+swapping which implementation is active, rather than mutating a flag that every method has to branch on.
+
+**Example**: `CircuitBreaker`'s closed/open/half-open states (see `stability-patterns.md`) are a State
+machine — each state has different behavior for "should this call go through." `pipeline-state.json`'s
+phase tracking (`shared/skills/deliver-feature/SKILL.md`) is the same shape applied to an entire feature
+delivery run: the current phase determines what `resume-pipeline` does next.
+
 ---
 *Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

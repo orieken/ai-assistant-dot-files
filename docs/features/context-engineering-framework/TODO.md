@@ -480,6 +480,48 @@
       benefit. `docs/README.md`'s directory listing and "How Agents Use These Docs" section updated to
       reference `patterns/` again now that it has real content.
 
+### Epic 34 — Expanded pattern catalog: DDD, EIP, Stability Patterns, 12-Factor (2026-07-08)
+> Follow-on to the Epic 33 patterns work: does the catalog include Domain-Driven Design? Should it just
+> list all 23 GoF patterns? Are there newer concepts (12-Factor) worth adding? User's call: add them all.
+> Prioritized additions that are already-practiced-but-undocumented (same gap class Epic 33 fixed)
+> over speculative new theory -- `analyst.md`/`architect.md` already explicitly channel Eric Evans,
+> Gregor Hohpe, and Michael Nygard by name; none of those three had a pattern doc until now.
+- [x] `domain-driven-design.md` -- Entity, Value Object, Aggregate/Aggregate Root, Repository, Domain
+      Service, Domain Event, Bounded Context, Context Map, Anti-Corruption Layer, Ubiquitous Language.
+      Grounded directly in existing repo mechanics rather than generic DDD theory: Domain Events
+      cross-reference `DOMAIN_DICTIONARY.md`'s own event table, Bounded Context references the same
+      file's 5 core domains, Anemic Domain Model warning cross-references
+      `design-principles.md`'s Anti-Pattern Radar.
+- [x] `enterprise-integration-patterns.md` -- Message Channel, Content-Based Router, Message Translator,
+      Publish-Subscribe Channel, Dead Letter Channel, Correlation Identifier, Saga. This repo doesn't run
+      literal message-queue infrastructure, so each pattern is grounded in a structurally-equivalent
+      mechanism that already exists: `pipeline-trace.json` as Correlation Identifier,
+      `deliver-feature`'s checkpointed pipeline + `resume-pipeline` rollback as Saga, `.history/` backups
+      as Dead Letter Channel.
+- [x] `stability-patterns.md` -- Circuit Breaker (general form; Sunday's API-specific version already
+      existed), Bulkhead, Timeout, Fail Fast, Steady State. Timeout and Circuit Breaker both grounded in
+      already-hard guardrails (`architecture-guardrails.md` #5), not just Nygard's book.
+- [x] `twelve-factor-app.md` -- all 12 factors. The one axis nothing else in `docs/patterns/` covers:
+      production runtime characteristics, not code structure. Cross-referenced against existing partial
+      coverage per factor (Config -> no-hardcoded-secrets guardrail, Dependencies -> each language's
+      package-manager convention, Admin Processes -> `db-migration`'s expand/contract skill) rather than
+      presented as unrelated new theory.
+- [x] Added Template Method, Composite, and State to the existing `gang-of-four-patterns.md` instead of
+      blanket-adding all 23 canonical GoF patterns -- explicitly labeled "not in CLAUDE.md's table," named
+      only because this codebase's own mechanisms (`BasePage`/`BaseFlow`, `BaseElement` composition,
+      `CircuitBreaker`/`pipeline-state.json` phase tracking) already use them unnamed. The other ~13
+      unused GoF patterns (Singleton, Flyweight, Interpreter, Memento, etc.) were deliberately not added
+      -- no evidence anything in this stack reaches for them.
+- [x] Found and fixed one citation error while verifying: `twelve-factor-app.md`'s Dev/Prod Parity
+      section originally cited a `docker-compose.e2e.yml` detail that lives in the real
+      `saturday-monorepo-csharp` README, not in this repo's own condensed `csharp-conventions.md` --
+      corrected to cite `scripts/ci-check.sh` instead, which is a real, already-verified fact from this
+      session (the bash-version CI bug it exists to catch).
+- [x] Verified: `health-check.sh --verbose` (167 passed/0 failed, DOMAIN_DICTIONARY.md orphaned-terms
+      warnings dropped from 15 to 7 since several previously-orphaned terms are now referenced from the
+      new pattern docs), `check-parity.sh`, and a cross-reference resolution check confirming every
+      backtick-quoted filename across all `docs/patterns/*.md` resolves to a real file in the repo.
+
 ---
 
 ## Summary: Gap Coverage Matrix
@@ -513,6 +555,7 @@
 | No preferred-package/structure guidance per language, and Claude Code never received what little existed | Epic 31 | 9 |
 | No verification that a fresh install actually produces correct output, only that this repo's own output is in sync | Epic 32 | 9 |
 | docs/ accumulated fully-superseded early bootstrap material, and docs/README.md itself was stale | Epic 33 | 9 |
+| Pattern catalog covered GoF/Saturday/Sunday/Clean Architecture but not DDD, EIP, Stability Patterns, or 12-Factor -- three of which were already named influences in architect.md with no documentation | Epic 34 | 9 |
 
 ---
 
