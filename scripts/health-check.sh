@@ -135,10 +135,18 @@ if [[ -f "$DICT" ]]; then
   terms=$(grep -oE '^\| \*\*[A-Za-z][^*]*\*\*' "$DICT" | sed 's/^| \*\*//; s/\*\*$//' || true)
   while IFS= read -r term; do
     [[ -z "$term" ]] && continue
-    # Search everywhere except the dictionary file itself for a real usage.
-    hits=$( (grep -rlF "$term" "$SHARED_DIR" "$REPO_DIR/docs" 2>/dev/null || true) | (grep -v "DOMAIN_DICTIONARY.md" || true) | wc -l | tr -d ' ')
+    # Case-insensitive, and also tries the kebab-case form: several dictionary terms are defined
+    # Title Case but only ever appear as a path/slug in prose (e.g. "Pipeline Trace" -> only shows up
+    # as pipeline-trace.json / the pipeline-trace skill). Also checks root-level *.md files, not just
+    # shared/ and docs/ -- the three BLUEPRINT_PROMPT.md files live at repo root. Still best-effort:
+    # a term embedded inside markdown code-formatting broken across words (like `` `api` fixture ``,
+    # where a backtick sits between "api" and "fixture") won't match either variant.
+    hyphenated=$(echo "$term" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+    hits=$( { grep -rliF "$term" "$SHARED_DIR" "$REPO_DIR/docs" "$REPO_DIR"/*.md 2>/dev/null || true; \
+              grep -rliF "$hyphenated" "$SHARED_DIR" "$REPO_DIR/docs" "$REPO_DIR"/*.md 2>/dev/null || true; } \
+            | (grep -v "DOMAIN_DICTIONARY.md" || true) | sort -u | wc -l | tr -d ' ')
     if [[ "$hits" -eq 0 ]]; then
-      warn "\"$term\" — defined but not referenced anywhere in shared/ or docs/ (may be a framework-level term used only in generated project code, not this repo — verify before removing)"
+      warn "\"$term\" — defined but not referenced anywhere in shared/, docs/, or root *.md files (may be a framework-level term used only in generated project code, not this repo — verify before removing)"
     else
       pass "\"$term\" — referenced in $hits file(s)"
     fi

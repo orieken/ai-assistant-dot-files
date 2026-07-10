@@ -347,7 +347,21 @@ if ! $DRY_RUN; then
   echo "========================================"
   echo "Framework health check"
   echo "========================================"
-  bash "$REPO_DIR/scripts/health-check.sh" || echo "(health-check reported issues — see above; run 'bash scripts/health-check.sh --verbose --fix' for detail and auto-repair)"
+  if [[ "$MODE" == "global" ]]; then
+    bash "$REPO_DIR/scripts/health-check.sh" || echo "(health-check reported issues — see above; run 'bash scripts/health-check.sh --verbose --fix' for detail and auto-repair)"
+  else
+    # health-check.sh validates this framework's own shared/ source tree (contracts/, knowledge/,
+    # memory-registry.json, CHANGELOG.md version consistency, etc.) via $REPO_DIR resolved from its
+    # own script location -- none of that gets copied into a --project target, so running it here
+    # would only ever re-check this checkout, never $TARGET_DIR. Running it silently against the
+    # wrong repo was worse than not running it: it looked like project validation but wasn't.
+    echo "Skipped for --project installs: health-check.sh checks this framework's own shared/ source"
+    echo "tree, none of which is copied into a --project target -- there's nothing there for it to"
+    echo "validate. The ok/skip/fail lines logged above are the verification for $TARGET_DIR."
+    echo ""
+    echo "To validate the framework's own source repo instead, run:"
+    echo "  bash $REPO_DIR/scripts/health-check.sh --verbose"
+  fi
 fi
 
 if $SHOW_TOUR && ! $DRY_RUN; then
