@@ -2,6 +2,33 @@
 
 Declarative, resilient API test automation. Terms match `shared/DOMAIN_DICTIONARY.md` exactly.
 
+## Declarative API Client Pattern
+
+**Context**: The overarching pattern every component below implements a piece of — Sunday's answer to
+"how do you write API tests that read like specifications instead of HTTP plumbing." The name comes
+directly from this file's own opening line and from `API_FRAMEWORK_BLUEPRINT_PROMPT.md`'s "Declarative
+Testing Style."
+
+**Structure**: Three layers, each hiding the one below it from the test author. A domain-specific
+`BaseApiClient` exposes only named business operations (`getUser(id)`, never `get(path)`) and hides an
+`IHttpAdapter` behind it (Adapter, keeping the concrete HTTP library swappable). Fluent Matchers
+(`toHaveStatus`, `toBeSuccessful`) and Schema Validation replace manual status-code/body assertions with
+declarative ones. Resilience Primitives (`CircuitBreaker`, `ExponentialBackoffStrategy`) replace ad hoc
+retry loops so failure-handling is a declared property of the client, not inline test logic.
+
+**Why "declarative"**: A test written against this pattern reads as *what* is being verified
+(`expect(response).toBeSuccessful()`, `expect(response.body).toMatchSchema(userSchema)`), never *how* —
+no manual JSON parsing, no `if (status !== 200)`, no hand-rolled retry `while` loop. Every one of those
+manual mechanics is exactly what a layer in this pattern exists to absorb.
+
+**Trade-offs**: More upfront structure than calling an HTTP client directly in a test — a new API domain
+needs its own `BaseApiClient` subclass before the first test can be written. Pays off the moment a
+contract changes or a flaky endpoint needs a retry policy: one file changes, not every test that touches
+that endpoint.
+
+**Related**: Every entry in this file is a Declarative API Client component. Saturday's `Site-Centric
+Pattern` is the equivalent umbrella pattern for E2E/UI testing — see `saturday-framework-patterns.md`.
+
 ## BaseApiClient
 
 **Context**: The abstract base every domain-specific API client extends — the thing that keeps HTTP

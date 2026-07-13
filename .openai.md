@@ -363,7 +363,7 @@ ALWAYS include OpenTelemetry instrumentation for every BDD scenario.
 
 ## Sunday Framework (API Testing)
 ALWAYS use Vitest for unit tests and Playwright for integration/E2E API tests.
-ALWAYS use the custom `api` fixture and fluent matchers (`toHaveStatus`, `toBeSuccessful`, `toRespondWithin`).
+ALWAYS use the custom api fixture (`api`) and fluent matchers (`toHaveStatus`, `toBeSuccessful`, `toRespondWithin`).
 ALWAYS extend `BaseApiClient` for domain-specific API clients.
 ALWAYS validate schemas with Zod (`validateSchema()`).
 NEVER use custom retry loops — use `CircuitBreaker` or `ExponentialBackoffStrategy`.

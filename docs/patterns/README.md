@@ -11,10 +11,12 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
   (Factory, Builder, Strategy, Observer, Adapter, Decorator, Command) with the structure/example/
   trade-off detail that table doesn't have room for, plus 3 more (Template Method, Composite, State)
   named for recognition because this codebase's own mechanisms already use them, unnamed.
-- [saturday-framework-patterns.md](saturday-framework-patterns.md) — the Site-Centric E2E architecture:
-  `BaseSite`, `BasePage`, `BaseElement`, `BaseFlow`, `Filters`, `SiteManager`, `TabManager`.
-- [sunday-framework-patterns.md](sunday-framework-patterns.md) — declarative API testing:
-  `BaseApiClient`, `IHttpAdapter`, Fluent Matchers, Schema Validation, Resilience Primitives.
+- [saturday-framework-patterns.md](saturday-framework-patterns.md) — the **Site-Centric Pattern** (named
+  as its own entry, not just its parts) plus every component that implements it: `BaseSite`, `BasePage`,
+  `BaseElement`, `BaseFlow`, `Filters`, `SiteManager`, `TabManager`.
+- [sunday-framework-patterns.md](sunday-framework-patterns.md) — the **Declarative API Client Pattern**
+  (named as its own entry) plus every component that implements it: `BaseApiClient`, `IHttpAdapter`,
+  Fluent Matchers, Schema Validation, Resilience Primitives.
 - [clean-architecture-layers.md](clean-architecture-layers.md) — Domain, Use Case, Adapter, and
   Framework layers, expanding on the dependency-direction rule in
   `shared/rules/architecture-guardrails.md`.

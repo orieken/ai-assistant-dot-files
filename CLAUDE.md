@@ -7,7 +7,7 @@ These rules apply to every project, every language, every file.
 
 ## Non-Negotiable Rules
 
-- **Cyclomatic complexity < 7** on every function or method — no exceptions
+- **Cyclomatic complexity < 7** on every function or method (the Cyclomatic Complexity Threshold, per `DOMAIN_DICTIONARY.md`) — no exceptions
 - **Unit test coverage ≥ 85%** for everything in `src/` and `lib/`
 - **Every external dependency** (DB, HTTP, filesystem, clock, queue) hides behind an interface
 - **Models and factories** are always separate files following the naming convention

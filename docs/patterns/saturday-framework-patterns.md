@@ -3,6 +3,35 @@
 The Site-Centric architecture. Every term below matches `shared/DOMAIN_DICTIONARY.md` exactly — don't
 introduce synonyms (`PageObject`, `App`, `Widget`, etc. are explicitly listed there as terms to avoid).
 
+## Site-Centric Pattern
+
+**Context**: The overarching pattern every component below implements a piece of — Saturday's answer to
+"how do you structure a large E2E suite so it doesn't rot into a pile of unrelated page objects."
+Explicitly named (`shared/rules/testing-conventions.md`: "ALWAYS use the Site-Centric pattern") and
+explicitly not the traditional Page Object Model — POM is named in the same rule as something to NEVER
+use.
+
+**Structure**: A `BaseSite` roots one web application's entire test surface — every `BasePage` it owns,
+every multi-page `BaseFlow` that crosses those pages, every state-gated `Filter`. Multiple `BaseSite`s
+(one per application under test) are coordinated by a `SiteManager`; multiple browser tabs within any of
+them are coordinated by a `TabManager`. The pattern's actual claim is narrower than "organize pages into
+classes" — it's that *application* is the top-level organizing unit, and everything else (pages, flows,
+elements, filters) nests inside exactly one `BaseSite`, never spanning two.
+
+**Why not POM**: Traditional Page Object Model has no answer for "this flow spans three pages" (it
+either bloats one page object with unrelated methods, or leaves the flow logic floating in the test
+itself) and no answer for "this suite drives two separate applications" (nothing stops a page object
+from silently coupling to another application's internals). `BaseFlow` and `SiteManager` are Site-Centric's
+direct answers to those two specific POM failure modes, not incidental extras.
+
+**Trade-offs**: More ceremony than POM for a single-page, single-app smoke test — a `BaseSite` with one
+`BasePage` is more scaffolding than a bare page object would need. Pays off precisely at the scale POM
+struggles with: multi-page flows, multi-application suites, and cross-project consistency (see
+`BaseSite`'s own Trade-offs entry below).
+
+**Related**: Every entry in this file is a Site-Centric component. Sunday's `Declarative API Client
+Pattern` is the equivalent umbrella pattern for API testing — see `sunday-framework-patterns.md`.
+
 ## BaseSite
 
 **Context**: The root orchestrator for a single web application under test. Every E2E suite has exactly
