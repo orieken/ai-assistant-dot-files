@@ -18,6 +18,27 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-13 — unit-tester reads callers/dependents; backfill-unit-tests considers context-engineer
+
+Follow-up to the same-day `unit-tester`/`backfill-unit-tests` addition, prompted by a direct question:
+should context get cleaned up before either starts work? Answer landed as "not the full `context-engineer`
+pass" (it's built around feature-spec-driven bounded-context mapping that doesn't exist for a bare
+file/directory target) "but yes to a narrower version of the same need." Characterization mode specifically
+depends on understanding a legacy target's callers and dependents, not just the target file — a caller that
+only exercises the code under specific external state is invisible from the target file alone, and
+`search-ki` doesn't cover it either (it finds documented gotchas, not undocumented call graphs).
+
+| Agent | Version | Change |
+|---|---|---|
+| unit-tester | 1.0.0 -> 1.1.0 | **Minor**: expanded process step 3 — after reading the target, grep for its callers/importers and what it depends on, not just the target file in isolation. Most load-bearing in characterization mode; a single already-understood file being backfilled for coverage needs it less. |
+
+`backfill-unit-tests` (no version — skills aren't versioned the way agents are): new process step 2 points
+at `context-engineer`'s own proactive self-invocation trigger (3+ files, unfamiliar code) rather than
+duplicating its logic — a directory/module-level characterization target should trigger it in practice, a
+single already-familiar file usually shouldn't. Renumbered subsequent steps.
+
+---
+
 ## 2026-07-13 — New agent: unit-tester (+ backfill-unit-tests skill)
 
 A new gap, adjacent to but distinct from `test-driven-developer`: sometimes tests need to be added to code

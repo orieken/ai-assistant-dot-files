@@ -26,19 +26,27 @@ coverage/characterization work with no accompanying feature delivery.
 
 ## Process
 1. **Resolve the scope** — the file, directory, or module the user pointed at.
-2. **Capture baseline coverage** — invoke `run-tests` for the target scope before any new tests exist, so
+2. **Check whether `context-engineer` should run first.** It's meant to self-invoke proactively per its own
+   trigger criteria (`shared/skills/context-engineer/SKILL.md`: 3+ files, or a codebase area not already
+   scoped this session) — don't skip that just because this skill doesn't explicitly orchestrate it the way
+   it orchestrates `unit-tester`/`code-reviewer`. In practice: a single already-familiar file being
+   backfilled for coverage rarely needs it; a directory or module being characterized for a legacy
+   refactor/migration almost always does, and benefits specifically from its bounded-context mapping and
+   prior-delivery lookup (`shared/agents/context-engineer.md` steps 3 and 6) — context `unit-tester`'s own
+   `search-ki` step doesn't cover.
+3. **Capture baseline coverage** — invoke `run-tests` for the target scope before any new tests exist, so
    the final report shows a real before/after delta. Skip only if the target has no existing test
    infrastructure to run at all (typical for genuinely untested legacy code) — note "no baseline" rather
    than fabricating a 0%.
-3. **Run `unit-tester`** against the resolved scope. It determines coverage-backfill vs. characterization
+4. **Run `unit-tester`** against the resolved scope. It determines coverage-backfill vs. characterization
    mode itself and produces `.claude/feature-workspace/unit-test-report.md`.
-4. **Run `code-reviewer`** against only the new/modified test files from step 3 — never against the
+5. **Run `code-reviewer`** against only the new/modified test files from step 4 — never against the
    untouched source. This is the counterbalance `unit-tester` doesn't have on its own: nothing else checks
    whether the tests it wrote are well-structured, correctly scoped, and free of the complexity/SOLID issues
    this framework flags everywhere else.
-5. **Capture final coverage** — invoke `run-tests` again for the same scope, compute the delta against step
-   2's baseline.
-6. **Produce the combined report** — display to the user.
+6. **Capture final coverage** — invoke `run-tests` again for the same scope, compute the delta against step
+   3's baseline.
+7. **Produce the combined report** — display to the user.
 
 ## Output Format
 
