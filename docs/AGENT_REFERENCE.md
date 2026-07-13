@@ -249,14 +249,17 @@ the `api-test-report.md`.
 **Role**: An autonomous, alternate red-green-refactor loop — explicitly authorized to iterate without asking
 for permission between steps, working directly from user-provided acceptance criteria rather than through
 `deliver-feature`.
-**Counterbalance**: The test suite itself (mechanical — tests pass or they don't).
+**Counterbalance**: The test suite itself (mechanical — tests pass or they don't). As of v1.1.0, also a
+`search-ki` lookup before test design and a `documentation-manager` recommendation (not auto-invoked) after
+a substantial session — see the 2026-07-13 CHANGELOG entry.
 **Gap — significant, and worth understanding clearly before choosing this over the full pipeline**: this
 agent deliberately bypasses every other counterbalance the normal pipeline has. No `code-reviewer` catches a
 SOLID violation, no `security-reviewer` catches a STRIDE-class vulnerability, no `accessibility-engineer`
 catches a semantic-HTML violation — none of that review happens unless a human separately runs it after the
 fact. This is a real, deliberate speed-for-safety tradeoff (autonomy without pausing), not an oversight — but
 it should be a conscious choice, not a default one, given how much of this framework's value elsewhere comes
-from exactly the reviews this agent skips.
+from exactly the reviews this agent skips. (This gap is about *review*, not *memory* — the memory-side gap,
+starting cold with no KI lookup and never routing learnings back afterward, was closed in v1.1.0.)
 
 ---
 

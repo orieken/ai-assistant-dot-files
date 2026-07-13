@@ -18,6 +18,23 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-13 — test-driven-developer gets memory awareness
+
+`test-driven-developer` bypasses the whole `deliver-feature` pipeline by design (see
+`docs/AGENT_REFERENCE.md` entry 24) — no `context-engineer` pass before it starts, and it's not part of
+the `pipeline-trace`/retrospective-every-5 cadence after it finishes. That's a deliberate speed tradeoff
+on the *review* axis (no code-reviewer/security-reviewer), but it left this agent silently cold on the
+*memory* axis too: it never checked whether a relevant KI/ADR already existed, and nothing routed its
+findings back into the memory system afterward. Closes that gap without reintroducing the ceremony the
+agent exists to skip — a single cheap `search-ki` lookup going in, a recommendation (not an auto-trigger)
+for `documentation-manager` coming out.
+
+| Agent | Version | Change |
+|---|---|---|
+| test-driven-developer | 1.0.1 -> 1.1.0 | **Minor**: new process step 2 invokes `search-ki` for the feature's domain/keywords before test design (read-only, non-blocking — informs, doesn't gate). New "Knowledge Consulted" section in `tdd-report.md`'s output format. New rule: after a substantial session, recommend `documentation-manager` to the user rather than auto-invoking it, matching that agent's own "most sessions produce nothing durable enough to promote" discipline. |
+
+---
+
 ## 2026-07-06 — Cursor native skills/agents compatibility (Epic 30, Phase 1)
 
 Cursor shipped native Agent Skills (`.cursor/skills/*/SKILL.md`) and subagent (`.cursor/agents/*.md`)
