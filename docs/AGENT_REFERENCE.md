@@ -2,7 +2,7 @@
 
 Every agent in this framework produces an output that *something* checks — another agent's review, a
 structural contract, a human approval gate, an aggregate metric measured after the fact, or (stated plainly
-where true) nothing yet. This doc makes that explicit for all 24 agents, one at a time, instead of leaving
+where true) nothing yet. This doc makes that explicit for all 25 agents, one at a time, instead of leaving
 it scattered implicitly across `deliver-feature/SKILL.md`, `shared/contracts/`, and each agent's own file.
 
 This is documentation of what already exists in v2 today — it does not introduce new agents or roles. Where
@@ -13,7 +13,7 @@ actually has running today.)
 
 ## How to read "Counterbalance"
 
-Four different *kinds* of check show up across these 24 agents, and they're not interchangeable:
+Four different *kinds* of check show up across these 25 agents, and they're not interchangeable:
 
 | Kind | What it catches | Example |
 |---|---|---|
@@ -261,17 +261,34 @@ it should be a conscious choice, not a default one, given how much of this frame
 from exactly the reviews this agent skips. (This gap is about *review*, not *memory* — the memory-side gap,
 starting cold with no KI lookup and never routing learnings back afterward, was closed in v1.1.0.)
 
+### 25. `unit-tester`
+**Role**: The mirror image of `test-driven-developer` — writes unit tests for existing code without
+modifying it, either to raise coverage on already-trusted code or to build a Michael Feathers-style
+characterization-test safety net before a legacy refactor or migration. Standalone, not gated behind
+`deliver-feature`.
+**Counterbalance**: Unlike `test-driven-developer`, this one isn't just a soft recommendation — the
+`backfill-unit-tests` skill auto-chains a real `code-reviewer` pass against the new test files every time,
+because (unlike `documentation-manager`, where most sessions produce nothing worth promoting) a code-quality
+check on newly-written tests is cheap and useful every single time, not just sometimes.
+**Gap**: Still no `security-reviewer` or `accessibility-engineer` pass — same review-chain bypass
+`test-driven-developer` has, scoped down slightly since this agent only ever produces test files, never
+production code. If a seam is genuinely required to make legacy code testable, that's explicitly *not*
+something this agent can do unilaterally — it's gated behind `approval-gates.md` gate #6, reported and
+held rather than performed.
+
 ---
 
 ## What this survey actually shows
 
-Reading all 24 agents together, three patterns stand out:
+Reading all 25 agents together, three patterns stand out:
 
 1. **The 14 pipeline agents are well-checked.** Every one has at least a structural contract; most have a
    real downstream reviewer or a human approval gate too. This is the part of the framework that's had the
    most iteration (three independent audits this session all confirmed the contract layer, once complete,
    holds up).
-2. **The 9 standalone agents are inconsistently checked.** Some (`release-manager`, `data-engineer`-adjacent
+2. **The 10 standalone agents are inconsistently checked** — though less inconsistently than before
+   `unit-tester` arrived with a real auto-chained reviewer rather than just a report a human might read.
+   Some (`release-manager`, `data-engineer`-adjacent
    `devops-engineer`) are well-gated because they touch genuinely irreversible actions. Others
    (`finops-engineer`, `dx-engineer`, `dependency-auditor`) have no check beyond a human reading the report —
    which may be the right amount of ceremony for their risk level, or may not; that's a judgment call this

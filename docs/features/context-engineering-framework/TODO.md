@@ -553,6 +553,36 @@
 
 ---
 
+### Epic 36 — New agent: unit-tester, gets memory awareness alongside test-driven-developer (2026-07-13)
+> Surfaced by a direct question: `test-driven-developer` writes tests and changes code to satisfy them, but
+> there was no standalone agent for the opposite case -- adding tests to code that must *not* change,
+> whether to raise coverage on trusted code or to build a Michael Feathers-style characterization-test
+> safety net before a legacy refactor/migration. `qa-engineer` already had the right guidance for this (its
+> own "Testing Legacy Code" section) but only reachable through `deliver-feature`'s workspace artifacts.
+> While closing that gap, also closed a smaller one found first: `test-driven-developer` itself started
+> every run cold, with no KI lookup and no path for its learnings to reach the memory system afterward.
+- [x] `test-driven-developer` 1.0.1 -> 1.1.0 (Minor): new process step invokes `search-ki` before test
+      design (read-only, non-blocking). New "Knowledge Consulted" output section. New rule recommending
+      `documentation-manager` after a substantial session, without auto-invoking it.
+- [x] New agent `unit-tester` (1.0.0): standalone, writes/backfills unit tests for existing code without
+      modifying it. Stricter than `qa-engineer` -- never modifies source, not even to fix a discovered bug;
+      a required seam is treated as `approval-gates.md` gate #6 (Writing Files out of Boundary) and held
+      for explicit approval rather than performed automatically. Same `search-ki` + non-auto-invoked
+      `documentation-manager` pattern as the `test-driven-developer` update above.
+- [x] New skill `backfill-unit-tests`: coordinates `unit-tester` then automatically runs `code-reviewer`
+      against just the new test files (never the untouched source) -- unlike the soft
+      `documentation-manager` recommendation, this counterbalance is auto-chained rather than merely
+      suggested, since a code-quality pass on new tests is cheap and useful every time, with none of
+      `documentation-manager`'s "most sessions produce nothing worth promoting" waste risk. Mirrors
+      `review-pr`, this repo's existing precedent for a thin orchestration skill.
+- [x] `docs/AGENT_REFERENCE.md`: updated agent-count references (24 -> 25), added entry #25 for
+      `unit-tester`, updated the survey summary's standalone-agent count (9 -> 10).
+- [x] `README.md` / `docs/ARCHITECTURE.md`: agent/skill counts updated (24 -> 25 agents, 53 -> 54 skills).
+- [x] Verified: `generate-configs.sh`, `check-parity.sh`, `health-check.sh --verbose`, `test-agents.sh` all
+      green.
+
+---
+
 ## Summary: Gap Coverage Matrix
 
 | Gap Identified | Epic(s) | Phase |
@@ -586,6 +616,7 @@
 | docs/ accumulated fully-superseded early bootstrap material, and docs/README.md itself was stale | Epic 33 | 9 |
 | Pattern catalog covered GoF/Saturday/Sunday/Clean Architecture but not DDD, EIP, Stability Patterns, or 12-Factor -- three of which were already named influences in architect.md with no documentation | Epic 34 | 9 |
 | STRIDE and SLI/observability principles were fully worked out inside security-reviewer.md/sre-engineer.md but never extracted as standalone references; Expand/Contract and API design guardrails existed only as rules, not documented patterns | Epic 35 | 9 |
+| test-driven-developer started every run cold (no KI lookup, no memory feedback loop); no standalone agent existed for adding tests to code that must not change (coverage backfill / legacy characterization) | Epic 36 | 9 |
 
 ---
 

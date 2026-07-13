@@ -18,6 +18,38 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-13 — New agent: unit-tester (+ backfill-unit-tests skill)
+
+A new gap, adjacent to but distinct from `test-driven-developer`: sometimes tests need to be added to code
+that must *not* change — raising coverage on already-trusted code, or building a Michael Feathers-style
+characterization-test safety net around legacy code before a refactor or migration. `qa-engineer` already
+had the right guidance for this (its own "Testing Legacy Code" section), but only as a step gated behind
+`deliver-feature`'s `analysis.md`/`implementation-notes.md` inputs — there was no way to point it at an
+arbitrary existing file with no feature delivery underway.
+
+Added `unit-tester`: same standalone-invocation style as `test-driven-developer`, but inverted — the code
+doesn't change to satisfy the tests, the tests describe what the code already does. Stricter than
+`qa-engineer` on one point: never modifies source, not even qa-engineer's narrow "except to fix a bug
+found" exception. If the code genuinely can't be tested without a structural seam, that's treated as
+`approval-gates.md` gate #6 (Writing Files out of Boundary) — reported and held for explicit approval, never
+performed automatically.
+
+Unlike `test-driven-developer`'s soft "recommend documentation-manager, don't auto-invoke" pattern (real
+risk of wasted ceremony — most ad-hoc sessions produce nothing worth promoting), a code-quality pass over
+newly-written tests has no equivalent "usually pointless" cost. So this one gets auto-chained instead of
+just recommended: new skill `backfill-unit-tests` runs `unit-tester`, then automatically runs
+`code-reviewer` against just the new test files (never the untouched source), producing one combined
+report — same shape as `review-pr`, this repo's existing precedent for a thin orchestration skill that
+coordinates agents without `deliver-feature`'s full checkpoint ceremony.
+
+| Agent | Version | Change |
+|---|---|---|
+| unit-tester | — -> 1.0.0 | **New agent.** Standalone, writes/backfills unit tests for existing code without modifying it (coverage backfill or legacy characterization). Includes the same `search-ki` lookup + non-auto-invoked `documentation-manager` recommendation pattern just added to `test-driven-developer`. |
+
+New skill: `shared/skills/backfill-unit-tests/SKILL.md` — coordinates `unit-tester` + `code-reviewer`, mirroring `review-pr`'s orchestration shape.
+
+---
+
 ## 2026-07-13 — test-driven-developer gets memory awareness
 
 `test-driven-developer` bypasses the whole `deliver-feature` pipeline by design (see
