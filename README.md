@@ -271,39 +271,55 @@ Grouped by what they're for:
 ## AI Feature Team Pipeline
 
 ```mermaid
-graph TD
+flowchart TD
     User([User]) --> SpecWriter[spec-writer]
     SpecWriter --> ContextEngineer[context-engineer]
 
-    subgraph "Phase 1: Discovery & Design"
+    subgraph "Phase 1: Discovery &amp; Design"
         ContextEngineer --> Analyst[analyst]
-        Analyst --> Architect[architect]
-        Architect --> Perf[performance-engineer]
+        Analyst --> Pause1{{"⏸ confirm scope"}}
+        Pause1 --> Architect[architect]
+        Architect -->|"RFC written"| Pause2{{"⏸ confirm architecture"}}
+        Architect -.->|"no RFC"| Perf[performance-engineer]
+        Pause2 --> Perf
         Perf --> Data[data-engineer]
     end
 
-    subgraph "Phase 2: Implementation & Review"
+    subgraph "Phase 2: Implementation &amp; Review"
         Data --> Developer[developer]
         Developer --> CodeReviewer[code-reviewer]
+        CodeReviewer -. "CHANGES REQUESTED" .-> Developer
         CodeReviewer --> A11y[accessibility-engineer]
         A11y --> SecurityReviewer[security-reviewer]
+        SecurityReviewer -->|"Critical finding"| Pause3{{"⏸ confirm fix"}}
+        SecurityReviewer -.->|"no Critical finding"| QAEngineer
     end
 
-    subgraph "Phase 3: Verification & Shipping"
-        SecurityReviewer --> QAEngineer[qa-engineer]
+    subgraph "Phase 3: Verification &amp; Shipping"
+        Pause3 --> QAEngineer[qa-engineer]
         QAEngineer --> SRE[sre-engineer]
         SRE --> TechWriter[tech-writer]
         TechWriter --> DevOpsEngineer[devops-engineer]
+        DevOpsEngineer --> Pause4{{"⏸ confirm docs complete"}}
+        Pause4 --> Ship{{"⏸ ship to Friday?"}}
     end
 
-    CodeReviewer -. "CHANGES REQUESTED" .-> Developer
-    ValidateArtifact{{"validate-artifact\n(every contract-bound handoff)"}}
+    classDef conditional stroke-dasharray: 5 5
+    class Architect,Perf,Data,A11y,SecurityReviewer conditional
+
+    classDef checkpoint fill:#fef3c7,stroke:#d97706,color:#78350f
+    class Pause1,Pause2,Pause3,Pause4,Ship checkpoint
 ```
 
-Every arrow above is also gated by `validate-artifact` (structural contract check) where the producing agent
-has a contract in `shared/contracts/`, and the whole run is checkpointed to
-`.claude/feature-workspace/pipeline-state.json` + `pipeline-trace.json` so it can be resumed or rolled back
-(`resume-pipeline`) rather than restarted from scratch.
+Dashed-border agents (`architect`, `performance-engineer`, `data-engineer`, `accessibility-engineer`,
+`security-reviewer`) are **conditional** — each runs only if its own trigger condition is met (a new
+pattern/abstraction, a performance SLA, a data model change, a UI surface, a security surface
+respectively); skipped otherwise, straight through to the next mandatory step. Amber nodes are **real
+stops** — the pipeline doesn't proceed past one without your explicit confirmation. Every arrow is also
+gated by `validate-artifact` (structural contract check) where the producing agent has a contract in
+`shared/contracts/`, and the whole run is checkpointed to `.claude/feature-workspace/pipeline-state.json`
++ `pipeline-trace.json` so it can be resumed or rolled back (`resume-pipeline`) rather than restarted from
+scratch.
 
 ### Using the agents by tool
 
