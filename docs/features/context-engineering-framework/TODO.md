@@ -620,6 +620,49 @@
 
 ---
 
+### Epic 38 — Testing taxonomy explicit + annotation convention + honest TDD scoping (2026-07-15)
+> Surfaced by two related questions: does the framework distinguish clearly between unit / integration
+> / acceptance / E2E tests, and should tests annotate their originating issue and specific AC for
+> traceability? Both real gaps -- the framework had structural separation (Saturday, Sunday,
+> test-driven-developer, unit-tester) but no doc naming the pyramid or its principles per level, and
+> traceability was only at qa-report.md time (evaporates when files get renamed). A third gap surfaced
+> during the conversation itself: single-agent TDD doesn't produce XP TDD's design benefit the way pair
+> programming does -- role separation is what makes the discipline work. Rather than cargo-cult TDD
+> across the framework, this update states the honest scope.
+- [x] New pattern doc `docs/patterns/testing-pyramid.md`: five test levels (Unit, Integration, API
+      Contract, Acceptance, E2E/UI), each with context/principles/writing-agent, and cross-references
+      to `saturday-framework-patterns.md` / `sunday-framework-patterns.md` for the top two levels
+      rather than restating them. FIRST principles (Uncle Bob) as unit-test properties. Three Laws of
+      TDD stated once, canonically, with an honest "When the discipline actually applies to agent-
+      written code" section: role-separated (via `deliver-atdd`) preserves XP TDD's design pressure;
+      standalone `test-driven-developer` doesn't, and that's fine -- design pressure for solo agents
+      comes from complexity thresholds, SOLID, `code-reviewer`, and refactoring passes, not from the
+      test-first ritual alone. Explicitly notes `unit-tester` never follows the Three Laws (impossible
+      when the code came first -- its discipline is Feathers' characterization).
+- [x] Two new sections in `shared/rules/testing-conventions.md`: Test Categories (a level -> agent ->
+      framework -> speed-budget -> principles table, enforcement side of the pattern doc's philosophy)
+      and Test Annotation Convention (issue-ref + AC-ref per test, with per-language mechanisms --
+      JSDoc for TS, docstring for pytest, `@Tag`/`@DisplayName` for JUnit, `[Trait]` for xUnit, comment
+      for Go, `@issue:...` tag for Gherkin). Documented-only, no CI fitness function -- matches how
+      Sandi Metz's rules are handled today.
+- [x] `test-driven-developer` 1.1.0 -> 1.2.0: cite Three Laws + FIRST explicitly in the preamble;
+      state the standalone-vs-role-separated scoping honestly; add annotation-convention step; read
+      `testing-conventions.md`.
+- [x] `unit-tester` 1.1.0 -> 1.2.0: state explicitly that it does NOT follow the Three Laws (its
+      discipline is characterization, not TDD); its tests satisfy FIRST as properties; add
+      annotation-convention step with characterization-mode guidance; read `testing-conventions.md`.
+- [x] `qa-engineer` 1.1.1 -> 1.2.0: multi-level scope stated explicitly (this agent legitimately owns
+      integration / API contract / acceptance / E2E); annotation step with Gherkin-specific guidance;
+      read `testing-conventions.md`.
+- [x] `deliver-atdd` gets a "Why this workflow specifically" paragraph in its When To Use section
+      pointing at the testing-pyramid doc's role-separation framing -- this is the framework's
+      strongest agent-TDD shape and worth calling out as such.
+- [x] `docs/patterns/README.md`: new entry for testing-pyramid.md at the end of the pattern list.
+- [x] Verified: `generate-configs.sh`, `check-parity.sh`, `health-check.sh --verbose`, `test-agents.sh`
+      all green.
+
+---
+
 ## Summary: Gap Coverage Matrix
 
 | Gap Identified | Epic(s) | Phase |
@@ -655,6 +698,7 @@
 | STRIDE and SLI/observability principles were fully worked out inside security-reviewer.md/sre-engineer.md but never extracted as standalone references; Expand/Contract and API design guardrails existed only as rules, not documented patterns | Epic 35 | 9 |
 | test-driven-developer started every run cold (no KI lookup, no memory feedback loop); no standalone agent existed for adding tests to code that must not change (coverage backfill / legacy characterization) | Epic 36 | 9 |
 | No ATDD-shaped delivery workflow that supports trust-progressive phase-out of mechanical review gates -- teams either ran full deliver-feature (heavier than needed) or hand-orchestrated qa-engineer/test-driven-developer every time (no persistence, no trust curve visible in repo) | Epic 37 | 9 |
+| Testing taxonomy structurally implicit but never named as a pyramid; no in-test annotation convention for issue/AC traceability (report-time-only, evaporates on rename); framework silently equated single-agent test-first with XP TDD's role-separated design discipline | Epic 38 | 9 |
 
 ---
 

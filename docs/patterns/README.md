@@ -47,6 +47,13 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
   Code Discipline, Pagination by Default, User Enumeration Prevention, Schema-First Contract. The
   `openapi` skill already enforces all of these per-endpoint; never written down as a standalone
   reference until now.
+- [testing-pyramid.md](testing-pyramid.md) — the five test levels (Unit, Integration, API Contract,
+  Acceptance, E2E/UI), FIRST principles for unit tests, and the Three Laws of TDD with an honest
+  scoping note: XP TDD's design pressure only fully applies to agent-written code when there's role
+  separation (as in `deliver-atdd`). For single-agent `test-driven-developer` use, tests are still
+  valuable as executable spec and regression safety, but the design lever is elsewhere (complexity
+  thresholds, SOLID, `code-reviewer`). References Saturday and Sunday patterns for the top two levels
+  rather than restating them.
 
 All terminology matches `shared/DOMAIN_DICTIONARY.md` exactly — that's the canonical definition source;
 these docs go deeper into context, structure, and trade-offs, not redefine the terms.

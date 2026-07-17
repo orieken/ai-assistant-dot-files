@@ -18,6 +18,38 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-15 — Testing taxonomy: FIRST, Three Laws, and annotation convention explicit
+
+Surfaced by a direct question about whether the framework has a clear distinction between unit /
+integration / acceptance / E2E tests, and whether tests should annotate their originating
+issue/AC for traceability. Both real gaps: the framework had structural separation (Saturday = E2E,
+Sunday = API, `test-driven-developer` = greenfield unit, `unit-tester` = existing-code unit) but no
+doc naming the pyramid or its principles per level, and no in-test annotation convention (traceability
+was report-time-only, evaporates the moment a test file gets renamed or moved).
+
+The user's follow-up correctly pushed back on cargo-culting XP TDD: the design pressure of XP TDD comes
+from epistemic role separation between the person writing the failing test and the person implementing
+it. When a single agent does both, that gap collapses. Rather than pretend `test-driven-developer`
+standalone produces the same design benefit as human XP TDD, this update states the honest scope: role-
+separated (via `deliver-atdd`) preserves the design pressure; standalone is valuable for spec/
+regression but relies on other mechanisms (complexity thresholds, SOLID, `code-reviewer`) for design
+work. This is the same "state the tradeoff plainly rather than paper over it" approach
+`docs/AGENT_REFERENCE.md` already uses for `test-driven-developer`'s review-chain bypass.
+
+New: `docs/patterns/testing-pyramid.md` (the philosophy — five test levels, FIRST, Three Laws with the
+role-separation scoping) and two new sections in `shared/rules/testing-conventions.md` (the
+enforcement — Test Categories table mapping level to agent/framework, plus Test Annotation Convention
+with per-language mechanisms — JSDoc for TS, docstring for pytest, `@Tag`/`@DisplayName` for JUnit,
+`[Trait]` for xUnit, comment for Go, `@issue:...` tag for Gherkin).
+
+| Agent | Version | Change |
+|---|---|---|
+| test-driven-developer | 1.1.0 -> 1.2.0 | **Minor**: cite Three Laws + FIRST explicitly (they were already the implicit discipline; naming them makes it teachable). Add honest scoping note about role separation — standalone use doesn't produce XP TDD's design benefit; that's a real tradeoff, not something to hide. New process step: annotate each test per the new Test Annotation Convention. Read `testing-conventions.md` in the preamble now that it has enforceable rules relevant to this agent. |
+| unit-tester | 1.1.0 -> 1.2.0 | **Minor**: state explicitly that this agent does NOT follow the Three Laws (impossible — the code came first) but that its tests still satisfy FIRST as properties. Add annotation-convention citation to step 6, with a note that in characterization mode the "AC" being annotated is often the observed behavior itself, not a spec-defined AC. Read `testing-conventions.md` in the preamble. |
+| qa-engineer | 1.1.1 -> 1.2.0 | **Minor**: add an intro paragraph making the multi-level scope explicit (integration / API contract / acceptance / E2E — this agent legitimately owns all four, and should be explicit about which level each test is at). Add annotation-convention citation to step 6 with per-format guidance (Gherkin gets `@issue:...` tag; scenario name IS the AC). Read `testing-conventions.md` in the preamble. |
+
+---
+
 ## 2026-07-13 — unit-tester reads callers/dependents; backfill-unit-tests considers context-engineer
 
 Follow-up to the same-day `unit-tester`/`backfill-unit-tests` addition, prompted by a direct question:

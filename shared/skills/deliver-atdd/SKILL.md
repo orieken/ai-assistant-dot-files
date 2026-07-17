@@ -13,6 +13,14 @@ approved before step definitions, step definitions approved before implementatio
 red-green loop to satisfy them) rather than `deliver-feature`'s 14-agent full-pipeline shape. Accepts a
 feature file already produced by `spec-writer` or hand-written to `features/TEMPLATE.md`.
 
+**Why this workflow specifically**: this is the shape where the Three Laws of TDD *actually* preserve
+their design-pressure benefit for agent-written code. `qa-engineer` writes the scenarios and step
+definitions; `test-driven-developer` implements against them. That role separation between "specifier"
+and "implementer" is what XP TDD depends on — see `docs/patterns/testing-pyramid.md`'s "When the
+discipline actually applies to agent-written code" section for the full framing. `test-driven-developer`
+used standalone (outside this workflow) is still valuable for spec/regression purposes but doesn't
+carry the same design pressure.
+
 Do NOT use for features that need architectural review, security review, accessibility review, or the
 other conditional agents `deliver-feature` gates on — use `deliver-feature` instead; it's a superset in
 review coverage, not just a longer version of this. Do NOT use before a feature spec exists — run
