@@ -745,6 +745,45 @@
 
 ---
 
+### Epic 41 — Saturday-test-advisor + Sunday advisor scope honesty (2026-07-17)
+> Surfaced by the user asking what `sunday-test-advisor` actually is and whether Saturday needs an
+> equivalent. Reading the skill revealed two gaps: (1) `sunday-test-advisor`'s name is broader than its
+> scope — it's `go-sunday`-YAML-specific, not general Sunday. A TypeScript Sunday test suite gets zero
+> help from it, but the name doesn't warn about that. (2) Saturday has no equivalent structural
+> auditor at all — but "coverage %" is the wrong framing; the user re-framed it as "force adherence to
+> Saturday's structure/patterns," which is sharper and matches the framework's existing structural-
+> enforcer family (`verify-dependencies`, `check-ubiquitous-language`, `analyze-complexity`). Also
+> considered whether to add per-language sub-sections to `sunday-test-advisor` and decided against —
+> the mechanisms (YAML audit vs. AST inspection) are too different to share a file cleanly, and there's
+> only one working implementation (go-sunday) today.
+- [x] New pattern entry `API Test Coverage Matrix` in `docs/patterns/sunday-framework-patterns.md`:
+      extracts the language-agnostic Coverage Matrix (per-HTTP-method baseline scenarios, expected
+      status codes, auth/timeout addenda) out of the `sunday-test-advisor` SKILL.md and into the
+      pattern doc as its own first-class entry. Explicitly named as "not a mandate — a baseline;
+      conscious skipping is legitimate." Referenced by `sunday-test-advisor` (go-sunday audit),
+      `api-test-generator` (auto-generation follows the same matrix), and by future per-language
+      Sunday advisors when those get built. Single source of truth.
+- [x] `sunday-test-advisor` description tightened: says "go-sunday" explicitly in the first phrase,
+      "Do NOT use for TypeScript/Python/Java/C# Sunday tests" explicitly in When To Use, points at the
+      pattern-doc Coverage Matrix as the canonical source (keeps a local reproduction only for
+      operational convenience, noting pattern doc wins on any discrepancy). No functional change to
+      the audit logic — just scope honesty.
+- [x] New skill `saturday-test-advisor`: structural-adherence audit against the Site-Centric pattern.
+      Four categories of finding — orphaned pages/flows/partials (defined in code, zero scenario
+      coverage), filter branch gaps (best-effort, verify manually), broken references (scenario points
+      at non-existent class), under-partialed pages (best-effort heuristic — ≥3 shared elements across
+      ≥5 pages suggests a missing `BasePartial`). Explicitly reports gaps as "either delete this or
+      add a scenario," never fabricates Gherkin scenarios — that's `qa-engineer`'s job, and scenarios
+      are business language that humans should write per `docs/patterns/testing-pyramid.md`. Supports
+      TypeScript, C#, Python, Java Saturday ports by handling each language's `extends`/`:` syntax.
+      Standalone Mode: pure Read + Grep + Glob, no external tools.
+- [x] `docs/patterns/README.md`: Sunday entry updated to mention the new `API Test Coverage Matrix`
+      pattern.
+- [x] Verified: `generate-configs.sh`, `check-parity.sh`, `health-check.sh --verbose`, `test-agents.sh`
+      all green. Skill count went from 55 to 56.
+
+---
+
 ## Summary: Gap Coverage Matrix
 
 | Gap Identified | Epic(s) | Phase |
@@ -783,6 +822,7 @@
 | Testing taxonomy structurally implicit but never named as a pyramid; no in-test annotation convention for issue/AC traceability (report-time-only, evaporates on rename); framework silently equated single-agent test-first with XP TDD's role-separated design discipline | Epic 38 | 9 |
 | Saturday had no dedicated concept for cross-page shared UI (headers/footers/global-nav awkwardly stuffed into BaseElement or base classes); Model/Factory were framework-wide but never claimed as first-class Saturday concepts; DRY-vs-DAMP tension in test authoring was practiced implicitly but never stated as a rule | Epic 39 | 9 |
 | Sunday pattern doc drifted asymmetric to Saturday's after Epic 39 (no Mental Model, no Model/Factory entries, no dedicated Mock Server/Test Doubles pattern despite explicit user callout); framework's own novel meta-patterns (deliver-feature's orchestration shape, shared/contracts/ handoff mechanism) had never been documented as named patterns despite being what makes v3 planning coherent | Epic 40 | 9 |
+| sunday-test-advisor's name overpromised (go-sunday-YAML-specific, not general Sunday); no structural-adherence auditor for Saturday at all despite the framework having a whole family of structural enforcers (verify-dependencies, check-ubiquitous-language, analyze-complexity); Coverage Matrix concept trapped inside one skill file rather than named as a pattern | Epic 41 | 9 |
 
 ---
 

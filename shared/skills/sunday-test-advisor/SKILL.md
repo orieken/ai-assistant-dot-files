@@ -1,23 +1,38 @@
 ---
 name: sunday-test-advisor
-description: Audits a go-sunday api.yaml spec for missing test scenarios per endpoint and interactively proposes YAML stubs the user can approve and generate. Use when the user asks "what tests am I missing?", "audit my api coverage", "suggest more tests", or after writing a new endpoint.
+description: Audits a go-sunday api.yaml spec (Go-based Sunday variant with YAML-driven test codegen) for missing test scenarios per endpoint and interactively proposes YAML stubs the user can approve and generate. Specific to go-sunday — for TypeScript/Python/Java/C# Sunday tests, use the general audit process from `sunday-framework-patterns.md`'s API Test Coverage Matrix manually. Use when the user asks "what tests am I missing?", "audit my api.yaml coverage", "suggest more tests", or after adding a new endpoint to a go-sunday spec.
 triggers:
-  keywords: ["missing tests", "test coverage", "audit tests", "suggest tests", "test advisor", "what tests", "coverage gaps"]
+  keywords: ["missing tests", "test coverage", "audit tests", "suggest tests", "test advisor", "what tests", "coverage gaps", "api.yaml audit", "go-sunday audit"]
   intentPatterns:
-    - "what test scenarios am I missing"
+    - "what test scenarios am I missing in api.yaml"
     - "audit my api.yaml test coverage"
-    - "suggest missing test cases for my api"
-    - "check test coverage for my spec"
+    - "suggest missing test cases for my go-sunday spec"
+    - "check test coverage for my api.yaml"
 standalone: true
 ---
 
 ## When To Use
-Use when the user wants to know what test scenarios are missing from their `api.yaml` spec, OR proactively after a new endpoint is added to the spec.
-Do NOT use for non-go-sunday projects, TypeScript/Playwright tests, or unit tests unrelated to api.yaml specs.
+Use when the user wants to audit a **go-sunday** `api.yaml` spec (Go-based Sunday variant with
+YAML-driven test codegen) for missing scenarios, OR proactively after a new endpoint is added to that
+spec.
 
-## Coverage Matrix
+Do NOT use for:
+- TypeScript, Python, Java, or C# Sunday tests — those don't use `api.yaml`. The Coverage Matrix
+  concept still applies (see the pattern doc reference below), but the audit is manual today.
+  Building per-language advisors is deferred until each language's Sunday workflow needs one.
+- Saturday E2E/UI tests — use `saturday-test-advisor` instead (structural adherence audit against
+  `.feature` files, different mechanism entirely).
+- Unit tests unrelated to `api.yaml` specs.
 
-Each HTTP method has a recommended set of scenarios. The advisor checks each endpoint against this matrix.
+## Coverage Matrix (reference — full source is in the pattern doc)
+
+The canonical Coverage Matrix lives in `docs/patterns/sunday-framework-patterns.md` under
+"API Test Coverage Matrix" — that pattern-doc entry is the single source of truth for the baseline
+scenarios per HTTP method, expected status codes, and when `auth_error`/`timeout_error` apply. Read
+that section before running the audit; the local reproduction below exists only for operational
+convenience so this skill's audit step doesn't require a second file read on every invocation.
+
+Per HTTP method:
 
 | Method   | Recommended Scenarios                                                      |
 |----------|---------------------------------------------------------------------------|
@@ -36,12 +51,15 @@ Scenarios always worth adding:
 - `timeout_error` — for slow network simulation (optional but recommended for SLA enforcement)
 
 ## Context To Load First
-1. Find the `api.yaml` spec — check these locations in order:
+1. **Read `docs/patterns/sunday-framework-patterns.md`'s "API Test Coverage Matrix" section** — the
+   canonical source of truth for the coverage baseline. If any discrepancy exists between the pattern
+   doc and the reproduction above, the pattern doc wins.
+2. Find the `api.yaml` spec — check these locations in order:
    - Path provided by user in their message
    - `api.yaml` in the current directory
    - `*/api.yaml` glob search (pick the first match)
-2. Read the spec completely before analysis.
-3. If no spec found, ask the user: "I couldn't find an api.yaml spec. What's the path?"
+3. Read the spec completely before analysis.
+4. If no spec found, ask the user: "I couldn't find an api.yaml spec. What's the path?"
 
 ## Process
 

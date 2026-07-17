@@ -179,6 +179,57 @@ schema changes; every test using the Factory picks up the new default automatica
 **Related**: `Model` (what a Factory produces), `BaseApiClient` (typically consumes Factory-produced
 Models as request payloads).
 
+## API Test Coverage Matrix
+
+**Context**: A shared baseline of scenarios every API endpoint under test should have coverage for,
+regardless of language or specific test framework. This is Sunday's answer to "how do you know when
+you've written enough API tests" — not a mandate, a baseline. Missing one shouldn't fail a build
+automatically, but the absence should be a conscious decision, not an oversight.
+
+**Structure**: Per HTTP method, the recommended scenario set:
+
+| Method   | Recommended baseline scenarios                                     |
+|----------|--------------------------------------------------------------------|
+| GET      | `happy_path`, `not_found`, `network_error`                         |
+| GET list | `happy_path`, `network_error` (not_found doesn't apply to lists)   |
+| POST     | `happy_path`, `server_error`, `validation_error`                   |
+| PUT      | `happy_path`, `not_found`, `server_error`                          |
+| PATCH    | `happy_path`, `not_found`, `server_error`                          |
+| DELETE   | `happy_path`, `not_found`                                          |
+
+Add `auth_error` for every endpoint that requires authentication (bearer, basic, apikey).
+`timeout_error` is always worth considering when the endpoint has an SLA to enforce; not on the
+baseline because not every endpoint needs it.
+
+The default expected status codes and Sunday resilience-primitive tie-ins:
+
+| Scenario           | status | typical trigger                         |
+|--------------------|--------|-----------------------------------------|
+| `happy_path`       | 200    | (POST: 201)                             |
+| `not_found`        | 404    | resource missing                        |
+| `server_error`     | 500    | upstream fault                          |
+| `auth_error`       | 401    | missing/invalid credential              |
+| `validation_error` | 422    | malformed payload                       |
+| `network_error`    | —      | transport failure — exercises retries   |
+| `timeout_error`    | —      | slow response — exercises `CircuitBreaker` |
+
+**Example**: A `POST /orders` endpoint that requires auth should have at least four scenarios:
+`happy_path` (201, order created), `server_error` (500 propagates), `validation_error` (422 on bad
+payload), `auth_error` (401 without a valid token). If the client wraps calls in
+`ExponentialBackoffStrategy`, add `network_error` to prove the strategy actually retries on transient
+failures rather than silently swallowing them.
+
+**Trade-offs**: The matrix defines a baseline, not a mandate. 100% matrix coverage isn't the goal —
+conscious skipping is legitimate (a `GET /health` endpoint that can never 404 doesn't need
+`not_found`). What matters is that the absence is a decision. Skipping because you forgot is exactly
+what advisor skills like `sunday-test-advisor` (go-sunday YAML audit) exist to catch.
+
+**Related**: `sunday-test-advisor` (go-sunday YAML audit against this matrix), `api-test-generator`
+(auto-generates baseline tests from an OpenAPI spec — implicitly follows a similar matrix), `Model` /
+`Factory` (produce the request payloads each scenario needs), `Mock Server` (route interception or
+provider stub exercises the failure-side scenarios without needing a broken real upstream), `Resilience
+Primitives` (`network_error` and `timeout_error` scenarios are how you verify these actually work).
+
 ## Mock Server (Test Doubles)
 
 **Context**: When a Sunday test needs to isolate from a real upstream service — either because the

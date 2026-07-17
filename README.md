@@ -45,7 +45,7 @@ for how the Context/Memory/Learning loop actually works, and the pipeline diagra
 ```
 shared/                              <- single source of truth, edit here only
 ├── agents/        (25 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
-├── skills/        (55 skills)       <- .md with trigger keywords/patterns
+├── skills/        (56 skills)       <- .md with trigger keywords/patterns
 ├── rules/                           <- architecture-guardrails.md, design-principles.md, approval-gates.md
 ├── contracts/                       <- required-section contracts for pipeline agent handoffs
 ├── knowledge/                       <- portable Knowledge Items (KIs)

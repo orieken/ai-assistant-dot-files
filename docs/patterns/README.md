@@ -23,8 +23,11 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
   (per-domain named operations), `IHttpAdapter` (the swappable HTTP layer), Fluent Matchers + Schema
   Validation (declarative assertions with Zod as both Model and validator), Resilience Primitives
   (`CircuitBreaker`, `ExponentialBackoffStrategy`), `Model` and `Factory` (Zod-typed request/response
-  shapes and their producers), and `Mock Server` (Test Doubles — route interception / provider stub
-  — for isolating from real upstreams while exercising failure paths).
+  shapes and their producers), `Mock Server` (Test Doubles — route interception / provider stub — for
+  isolating from real upstreams while exercising failure paths), and the **API Test Coverage Matrix**
+  (per-HTTP-method baseline scenarios — `GET` → happy/not_found/network, `POST` →
+  happy/server/validation, etc. — the language-agnostic single source of truth that
+  `sunday-test-advisor` audits go-sunday specs against and future per-language advisors will reference).
 - [clean-architecture-layers.md](clean-architecture-layers.md) — Domain, Use Case, Adapter, and
   Framework layers, expanding on the dependency-direction rule in
   `shared/rules/architecture-guardrails.md`.
