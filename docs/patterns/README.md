@@ -12,8 +12,12 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
   trade-off detail that table doesn't have room for, plus 3 more (Template Method, Composite, State)
   named for recognition because this codebase's own mechanisms already use them, unnamed.
 - [saturday-framework-patterns.md](saturday-framework-patterns.md) — the **Site-Centric Pattern** (named
-  as its own entry, not just its parts) plus every component that implements it: `BaseSite`, `BasePage`,
-  `BaseElement`, `BaseFlow`, `Filters`, `SiteManager`, `TabManager`.
+  as its own entry) plus every component that implements it, organized top-down: `BaseSite` (the
+  orchestrator), `BasePage` (the anatomy) with its sub-parts `BaseElement`, `Filters`, and `BasePartial`
+  (shared cross-page UI like headers/footers/global nav — dedicated concept, not `BaseElement` overloaded),
+  `BaseFlow` (multi-page journeys, with the Moist testing principle folded into its trade-offs), `Model`
+  and `Factory` (test data flowing through everything, applying this framework's per-language factory
+  conventions), plus `SiteManager` and `TabManager` as coordinators.
 - [sunday-framework-patterns.md](sunday-framework-patterns.md) — the **Declarative API Client Pattern**
   (named as its own entry) plus every component that implements it: `BaseApiClient`, `IHttpAdapter`,
   Fluent Matchers, Schema Validation, Resilience Primitives.

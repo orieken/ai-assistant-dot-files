@@ -90,7 +90,8 @@ This file is the single source of truth for the **Ubiquitous Language** in the a
 |---|---|---|
 | **BaseSite** | Root orchestrator for a web application under test. | `App`, `Application` |
 | **BasePage** | Represents a single page within a BaseSite. | `PageObject`, `Screen`, `View` |
-| **BaseElement** | A reusable UI component abstraction within a BasePage. | `Component`, `Widget` |
+| **BaseElement** | A reusable UI component abstraction within a single BasePage. | `Component`, `Widget` |
+| **BasePartial** | A shared UI section (header, footer, global nav) that appears across multiple BasePages. Lives in a `partials/` subdirectory; deliberately does NOT follow the `FooPage` naming convention. Fills the gap `BaseElement` doesn't cover (cross-page reuse). | `SharedComponent`, `LayoutFragment`, `PartialPage` |
 | **BaseFlow** | A multi-step user journey that spans multiple pages. | `Workflow`, `Scenario`, `Journey` |
 | **SiteManager** | Manages cross-application test contexts. | `AppManager`, `ContextManager` |
 | **TabManager** | Manages multi-tab browser contexts within a test. | `WindowManager`, `BrowserManager` |

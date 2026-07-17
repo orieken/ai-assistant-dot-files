@@ -392,6 +392,12 @@ CRITICAL: Test coverage MUST be >= 85%.
 CRITICAL: Cyclomatic complexity per function MUST be < 7.
 ALWAYS practice TDD/BDD — Red-Green-Refactor.
 NEVER write feature code without tests.
+ALWAYS keep tests "moist," not fully dry — DRY the setup noise (via Flows, Factories, fixtures) but
+keep the critical assertion path visible in the test itself. A test verifying search results should
+show "user searched for X" prominently in the test body; how they clicked into the search input should
+not. Over-DRYing by hiding the interesting user action inside a flow makes the test read like a magic
+incantation and defeats the point. This is the same idea as DAMP (Descriptive And Meaningful Phrases),
+a well-known counterpoint to blanket DRY in tests.
 
 ## Reporting Pipeline
 Cucumber JSON summaries feed the Friday dashboard (see `shared/rules/approval-gates.md` gate #1 —

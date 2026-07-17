@@ -663,6 +663,50 @@
 
 ---
 
+### Epic 39 — Saturday concept expansion: Partials, Models, Factories, Moist tests (2026-07-17)
+> Surfaced by the user sharing a personal reformulation of Saturday's concepts (Site / Pages [with
+> Elements, Filters, Partials] / Flows) and asking whether it made sense. Three genuine additions came
+> out of that: `BasePartial` was a real gap (`BaseElement` is documented as page-scoped, leaving
+> cross-page shared UI like headers/footers/global-nav with no clean home), `Model`/`Factory` were
+> framework-wide `CLAUDE.md` conventions that were never explicitly claimed as first-class Saturday
+> concepts even though every Saturday test uses them, and the "Moist tests" principle (DRY the setup
+> noise, keep the critical assertion path visible — related to DAMP) sharpens the existing "always
+> practice TDD/BDD" rule with a nuance the framework practices implicitly but never stated.
+- [x] `docs/patterns/saturday-framework-patterns.md`: added "Mental Model" section at the top laying
+      out the top-down hierarchy (Site → Pages → Flows, plus Models/Factories as data, plus
+      Coordinators). Expanded `BasePage`'s Structure and Related to explicitly name its three
+      sub-parts (`BaseElement`, `Filters`, `BasePartial`) rather than treating them as unrelated
+      sibling patterns. Expanded Site-Centric Pattern's "Why not POM" to include the "shared header
+      across every page" failure mode that `BasePartial` specifically addresses.
+- [x] New pattern entries in the same doc: `BasePartial` (Context/Structure/Example/Trade-offs/Related
+      with the naming-convention note that partials deliberately do NOT follow `FooPage`), `Model`
+      (test-context application of `CLAUDE.md`'s general Models convention), `Factory` (test-context
+      application of `CLAUDE.md`'s general Factories convention, referencing the per-language factory
+      libraries already documented in `shared/rules/<language>-conventions.md`).
+- [x] `BaseFlow` Trade-offs section rewritten to fold in the Moist principle explicitly — DRY the setup
+      noise, keep the critical assertion path visible, with reference to DAMP as the related
+      established idea.
+- [x] `shared/DOMAIN_DICTIONARY.md`: added `BasePartial` row to the Saturday Framework section with
+      synonyms to avoid (`SharedComponent`, `LayoutFragment`, `PartialPage`). Clarified `BaseElement`'s
+      description to say "within a single BasePage" to make the page-scoped-vs-cross-page distinction
+      between `BaseElement` and `BasePartial` unambiguous.
+- [x] `shared/rules/testing-conventions.md`: added the Moist principle to Test Quality as an ALWAYS
+      rule with a concrete example (search-results test — the search action stays visible, the click
+      mechanics don't). Documented-only, no CI check, matching how the other Test Quality items are
+      handled.
+- [x] `docs/patterns/README.md`: updated the Saturday entry to reflect the top-down hierarchy and
+      mention all the new concepts.
+- [x] Verified: `generate-configs.sh`, `check-parity.sh`, `health-check.sh --verbose`, `test-agents.sh`
+      all green. No agent version bumps this round — pure docs and dictionary additions; agent
+      behavior unchanged.
+- [x] **Follow-up flagged, not done here**: the Saturday implementation repos themselves
+      (`saturday-monorepo` TS, `saturday-monorepo-csharp`, `saturday-monorepo-python`,
+      `saturday-monorepo-java`) need `BasePartial` added as a real class/interface to match the
+      documented concept. Explicitly out of scope for this epic — a separate feature spec per repo,
+      matching the pattern already used for the earlier factory-tooling specs in each of those repos.
+
+---
+
 ## Summary: Gap Coverage Matrix
 
 | Gap Identified | Epic(s) | Phase |
@@ -699,6 +743,7 @@
 | test-driven-developer started every run cold (no KI lookup, no memory feedback loop); no standalone agent existed for adding tests to code that must not change (coverage backfill / legacy characterization) | Epic 36 | 9 |
 | No ATDD-shaped delivery workflow that supports trust-progressive phase-out of mechanical review gates -- teams either ran full deliver-feature (heavier than needed) or hand-orchestrated qa-engineer/test-driven-developer every time (no persistence, no trust curve visible in repo) | Epic 37 | 9 |
 | Testing taxonomy structurally implicit but never named as a pyramid; no in-test annotation convention for issue/AC traceability (report-time-only, evaporates on rename); framework silently equated single-agent test-first with XP TDD's role-separated design discipline | Epic 38 | 9 |
+| Saturday had no dedicated concept for cross-page shared UI (headers/footers/global-nav awkwardly stuffed into BaseElement or base classes); Model/Factory were framework-wide but never claimed as first-class Saturday concepts; DRY-vs-DAMP tension in test authoring was practiced implicitly but never stated as a rule | Epic 39 | 9 |
 
 ---
 
