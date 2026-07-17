@@ -707,6 +707,44 @@
 
 ---
 
+### Epic 40 — Sunday parallel updates + framework meta-patterns (2026-07-17)
+> Two related but distinct pieces of work bundled because they came from the same conversation about
+> pattern-doc completeness. Sunday's pattern doc had drifted asymmetric to Saturday's after Epic 39
+> (which added Mental Model / BasePartial / Model / Factory / Moist to Saturday) — a real
+> inconsistency worth fixing. Separately: the framework's own novel mechanisms (deliver-feature's
+> orchestration shape, the contract-based agent-handoff mechanism in shared/contracts/) had never been
+> documented as patterns, and the user flagged this specifically as valuable to have named going into
+> v3 prototyping so the mechanisms carry forward even if the specific agent lineup changes.
+- [x] Sunday parallel updates: added Mental Model section at the top matching Saturday's shape (three
+      primary concepts + three supporting), which reorders nothing but gives readers the top-down map
+      Saturday just got. Added three new pattern entries: `Model` (Zod schema as both the shape
+      definition AND the response validator — Sunday's central bet on Zod as a double-duty
+      abstraction), `Factory` (produces valid Model instances using the per-language factory library
+      convention, mirroring Saturday's Factory entry but with Sunday-specific emphasis on request-
+      payload construction), and `Mock Server` / Test Doubles (route interception vs. provider stub,
+      when to reach for which, and the honest "validate the mock against the real contract or you
+      lock in fantasy" trade-off with mitigations via the shared Zod schema and the existing
+      `api-contract-verify` skill). Follows Martin Fowler's Test Doubles terminology explicitly
+      rather than inventing new terms.
+- [x] New pattern doc `docs/patterns/framework-meta-patterns.md`: separate from the general catalog
+      because the audience is different (framework-builders, not framework-users) and the content is
+      novel to this repo rather than general software patterns. Two entries: **Pipeline / Orchestration
+      Pattern** (deliver-feature's 14-agent sequence documented with the six load-bearing mechanisms
+      named — sequential specialist stages, artifact-based handoff, contract validation, human
+      checkpoints, checkpointed state, trace logging — plus review-pr, backfill-unit-tests, and
+      deliver-atdd as thinner variants of the same pattern at smaller scale) and **Contract-First
+      Agent Handoff** (shared/contracts/ + validate-artifact as a named pattern with an honest "novel
+      to this framework, no direct prior art found" claim and specific analogs from OpenAPI, Pact, and
+      ML pipeline stage schemas explaining why none of them fit LLM prose output). Written with v3
+      planning in mind — the mechanisms should carry forward whether or not the specific agent lineup
+      does.
+- [x] `docs/patterns/README.md`: updated the Sunday entry to reflect the new sections, added a new
+      entry for framework-meta-patterns.md with an explicit note about its different audience.
+- [x] Verified: `generate-configs.sh`, `check-parity.sh`, `health-check.sh --verbose`, `test-agents.sh`
+      all green. No agent version bumps — pure docs additions.
+
+---
+
 ## Summary: Gap Coverage Matrix
 
 | Gap Identified | Epic(s) | Phase |
@@ -744,6 +782,7 @@
 | No ATDD-shaped delivery workflow that supports trust-progressive phase-out of mechanical review gates -- teams either ran full deliver-feature (heavier than needed) or hand-orchestrated qa-engineer/test-driven-developer every time (no persistence, no trust curve visible in repo) | Epic 37 | 9 |
 | Testing taxonomy structurally implicit but never named as a pyramid; no in-test annotation convention for issue/AC traceability (report-time-only, evaporates on rename); framework silently equated single-agent test-first with XP TDD's role-separated design discipline | Epic 38 | 9 |
 | Saturday had no dedicated concept for cross-page shared UI (headers/footers/global-nav awkwardly stuffed into BaseElement or base classes); Model/Factory were framework-wide but never claimed as first-class Saturday concepts; DRY-vs-DAMP tension in test authoring was practiced implicitly but never stated as a rule | Epic 39 | 9 |
+| Sunday pattern doc drifted asymmetric to Saturday's after Epic 39 (no Mental Model, no Model/Factory entries, no dedicated Mock Server/Test Doubles pattern despite explicit user callout); framework's own novel meta-patterns (deliver-feature's orchestration shape, shared/contracts/ handoff mechanism) had never been documented as named patterns despite being what makes v3 planning coherent | Epic 40 | 9 |
 
 ---
 

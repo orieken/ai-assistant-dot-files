@@ -19,8 +19,12 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
   and `Factory` (test data flowing through everything, applying this framework's per-language factory
   conventions), plus `SiteManager` and `TabManager` as coordinators.
 - [sunday-framework-patterns.md](sunday-framework-patterns.md) — the **Declarative API Client Pattern**
-  (named as its own entry) plus every component that implements it: `BaseApiClient`, `IHttpAdapter`,
-  Fluent Matchers, Schema Validation, Resilience Primitives.
+  (named as its own entry) plus every component that implements it, organized top-down: `BaseApiClient`
+  (per-domain named operations), `IHttpAdapter` (the swappable HTTP layer), Fluent Matchers + Schema
+  Validation (declarative assertions with Zod as both Model and validator), Resilience Primitives
+  (`CircuitBreaker`, `ExponentialBackoffStrategy`), `Model` and `Factory` (Zod-typed request/response
+  shapes and their producers), and `Mock Server` (Test Doubles — route interception / provider stub
+  — for isolating from real upstreams while exercising failure paths).
 - [clean-architecture-layers.md](clean-architecture-layers.md) — Domain, Use Case, Adapter, and
   Framework layers, expanding on the dependency-direction rule in
   `shared/rules/architecture-guardrails.md`.
@@ -58,6 +62,16 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
   valuable as executable spec and regression safety, but the design lever is elsewhere (complexity
   thresholds, SOLID, `code-reviewer`). References Saturday and Sunday patterns for the top two levels
   rather than restating them.
+- [framework-meta-patterns.md](framework-meta-patterns.md) — **patterns novel to (or specific to) this
+  framework itself**, for anyone building a similar multi-agent orchestration system rather than for
+  teams *using* this framework. **Pipeline / Orchestration Pattern** (`deliver-feature`'s 14-agent
+  sequence documented as a general pattern with the six load-bearing mechanisms named — sequential
+  specialist stages, artifact handoff, contract validation, human checkpoints, checkpointed state,
+  trace logging) and **Contract-First Agent Handoff** (`shared/contracts/` + `validate-artifact` as a
+  named pattern with no established prior art for LLM-artifact contracts specifically). Kept in a
+  separate file so the main catalog stays scoped to general software patterns. Written with v3
+  planning in mind — the mechanisms named here should carry forward as the substrate whether or not
+  the specific agent lineup does.
 
 All terminology matches `shared/DOMAIN_DICTIONARY.md` exactly — that's the canonical definition source;
 these docs go deeper into context, structure, and trade-offs, not redefine the terms.
