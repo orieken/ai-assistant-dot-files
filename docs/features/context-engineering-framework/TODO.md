@@ -583,6 +583,43 @@
 
 ---
 
+### Epic 37 — deliver-atdd: config-driven, trust-progression ATDD workflow (2026-07-15)
+> Surfaced by a direct question: what if a team wants an ATDD/BDD-shaped delivery (pair on spec ->
+> qa-engineer writes Gherkin -> human review -> qa-engineer writes step defs -> human review ->
+> test-driven-developer implements to green -> qa-engineer runs -> ship review) with the ability to
+> phase out mechanical human-review gates as trust is earned, rather than either running
+> `deliver-feature`'s full 14-agent pipeline or manually orchestrating three agents by hand every time?
+> The two existing orchestration skills (`review-pr`, `backfill-unit-tests`) are stateless -- every
+> invocation runs the same fixed chain. This one's whole point is that its gate configuration is a
+> repo-persisted property that changes over time, so a static skill can't capture what makes it
+> interesting.
+- [x] New skill `deliver-atdd`: coordinates `qa-engineer` (scenario writing, step definitions, and
+      final acceptance run) with `test-driven-developer` (autonomous inner red-green loop, per its
+      already-established v1.1.0 contract -- no gate around it by design).
+- [x] Config-driven trust progression via `.claude/atdd-config.json` (project-root, checked into git so
+      the trust curve is auditable in history, not tribal knowledge). Two configurable gates:
+      `scenario-review` and `test-code-review`, each `active` (pause for human) or `phased-out`
+      (skip). Two other gates are non-configurable and always run: the initial `spec-writer`/`analyst`
+      pairing (pre-pipeline, matching `deliver-feature`'s own pre-pipeline stance) and the final
+      ship-readiness gate (matching `approval-gates.md`'s principle that irreversible actions never
+      delegate the final "yes").
+- [x] "Suggest, don't act" pattern for gate progression: at end of a successful run, if a gate has
+      been active for 5+ consecutive runs with no human-requested edits, surface a suggestion to the
+      user to consider phasing it out. Never mutates the config file itself -- matches
+      `memory-engineer`'s existing "surface, don't act" pattern for KI expiration.
+- [x] Reuses `deliver-feature`'s proven infrastructure verbatim -- `feature-workspace/`,
+      `pipeline-state.json` (with new `"pipeline": "deliver-atdd"` field so resumer can distinguish),
+      `pipeline-trace.json`, `docs/features/<name>/` archive shape. Divergences from `deliver-feature`
+      called out explicitly in the skill's own "When To Use": no architect/perf/data/a11y/security
+      reviewers (use `deliver-feature` if any of those are needed -- this is a scope narrowing, not a
+      superset), no Friday POST at the end (not blocked, just not built -- flagged as a worthwhile
+      future extension for teams that want it).
+- [x] `README.md` / `docs/ARCHITECTURE.md`: skill count updated (54 -> 55).
+- [x] Verified: `generate-configs.sh`, `check-parity.sh`, `health-check.sh --verbose`, `test-agents.sh`
+      all green.
+
+---
+
 ## Summary: Gap Coverage Matrix
 
 | Gap Identified | Epic(s) | Phase |
@@ -617,6 +654,7 @@
 | Pattern catalog covered GoF/Saturday/Sunday/Clean Architecture but not DDD, EIP, Stability Patterns, or 12-Factor -- three of which were already named influences in architect.md with no documentation | Epic 34 | 9 |
 | STRIDE and SLI/observability principles were fully worked out inside security-reviewer.md/sre-engineer.md but never extracted as standalone references; Expand/Contract and API design guardrails existed only as rules, not documented patterns | Epic 35 | 9 |
 | test-driven-developer started every run cold (no KI lookup, no memory feedback loop); no standalone agent existed for adding tests to code that must not change (coverage backfill / legacy characterization) | Epic 36 | 9 |
+| No ATDD-shaped delivery workflow that supports trust-progressive phase-out of mechanical review gates -- teams either ran full deliver-feature (heavier than needed) or hand-orchestrated qa-engineer/test-driven-developer every time (no persistence, no trust curve visible in repo) | Epic 37 | 9 |
 
 ---
 
