@@ -1,0 +1,132 @@
+{
+  "$schema": "./project-patterns.schema.json",
+  "version": "1.0.0",
+  "description": "Registry of known project blueprints. Consumed by shared/skills/bootstrap-project/ and available for other skills to reference. Each entry points at a full blueprint file under shared/blueprints/.",
+  "patterns": [
+    {
+      "id": "saturday",
+      "name": "Saturday — E2E Test Framework",
+      "oneLiner": "Site-Centric E2E automation with Cucumber.js + Playwright + OTel, plus a Vue dashboard.",
+      "blueprint": "shared/blueprints/saturday.md",
+      "languages": {
+        "primary": "typescript",
+        "supported": ["typescript", "python", "csharp", "java", "go"],
+        "note": "TypeScript is the reference implementation. Python/C#/Java/Go ports exist but have varying maturity — see saturday.md for status per port."
+      },
+      "testingLevels": ["e2e-ui", "acceptance", "unit"],
+      "status": "stable"
+    },
+    {
+      "id": "sunday",
+      "name": "Sunday — API Test Framework",
+      "oneLiner": "Clean Architecture API testing with Vitest + Playwright + Zod + BaseApiClient + Resilience Primitives.",
+      "blueprint": "shared/blueprints/sunday.md",
+      "languages": {
+        "primary": "typescript",
+        "supported": ["typescript"],
+        "note": "TypeScript-only. Port to other languages would follow the same Clean Architecture layout but is not yet blueprinted."
+      },
+      "testingLevels": ["api-contract", "integration", "unit"],
+      "status": "stable"
+    },
+    {
+      "id": "mcp-server",
+      "name": "MCP Server",
+      "oneLiner": "Model Context Protocol server exposing tools, personas, and workflows to Claude and other MCP clients.",
+      "blueprint": "shared/blueprints/mcp-server.md",
+      "languages": {
+        "primary": "go",
+        "supported": ["go", "typescript"],
+        "note": "Go is the suggested default (matches CLAUDE.md's Backend/MCP declaration, single-binary distribution). TypeScript is fully first-class — the MCP SDK is mature in both languages. The design pattern (tool / persona / workflow trinity + Clean Architecture layers) is what matters; the language is a soft preference the interviewee should pick."
+      },
+      "testingLevels": ["api-contract", "integration", "unit"],
+      "status": "stable"
+    },
+    {
+      "id": "scribe-cli",
+      "name": "Scribe — Content Publishing CLI",
+      "oneLiner": "Go CLI for publishing content across multiple channels (RSS, S3, Bluesky, LinkedIn, etc.). Single binary via GoReleaser.",
+      "blueprint": "shared/blueprints/scribe-cli.md",
+      "languages": {
+        "primary": "go",
+        "supported": ["go"],
+        "note": "Go-only. The single-binary distribution model is core to the pattern."
+      },
+      "testingLevels": ["e2e-ui", "integration", "unit"],
+      "status": "stable"
+    },
+    {
+      "id": "clean-arch-service",
+      "name": "Clean Architecture Backend Service",
+      "oneLiner": "Polyglot backend service (HTTP/gRPC/queue-consumer) with strict Clean Architecture layers.",
+      "blueprint": "shared/blueprints/clean-arch-service.md",
+      "languages": {
+        "primary": "go",
+        "supported": ["go", "typescript", "python", "java", "csharp"],
+        "note": "Go is the default backend language in this ecosystem. Other languages follow the same layer structure with language-specific idioms."
+      },
+      "testingLevels": ["e2e-ui", "api-contract", "integration", "unit"],
+      "status": "stable"
+    },
+    {
+      "id": "clean-arch-cli",
+      "name": "Clean Architecture CLI",
+      "oneLiner": "Command-line tool with Clean Architecture layers. Domain logic testable without the CLI framework.",
+      "blueprint": "shared/blueprints/clean-arch-cli.md",
+      "languages": {
+        "primary": "go",
+        "supported": ["go", "typescript"],
+        "note": "Go via Cobra is the reference. TypeScript via Commander is supported for teams already in a Node monorepo."
+      },
+      "testingLevels": ["e2e-ui", "integration", "unit"],
+      "status": "stable"
+    },
+    {
+      "id": "clean-arch-library",
+      "name": "Clean Architecture Library",
+      "oneLiner": "Publishable library — pure domain and use-case layers, no adapters, no framework coupling.",
+      "blueprint": "shared/blueprints/clean-arch-library.md",
+      "languages": {
+        "primary": "typescript",
+        "supported": ["typescript", "go", "python", "java", "csharp"],
+        "note": "Language choice depends on the target ecosystem the library is being published into."
+      },
+      "testingLevels": ["unit"],
+      "status": "stable"
+    },
+    {
+      "id": "frontend",
+      "name": "Frontend Application",
+      "oneLiner": "Web frontend with strong recommendation for Vue 3 + Tailwind + Composition API, but user picks the framework.",
+      "blueprint": "shared/blueprints/frontend.md",
+      "languages": {
+        "primary": "typescript",
+        "supported": ["typescript"],
+        "note": "TypeScript is mandatory. Framework options (Vue 3, React, Svelte, Angular, SolidJS) are chosen during the interview. Vue 3 is the recommended default because it matches the rest of this ecosystem's frontend work."
+      },
+      "frameworks": {
+        "recommended": "vue3",
+        "supported": ["vue3", "react", "svelte", "angular", "solidjs"]
+      },
+      "testingLevels": ["e2e-ui", "acceptance", "integration", "unit"],
+      "status": "stable"
+    },
+    {
+      "id": "other",
+      "name": "Other / Custom",
+      "oneLiner": "Falls back to generic Clean Architecture layout. Bootstrap-project will interview more deeply to determine required layers.",
+      "blueprint": "shared/blueprints/clean-arch-service.md",
+      "languages": {
+        "primary": null,
+        "supported": ["typescript", "go", "python", "java", "csharp"],
+        "note": "No pre-set language. The bootstrap interview will ask."
+      },
+      "testingLevels": ["unit"],
+      "status": "fallback"
+    }
+  ],
+  "unblueprintedIdeas": {
+    "description": "Ideas that have come up but do not yet have a blueprint. If a user picks one of these in the interview, bootstrap-project flags it and offers to either fall back to the closest match or defer and blueprint the pattern first as a separate task.",
+    "ideas": []
+  }
+}
