@@ -1,6 +1,6 @@
 ---
 name: health-check
-description: Validates the ai-assistant-dot-files installation — symlinks, agent/skill frontmatter, platform config drift, domain dictionary orphans, inter-agent contracts, changelog/version consistency, Knowledge Item frontmatter, and memory registry integrity. Wraps scripts/health-check.sh for everything scriptable and adds AI judgment on top for anything that requires reading prose.
+description: Validates the ai-assistant-dot-files installation — symlinks, agent/skill frontmatter, platform config drift, domain dictionary orphans, inter-agent contracts, changelog/version consistency, Knowledge Item frontmatter, and memory registry integrity. Wraps scripts/health-check.sh for everything scriptable and adds AI judgment on top for anything that requires reading prose. Also detects and reports the presence of opt-in AOS layers (telemetry, evaluation, hooks, orchestration, rag) and counter agents when they exist — never fails on their absence.
 triggers:
   keywords: ["health-check", "health", "check installation", "verify setup", "check setup"]
   intentPatterns: ["Check my setup", "Is everything installed?", "Run health check", "Verify my installation", "/health-check"]
@@ -49,8 +49,27 @@ Do NOT use for debugging application code in a project you're building features 
    broken/missing symlinks. It does not touch anything else (contracts, changelog, KI frontmatter, domain
    dictionary) since those need human judgment about the *right* fix, not just a mechanical one.
 
-4. **Produce the health report** — synthesize the script's output plus your judgment calls into the format
-   below; don't just paste the raw script output.
+4. **Detect optional AOS layers** (v3.0+): check for the presence of each opt-in AOS layer and any
+   counter agents. AOS layers are optional per the migration plan (`docs/aos/migration-plan.md`) —
+   a missing layer is never a failure, only an "absent" observation:
+   - `shared/telemetry/` — layer present if the directory exists with a `README.md`
+   - `shared/evaluation/` — same shape
+   - `shared/hooks/` — same shape (Phase 2)
+   - `shared/orchestration/` — same shape (Phase 3)
+   - `shared/rag/` — same shape (Phase 3)
+   - Counter agents under `shared/agents/` matching `*-auditor.md`, `*-evaluator.md`, or `*-validator.md`.
+     DO NOT include the review-shaped producers whose names happen to end in `-reviewer` — those
+     (`code-reviewer`, `security-reviewer`, `accessibility-engineer`-style producers) are producers-in-
+     role-name, not AOS counter agents. Only count files that pair with a known producer per the
+     15 pairs in `docs/aos/AOS_Governance_Design_Pack/01-Governance-Checks-and-Balances.md` — in v3.0
+     that's `memory-auditor.md` alone; more will land in Phase 2 (`context-auditor.md`,
+     `knowledge-auditor.md`, `prompt-evaluator.md`, `agent-evaluator.md`, `rule-auditor.md`,
+     `pattern-reviewer.md`, `tool-validator.md`, `documentation-auditor.md`, `retrieval-evaluator.md`,
+     `privacy-auditor.md`).
+
+5. **Produce the health report** — synthesize the script's output plus your judgment calls into the format
+   below; don't just paste the raw script output. The AOS Layers section always appears at the bottom of
+   the report, even when everything is absent — it's an inventory, not a pass/fail check.
 
 ## Output Format
 
@@ -84,6 +103,20 @@ HEALTHY (0 fails) | DEGRADED (warns only) | BROKEN (1+ fails)
 ## Recommended Next Steps
 1. [Specific command or edit]
 — or "No issues found."
+
+## AOS Layers
+Opt-in per the AOS migration plan — absence is never a failure, only an inventory observation.
+
+| Layer | Present? | Notes |
+|---|---|---|
+| `shared/telemetry/` | Yes / No | [If present: brief list of files. If absent: "Not installed — see docs/aos/migration-guide.md if you want to opt in."] |
+| `shared/evaluation/` | Yes / No | [Same shape] |
+| `shared/hooks/` | Yes / No | [Same shape — Phase 2] |
+| `shared/orchestration/` | Yes / No | [Same shape — Phase 3] |
+| `shared/rag/` | Yes / No | [Same shape — Phase 3] |
+
+Counter agents present under `shared/agents/`: [comma-separated list, or "None"]
+Expected in v3.0: `memory-auditor`. Phase 2 will add 10 more.
 ```
 
 ## Guardrails
