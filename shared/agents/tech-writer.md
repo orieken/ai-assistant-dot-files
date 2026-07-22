@@ -3,7 +3,7 @@ name: tech-writer
 description: Use after qa-engineer has produced qa-report.md. Updates all documentation for the implemented feature including README, API docs, ADRs, changelogs, and inline code docs. Produces docs-report.md. MUST be invoked after qa-engineer and before devops-engineer.
 tools: Read, Write, Edit, Glob, Grep
 model: inherit
-version: 1.1.1
+version: 1.2.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -74,23 +74,11 @@ Status: Accepted
 
 ## Output Format
 
-Write `.claude/feature-workspace/docs-report.md`:
-
-```markdown
-# Documentation Report: [Feature Name]
-
-## Files Updated
-- `CHANGELOG.md` — Added entry for [feature]
-- `README.md` — Added section on [feature]
-- `docs/adr/ADR-005-[name].md` — New ADR for [decision]
-
-## Files Unchanged (and why)
-- `docs/setup.md` — No new setup steps required
-
-## Notes for DevOps
-- [New env vars that need to be documented in deployment runbooks]
-- [New infrastructure that needs runbook entries]
-```
+Read `shared/templates/docs-report.template.md` and produce your artifact at
+`.claude/feature-workspace/docs-report.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## Rules
 

@@ -3,7 +3,7 @@ name: devops-engineer
 description: Use after tech-writer has produced docs-report.md. Handles CI/CD pipeline updates, environment configuration, deployment scripts, and infrastructure changes required by the feature. Produces devops-report.md. MUST be invoked after tech-writer and is the final agent in the pipeline.
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: inherit
-version: 1.0.1
+version: 1.1.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -61,34 +61,11 @@ You are a **Senior DevOps / Platform Engineer**. You make sure that what was bui
 
 ## Output Format
 
-Write `.claude/feature-workspace/devops-report.md`:
-
-```markdown
-# DevOps Report: [Feature Name]
-
-## Files Created
-- `.github/workflows/new-job.yml` — [what it does]
-
-## Files Modified
-- `.github/workflows/ci.yml` — [what changed]
-- `.env.example` — Added: `NEW_VAR=example_value`
-
-## New Environment Variables Required
-| Variable | Description | Example | Secret? |
-|---|---|---|---|
-| `NEW_API_KEY` | API key for X service | `sk-...` | Yes |
-| `FEATURE_TIMEOUT` | Timeout in ms for Y | `5000` | No |
-
-## Migration Steps
-- Run `alembic upgrade head` before deploying — or "None required"
-
-## Deployment Notes
-- [Anything ops needs to know when deploying this]
-- [Any rollback procedure]
-
-## Manual Steps Required
-- [Things that CANNOT be automated and must be done manually, e.g. "Set NEW_API_KEY in production secrets vault"]
-```
+Read `shared/templates/devops-report.template.md` and produce your artifact at
+`.claude/feature-workspace/devops-report.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## Rules
 

@@ -3,7 +3,7 @@ name: accessibility-engineer
 description: Use after the developer subagent has produced implementation-notes.md and BEFORE the code-reviewer. Reviews frontend and UI code for accessibility vulnerabilities, Semantic HTML, and UX Craftsmanship. Produces accessibility-report.md. MUST be invoked on features involving UI changes, HTML, CSS, or frontend components.
 tools: Read, Glob, Grep, Bash
 model: inherit
-version: 1.0.1
+version: 1.1.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -37,25 +37,11 @@ All interactive elements must be reachable and usable via Keyboard-only navigati
 
 ## Output Format
 
-Write `.claude/feature-workspace/accessibility-report.md`:
-
-```markdown
-# Accessibility & UX Report: [Feature Name]
-
-## Evaluation Summary
-- **Semantic HTML**: [Pass/Fail/Notes]
-- **Interactive Elements**: [Pass/Fail/Notes]
-- **ARIA & Labels**: [Pass/Fail/Notes]
-- **Keyboard Navigation**: [Pass/Fail/Notes]
-
-## Findings & Fixes
-- `path/to/component.tsx` — Changed `<div onClick={...}>` to `<button type="button" onClick={...}>` to ensure keyboard accessibility.
-- [Finding without autofix]: [Recommendation]
-
-## Notes for QA
-- [Specific interactions QA should test via keyboard only]
-- [Screen reader verification points]
-```
+Read `shared/templates/accessibility-report.template.md` and produce your artifact at
+`.claude/feature-workspace/accessibility-report.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## Rules
 - Fix violations directly whenever possible.

@@ -3,7 +3,7 @@ name: code-reviewer
 description: Use after the developer subagent has produced implementation-notes.md and BEFORE the security-reviewer or qa-engineer. Reviews the developer's implementation against ARCHITECTURE_RULES.md, SOLID principles, and clean code standards. Produces code-review-report.md. Acts as a "Pair Programmer" and will send the developer back to make changes if the code violates craftsmanship rules. MUST be invoked after developer and before security-reviewer.
 tools: Read, Glob, Grep, Bash
 model: inherit
-version: 1.0.1
+version: 1.1.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -72,55 +72,11 @@ If you see any of the following, you must request changes:
 
 ## Output Format
 
-Write `.claude/feature-workspace/code-review-report.md`:
-
-```markdown
-# Code Review Report: [Feature Name]
-
-## Overall Status
-**[APPROVED | CHANGES REQUESTED]**
-
-## Design Narrative
-[2-3 sentence plain-English description of what the code is doing architecturally]
-
-## Design Score
-- **Clarity** [1-5]: Does the code reveal its intent without comments?
-- **Cohesion** [1-5]: Does each class/module do one well-defined thing?
-- **Coupling** [1-5]: Are dependencies minimal and pointing the right direction?
-- **Craft** [1-5]: Was the refactor pass taken seriously? (Checks the developer's Named Refactoring Log)
-
-*(Note: Score of 3+ on all dimensions = APPROVED. Any dimension below 3 = CHANGES REQUESTED. Provide specific Fowler refactoring operations to improve any dimension scoring < 3)*
-
-## Security Surface
-- [Auth/Inputs/APIs touched or "None"]
-
-## Performance Surface
-- [DB calls/Network calls/Loops or "None"]
-
-## Test Design Review
-- [Are tests verifying behaviors instead of implementation details?]
-
-## Verification of Developer Self-Review
-- [Did the developer's self-review match reality? If not, explicitly call out the discrepancy]
-
-## Feedback for the Developer
-
-*(If Approved, you can just leave a note of encouragement or minor non-blocking suggestions)*
-
-*(If Changes Requested, provide specific, named refactoring instructions):*
-
-### 1. [Specific Refactoring Operation, e.g., "Extract Function"]
-- **File**: `path/to/file.ts` lines X-Y
-- **Smell**: This method calculates the outstanding balance AND prints the receipt. Multiple responsibilities.
-- **Instruction**: Extract the calculation logic into `calculateOutstanding(invoice)` and reduce this function's length.
-
-### 2. [Specific Architectural Violation]
-- **File**: `path/to/file.py`
-- **Smell**: The domain entity is directly importing `psycopg2` (Infrastructure).
-- **Instruction**: Abstract this behind a repository interface so the domain remains pure.
-
-### 3. ...
-```
+Read `shared/templates/code-review-report.template.md` and produce your artifact at
+`.claude/feature-workspace/code-review-report.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## The Iterative Loop Rules
 

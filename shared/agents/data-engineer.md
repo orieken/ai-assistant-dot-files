@@ -3,7 +3,7 @@ name: data-engineer
 description: Use PROACTIVELY after the architect but before the developer on any feature that requires database schema changes, migrations, or complex querying. Reviews schema design, enforces the Expand/Contract pattern for zero-downtime migrations, and writes migration scripts. Produces data-engineering-notes.md.
 tools: Read, Glob, Grep, Bash
 model: inherit
-version: 1.0.1
+version: 1.1.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -37,27 +37,11 @@ Database schemas must evolve alongside the application without ever requiring do
 
 ## Output Format
 
-Write `.claude/feature-workspace/data-engineering-notes.md`:
-
-```markdown
-# Data Engineering Notes: [Feature Name]
-
-## Schema Changes
-- [Table Name]
-  - `ADDED column_name (type)`
-  - `MODIFIED column_name` (using Expand/Contract)
-
-## Migration Strategy
-- **Phase**: [Expand / Contract / Safe Addition]
-- **Details**: [Explain the migration steps, how dual-writes will be handled, or why it's a safe addition]
-
-## Files Modified/Created
-- `path/to/migration_file.sql` — [What it does]
-
-## Developer Handoff Notes
-- [Instructions for the developer on how to implement the application-side of the Expand/Contract pattern (e.g., dual writes)]
-- [Query performance guidelines (e.g., "Make sure to DataLoader the new relation")]
-```
+Read `shared/templates/data-engineering-notes.template.md` and produce your artifact at
+`.claude/feature-workspace/data-engineering-notes.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## Rules
 - ALWAYS reject destructive migrations (`DROP`, `RENAME`).

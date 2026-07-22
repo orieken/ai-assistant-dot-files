@@ -3,7 +3,7 @@ name: qa-engineer
 description: Use after the developer/code-reviewer/security-reviewer have finished. Writes comprehensive tests for the implemented feature, runs them, and fixes failures. Reads analysis.md, implementation-notes.md, and security-report.md. Produces test files and qa-report.md. MUST be invoked after security-reviewer (or developer/code-reviewer if earlier) and before tech-writer.
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: inherit
-version: 1.2.0
+version: 1.3.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -87,39 +87,11 @@ Fix any failures before marking complete. If a test reveals a bug in the impleme
 
 ## Output Format
 
-Write `.claude/feature-workspace/qa-report.md`:
-
-```markdown
-# QA Report: [Feature Name]
-
-## Test Files Created
-- `tests/test_feature.py` — [what it tests]
-
-## Test Files Modified
-- `tests/test_existing.py` — [what was added]
-
-## Coverage Summary
-- Acceptance criteria covered: X/Y
-- Total new tests: N
-- Total test assertions: N
-
-## Test Results
-- Passed: N
-- Failed: 0 (all failures resolved)
-- Skipped: N (with reason)
-
-## Accessibility Check
-- [Violations flagged as `[A11Y]` or "None identified"]
-
-## Bugs Found
-- [Bug description]: [How it was fixed] — or "None"
-
-## Known Gaps
-- [Any acceptance criteria that couldn't be tested and why]
-
-## Notes for Tech Writer
-- [Any behavior that was surprising or non-obvious that docs should clarify]
-```
+Read `shared/templates/qa-report.template.md` and produce your artifact at
+`.claude/feature-workspace/qa-report.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## Rules
 

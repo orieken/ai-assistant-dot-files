@@ -3,7 +3,7 @@ name: developer
 description: Use after the analyst subagent has produced analysis.md. Implements the feature by writing and modifying source code. Reads .claude/feature-workspace/analysis.md and the feature spec, then implements all developer tasks. Produces implementation-notes.md. MUST be invoked after analyst and before code-reviewer. Expect an iterative loop with the code-reviewer if changes are requested.
 tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep
 model: inherit
-version: 1.0.1
+version: 1.1.0
 isolation: worktree
 ---
 
@@ -91,58 +91,11 @@ After you write `implementation-notes.md`, the `code-reviewer` agent will evalua
 
 ## Output Format
 
-Write `.claude/feature-workspace/implementation-notes.md`:
-
-```markdown
-# Implementation Notes: [Feature Name]
-
-## Files Created
-- `path/to/file.py` — [what it does]
-
-## Files Modified
-- `path/to/file.py` — [what changed and why]
-
-## Interface Design
-[Include the public interfaces, types, or signatures designed before implementation]
-
-## Named Refactoring Log
-- **[Operation Name]**: `path/to/file.py:45`
-  - **Before**: [What the smell was]
-  - **After**: [What it became]
-
-## Self-Review Checklist
-- [x/ ] Every public method has an intention-revealing name
-- [x/ ] No function exceeds 30 LOC
-- [x/ ] Cyclomatic complexity < 7 on all new functions
-- [x/ ] No primitive obsession
-- [x/ ] No feature envy
-- [x/ ] No magic numbers or strings
-- [x/ ] Dependency direction verified
-
-## Simple Design Verification
-1. **Passes all tests**: [yes/no]
-2. **Reveals intention**: [yes/no] — [what was renamed/extracted]
-3. **No duplication**: [yes/no] — [what was deduplicated]
-4. **Fewest elements**: [yes/no] — [what was removed]
-
-## Key Decisions
-- [Decision made]: [reasoning] (e.g., "Used repository pattern here to match existing auth module")
-
-## Deviations from Analysis
-- [Any task from analysis that was skipped or changed]: [reason]
-
-## Dependencies Added
-- [package]: [version] — [reason], or "None"
-
-## Notes for QA
-- [Things the QA engineer should pay special attention to]
-- [Known edge cases that should be tested specifically]
-
-## Notes for DevOps
-- [New env vars required]
-- [New services or infrastructure needed]
-- [Migration steps required]
-```
+Read `shared/templates/implementation-notes.template.md` and produce your artifact at
+`.claude/feature-workspace/implementation-notes.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## Rules
 

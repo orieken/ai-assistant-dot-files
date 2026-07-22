@@ -3,7 +3,7 @@ name: sre-engineer
 description: Use after the developer subagent has produced implementation-notes.md. Reviews the code specifically for Observability, Telemetry, Logging Cardinality, and Service Level Indicators (SLIs). Produces observability-report.md. MUST be invoked before the devops-engineer handles infrastructure.
 tools: Read, Write, Edit, Glob, Grep
 model: inherit
-version: 1.0.1
+version: 1.1.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -39,32 +39,11 @@ Traces, logs, and metrics must NEVER contain cleartext passwords, authentication
 
 ## Output Format
 
-Write `.claude/feature-workspace/observability-report.md`:
-
-```markdown
-# Observability & SRE Report: [Feature Name]
-
-## 1. Service Level Indicators (SLIs)
-*These metrics define the health of the newly added feature.*
-- **Availability SLI**: [e.g., "Payment endpoint returns 2xx or 4xx (non-500) > 99.9% of the time."]
-- **Latency SLI**: [e.g., "Payment API p95 latency < 800ms."]
-
-## 2. OpenTelemetry & Tracing
-- **Analysis**: [Pass/Fail]
-- **Spans Added**: [List the critical spans verified in the code, e.g., "Identified explicit `payment.process` and `stripe.charge` spans."]
-- **Missing Telemetry**: [Identify large blind spots in the code where tracing should be added.]
-
-## 3. Log Quality & Cardinality
-- **Status**: [Pass / Fail / Fixed]
-- **Findings**: [e.g., "Refactored 4 logger statements in `payment_service.ts` from string interpolation to structured context maps with stable strings."]
-
-## 4. PII Data Hygiene
-- **Status**: [Clean / Violation detected]
-- **Notes**: [e.g., "Ensured `user.email` is redacted in the auth service spans."]
-
-## Notes for DevOps Engineer
-- [Any specific alerts or dashboard panels DevOps should wire up in Grafana/Datadog based on these SLIs.]
-```
+Read `shared/templates/observability-report.template.md` and produce your artifact at
+`.claude/feature-workspace/observability-report.md` by filling in the bracketed
+`[placeholder]` markers. Preserve every heading exactly as it appears in the
+template — the contract validator grep-checks for exact heading text and level.
+If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ## Rules
 - If you find `logger.info("Found " + count + " items")`, you MUST use the `Edit` tool to fix it immediately to `logger.info({ count }, "Items found")`. Do not leave it as a recommendation.
