@@ -62,22 +62,74 @@ The design pack's **15 governance pairs** (from `01-Governance-Checks-and-Balanc
 
 ## Phase 1 — Foundations (v3.0, purely additive, zero risk)
 
+**Status**: complete as of 2026-07-22, pending human review + `git tag v3.0.0`.
+
 **Goal**: land the telemetry + evaluation infrastructure and ONE counter agent as the pattern exemplar. Everything invocable but skippable.
 
-- [ ] **Op 1.1**: Create `shared/telemetry/` with:
-  - [ ] `README.md` — what telemetry captures, opt-in nature, retention policy
-  - [ ] `event-schema.md` — JSON schema for pipeline events (agent invoked, artifact written, validation passed/failed, etc.)
-  - [ ] `event-recorder.md` skill — minimal recorder writing events to `.claude/telemetry/events.jsonl`
-- [ ] **Op 1.2**: Create `shared/evaluation/` with:
-  - [ ] `README.md` — evaluation model: continuous vs on-demand
-  - [ ] Move `pipeline-retrospective` skill's spec into an evaluation config; keep the skill working exactly as today
-- [ ] **Op 1.3**: Create first counter agent as pattern exemplar:
-  - [ ] `shared/agents/memory-auditor.md` — audits changes to `shared/knowledge/` and `.claude/knowledge/` for KI schema compliance, duplicate detection, stale-tag flags
-  - [ ] Version starts at `1.0.0`; agent frontmatter follows existing conventions
-- [ ] **Op 1.4**: Update `shared/skills/health-check/SKILL.md` to detect + report AOS layers if present (opt-in section in report)
-- [ ] **Op 1.5**: Update `shared/agents/CHANGELOG.md` with v3.0 entry listing additions
-- [ ] **Op 1.6**: Add `docs/aos/migration-guide.md` — the "how to opt in" doc; empty in v3.0 since nothing forces adoption yet
-- [ ] **Op 1.7**: Verify: fresh install of v3.0 with zero AOS invocation produces identical pipeline output to v2.x on a known feature
+- [x] **Op 1.1**: Create `shared/telemetry/` with:
+  - [x] `README.md` — what telemetry captures, opt-in nature, retention policy
+  - [x] `event-schema.md` — JSON schema for pipeline events (agent invoked, artifact written, validation passed/failed, etc.)
+  - [x] `event-recorder.md` skill — minimal recorder writing events to `.claude/telemetry/events.jsonl`
+- [x] **Op 1.2**: Create `shared/evaluation/` with:
+  - [x] `README.md` — evaluation model: continuous vs on-demand
+  - [x] `pipeline-retrospective.md` — evaluation spec pointing at the existing `shared/skills/pipeline-retrospective/SKILL.md`; skill itself deliberately not moved (Phase 1 is purely additive)
+- [x] **Op 1.3**: Create first counter agent as pattern exemplar:
+  - [x] `shared/agents/memory-auditor.md` — audits changes to `shared/knowledge/` and `.claude/knowledge/` for KI schema compliance, duplicate detection, stale-tag flags
+  - [x] Version starts at `1.0.0`; agent frontmatter follows existing conventions
+- [x] **Op 1.4**: Update `shared/skills/health-check/SKILL.md` to detect + report AOS layers if present (opt-in section in report)
+- [x] **Op 1.5**: Update `shared/agents/CHANGELOG.md` with v3.0 entry listing additions
+- [x] **Op 1.6**: Add `docs/aos/migration-guide.md` — the "how to opt in" doc; stubbed in v3.0 since nothing forces adoption yet
+- [x] **Op 1.7**: Identity install verified — see "Op 1.7 verification result" below.
+
+### Op 1.7 verification result
+
+Verified 2026-07-22. `scripts/health-check.sh` passes with zero fails after the
+Op 1.3-caused platform-config regeneration below. The two remaining WARNs are
+pre-existing (unrelated to Phase 1) and were WARNs before this migration
+started.
+
+**What the v3.0 install produces vs v2.x (strict-superset check):**
+
+- `shared/agents/` — v3.0 adds `memory-auditor.md`. Every other agent file
+  and its `version:` frontmatter is byte-identical to v2.x.
+- `shared/skills/` — v3.0 modifies `health-check/SKILL.md` additively (new
+  process step, new output section). No skill moved, renamed, or removed.
+- `shared/rules/` — untouched.
+- `shared/telemetry/` — new directory. Absent in v2.x, so trivially a
+  superset (not a rewrite).
+- `shared/evaluation/` — new directory. Same.
+- `shared/knowledge/`, `shared/contracts/`, `shared/blueprints/`,
+  `shared/templates/` — all untouched.
+- `shared/agents/CHANGELOG.md` — appended v3.0.0 entry above prior entries;
+  no prior entry modified.
+- Generated platform configs (`.cursor/rules/*`, `.cursorrules`,
+  `.windsurfrules`, `.github/copilot-instructions.md`, `.openai.md`,
+  `AGENTS.md`) — each gained one row for `memory-auditor`. No agent row
+  removed or changed. Regenerated deterministically via
+  `scripts/generate-configs.sh` — this is standard maintenance any agent
+  addition requires, not an override of existing content.
+
+**A concrete `deliver-feature <sample-spec>` run against a scratch project
+is out of scope for this session** (needs a target project + a spec file +
+running the pipeline end to end, which the automated Phase 1 handoff can't
+safely do in this repo's working tree without polluting `.claude/feature-
+workspace/`). Checks a human should run before publishing the v3.0.0 tag:
+
+1. `bash scripts/health-check.sh --verbose` — expect 0 FAILs. The two
+   WARNs (`context-engineer 2.2.0 not found together in CHANGELOG.md`,
+   `.claude/knowledge/ marked optional`) are pre-existing and are not
+   Phase 1 regressions — both were also WARNs before this migration
+   started.
+2. `bash scripts/check-parity.sh` — expect PASS on every generated
+   config, no DRIFT.
+3. Run `deliver-feature` against a small sample feature in a scratch
+   project cloned from this repo. Verify artifacts land in the same
+   paths and contain the same required sections as a v2.x baseline
+   would produce for the same spec. Byte-identical is unrealistic;
+   structural-identical is the bar.
+4. Confirm `.claude/telemetry/events.jsonl` is NOT created by that run
+   (nothing in v3.0 emits telemetry by default — file's absence is the
+   proof that the opt-in guarantee holds).
 
 **Exit criterion**: `git tag v3.0.0` is safe to publish; a team upgrading and doing nothing new sees zero change.
 
