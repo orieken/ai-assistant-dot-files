@@ -18,6 +18,67 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-22 — v3.0.0: AOS foundations (Phase 1)
+
+First landing of the AOS (AI Operating System) migration described in
+`docs/aos/migration-plan.md`. Phase 1 is **purely additive**: every change here
+is opt-in. A team upgrading a v2.x install to v3.0.0 without invoking any AOS-
+specific capability behaves identically to v2.x. That is the backward-compat
+guarantee this release commits to — see `docs/aos/migration-guide.md`.
+
+### New
+- `shared/telemetry/` — top-level layer for pipeline telemetry. Contains
+  `README.md`, `event-schema.md` (agent.invoked, agent.completed,
+  artifact.written, validation.passed, validation.failed), and the
+  `event-recorder` skill (`event-recorder.md`) that appends events to
+  `.claude/telemetry/events.jsonl`. No producer emits events by default —
+  Phase 3 will wire that via hooks.
+- `shared/evaluation/` — top-level layer for continuous evaluation specs.
+  Contains `README.md` (continuous vs on-demand model) and the first spec,
+  `pipeline-retrospective.md`, which points at the existing
+  `shared/skills/pipeline-retrospective/SKILL.md` unchanged and documents its
+  Phase 3 continuous-trigger contract.
+- `shared/agents/memory-auditor.md` (v1.0.0) — the first AOS counter agent,
+  paired with the `memory-engineer` skill (pair #2 in the AOS design pack's
+  Governance Checks and Balances). Read-only (`Read, Glob, Grep`), reports
+  schema failures, exact duplicates, semantic-overlap candidates, and stale-
+  metadata candidates. Never modifies KIs. Exemplar for the 10 remaining
+  audit-relationship counter agents Phase 2 will land.
+- `docs/aos/migration-guide.md` — the "how to opt in" stub. Nothing forces
+  adoption in v3.0.0.
+
+### Updated
+- `shared/skills/health-check/SKILL.md` — new "AOS Layers" section at the
+  bottom of the health report inventories which AOS layers and counter
+  agents are present. Absence of any AOS layer is never a failure —
+  inventory only, consistent with the opt-in migration principle. Counter-
+  agent detection filters out review-shaped producers (`code-reviewer`,
+  `security-reviewer`, etc.) so only real AOS counter agents (paired per
+  the 15 governance pairs) get counted. Skill has no frontmatter `version:`
+  field today; not retroactively adding one just for this edit — kept
+  consistent with every other skill.
+
+### Unchanged
+Every agent's `version:` in this changelog stayed exactly as it was in the
+v2.x-era last row. Every existing skill file behaves identically. Every rule
+under `shared/rules/` is untouched. Every contract, blueprint, and template
+is untouched. `shared/memory-registry.json` is untouched (memory-auditor
+reads it; it does not appear as a new source).
+
+### The v3.0 backward-compat guarantee (verbatim)
+
+> A v2.x install upgraded to v3.0 without opting into any AOS capability
+> behaves identically to v2.x.
+
+Verified via Op 1.7's identity check — see the migration plan for the exact
+checks a human should run before publishing the v3.0.0 tag.
+
+| Agent | Version | Change |
+|---|---|---|
+| memory-auditor | — -> 1.0.0 | **New agent.** First AOS counter agent, paired with the memory-engineer skill. Read-only auditor: schema compliance, exact + semantic duplicate detection, stale-metadata candidates. Never modifies KIs; produces findings for human/memory-engineer approval. Tools deliberately limited to Read, Glob, Grep. |
+
+---
+
 ## 2026-07-15 — Testing taxonomy: FIRST, Three Laws, and annotation convention explicit
 
 Surfaced by a direct question about whether the framework has a clear distinction between unit /
