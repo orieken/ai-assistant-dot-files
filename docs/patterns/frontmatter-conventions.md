@@ -133,6 +133,13 @@ Cross-tool state: there is no universal cross-vendor standard for these files. C
 
 These are known improvements to the frontmatter story, currently open as handoff prompts under `docs/prompts/`:
 
-- **Formal contracts** — `docs/prompts/add-frontmatter-contracts.md`. Adds `shared/contracts/agent-frontmatter-contract.md` and `skill-frontmatter-contract.md` so `validate-artifact` can grep-check frontmatter the same way it checks pipeline artifacts. Zero new tooling.
+- **Formal contracts** — DONE. Three contract files landed:
+  [`shared/contracts/agent-frontmatter-contract.md`](../../shared/contracts/agent-frontmatter-contract.md),
+  [`shared/contracts/skill-frontmatter-contract.md`](../../shared/contracts/skill-frontmatter-contract.md),
+  and [`shared/contracts/ki-frontmatter-contract.md`](../../shared/contracts/ki-frontmatter-contract.md).
+  `validate-artifact` now accepts frontmatter files as valid artifacts (see the last three rows of its
+  Contract Mapping table). The contracts are 1:1 with the field-presence checks in `scripts/health-check.sh`
+  steps 2, 3, and 8 — no stricter, no looser — plus a few cheap structural rules (semver shape on agent
+  `version`, ISO-8601 shape on KI `created`, kebab-case + filename-match on all three `name` fields).
 - **JSON schemas** — `docs/prompts/add-frontmatter-json-schemas.md`. Adds `shared/schemas/*.schema.json` for real IDE autocomplete + enum-value validation (currently `tools: WhatEver, RandomName` would pass health-check's field-presence check).
 - **KI template** — no `shared/templates/ki.template.md` today. Only skills have a template file (`shared/skills/SKILL_TEMPLATE.md`) and now agents have one (`shared/templates/agent.template.md`). KIs get authored ad-hoc from example. Worth adding when the frontmatter contracts land — same effort.
