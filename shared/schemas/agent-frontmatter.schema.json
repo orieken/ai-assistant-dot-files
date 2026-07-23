@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/orieken/ai-assistant-dot-files/shared/schemas/agent-frontmatter.schema.json",
+  "title": "Agent Frontmatter",
+  "description": "Schema for the YAML frontmatter block of shared/agents/*.md files. Source of truth: shared/contracts/agent-frontmatter-contract.md.",
+  "type": "object",
+  "required": ["name", "description", "tools", "model", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "kebab-case identifier; must match filename base (analyst.md -> name: analyst).",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "description": {
+      "type": "string",
+      "description": "One sentence. Include PROACTIVELY when the pipeline should invoke unconditionally; include MUST for hard-required ordering.",
+      "minLength": 30
+    },
+    "tools": {
+      "type": "string",
+      "description": "Comma-separated list of Claude Code tool names. Use least-privilege — read-only agents (auditors, reviewers) should NOT have Write. Recognized tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, Task, Skill, WebFetch, WebSearch.",
+      "pattern": "^(Read|Write|Edit|MultiEdit|Bash|Glob|Grep|Task|Skill|WebFetch|WebSearch)(,\\s*(Read|Write|Edit|MultiEdit|Bash|Glob|Grep|Task|Skill|WebFetch|WebSearch))*$"
+    },
+    "model": {
+      "type": "string",
+      "description": "Usually 'inherit' — the parent session's model applies. Pin to a specific claude-* id only for cost/quality tradeoffs on a specific agent. Uses a pattern (not enum) because Anthropic ships new models frequently and pinning an enum here would age fast; see escalation clause in docs/prompts/add-frontmatter-json-schemas.md.",
+      "pattern": "^(inherit|claude-[a-z0-9-]+)$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semver. Bump minor on behavior-relevant change (output-format refactor, tool-list change); patch on prose-only edits; major only if the agent's contract with callers breaks.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "isolation": {
+      "type": "string",
+      "description": "Optional. 'worktree' — agent runs in a temporary git worktree isolated from the main working copy. See shared/agents/developer.md for the reference use.",
+      "enum": ["worktree"]
+    }
+  }
+}
