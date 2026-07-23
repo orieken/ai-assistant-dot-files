@@ -38,7 +38,7 @@ version: 1.2.0
 
 ### Template
 
-`shared/agents/AGENT_TEMPLATE.md`.
+`shared/templates/agent.template.md` (deliberately outside `shared/agents/` so the Claude Code loader doesn't register the template itself as a real agent — same "escape hatch" reason `SKILL_TEMPLATE.md` lives at `shared/skills/SKILL_TEMPLATE.md` above the loader's `*/SKILL.md` search path).
 
 ---
 
@@ -135,4 +135,4 @@ These are known improvements to the frontmatter story, currently open as handoff
 
 - **Formal contracts** — `docs/prompts/add-frontmatter-contracts.md`. Adds `shared/contracts/agent-frontmatter-contract.md` and `skill-frontmatter-contract.md` so `validate-artifact` can grep-check frontmatter the same way it checks pipeline artifacts. Zero new tooling.
 - **JSON schemas** — `docs/prompts/add-frontmatter-json-schemas.md`. Adds `shared/schemas/*.schema.json` for real IDE autocomplete + enum-value validation (currently `tools: WhatEver, RandomName` would pass health-check's field-presence check).
-- **KI template** — no `shared/knowledge/KI_TEMPLATE.md` today. Only skills have a template file (`SKILL_TEMPLATE.md`) and now agents have one (`AGENT_TEMPLATE.md`). KIs get authored ad-hoc from example. Worth adding when the frontmatter contracts land — same effort.
+- **KI template** — no `shared/templates/ki.template.md` today. Only skills have a template file (`shared/skills/SKILL_TEMPLATE.md`) and now agents have one (`shared/templates/agent.template.md`). KIs get authored ad-hoc from example. Worth adding when the frontmatter contracts land — same effort.
