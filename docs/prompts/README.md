@@ -14,8 +14,9 @@ Separate from `docs/aos/prompts/` (AOS-migration-specific) — these are general
 
 | File | Scope | Estimated size |
 |---|---|---|
-| [add-frontmatter-contracts.md](add-frontmatter-contracts.md) | Add `shared/contracts/agent-frontmatter-contract.md` + `skill-frontmatter-contract.md` + `ki-frontmatter-contract.md` so `validate-artifact` can grep-check these the same way it checks pipeline artifacts | Small — 3 contract files + validate-artifact skill update, 1-2 commits |
-| [add-frontmatter-json-schemas.md](add-frontmatter-json-schemas.md) | Add `shared/schemas/agent-frontmatter.schema.json` etc. Enables IDE autocomplete + enum-value validation. Wire into VS Code / Cursor settings templates | Medium — 3 schema files + IDE settings + optional health-check integration, 2-4 commits |
+| [write-blog-posts.md](write-blog-posts.md) | Draft dev.to + LinkedIn blog posts covering recent framework + agent developments. Six candidate topics ranging from the mcp-add retrofit to the AOS migration to corpus-aware RAG | Small-Medium — one topic = ~2 files + 1 commit; menu-driven, do 1-3 topics per session |
+| [add-frontmatter-contracts.md](add-frontmatter-contracts.md) — DONE | Add `shared/contracts/agent-frontmatter-contract.md` + `skill-frontmatter-contract.md` + `ki-frontmatter-contract.md` so `validate-artifact` can grep-check these the same way it checks pipeline artifacts. Shipped 2026-07-22 in commits `ae1e440` → `38b14a9` | Small — 3 contract files + validate-artifact skill update, 1-2 commits |
+| [add-frontmatter-json-schemas.md](add-frontmatter-json-schemas.md) — DONE | Add `shared/schemas/agent-frontmatter.schema.json` etc. Enables IDE autocomplete + enum-value validation. Wire into VS Code / Cursor settings templates. Shipped 2026-07-22 in commits `fdfdd9b` → `a522e14` | Medium — 3 schema files + IDE settings + optional health-check integration, 2-4 commits |
 
 ## Convention
 
