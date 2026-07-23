@@ -184,12 +184,14 @@ workspace/`). Checks a human should run before publishing the v3.0.0 tag:
 - [ ] **Op 3.2**: Implement orchestration wrapper for `deliver-feature`:
   - [ ] Preserve exact `deliver-feature` skill behavior for teams that don't opt in
   - [ ] New `orchestrate` skill invokes the runtime; runtime can replay pipeline events, restart from checkpoints, run branches in parallel
-- [ ] **Op 3.3**: Design `shared/rag/`:
-  - [ ] `README.md`, `interface.md`, `retrieval-schema.md`
-  - [ ] Vector-store adapter interface (pluggable — Qdrant, pgvector, LightRAG per design pack `06-LightRAG-Strategy.md`)
-- [ ] **Op 3.4**: Implement vector-based retrieval alongside lexical `search-ki`:
-  - [ ] `search-ki` keeps working unchanged (lexical fallback)
-  - [ ] New `search-ki-semantic` uses RAG; `query-memory` gains optional `--semantic` flag
+- [ ] **Op 3.3**: Design `shared/rag/` — corpus-aware retrieval adapter interface (see `docs/adrs/ADR-002-corpus-aware-retrieval-strategy.md`):
+  - [ ] `README.md` — three-corpus model: framework KIs, installed-project docs/, installed-project source
+  - [ ] `retriever.interface.md` — pluggable adapter contract (`Retrieve(query, corpus) → results`); implementations swap without touching consumers
+  - [ ] Three adapter shapes documented: `llm-as-retriever` (framework corpus, default), `bm25` via sqlite-fts5 (installed-project docs, default), `vector` via sqlite-vec (installed-project feature-archive + optional source, opt-in)
+- [ ] **Op 3.4**: Implement retrieval per corpus, graduated by complexity:
+  - [ ] **Framework corpus** — `search-ki` keeps its lexical implementation unchanged; new `search-ki-semantic` skill uses `llm-as-retriever` over the KI corpus (small enough to fit in context — corpus stays under ~200 KIs per the memory-registry health-check); `query-memory --semantic` opt-in flag routes to same
+  - [ ] **Installed-project docs** — MCP tools in the broad framework-MCP (saturday-mcp per mcp-expand scope): `search_docs` (BM25 over the installed project's `docs/`), `search_features` (vector similarity over `docs/features/` — the semantic "have we built this before?" query the analyst runs today via grep+mtime), `search_adrs` (BM25 over `docs/adrs/`). Index lives in `.claude/rag/` per install; rebuilt via a `/reindex` skill on demand plus install-time initial pass
+  - [ ] **Installed-project source** — **DEFERRED**. Lean on the client's built-in code search (Claude Code Grep/Glob/Read) initially. Add vector-backed code retrieval only if telemetry shows the built-in isn't sufficient. Adapter interface is ready for it when the time comes
 - [ ] **Op 3.5**: Implement Learning engine skill:
   - [ ] Watches retrospectives + failed validations; proposes new KIs (draft mode, human approves)
   - [ ] Opt-in via hook (`on-retrospective-written → learning-engine`)
@@ -276,7 +278,7 @@ Consider `/adr` for these decisions:
 
 ## Estimate
 
-Rough scope: ~38 ops across 4 phases + ADRs + docs. If each op takes ~1-2 hours including tests + review, that's ~55-75 hours of focused work spread across 4 minor releases. Phase 3 grew from 10 to 13 ops with the trinity-native workflow refactor (3.11-3.13); Phase 3 is the heaviest phase.
+Rough scope: ~38 ops across 4 phases + ADRs + docs. If each op takes ~1-2 hours including tests + review, that's ~55-75 hours of focused work spread across 4 minor releases. Phase 3 grew from 10 ops to 13 with the trinity-native workflow refactor (3.11-3.13); Ops 3.3/3.4 were also reframed to a corpus-aware retrieval strategy (see ADR-001) without changing the op count. Phase 3 remains the heaviest phase and now has three retrieval implementations to build (LLM-as-retriever, BM25, vector) instead of one — the "installed-project docs" corpus is the most valuable single addition since it powers agent + chat queries about the actual project the framework is installed in.
 
 Recommend one milestone per release cadence — e.g., 2-week releases means v3.0 ships in ~2 weeks after start, v3.1 two weeks later, etc. Total elapsed: ~2 months to reach v3.3.
 

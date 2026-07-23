@@ -47,9 +47,10 @@ File names follow the pattern: `ADR-NNN-short-description.md` in kebab-case.
 
 ## Index
 
-| ADR     | Title                                      | Status   | Date       |
-|---------|--------------------------------------------|----------|------------|
-| ADR-001 | Adopt RAG-friendly documentation structure | Accepted | 2026-04-08 |
+| ADR     | Title                                           | Status   | Date       |
+|---------|-------------------------------------------------|----------|------------|
+| ADR-001 | Adopt RAG-friendly documentation structure      | Accepted | 2026-04-08 |
+| ADR-002 | Corpus-aware retrieval strategy (graduated RAG) | Accepted | 2026-07-22 |
 
 ---
 
