@@ -226,6 +226,79 @@ for ki_dir in "$SHARED_DIR/knowledge" "$REPO_DIR/.claude/knowledge"; do
 done
 echo ""
 
+echo "--- Frontmatter JSON Schema Validation (opt-in — requires python3 jsonschema + PyYAML) ---"
+# Adds real value-validation on top of the field-presence checks in steps 2, 3, and 8 above:
+# `tools: WhatEverRandomName` and `standalone: false` slip past field-presence but fail here.
+# Zero hard dependency — if jsonschema/PyYAML aren't installed, this step warns and skips
+# rather than fails, so the rest of health-check.sh still runs cleanly on a stock machine.
+SCHEMA_VALIDATOR="$REPO_DIR/scripts/validate-frontmatter.py"
+SCHEMA_DIR="$SHARED_DIR/schemas"
+if [[ ! -f "$SCHEMA_VALIDATOR" ]]; then
+  warn "scripts/validate-frontmatter.py not found — skipping schema validation"
+elif ! python3 -c "import jsonschema, yaml" 2>/dev/null; then
+  warn "python3 jsonschema + PyYAML not available — skipping schema validation (install: pip install jsonschema pyyaml)"
+else
+  # Agents
+  AGENT_SCHEMA="$SCHEMA_DIR/agent-frontmatter.schema.json"
+  if [[ -f "$AGENT_SCHEMA" ]]; then
+    agent_files=$(find "$SHARED_DIR/agents" -maxdepth 1 -name "*.md" ! -name "CHANGELOG.md" | sort)
+    schema_output=$(python3 "$SCHEMA_VALIDATOR" "$AGENT_SCHEMA" $agent_files 2>&1)
+    schema_exit=$?
+    if [[ $schema_exit -eq 0 ]]; then
+      pass "agent frontmatter — all files valid against $AGENT_SCHEMA"
+    else
+      fail "agent frontmatter — schema violations:"
+      echo "$schema_output" | grep -E "FAIL|^          -" || true
+    fi
+  else
+    warn "$AGENT_SCHEMA not found — skipping agent schema check"
+  fi
+
+  # Skills
+  SKILL_SCHEMA="$SCHEMA_DIR/skill-frontmatter.schema.json"
+  if [[ -f "$SKILL_SCHEMA" ]]; then
+    skill_files=$(find "$SHARED_DIR/skills" -maxdepth 2 -name "SKILL.md" | sort)
+    schema_output=$(python3 "$SCHEMA_VALIDATOR" "$SKILL_SCHEMA" $skill_files 2>&1)
+    schema_exit=$?
+    if [[ $schema_exit -eq 0 ]]; then
+      pass "skill frontmatter — all files valid against $SKILL_SCHEMA"
+    else
+      fail "skill frontmatter — schema violations:"
+      echo "$schema_output" | grep -E "FAIL|^          -" || true
+    fi
+  else
+    warn "$SKILL_SCHEMA not found — skipping skill schema check"
+  fi
+
+  # Knowledge Items — walk shared/knowledge and .claude/knowledge separately so a
+  # missing .claude/knowledge (common — it's project-local, not always present in
+  # this repo) doesn't trip `set -o pipefail` under `find`.
+  KI_SCHEMA="$SCHEMA_DIR/ki-frontmatter.schema.json"
+  if [[ -f "$KI_SCHEMA" ]]; then
+    ki_files=""
+    for ki_root in "$SHARED_DIR/knowledge" "$REPO_DIR/.claude/knowledge"; do
+      [[ -d "$ki_root" ]] || continue
+      found=$(find "$ki_root" -maxdepth 1 -name "*.md" ! -name "README.md" | sort || true)
+      [[ -n "$found" ]] && ki_files="$ki_files $found"
+    done
+    if [[ -n "$ki_files" ]]; then
+      schema_output=$(python3 "$SCHEMA_VALIDATOR" "$KI_SCHEMA" $ki_files 2>&1)
+      schema_exit=$?
+      if [[ $schema_exit -eq 0 ]]; then
+        pass "knowledge item frontmatter — all files valid against $KI_SCHEMA"
+      else
+        fail "knowledge item frontmatter — schema violations:"
+        echo "$schema_output" | grep -E "FAIL|^          -" || true
+      fi
+    else
+      pass "no knowledge items found to validate"
+    fi
+  else
+    warn "$KI_SCHEMA not found — skipping KI schema check"
+  fi
+fi
+echo ""
+
 echo "--- Memory Registry (shared/memory-registry.json) ---"
 REGISTRY="$SHARED_DIR/memory-registry.json"
 if [[ -f "$REGISTRY" ]]; then
