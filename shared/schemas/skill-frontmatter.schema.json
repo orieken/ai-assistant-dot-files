@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/orieken/ai-assistant-dot-files/shared/schemas/skill-frontmatter.schema.json",
+  "title": "Skill Frontmatter",
+  "description": "Schema for the YAML frontmatter block of shared/skills/*/SKILL.md files. Source of truth: shared/contracts/skill-frontmatter-contract.md.",
+  "type": "object",
+  "required": ["name", "description", "triggers", "standalone"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "kebab-case identifier; must match the parent directory name (shared/skills/adr/SKILL.md -> name: adr).",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "description": {
+      "type": "string",
+      "description": "One sentence. What the skill does and when Claude should auto-trigger it.",
+      "minLength": 30
+    },
+    "triggers": {
+      "type": "object",
+      "description": "Auto-trigger routing table. Both sub-keys must be present; an empty list is acceptable for manual-invocation-only skills, but the key itself must exist.",
+      "required": ["keywords", "intentPatterns"],
+      "additionalProperties": false,
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "description": "Literal string matches; routing fires when any keyword appears in user input.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "intentPatterns": {
+          "type": "array",
+          "description": "Fuzzy sentence patterns with * wildcards for user-supplied nouns.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "standalone": {
+      "type": "boolean",
+      "description": "Must be true. Skills that require MCP servers or external network calls to function are not portable across installs — enforces the 'everything must work offline' discipline.",
+      "enum": [true]
+    }
+  }
+}
