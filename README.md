@@ -369,6 +369,32 @@ Full rules: `shared/rules/architecture-guardrails.md`, `shared/rules/design-prin
 
 ---
 
+## IDE Setup (optional) — schema-backed frontmatter autocomplete
+
+Agent, skill, and Knowledge Item frontmatter blocks have JSON Schemas under `shared/schemas/`. Opting
+in gets you autocomplete and inline validation while authoring — for example, `tools: WhatEverRandomName`
+gets flagged in-editor instead of only at `scripts/health-check.sh` time (which today validates field
+presence only, not values).
+
+**VS Code** — install the [Red Hat YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml)
+(`redhat.vscode-yaml`), then copy the template:
+
+```bash
+cp .vscode/settings.json.example .vscode/settings.json
+```
+
+**Cursor** — same setup, Cursor uses the same YAML language server:
+
+```bash
+cp .cursor/settings.json.example .cursor/settings.json
+```
+
+Both templates wire `shared/schemas/agent-frontmatter.schema.json`, `skill-frontmatter.schema.json`,
+and `ki-frontmatter.schema.json` to the matching glob patterns under `shared/`. The contracts these
+schemas encode live under `shared/contracts/`.
+
+---
+
 ## License
 
 Dual-licensed by content type:
