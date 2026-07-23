@@ -11,21 +11,21 @@ standalone: true
 When the user explicitly asks to document an architectural decision or asks to write an ADR.
 
 ## Context To Load First
-1. All existing ADRs in `docs/adr/` (for next number + tone)
+1. All existing ADRs in `docs/adrs/` (for next number + tone)
 2. `ARCHITECTURE_RULES.md`
 3. `DOMAIN_DICTIONARY.md`
 4. `.claude/feature-workspace/architecture-notes.md` if it exists.
 
 ## Process
-1. Determine next ADR number (scan `docs/adr/` for existing files)
+1. Determine next ADR number (scan `docs/adrs/` for existing files)
 2. Ask: "What was decided?" (one sentence, active voice) — one question at a time
 3. Ask: "What was the context that made this decision necessary?"
 4. Ask: "What alternatives were considered and why were they rejected?"
 5. Ask: "What are the consequences — easier, harder, changed?"
 6. Ask: "Does this decision produce a fitness function? If so, how is it enforced?"
 7. Draft the ADR and show it for approval
-8. On approval, write to `docs/adr/ADR-[NNN]-[kebab-title].md`
-9. Update `docs/adr/README.md` (index) — create it if it doesn't exist
+8. On approval, write to `docs/adrs/ADR-[NNN]-[kebab-title].md`
+9. Update `docs/adrs/README.md` (index) — create it if it doesn't exist
 
 ## Output Format
 ```markdown
