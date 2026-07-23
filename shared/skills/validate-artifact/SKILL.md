@@ -13,6 +13,12 @@ artifact — before the pipeline proceeds to the next step. Every pipeline agent
 closed 2026-07-04 — see the Contract Mapping below). Can also be run standalone: "validate analysis.md
 against its contract".
 
+Also usable outside the pipeline entirely to validate **frontmatter files** — agent files, skill
+`SKILL.md` files, and Knowledge Items — against the three frontmatter contracts (see the last three
+rows of the Contract Mapping). This is the referenceable, standalone-invocable form of the
+field-presence checks that `scripts/health-check.sh` already runs across the whole corpus in bulk;
+`validate-artifact` handles the "validate this one file" case.
+
 ## Context To Load First
 1. The contract file for the artifact being validated (see mapping below)
 2. The artifact file itself
@@ -33,13 +39,32 @@ against its contract".
 | sre-engineer | `.claude/feature-workspace/observability-report.md` | `shared/contracts/observability-contract.md` |
 | tech-writer | `.claude/feature-workspace/docs-report.md` | `shared/contracts/docs-contract.md` |
 | devops-engineer | `.claude/feature-workspace/devops-report.md` | `shared/contracts/devops-contract.md` |
+| humans (agent author) | `shared/agents/*.md` | `shared/contracts/agent-frontmatter-contract.md` |
+| humans (skill author) | `shared/skills/*/SKILL.md` | `shared/contracts/skill-frontmatter-contract.md` |
+| humans (KI author) | `shared/knowledge/*.md`, `.claude/knowledge/*.md` | `shared/contracts/ki-frontmatter-contract.md` |
 
 ## Process
+
+### Pipeline artifacts (analysis.md, architecture-notes.md, etc.)
 1. Read the contract's "Required Sections" list.
 2. Grep the artifact for each required heading — exact string and heading level (`##` vs `###`) must match.
 3. Apply the contract's "Validation Rule" content checks (e.g., "Overall Status must contain APPROVED or CHANGES REQUESTED", "Test Results must show Failed: 0").
 4. Record every miss — missing heading or failed content rule — as a violation.
 5. Report `PASS` (zero violations) or `FAIL` (one or more violations).
+
+### Frontmatter files (agents, skills, KIs)
+Same PASS/FAIL semantics; the validation switches from heading-grepping to frontmatter-parsing.
+1. Read the contract's "Required Fields" table.
+2. Isolate the YAML frontmatter block — everything between the opening `---` and the next `---`. If the
+   file doesn't start with `---`, that alone is a FAIL (no frontmatter present).
+3. For each required field, grep for `^<field>:` inside the frontmatter block.
+4. Apply the contract's structural rules (semver shape for agent `version`, ISO-8601 shape for KI
+   `created`, sub-key presence for skill `triggers`, kebab-case + filename-match for `name`, etc.).
+5. Record every miss as a violation and report `PASS` / `FAIL` in the same output format as pipeline
+   artifacts.
+
+The output section headings (`Missing Sections`, `Present Sections`) still apply — read them as
+"Missing Fields" / "Present Fields" for the frontmatter case.
 
 ## Output Format
 ```markdown
