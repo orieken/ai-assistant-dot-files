@@ -2,7 +2,12 @@
 
 Every markdown file the framework treats as structured — agents, skills, Knowledge Items — uses YAML frontmatter to declare identity, capabilities, and metadata. This doc is the reference for what fields exist, what values are valid, and why.
 
-Enforcement today: `scripts/health-check.sh` validates **field presence** for all three shapes. It does not validate types, enum values, or format. See "Gaps and follow-ups" at the bottom for the JSON-schema / contract-file work that would close those gaps.
+Enforcement today: `scripts/health-check.sh` validates **field presence** for all three shapes AND
+value-level shape (via [JSON schemas](../../shared/schemas/) — kebab-case patterns, semver on agent
+`version`, ISO 8601 on KI `created`, valid Claude Code tool names on agent `tools`, `standalone: true`
+on skills). The schema step is opt-in in the sense that it degrades to a WARN if `python3` +
+`jsonschema` + `PyYAML` aren't installed; field-presence still runs regardless. See "Gaps and
+follow-ups" at the bottom for the remaining contract-file work.
 
 ---
 
@@ -141,5 +146,14 @@ These are known improvements to the frontmatter story, currently open as handoff
   Contract Mapping table). The contracts are 1:1 with the field-presence checks in `scripts/health-check.sh`
   steps 2, 3, and 8 — no stricter, no looser — plus a few cheap structural rules (semver shape on agent
   `version`, ISO-8601 shape on KI `created`, kebab-case + filename-match on all three `name` fields).
-- **JSON schemas** — `docs/prompts/add-frontmatter-json-schemas.md`. Adds `shared/schemas/*.schema.json` for real IDE autocomplete + enum-value validation (currently `tools: WhatEver, RandomName` would pass health-check's field-presence check).
+- **JSON schemas** — DONE. Three schemas landed under [`shared/schemas/`](../../shared/schemas/):
+  [`agent-frontmatter.schema.json`](../../shared/schemas/agent-frontmatter.schema.json),
+  [`skill-frontmatter.schema.json`](../../shared/schemas/skill-frontmatter.schema.json), and
+  [`ki-frontmatter.schema.json`](../../shared/schemas/ki-frontmatter.schema.json). Wired into VS
+  Code and Cursor via `.vscode/settings.json.example` / `.cursor/settings.json.example` — copy the
+  template to enable in-editor validation (README has the walkthrough under "IDE Setup"). Also
+  wired into `scripts/health-check.sh` via a dedicated "Frontmatter JSON Schema Validation" step
+  backed by `scripts/validate-frontmatter.py`, which runs when `python3 jsonschema + PyYAML` are
+  available and warn-skips otherwise. `tools: WhatEverRandomName` is now flagged at author time
+  in-IDE and at check time in the script; both agree on shape by design.
 - **KI template** — no `shared/templates/ki.template.md` today. Only skills have a template file (`shared/skills/SKILL_TEMPLATE.md`) and now agents have one (`shared/templates/agent.template.md`). KIs get authored ad-hoc from example. Worth adding when the frontmatter contracts land — same effort.
