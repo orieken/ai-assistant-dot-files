@@ -10,6 +10,8 @@ Separate from `docs/aos/prompts/` (AOS-migration-specific) — these are general
 2. Copy the entire target prompt file into the message.
 3. The agent has everything needed: repo path, prior state, scope, guardrails, commit discipline, escalation criteria, report format.
 
+For tasks that require a human (not a fireable agent prompt), see [../human-tasks.md](../human-tasks.md).
+
 ## Prompts
 
 | File | Scope | Estimated size |
