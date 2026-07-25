@@ -16,6 +16,31 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-07-25 — v3.1.0: AOS Governance Skeleton (Phase 2)
+
+Second phase of the AOS (AI Operating System) migration described in `docs/aos/migration-plan.md`. Phase 2 is **purely additive**: every change is opt-in. A team upgrading to v3.1.0 without configuring `.claude/hooks/` or enabling auditor invocations sees zero behavior change from v3.0.0. That is the backward-compat guarantee this release commits to.
+
+- **10 Counter-Auditor Agents**: Added `context-auditor`, `knowledge-auditor`, `prompt-evaluator`, `agent-evaluator`, `rule-auditor`, `pattern-reviewer`, `tool-validator`, `documentation-auditor`, `retrieval-evaluator`, `privacy-auditor`.
+- **4 Opposing-Force Skill Pairs (7 skills)**: Added `memory-expansion` / `memory-compression`, `learning-engine` / `forgetting-engine`, `cost-optimizer` / `quality-optimizer`, and `scheduler`.
+- **Event Interceptor Layer**: Created `shared/hooks/` with `hooks-schema.md` and example hook definitions (`on-artifact-write.yaml`, `on-validation-pass.yaml`, `on-ki-created.yaml`).
+- **Opt-in Auditor Integration**: Updated `validate-artifact` to optionally invoke corresponding counter-auditor agents post-structural PASS when configured.
+- **Health Check Extension**: Extended `health-check` skill to detect all 11 counter agents and validate hook schemas.
+
+| Agent | Version | Change |
+|---|---|---|
+| `context-auditor` | 1.0.0 | Initial counter agent auditing `context-manifest.md` for pruning discipline, broken references, and token pressure accuracy. |
+| `knowledge-auditor` | 1.0.0 | Initial counter agent auditing `create-ki` skill output for KI schema compliance, semantic overlap, and ubiquitous language. |
+| `prompt-evaluator` | 1.0.0 | Initial counter agent auditing agent/skill prompts for prompt engineering hygiene, secret leakage, and template decoupling. |
+| `agent-evaluator` | 1.0.0 | Initial counter agent promoting `agent-eval` skill logic into an agent persona, evaluating frontmatter contracts and quality scores. |
+| `rule-auditor` | 1.0.0 | Initial counter agent auditing `shared/rules/*.md` for cross-rule contradictions, dead path references, and registry alignment. |
+| `pattern-reviewer` | 1.0.0 | Initial counter agent auditing `docs/patterns/*.md` for code snippet accuracy and resolved file paths. |
+| `tool-validator` | 1.0.0 | Initial counter agent auditing `shared/skills/*/SKILL.md` for standalone mode declarations and hidden script dependencies. |
+| `documentation-auditor` | 1.0.0 | Initial counter agent auditing `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts. |
+| `retrieval-evaluator` | 1.0.0 | Initial counter agent auditing KI + ADR retrievability per ADR-002 telemetry, identifying unmatched zero-hit queries. |
+| `privacy-auditor` | 1.0.0 | Initial counter agent paired with `security-reviewer`, auditing workspace artifacts for secret leakage, PII, and data boundary leaks. |
+
+---
+
 ## 2026-07-25 — AOS Phase 2 Op 2.1: 10 Counter-Auditor Agents
 
 Adds 10 read-only counter agents under `shared/agents/` following the `memory-auditor` exemplar shape (Op 2.1 of `docs/aos/migration-plan.md`). Every agent is audit-only, reports findings for human review, and never mutates project state.
