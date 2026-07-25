@@ -2,7 +2,7 @@
 
 Every agent in this framework produces an output that *something* checks — another agent's review, a
 structural contract, a human approval gate, an aggregate metric measured after the fact, or (stated plainly
-where true) nothing yet. This doc makes that explicit for all 25 agents, one at a time, instead of leaving
+where true) nothing yet. This doc makes that explicit for all 26 agents, one at a time, instead of leaving
 it scattered implicitly across `deliver-feature/SKILL.md`, `shared/contracts/`, and each agent's own file.
 
 This is documentation of what already exists in v2 today — it does not introduce new agents or roles. Where
@@ -13,7 +13,7 @@ actually has running today.)
 
 ## How to read "Counterbalance"
 
-Four different *kinds* of check show up across these 25 agents, and they're not interchangeable:
+Four different *kinds* of check show up across these 26 agents, and they're not interchangeable:
 
 | Kind | What it catches | Example |
 |---|---|---|
@@ -228,7 +228,17 @@ KI (no separate file), and the boundary is explicit — `promote-memory` covers 
 every session — see `docs/runbooks/context-engineering.md`'s Learning section for why that would be its own
 kind of over-engineering.
 
-### 22. `modernization-supervisor`
+### 22. `memory-auditor`
+**Role**: Read-only counter-agent for the KI corpus — audits `shared/knowledge/` and optional
+`.claude/knowledge/` entries for schema compliance, duplicate candidates, semantic overlap, and stale
+metadata.
+**Counterbalance**: Its own read-only tool boundary (`Read`, `Glob`, `Grep`) prevents it from acting on
+findings directly; any merge, deletion, expiration, or registry edit still routes through a human or
+`memory-engineer` with the normal approval gates.
+**Gap**: Semantic duplicate detection is judgment-heavy. The agent can flag overlap candidates, but no
+automated fitness function proves two KIs really encode the same reusable lesson without human review.
+
+### 23. `modernization-supervisor`
 **Role**: Coordinates three parallel modernization workstreams (dependency updates, pattern refactors, test
 coverage) across a legacy codebase.
 **Counterbalance**: Its own process requires running full-suite integration tests after coordinating the
@@ -237,7 +247,7 @@ merge itself (nothing in its own rules says it merges without asking).
 **Gap**: No dedicated reviewer checks the *coordination* quality itself (did it actually prevent the 3
 sub-workstreams from conflicting) beyond the integration test suite passing.
 
-### 23. `api-test-generator`
+### 24. `api-test-generator`
 **Role**: Generates Sunday Framework API test suites (Playwright + Vitest + Zod) from a spec or OpenAPI doc.
 **Counterbalance**: If invoked as part of a full feature delivery, `code-reviewer`/`qa-engineer` would still
 review the generated tests as part of that pipeline. If invoked standalone (its primary use case — "generate
@@ -245,7 +255,7 @@ API tests" on demand), there is none.
 **Gap**: Standalone invocations have no formal check on the generated tests' quality beyond a human reading
 the `api-test-report.md`.
 
-### 24. `test-driven-developer`
+### 25. `test-driven-developer`
 **Role**: An autonomous, alternate red-green-refactor loop — explicitly authorized to iterate without asking
 for permission between steps, working directly from user-provided acceptance criteria rather than through
 `deliver-feature`.
@@ -261,7 +271,7 @@ it should be a conscious choice, not a default one, given how much of this frame
 from exactly the reviews this agent skips. (This gap is about *review*, not *memory* — the memory-side gap,
 starting cold with no KI lookup and never routing learnings back afterward, was closed in v1.1.0.)
 
-### 25. `unit-tester`
+### 26. `unit-tester`
 **Role**: The mirror image of `test-driven-developer` — writes unit tests for existing code without
 modifying it, either to raise coverage on already-trusted code or to build a Michael Feathers-style
 characterization-test safety net before a legacy refactor or migration. Standalone, not gated behind
@@ -278,15 +288,33 @@ held rather than performed.
 
 ---
 
+## AOS Counter-Auditor Agents (v3.0 - v3.1)
+
+The following 11 read-only counter-auditor agents implement the opposing-force checks defined in `docs/aos/governance-pairs.md`:
+
+27. `memory-auditor` — Counter to `memory-engineer` (audits KI corpus for schema validity, exact/semantic duplicates, and stale metadata).
+28. `context-auditor` — Counter to `context-engineer` (audits `context-manifest.md` for pruning discipline, broken file paths, and token pressure accuracy).
+29. `knowledge-auditor` — Counter to `create-ki` (audits newly authored KIs against `ki-frontmatter.schema.json` and corpus overlap).
+30. `prompt-evaluator` — Counter to prompt authors (audits agent/skill prompts for secret leaks, fabricated URLs, and template decoupling).
+31. `agent-evaluator` — Counter to agent persona authors (promotes `agent-eval` logic to run golden-file evals against frontmatter contracts).
+32. `rule-auditor` — Counter to rule authors (audits `shared/rules/*.md` for cross-rule contradictions and dead references).
+33. `pattern-reviewer` — Counter to pattern doc authors (audits `docs/patterns/*.md` for accuracy against live codebase implementation).
+34. `tool-validator` — Counter to skill authors (audits `shared/skills/*/SKILL.md` for standalone mode declarations and script dependencies).
+35. `documentation-auditor` — Counter to `tech-writer` (audits `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts).
+36. `retrieval-evaluator` — Counter to RAG search skills (audits KI + ADR retrievability per ADR-002 telemetry, flagging unmatched zero-hit queries).
+37. `privacy-auditor` — Counter to `security-reviewer` & developers (audits feature workspace artifacts for PII, secrets, and credential leaks).
+
+---
+
 ## What this survey actually shows
 
-Reading all 25 agents together, three patterns stand out:
+Reading all 26 agents together, three patterns stand out:
 
 1. **The 14 pipeline agents are well-checked.** Every one has at least a structural contract; most have a
    real downstream reviewer or a human approval gate too. This is the part of the framework that's had the
    most iteration (three independent audits this session all confirmed the contract layer, once complete,
    holds up).
-2. **The 10 standalone agents are inconsistently checked** — though less inconsistently than before
+2. **The 11 standalone agents are inconsistently checked** — though less inconsistently than before
    `unit-tester` arrived with a real auto-chained reviewer rather than just a report a human might read.
    Some (`release-manager`, `data-engineer`-adjacent
    `devops-engineer`) are well-gated because they touch genuinely irreversible actions. Others

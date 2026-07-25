@@ -10,7 +10,7 @@ across all of them.
 
 For the *why* behind the categories and disciplines below (FIRST principles, the Three Laws of TDD, when
 role separation preserves TDD's design pressure and when it doesn't), see
-[`docs/patterns/testing-pyramid.md`](../../docs/patterns/testing-pyramid.md). This file is the
+`docs/patterns/testing-pyramid.md`. This file is the
 enforceable "always/never" side; that one is the philosophy.
 
 ## Test Categories

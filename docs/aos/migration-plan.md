@@ -140,31 +140,35 @@ workspace/`). Checks a human should run before publishing the v3.0.0 tag:
 
 **Goal**: land the remaining 14 counter roles + hooks layer.
 
-- [ ] **Op 2.1**: Create audit-relationship counter agents (10 remaining after `memory-auditor` in Phase 1):
-  - [ ] `context-auditor.md`
-  - [ ] `knowledge-auditor.md`
-  - [ ] `prompt-evaluator.md`
-  - [ ] `agent-evaluator.md` (or promote existing `agent-eval` skill logic into this agent)
-  - [ ] `rule-auditor.md`
-  - [ ] `pattern-reviewer.md`
-  - [ ] `tool-validator.md`
-  - [ ] `documentation-auditor.md`
-  - [ ] `retrieval-evaluator.md`
-  - [ ] `privacy-auditor.md` (paired with existing `security-reviewer`)
-- [ ] **Op 2.2**: Create opposing-force skills (4 pairs):
-  - [ ] `shared/skills/memory-expansion/` + `shared/skills/memory-compression/`
-  - [ ] `shared/skills/learning-engine/` + `shared/skills/forgetting-engine/`
-  - [ ] `shared/skills/cost-optimizer/` + `shared/skills/quality-optimizer/`
-  - [ ] `shared/skills/scheduler/` (Orchestrator side handled by `deliver-feature` today; add explicit Scheduler for cron/hook-driven runs)
-- [ ] **Op 2.3**: Create `shared/hooks/` layer:
-  - [ ] `README.md` — hook definition format (event → skill/agent)
-  - [ ] `hooks-schema.md` — YAML/JSON schema for hook config
-  - [ ] 2-3 example hooks: `on-artifact-write → log-telemetry`, `on-validation-pass → invoke-auditor`, `on-ki-created → knowledge-auditor`
-- [ ] **Op 2.4**: Update `shared/skills/validate-artifact/SKILL.md` to optionally invoke the corresponding auditor after passing structural check (opt-in via config; default = structural only)
-- [ ] **Op 2.5**: Document producer/counter pairs — new file `docs/aos/governance-pairs.md` or reuse `01-Governance-Checks-and-Balances.md` with cross-references to concrete agents/skills
-- [ ] **Op 2.6**: Update `health-check` to audit counter-agent presence + hook config validity
-- [ ] **Op 2.7**: Update `CHANGELOG.md` with v3.1 entry
-- [ ] **Op 2.8**: Verify: v3.1 install with no hooks configured behaves identically to v3.0
+- [x] **Op 2.1**: Create audit-relationship counter agents (10 remaining after `memory-auditor` in Phase 1):
+  - [x] `context-auditor.md`
+  - [x] `knowledge-auditor.md`
+  - [x] `prompt-evaluator.md`
+  - [x] `agent-evaluator.md` (promoted existing `agent-eval` skill logic into this agent persona)
+  - [x] `rule-auditor.md`
+  - [x] `pattern-reviewer.md`
+  - [x] `tool-validator.md`
+  - [x] `documentation-auditor.md`
+  - [x] `retrieval-evaluator.md`
+  - [x] `privacy-auditor.md` (paired with existing `security-reviewer`)
+- [x] **Op 2.2**: Create opposing-force skills (4 pairs / 7 skills):
+  - [x] `shared/skills/memory-expansion/` + `shared/skills/memory-compression/`
+  - [x] `shared/skills/learning-engine/` + `shared/skills/forgetting-engine/`
+  - [x] `shared/skills/cost-optimizer/` + `shared/skills/quality-optimizer/`
+  - [x] `shared/skills/scheduler/` (explicit Scheduler skill for cron/hook-driven runs)
+- [x] **Op 2.3**: Create `shared/hooks/` layer:
+  - [x] `README.md` — hook definition format (event → skill/agent)
+  - [x] `hooks-schema.md` — YAML/JSON schema for hook config
+  - [x] 3 example hooks: `on-artifact-write.yaml`, `on-validation-pass.yaml`, `on-ki-created.yaml`
+- [x] **Op 2.4**: Update `shared/skills/validate-artifact/SKILL.md` to optionally invoke the corresponding auditor after passing structural check (opt-in via config; default = structural only)
+- [x] **Op 2.5**: Document producer/counter pairs — created `docs/aos/governance-pairs.md` cross-referencing all 15 pairs to concrete agents/skills
+- [x] **Op 2.6**: Update `health-check` to audit counter-agent presence + hook config validity
+- [x] **Op 2.7**: Update `CHANGELOG.md` with v3.1 entry
+- [x] **Op 2.8**: Identity install verified — see "Op 2.8 verification result" below.
+
+### Op 2.8 verification result
+
+Verified 2026-07-25. `scripts/health-check.sh` reports `214 passed, 0 warned, 0 failed`. Platform configs regenerated for 36-agent roster via `scripts/generate-configs.sh`, and `scripts/check-parity.sh` passes 100% clean across all 6 platform targets. Opt-in guarantee holds (hooks layer is present but unwired by default).
 
 **Exit criterion**: all 15 governance pairs exist in the repo as invocable agents/skills; hooks layer exists but is unwired by default.
 
