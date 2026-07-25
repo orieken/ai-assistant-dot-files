@@ -1,6 +1,9 @@
 # Mac OS
 .DS_Store
 
+# Local secrets
+.env
+
 # Editor-generated local history (e.g. VS Code/Copilot "Local History" extension) — can appear at any depth
 .history/
 
@@ -11,6 +14,14 @@
 # Agent golden-file test outputs (locally generated, not deterministic)
 tests/agents/*/actual-output.md
 
+# Local blog publishing helpers (keep drafts tracked, keep API posting mechanism local)
+scripts/publish-blog-posts.py
+docs/blog-posts/publishing.md
+
+# AI tool compatibility audit notes
+docs/audits/
+
 # Legacy and Backups
 *.bak
 archive/
+
