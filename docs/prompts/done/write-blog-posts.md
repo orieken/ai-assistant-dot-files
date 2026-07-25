@@ -99,9 +99,14 @@ Each is a topic that maps cleanly to a numbered draft.
 - **Source**: `docs/prompts/README.md`, `docs/aos/prompts/README.md`, `saturday-monorepo/saturday-mcp/docs/prompts/README.md` — three parallel prompt directories all following the same convention.
 
 ### 10: Frontmatter Conventions Nobody Agrees On
-- **Story**: YAML frontmatter in agent/skill/KI markdown is a de facto standard, but every vendor's shape is different. Claude Code uses one shape. Cursor's `.mdc` uses another. Windsurf and Copilot use flat markdown. There is no cross-tool standard, so the framework has to be its own source of truth and project into each platform.
+- **Story**: YAML frontmatter in agent/skill/KI markdown is a de facto standard, but every vendor's shape is different. Claude Code uses one shape. Cursor's `.mdc` uses another. Windsurf and Computes use flat markdown. There is no cross-tool standard, so the framework has to be its own source of truth and project into each platform.
 - **Mechanics**: the frontmatter contracts, the JSON schemas, the IDE integration templates, the health-check validation, the platform generation pipeline (`scripts/generate-configs.sh`).
 - **Source**: `docs/patterns/frontmatter-conventions.md`, `shared/schemas/*.schema.json`, `shared/platform-registry.json`.
+
+### 11 (Future): Opposing-Force Governance — How 11 Counter-Agents Keep AI Code Quality Honest
+- **Story**: Most AI coding tools rely on self-critique (the same agent reviewing its own work). In AOS Phase 2, we introduce opposing-force governance pairs — dedicated counter-agents (`security-auditor`, `architecture-auditor`, `performance-auditor`, `quality-auditor`, etc.) and opposing-force skill pairs that audit producer agents independently.
+- **Mechanics**: 11 audit pairs, 4 opposing-force skill pairs, `hooks/` layer interceptors, `validate-artifact` opt-in auditor checks, health-check governance checks.
+- **Source**: `docs/aos/prompts/phase-2-governance.md`, `docs/aos/migration-plan.md` (Phase 2), `docs/aos/AOS_Governance_Design_Pack/01-Governance-Checks-and-Balances.md`.
 
 ## Discipline (non-negotiable)
 

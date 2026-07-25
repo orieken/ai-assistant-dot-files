@@ -14,14 +14,13 @@ For tasks that require a human (not a fireable agent prompt), see [../human-task
 
 ## Active Prompts
 
-| File | Scope | Estimated size |
-|---|---|---|
-| [write-blog-posts.md](write-blog-posts.md) | Draft dev.to + LinkedIn blog posts covering recent framework + agent developments. Six candidate topics ranging from the mcp-add retrofit to the AOS migration to corpus-aware RAG | Small-Medium — one topic = ~2 files + 1 commit; menu-driven, do 1-3 topics per session |
+*(None — all framework improvement prompts complete!)*
 
 ## Completed Prompts (`docs/prompts/done/`)
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/write-blog-posts.md](done/write-blog-posts.md) | Draft dev.to + LinkedIn blog posts covering recent framework + agent developments (Posts 05–10) | Shipped 2026-07-25 in commits `1abd94f` → `47dccce` |
 | [done/implement-automated-delivery-tier-a.md](done/implement-automated-delivery-tier-a.md) | IMPLEMENT interim Tier A auto-proceed & Tier B contract retries in `/deliver-feature` skill based on `.claude/delivery-policy.yaml` | Shipped 2026-07-25 in commit `25b1a50` |
 | [done/automate-deliver-feature.md](done/automate-deliver-feature.md) | DESIGN automated `/deliver-feature` workflow (Tier A/B/C classification, policy schema, interim automation, design doc + implementation handoff prompt) | Shipped 2026-07-25 in commits `04ea74d` → `4d13163` |
 | [done/capture-session-history.md](done/capture-session-history.md) | Capture AOS foundations + frontmatter + MCP retrofit session history via `/retrospective` and `/extract-lessons` | Shipped 2026-07-25 in commits `e0a48e8` → `61a17e7` |
