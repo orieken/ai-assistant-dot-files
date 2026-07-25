@@ -11,6 +11,8 @@ posts that point readers back to the dev.to version once URLs are available.
 | Memory Engineering Is a Promotion Pipeline | [02-memory-promotion-pipeline-devto.md](02-memory-promotion-pipeline-devto.md) | [02-memory-promotion-pipeline-linkedin.md](02-memory-promotion-pipeline-linkedin.md) |
 | The Forgotten Symlink | [03-forgotten-symlink-devto.md](03-forgotten-symlink-devto.md) | [03-forgotten-symlink-linkedin.md](03-forgotten-symlink-linkedin.md) |
 | Toward an AI Operating System | [04-aos-context-engineering-devto.md](04-aos-context-engineering-devto.md) | [04-aos-context-engineering-linkedin.md](04-aos-context-engineering-linkedin.md) |
+| The 63-Commit Retrofit: Bringing Clean Architecture to a Legacy MCP Server | [05-the-63-commit-retrofit-devto.md](05-the-63-commit-retrofit-devto.md) | [05-the-63-commit-retrofit-linkedin.md](05-the-63-commit-retrofit-linkedin.md) |
+| Templates Beat Prompts: Fixing Agent Output Structure Drift | [06-templates-beat-prompts-devto.md](06-templates-beat-prompts-devto.md) | [06-templates-beat-prompts-linkedin.md](06-templates-beat-prompts-linkedin.md) |
 
 ## Before Publishing
 
