@@ -1,0 +1,10 @@
+version: "1.0"
+hooks:
+  - id: "auditor-on-validation-pass"
+    event: "on-validation-pass"
+    enabled: true
+    action:
+      type: "agent"
+      target: "context-auditor"
+      args:
+        passContext: true

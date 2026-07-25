@@ -1,0 +1,10 @@
+version: "1.0"
+hooks:
+  - id: "telemetry-artifact-write"
+    event: "on-artifact-write"
+    enabled: true
+    action:
+      type: "agent"
+      target: "privacy-auditor"
+      args:
+        passContext: true

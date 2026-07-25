@@ -1,0 +1,10 @@
+version: "1.0"
+hooks:
+  - id: "knowledge-auditor-ki-created"
+    event: "on-ki-created"
+    enabled: true
+    action:
+      type: "agent"
+      target: "knowledge-auditor"
+      args:
+        passContext: true
