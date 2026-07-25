@@ -112,7 +112,7 @@ created: 2026-07-19
 
 ### Template
 
-None yet — see the gap section below.
+[`shared/templates/ki.template.md`](../../shared/templates/ki.template.md).
 
 ---
 
@@ -156,4 +156,5 @@ These are known improvements to the frontmatter story, currently open as handoff
   backed by `scripts/validate-frontmatter.py`, which runs when `python3 jsonschema + PyYAML` are
   available and warn-skips otherwise. `tools: WhatEverRandomName` is now flagged at author time
   in-IDE and at check time in the script; both agree on shape by design.
-- **KI template** — no `shared/templates/ki.template.md` today. Only skills have a template file (`shared/skills/SKILL_TEMPLATE.md`) and now agents have one (`shared/templates/agent.template.md`). KIs get authored ad-hoc from example. Worth adding when the frontmatter contracts land — same effort.
+- **KI template** — DONE. [`shared/templates/ki.template.md`](../../shared/templates/ki.template.md) landed. Conforms to `shared/schemas/ki-frontmatter.schema.json` with required fields (`name`, `tags`, `domain`, `created`) and body sections (`## Context`, `## Pattern`).
+
