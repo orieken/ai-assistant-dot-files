@@ -57,15 +57,13 @@ Do NOT use for debugging application code in a project you're building features 
    - `shared/hooks/` — same shape (Phase 2)
    - `shared/orchestration/` — same shape (Phase 3)
    - `shared/rag/` — same shape (Phase 3)
-   - Counter agents under `shared/agents/` matching `*-auditor.md`, `*-evaluator.md`, or `*-validator.md`.
+   - Counter agents under `shared/agents/` matching `*-auditor.md`, `*-evaluator.md`, `*-reviewer.md`, or `*-validator.md`.
      DO NOT include the review-shaped producers whose names happen to end in `-reviewer` — those
      (`code-reviewer`, `security-reviewer`, `accessibility-engineer`-style producers) are producers-in-
-     role-name, not AOS counter agents. Only count files that pair with a known producer per the
-     15 pairs in `docs/aos/AOS_Governance_Design_Pack/01-Governance-Checks-and-Balances.md` — in v3.0
-     that's `memory-auditor.md` alone; more will land in Phase 2 (`context-auditor.md`,
-     `knowledge-auditor.md`, `prompt-evaluator.md`, `agent-evaluator.md`, `rule-auditor.md`,
-     `pattern-reviewer.md`, `tool-validator.md`, `documentation-auditor.md`, `retrieval-evaluator.md`,
-     `privacy-auditor.md`).
+     role-name, not AOS counter agents. Count counter agents mapped to the 15 pairs in `docs/aos/governance-pairs.md`:
+     `memory-auditor`, `context-auditor`, `knowledge-auditor`, `prompt-evaluator`, `agent-evaluator`,
+     `rule-auditor`, `pattern-reviewer`, `tool-validator`, `documentation-auditor`, `retrieval-evaluator`, `privacy-auditor`.
+   - Validate hook configs under `shared/hooks/examples/` and `.claude/hooks/` against `shared/hooks/hooks-schema.md`.
 
 5. **Produce the health report** — synthesize the script's output plus your judgment calls into the format
    below; don't just paste the raw script output. The AOS Layers section always appears at the bottom of
@@ -109,14 +107,14 @@ Opt-in per the AOS migration plan — absence is never a failure, only an invent
 
 | Layer | Present? | Notes |
 |---|---|---|
-| `shared/telemetry/` | Yes / No | [If present: brief list of files. If absent: "Not installed — see docs/aos/migration-guide.md if you want to opt in."] |
+| `shared/telemetry/` | Yes / No | [If present: brief list of files.] |
 | `shared/evaluation/` | Yes / No | [Same shape] |
-| `shared/hooks/` | Yes / No | [Same shape — Phase 2] |
+| `shared/hooks/` | Yes / No | [Present — Phase 2: hooks-schema + examples] |
 | `shared/orchestration/` | Yes / No | [Same shape — Phase 3] |
 | `shared/rag/` | Yes / No | [Same shape — Phase 3] |
 
 Counter agents present under `shared/agents/`: [comma-separated list, or "None"]
-Expected in v3.0: `memory-auditor`. Phase 2 will add 10 more.
+Landed in v3.1: 11 counter agents (memory-auditor + 10 Phase 2 counter-auditors).
 ```
 
 ## Guardrails
