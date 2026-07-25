@@ -1,0 +1,49 @@
+# Delivery Policy Template (.claude/delivery-policy.yaml)
+# Controls policy-driven graduated automation for the /deliver-feature pipeline.
+
+version: "1.0"
+mode: "policy-driven" # Options: "strict-human", "policy-driven", "unattended"
+
+defaults:
+  maxContractRetries: 3
+  maxDiffLines: 200
+  requireGreenTests: true
+
+# Non-negotiable gate policies (Only gates 2, 6, and 7 are policy-eligible)
+gates:
+  gitCommit:
+    autoProceed: true
+    maxDiffLines: 300
+    requireCleanStatus: true
+
+  outOfBoundaryWrite:
+    autoProceed: true
+    allowedPaths:
+      - "src/**"
+      - "tests/**"
+      - "docs/**"
+
+  fitnessFunctionWiring:
+    autoProceed: true
+    requireDryRunPass: true
+
+# Pipeline stage auto-proceed settings
+stages:
+  phase1_discovery:
+    autoProceedAnalyst: true
+    autoProceedArchitect: false # Pause if architectural RFC or structural flags exist
+
+  phase2_implementation:
+    autoProceedDeveloper: true
+    autoProceedCodeReviewer: true # Auto-proceed if verdict is APPROVED & 0 Criticals
+
+  phase3_verification:
+    autoProceedQA: true
+    autoProceedTechWriter: true
+    autoProceedDevOps: true
+
+# Hard escalation thresholds (always halt to human if triggered)
+escalations:
+  haltOnSecurityCritical: true
+  haltOnArchitecturalRFC: true
+  haltOnMaxRetriesExceeded: true
