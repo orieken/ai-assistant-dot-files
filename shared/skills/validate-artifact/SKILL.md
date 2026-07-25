@@ -66,6 +66,13 @@ Same PASS/FAIL semantics; the validation switches from heading-grepping to front
 The output section headings (`Missing Sections`, `Present Sections`) still apply — read them as
 "Missing Fields" / "Present Fields" for the frontmatter case.
 
+### Opt-in Counter Auditor Invocation (AOS Phase 2)
+When enabled via project configuration (`.claude/validate-artifact.yaml` or `invokeAuditors: true` in `.claude/delivery-policy.yaml`):
+1. After the artifact passes the structural check with status `PASS`, lookup the producer's corresponding counter agent (per `docs/aos/governance-pairs.md`).
+2. Invoke the counter auditor agent (e.g. `context-auditor` for `context-manifest.md`, `privacy-auditor` for implementation artifacts, `knowledge-auditor` for KIs).
+3. Attach the counter auditor's findings report under `## Counter Auditor Findings` in the output format.
+4. **Default Behavior Unchanged**: If no configuration exists, `validate-artifact` runs strictly structural checks without invoking auditors.
+
 ## Output Format
 ```markdown
 # Artifact Validation: [artifact filename]
