@@ -18,6 +18,18 @@ commit — the pre-commit hook checks for exactly this.
 
 ---
 
+## 2026-07-24 — Context-engineer changelog catch-up
+
+Documentation-only catch-up for the existing `context-engineer` v2.2.0 prompt state. The agent file
+already carried this version; this entry records it so `health-check.sh` no longer reports the version as
+undocumented. No agent behavior changed in this edit.
+
+| Agent | Version | Change |
+|---|---|---|
+| context-engineer | 2.2.0 | Changelog catch-up for the already-present proactive context-optimization prompt version. No prompt edit or behavior change in this documentation patch. |
+
+---
+
 ## 2026-07-22 — v3.0.0: AOS foundations (Phase 1)
 
 First landing of the AOS (AI Operating System) migration described in
