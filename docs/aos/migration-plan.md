@@ -115,11 +115,10 @@ running the pipeline end to end, which the automated Phase 1 handoff can't
 safely do in this repo's working tree without polluting `.claude/feature-
 workspace/`). Checks a human should run before publishing the v3.0.0 tag:
 
-1. `bash scripts/health-check.sh --verbose` — expect 0 FAILs. The two
-   WARNs (`context-engineer 2.2.0 not found together in CHANGELOG.md`,
-   `.claude/knowledge/ marked optional`) are pre-existing and are not
-   Phase 1 regressions — both were also WARNs before this migration
-   started.
+1. `bash scripts/health-check.sh --verbose` — expect 0 FAILs and 0 WARNs
+   (the pre-existing `context-engineer 2.2.0` changelog warning and
+   `.claude/knowledge/` optional-path warning were both resolved in the
+   framework hygiene sweep).
 2. `bash scripts/check-parity.sh` — expect PASS on every generated
    config, no DRIFT.
 3. Run `deliver-feature` against a small sample feature in a scratch

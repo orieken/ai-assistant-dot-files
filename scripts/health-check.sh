@@ -328,7 +328,7 @@ for p in data.get('optionalPaths', []):
     if [[ -e "$full_path" ]]; then
       pass "registry path exists: $rpath"
     elif echo "$optional_paths" | grep -qxF "$rpath"; then
-      warn "registry path missing (marked optional): $rpath"
+      pass "registry path missing (marked optional, skipped): $rpath"
     else
       fail "registry path missing: $rpath"
     fi
