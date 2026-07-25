@@ -16,7 +16,6 @@ For tasks that require a human (not a fireable agent prompt), see [../human-task
 
 | File | Scope | Estimated size |
 |---|---|---|
-| [framework-hygiene-sweep.md](framework-hygiene-sweep.md) | Eight small pending items: commit `.gitignore` mod, track blog drafts, delete redundant AOS zip, add KI template, adopt `done/` convention, investigate audits doc, fix 2 pre-existing health-check WARNs | Small — 7-8 commits, all mechanical |
 | [capture-session-history.md](capture-session-history.md) | Investigate the framework's existing archive patterns (`docs/features/`, `docs/lessons-learned/`, `/retrospective` skill), propose one of four options for capturing the 2026-07 AOS foundations + frontmatter + retrofit sessions as history, execute on user approval | Small — investigation + user decision + 0-3 commits |
 | [automate-deliver-feature.md](automate-deliver-feature.md) | DESIGN an automated `/deliver-feature` workflow — policy-driven graduated automation preserving the framework's stage-3 human-in-the-loop stance. Produces `docs/aos/automated-delivery-design.md` + a follow-up Tier A implementation handoff. No code changes to the skill in this pass | Medium — design doc + handoff prompt + index update, 3 commits |
 | [write-blog-posts.md](write-blog-posts.md) | Draft dev.to + LinkedIn blog posts covering recent framework + agent developments. Six candidate topics ranging from the mcp-add retrofit to the AOS migration to corpus-aware RAG | Small-Medium — one topic = ~2 files + 1 commit; menu-driven, do 1-3 topics per session |
@@ -25,6 +24,7 @@ For tasks that require a human (not a fireable agent prompt), see [../human-task
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/framework-hygiene-sweep.md](done/framework-hygiene-sweep.md) | Eight small pending items: commit `.gitignore` mod, track blog drafts, delete redundant AOS zip, add KI template, adopt `done/` convention, investigate audits doc, fix 2 pre-existing health-check WARNs | Shipped 2026-07-24 in commits `5a4a35d` → `9717fca` |
 | [done/add-frontmatter-contracts.md](done/add-frontmatter-contracts.md) | Add `shared/contracts/agent-frontmatter-contract.md` + `skill-frontmatter-contract.md` + `ki-frontmatter-contract.md` so `validate-artifact` can grep-check these | Shipped 2026-07-22 in commits `ae1e440` → `38b14a9` |
 | [done/add-frontmatter-json-schemas.md](done/add-frontmatter-json-schemas.md) | Add `shared/schemas/agent-frontmatter.schema.json` etc. Enables IDE autocomplete + enum-value validation. Wire into VS Code / Cursor settings templates | Shipped 2026-07-22 in commits `fdfdd9b` → `a522e14` |
 
