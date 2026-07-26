@@ -16,8 +16,15 @@ Set up the ai-assistant-dot-files framework in a target project **AND** expose s
 
 ## Reference material
 
-- `saturday-monorepo/saturday-mcp/` — the reference implementation of a framework-tool-exposing MCP. Its `internal/tools/`, `internal/analyzers/`, `internal/server/tool_provider.go` are the sources you'll copy from.
-- `saturday-mcp/mcp-expand-plan.md` — documents the tool patterns, retrieval-adapter interface, path resolution strategy.
+**Primary source (preferred, no external clone required):**
+- `shared/mcp-patterns/go/tools/` — reference tool source shipped with the framework itself (retrievers, analyzers, walkutil, response structs, registration pattern). Copy from here for any new bridge.
+- `shared/mcp-patterns/porting-guides/<language>.md` — if the target project's MCP is TypeScript, Python, or Java, read the matching porting guide first.
+
+**If `shared/mcp-patterns/` doesn't exist yet in your framework install** (the extraction is queued as `docs/prompts/add-mcp-patterns-directory.md`), fall back to:
+- `saturday-monorepo/saturday-mcp/internal/tools/`, `internal/analyzers/`, `internal/server/tool_provider.go` — historical reference implementation. **Requires saturday-monorepo cloned locally.** This fallback is temporary; the extraction eliminates the accidental dependency.
+
+**Always relevant:**
+- `saturday-monorepo/saturday-mcp/mcp-expand-plan.md` — documents the tool patterns, retrieval-adapter interface, path resolution strategy. Useful even after extraction as a real-world worked example.
 - `docs/patterns/deliver-feature-workflow.md` — shows how framework agents relate to framework MCP tools (agents author, MCP tools serve any client).
 
 ## Prerequisites

@@ -24,7 +24,7 @@ The framework can live in a target project in one of four shapes. Phase A of thi
 | Pattern | How to detect | Update mechanism |
 |---|---|---|
 | **A. Traditional install** — symlinks | `.claude/agents/`, `.claude/skills/`, `.claude/rules/` in target project exist and are symlinks pointing into the framework clone | `install.sh` re-run (refreshes symlinks; usually no-op since symlinks track the framework live) |
-| **B. Bridge install** — copied tool source in project's MCP | Target project has an MCP server (e.g., `./project/mcp/`) with source files whose content matches or descends from `saturday-mcp/internal/tools/*` | Manual re-copy of updated tool files + regen tests + rebuild MCP server (source was **copied**, not symlinked, so upstream changes don't flow automatically) |
+| **B. Bridge install** — copied tool source in project's MCP | Target project has an MCP server (e.g., `./project/mcp/`) with source files whose content matches or descends from `shared/mcp-patterns/go/tools/*` (or, historically, `saturday-mcp/internal/tools/*` for bridges established before the pattern extraction — see `docs/prompts/add-mcp-patterns-directory.md`) | Manual re-copy of updated tool files + regen tests + rebuild MCP server (source was **copied**, not symlinked, so upstream changes don't flow automatically). If `shared/mcp-patterns/` exists in the framework install, use it as the diff source. If not (pre-extraction), fall back to saturday-mcp as the diff source and note the technical debt |
 | **C. Adopted saturday-mcp** — used as-is | Target project uses `saturday-mcp` (as a submodule, dependency, or installed binary) rather than its own MCP with bridged tools | Update the saturday-mcp version pin (submodule commit / dependency version / installed-binary rebuild); restart MCP server |
 | **D. Generated platform configs** — non-symlinkable | `.cursor/rules/*.mdc`, `.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`, `.openai.md`, `AGENTS.md` exist in target project as regenerated content | Re-run `scripts/generate-configs.sh` (in-repo tool that produces the platform-specific files from the shared sources) |
 
@@ -74,11 +74,19 @@ Commit (in target repo): `chore(platform-configs): regenerate for framework upda
 
 #### If Pattern B detected — sync copied tool source (most work)
 
-For each tool file that changed upstream in `saturday-mcp/internal/tools/`:
+**Diff source selection**: prefer `<framework_clone>/shared/mcp-patterns/go/tools/` if it exists (post-extraction). Fall back to `saturday-monorepo/saturday-mcp/internal/tools/` if not (pre-extraction — note this in the Phase B report so extraction gets prioritized).
 
-1. Diff the target's copy against the current saturday-mcp version:
+For each tool file that changed upstream:
+
+1. Diff the target's copy against the current reference source:
    ```bash
-   diff /path/to/project/mcp/internal/tools/<tool>.go /path/to/saturday-monorepo/saturday-mcp/internal/tools/<tool>.go
+   # Preferred (post-extraction):
+   diff /path/to/project/mcp/internal/tools/<tool>.go \
+        /path/to/ai-assistant-dot-files/shared/mcp-patterns/go/tools/<tool>.go
+
+   # Fallback (pre-extraction, requires saturday-monorepo cloned):
+   diff /path/to/project/mcp/internal/tools/<tool>.go \
+        /path/to/saturday-monorepo/saturday-mcp/internal/tools/<tool>.go
    ```
 2. Identify what changed upstream + what was intentionally adapted downstream (path defaults, monorepo `packagePath` handling, etc.)
 3. Re-apply the upstream changes to the target's copy PRESERVING the downstream adaptations
