@@ -108,6 +108,28 @@ describes what's loaded *right now* — it is not where things are durably store
    definition and the specific artifact/task handed to it, never the orchestrator's full history or another
    subagent's internal reasoning. The orchestrator only ever consumes a subagent's final structured report
    (see `shared/knowledge/subagent-isolation-is-a-hard-boundary.md`).
+6. **Judgment Over Blanket Constraints** — newer models handle repo-local judgment better than long lists of
+   defensive absolutes. Keep hard safety gates hard (`approval-gates.md`, destructive migrations, secrets,
+   architecture boundaries), but phrase style and implementation guidance as "match the surrounding code" or
+   "prefer the established pattern" instead of repeating brittle universal rules in every prompt.
+7. **Interfaces Over Examples** — when a tool, skill, script, or artifact is confusing, improve its
+   interface first: names, schemas, status enums, required sections, defaults, and validation errors carry
+   more reusable signal than a pile of examples. Keep examples for high-risk protocols or genuinely
+   non-obvious workflows.
+8. **Progressive Disclosure Before Central Catalogs** — root prompts (`CLAUDE.md`, `AGENTS.md`, generated
+   platform prompts) should identify the framework and routing map, not become encyclopedias. Detailed
+   verification, review, migration, and domain guidance belongs in skills/runbooks that are loaded only when
+   relevant.
+9. **Rich References Beat Prose Summaries** — when a task depends on taste or fidelity, prefer references
+   the model can inspect directly: interfaces, tests, fixtures, schemas, HTML mockups, rubrics, prior
+   implementation files, or golden outputs. A prose spec is still useful, but it should point at the
+   highest-fidelity reference available instead of paraphrasing it.
+
+The Claude 5 context-engineering guidance published by Anthropic on 2026-07-24 is the external calibration
+point for principles 6-9: their reported direction is smaller upfront prompts, heavier progressive
+disclosure, simpler tool descriptions, and richer references. This framework keeps stronger hard gates than
+Claude Code's default system prompt because it encodes organizational risk controls, but those gates should
+not be used as an excuse to duplicate obvious guidance everywhere.
 
 `context-engineer` is the agent responsible for keeping Layers 3-6 high-signal before the rest of the
 pipeline starts. Its output, `context-manifest.md`, has a required structure enforced by
@@ -167,6 +189,10 @@ To confirm context is well-managed on an active run:
 - The active open files only belong to the component currently being modified.
 - Terminal/command output in context is concise (use filters, `head`, or limit counts like `git log -n 5`).
 - No duplicate copies of the same file or guideline exist across the loaded context.
+- No prompt, skill, or rule repeats guidance already obvious from the filesystem, schema, tool signature, or
+  a more specific loaded runbook.
+- Pinpoint references favor high-fidelity artifacts (interfaces, tests, schemas, rubrics, mockups) over
+  prose paraphrases when both exist.
 - Run `context-audit` after a delivery to check whether pinned files were actually referenced, and whether
   any large file was loaded without a line-range constraint.
 

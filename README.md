@@ -44,8 +44,8 @@ for how the Context/Memory/Learning loop actually works, and the pipeline diagra
 
 ```
 shared/                              <- single source of truth, edit here only
-├── agents/        (25 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
-├── skills/        (56 skills)       <- .md with trigger keywords/patterns
+├── agents/        (26 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
+├── skills/        (58 skills)       <- .md with trigger keywords/patterns
 ├── rules/                           <- architecture-guardrails.md, design-principles.md, approval-gates.md
 ├── contracts/                       <- required-section contracts for pipeline agent handoffs
 ├── knowledge/                       <- portable Knowledge Items (KIs)
@@ -138,7 +138,7 @@ that's what those tools are actually capable of running.
 
 ---
 
-## Agent Roster (24)
+## Agent Roster (26)
 
 Full definitions in `shared/agents/`; versions tracked in `shared/agents/CHANGELOG.md`. For what actually
 checks each agent's work today (a contract, a downstream reviewer, a human approval gate, or an honestly
@@ -167,13 +167,15 @@ documented gap), see [docs/AGENT_REFERENCE.md](docs/AGENT_REFERENCE.md).
 | **dx-engineer** | Developer-experience: build times, flaky tests, local dev loop friction. |
 | **finops-engineer** | Reviews architecture/code changes for cost implications as a first-class metric. |
 | **documentation-manager** | Ad-hoc-session counterpart to `promote-memory` -- captures durable knowledge from sessions that never went through `deliver-feature`, via the same Candidate Record + human-approval flow. |
+| **memory-auditor** | Read-only counter-agent for the KI corpus — audits schema compliance, duplicate candidates, and stale metadata without modifying memory. |
 | **modernization-supervisor** | Coordinates parallel legacy-modernization workstreams (dependencies, patterns, test coverage). |
 | **api-test-generator** | Generates Sunday Framework API test suites (Playwright + Vitest + Zod) from a spec. |
 | **test-driven-developer** | Autonomous red-green-refactor loop: writes tests first, iterates until green. |
+| **unit-tester** | Backfills unit and characterization tests for existing code without modifying production implementation. |
 
 ---
 
-## Skill Catalog (53)
+## Skill Catalog (58)
 
 Full definitions in `shared/skills/<name>/SKILL.md`, including exact trigger keywords/intent patterns.
 Grouped by what they're for:
@@ -182,6 +184,7 @@ Grouped by what they're for:
 | Skill | Trigger on |
 |---|---|
 | `deliver-feature` | "Deliver \*", "Implement \*", `/deliver-feature *` — runs the full agent sequence |
+| `deliver-atdd` | Acceptance-test-first delivery loop with scenario review gates and autonomous red-green implementation. |
 | `resume-pipeline` | Resuming an interrupted run, `--from-phase N`, rolling back an agent's artifact |
 | `validate-artifact` | Auto-invoked between every contract-bound agent handoff — checks required sections |
 | `pipeline-trace` | "How long did \* take", ad-hoc single-run timing/iteration questions |
@@ -204,6 +207,7 @@ Grouped by what they're for:
 | `new-feature` | Guided spec creation, optionally kicks off delivery |
 | `spec-writer` | `/spec-writer`, "write a spec for \*", "review this spec" |
 | `event-storm` | Collaborative domain modeling before a feature starts |
+| `bootstrap-project` | Guided greenfield project setup from known ecosystem blueprints and starter artifacts. |
 
 ### Code quality & architecture
 | Skill | Trigger on |
@@ -215,6 +219,7 @@ Grouped by what they're for:
 | `verify-dependencies` | Clean Architecture import-boundary checks |
 | `team-topology-check` | Flags a stale Collaboration mode or a bypassed Platform team at a Bounded Context crossing, per `TEAM_TOPOLOGY.md` |
 | `review-pr` | Coordinates code-reviewer + security-reviewer + accessibility-engineer on a PR |
+| `context-engineer` | Builds a high-signal context manifest before complex, unfamiliar, or multi-file work. |
 
 ### Testing
 | Skill | Trigger on |
@@ -222,8 +227,10 @@ Grouped by what they're for:
 | `run-tests` | Executes the suite, verifies the 85% coverage threshold |
 | `generate-fuzz-tests` | Property-based fuzz test generation |
 | `sunday-test-advisor` | Audits an API spec for missing test scenarios |
+| `saturday-test-advisor` | Audits Saturday Site-Centric E2E/UI suites for orphaned primitives and broken scenario references. |
 | `debug-tests` | Iteratively debugging a failing test suite |
 | `api-contract-verify` | Pact-style consumer-driven contract verification |
+| `backfill-unit-tests` | Coordinates `unit-tester` and `code-reviewer` to add tests around existing code safely. |
 
 ### Security & accessibility
 | Skill | Trigger on |
@@ -242,6 +249,7 @@ Grouped by what they're for:
 |---|---|
 | `openapi` | API contract design before implementation |
 | `api-ingest` | Generates docs + typed clients from a Swagger/OpenAPI URL |
+| `mcp-add` | Retrofitting or extending an MCP server with the framework's tool/persona/workflow pattern. |
 
 ### Documentation
 | Skill | Trigger on |

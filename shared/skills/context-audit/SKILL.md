@@ -42,13 +42,25 @@ Cross-reference `context-manifest.md`'s Pinpoint Files against actual file line 
 own guardrail requires range-constraining anything over 500 lines — flag any pin over 500 lines with no
 `#Lxx-Lyy` range as a guardrail violation, not just inefficiency.
 
-### 4. Session-level audit (conversation mode)
+### 4. Overconstrained or duplicated guidance
+Check whether loaded prompts, rules, skills, or manifest entries repeat instructions that are already obvious
+from a tool schema, file structure, or more specific runbook. Flag style/implementation rules that could be
+replaced by "match surrounding code" or "follow the referenced interface/schema." Do not flag hard safety
+controls (`approval-gates.md`, destructive migration bans, secret handling, Clean Architecture boundaries)
+as waste just because they are strict — those are risk controls, not style hints.
+
+### 5. Low-fidelity references
+Flag prose summaries pinned in place of smaller, higher-fidelity references: interfaces, tests, schemas,
+fixtures, generated golden outputs, HTML/design mockups, or rubrics. Recommend swapping to the underlying
+reference when it carries the same information with fewer tokens and less ambiguity.
+
+### 6. Session-level audit (conversation mode)
 When auditing the live conversation instead of a persisted pipeline run: scan the tool-call history for the
 same three patterns — full reads of files over 500 lines with no `offset`/`limit`, the same file read more
 than once without the content changing, and files read but never referenced again in any subsequent
-response.
+response. Also check for duplicated guidance and low-fidelity references using steps 4 and 5.
 
-### 5. Estimate wasted tokens
+### 7. Estimate wasted tokens
 For each flagged item, estimate the token cost using the same heuristic `context-engineer` uses (~line count
 × 8 chars/line ÷ 4 chars/token) so the waste is quantified, not just qualitative.
 
@@ -64,6 +76,12 @@ For each flagged item, estimate the token cost using the same heuristic `context
 
 ## Unconstrained Large Reads
 - [file] ([N] lines) -- pinned without a line range, violates context-engineer's >500-line guardrail
+
+## Overconstrained Guidance
+- [file or prompt section] -- repeats [instruction] already expressed by [more specific source/interface]
+
+## Low-Fidelity References
+- [prose file] -- summarizes [interface/test/schema/mockup/rubric] that should be pinned directly instead
 
 ## Estimated Total Waste
 ~[N] tokens across [M] flagged items ([X]% of the manifest's estimated total)

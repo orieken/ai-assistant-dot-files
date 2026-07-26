@@ -12,9 +12,10 @@ that these headings survive intact. Preserve every heading exactly.
 - **Bounded Context**: [e.g. Identity & Access]
 
 ## 2. Pinpoint Files (To Keep Open)
-List specific files that must be opened or referred to, specifying line ranges where appropriate:
-- [File Name](file://<absolute_path>#L10-L45) -- [Reason, e.g., "Defines the IUser repository interface"]
-- [File Name](file://<absolute_path>) -- [Reason]
+List specific files that must be opened or referred to, specifying line ranges where appropriate. Prefer
+high-fidelity references (interfaces, tests, schemas, fixtures, mockups, rubrics) over prose paraphrases:
+- [File Name](file://<absolute_path>#L10-L45) -- [Reference type] -- [Reason, e.g., "Defines the IUser repository interface"]
+- [File Name](file://<absolute_path>) -- [Reference type] -- [Reason]
 
 ## 3. Global Rules and Constraints
 List reference files that establish the patterns:

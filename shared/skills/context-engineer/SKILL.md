@@ -62,6 +62,15 @@ deliberately independent of recency — a same-area feature from 20 deliveries a
 scale a direct grep is fine; once the archive grows past ~15-20 features, see
 `docs/runbooks/scaling-cross-feature-learning.md`.
 
+### 4b. Prefer High-Fidelity References
+When choosing what to pin, prefer references Claude can inspect directly over prose paraphrases:
+- Interfaces, schemas, tests, fixtures, generated golden outputs, and prior implementation files.
+- HTML/design mockups or artifact files when visual fidelity matters.
+- Rubrics/checklists when the task depends on taste or review judgment.
+
+If a prose spec summarizes a code/test/schema reference, pin the underlying reference too — or replace the
+prose pin with the underlying reference when the summary adds no unique information.
+
 ### 5. Estimate the Token Budget
 For each pinned file, estimate tokens (~line count × 8 chars/line ÷ 4 chars/token — a rough heuristic). Sum the total and compare against the consuming agent's tier budget (of a 200k-token context window): Analyst/Architect ≤60%, Developer ≤80%, Reviewer agents ≤40%. Flag `WARNING` if over budget and recommend specific cuts.
 
@@ -81,9 +90,10 @@ The skill produces a `context-manifest.md` matching this structure:
 - **Bounded Context**: [e.g., Identity & Access]
 
 ## 2. Pinpoint Files (To Keep Open)
-List specific files and line ranges that MUST be kept in active memory:
-- [File Basename](file:///absolute/path/to/file#L1-L50) -- [Purpose/Contract]
-- [File Basename](file:///absolute/path/to/file#L100-L150) -- [Implementation details]
+List specific files and line ranges that MUST be kept in active memory. Prefer high-fidelity references
+(interfaces, tests, schemas, fixtures, mockups, rubrics) over prose paraphrases when both exist:
+- [File Basename](file:///absolute/path/to/file#L1-L50) -- [Reference type] -- [Purpose/Contract]
+- [File Basename](file:///absolute/path/to/file#L100-L150) -- [Reference type] -- [Implementation details]
 
 ## 3. Global Rules and Constraints
 List reference files that establish the patterns:
@@ -113,6 +123,8 @@ List files currently open that should be closed immediately:
 ## Guardrails
 - **No directory dumps**: Do not include entire directories in the manifest. Specify files explicitly.
 - **Limit line count**: Files over 500 lines must be referenced with specific line ranges.
+- **Prefer reference fidelity**: Do not pin a prose summary when a smaller, more precise code/test/schema/
+  rubric/mockup reference carries the same information.
 - **Rule alignment**: Never recommend files that violate Clean Architecture dependency boundaries (e.g. loading infrastructure database models in the Domain context manifest).
 - **Never** report a token budget as OK without having actually estimated it.
 - **Never** skip the "Prior Deliveries" section silently — state "none found" explicitly so it's clear the check ran.

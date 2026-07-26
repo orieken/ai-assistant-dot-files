@@ -10,14 +10,14 @@ set -uo pipefail
 # passing on macOS's bash proves nothing about whether it'll pass in CI. Run this before every push that
 # touches scripts/, shared/, or .github/workflows/ — not just after.
 #
-# Covers 3 of the 4 CI jobs: check-parity, test-agents, health-check. The 4th (agent-versions) only runs
-# on pull requests and needs a real base-ref + head SHA from the PR event -- not reproducible standalone
-# without a PR to compare against. If you want to check it locally, run
+# Covers the CI jobs that are reproducible from a standalone checkout: check-parity, test-agents,
+# health-check, and test-install. The agent-versions job only runs on pull requests and needs a real
+# base-ref + head SHA from the PR event -- not reproducible standalone without a PR to compare against.
+# If you want to check it locally, run
 # scripts/check-agent-versions-ci.sh <base-ref> <head-sha> directly against a real branch comparison.
 #
-# Also runs test-install.sh (not yet a real CI job -- see approval-gates.md gate #7, adding it to
-# .github/workflows/framework-ci.yml needs explicit sign-off first). It writes to scratch dirs under
-# the container's own /tmp, not to the read-only /repo mount, so it's safe to run here regardless.
+# test-install.sh writes to scratch dirs under the container's own /tmp, not to the read-only /repo
+# mount, so it's safe to run here alongside the static checks.
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="ubuntu:24.04"  # matches ubuntu-latest at the time this script was written; bump if GitHub moves LTS

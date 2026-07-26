@@ -29,8 +29,8 @@ docs/
                              documentation; act on findings, then delete once resolved.
 ```
 
-`docs/aos/` (v3/AOS prototyping material) deliberately doesn't live on `main` -- see the `v3-aos`
-branch.
+`docs/aos/` contains opt-in v3/AOS migration and governance material. It is tracked on `main`, but the
+runtime remains backward-compatible with v2 installs unless a team explicitly adopts the AOS layers.
 
 ---
 
