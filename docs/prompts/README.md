@@ -14,6 +14,12 @@ For tasks that require a human (not a fireable agent prompt), see [../human-task
 
 ## Active Prompts
 
+### Cross-project setup pattern
+
+| File | Scope | Estimated size |
+|---|---|---|
+| [install-framework-with-mcp-bridge.md](install-framework-with-mcp-bridge.md) | Install framework into a target project **AND** bridge selected framework tools (analyze_complexity, check_accessibility, search_ki, search_docs, etc.) into that project's existing MCP server. Follows Option B (copy source, keep MCP sovereign, adjust paths + monorepo `packagePath` filter for the target's layout). Reusable pattern for projects with Saturday-like structure but not using Saturday itself | Medium-large — Phase A investigate + Phase B plan + Phase C multi-op execution; ~8-10 commits in the target repo |
+
 ### Phase 10 Roadmap Epics (from `docs/audits/framework-gap-audit-2026-07-25.md`)
 
 Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execution order below matches the audit's priority ranking.
