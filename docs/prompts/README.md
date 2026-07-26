@@ -14,7 +14,24 @@ For tasks that require a human (not a fireable agent prompt), see [../human-task
 
 ## Active Prompts
 
-*(None — all framework improvement prompts complete!)*
+### Phase 10 Roadmap Epics (from `docs/audits/framework-gap-audit-2026-07-25.md`)
+
+Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execution order below matches the audit's priority ranking.
+
+| Epic | File | Estimated size |
+|---|---|---|
+| **53** | [epic-53-inventory-drift-check.md](epic-53-inventory-drift-check.md) — CI drift detection for `shared/` inventories | Small (1 script + wire-in) |
+| **42** | [epic-42-roo-code-cline-platform.md](epic-42-roo-code-cline-platform.md) — Roo Code + Cline platform integration | Medium (Phase A investigate + Phase B multi-op) |
+| **44** | [epic-44-jetbrains-exporter.md](epic-44-jetbrains-exporter.md) — JetBrains + Junie system-prompt exporter | Small-medium (same Phase A/B pattern) |
+| **46** | [epic-46-visual-qa-engineer.md](epic-46-visual-qa-engineer.md) — visual-qa-engineer agent + Saturday.ML integration | Medium (Phase A design + Phase B agent/contract/template/pipeline wiring) |
+| **48** | [epic-48-iac-conventions.md](epic-48-iac-conventions.md) — Terraform / Docker / K8s / GHA rule doc | Small-medium (1 file + agent wire-up) |
+| **49** | [epic-49-mobile-conventions.md](epic-49-mobile-conventions.md) — Swift + Kotlin conventions | Medium (2 files, one commit each) |
+| **50** | [epic-50-rust-conventions.md](epic-50-rust-conventions.md) — Rust conventions | Small-medium (1 file) |
+| **51** | [epic-51-enterprise-memory-sync.md](epic-51-enterprise-memory-sync.md) — `install.sh --sync-memory` + ADR-003 | Medium-large (design + protocol + tooling) |
+| **55** | [epic-55-agent-eval-expansion.md](epic-55-agent-eval-expansion.md) — golden-file coverage for all 36 agents | Medium (audit + fill + enforce) |
+| **57** | [epic-57-context-manifest-fixtures.md](epic-57-context-manifest-fixtures.md) — fixtures for `check-context-budget.sh` | Small (1 commit) |
+
+**Not drafted — reasons documented inline in the audit** (superseded, resolved, or scope-clarification needed): Epics 43, 45, 47, 52, 54, 56, 58.
 
 ## Completed Prompts (`docs/prompts/done/`)
 
