@@ -16,12 +16,12 @@ Set up the ai-assistant-dot-files framework in a target project **AND** expose s
 
 ## Reference material
 
-**Primary source (preferred, no external clone required):**
-- `shared/mcp-patterns/go/tools/` — reference tool source shipped with the framework itself (retrievers, analyzers, walkutil, response structs, registration pattern). Copy from here for any new bridge.
+**Primary source:**
+- `shared/mcp-patterns/go/tools/`, `shared/mcp-patterns/go/analyzers/`, `shared/mcp-patterns/go/server/` — reference tool source shipped with the framework itself (retrievers, analyzers, walkutil, response structs, registration pattern). Copy from here for any new bridge.
 - `shared/mcp-patterns/porting-guides/<language>.md` — if the target project's MCP is TypeScript, Python, or Java, read the matching porting guide first.
 
-**If `shared/mcp-patterns/` doesn't exist yet in your framework install** (the extraction is queued as `docs/prompts/add-mcp-patterns-directory.md`), fall back to:
-- `saturday-monorepo/saturday-mcp/internal/tools/`, `internal/analyzers/`, `internal/server/tool_provider.go` — historical reference implementation. **Requires saturday-monorepo cloned locally.** This fallback is temporary; the extraction eliminates the accidental dependency.
+**Optional real-world example:**
+- `saturday-monorepo/saturday-mcp/` — a real-world downstream consumer of these patterns. Useful as a secondary reference, but optional (saturday-monorepo does NOT need to be cloned locally to bridge tools).
 
 **Always relevant:**
 - `saturday-monorepo/saturday-mcp/mcp-expand-plan.md` — documents the tool patterns, retrieval-adapter interface, path resolution strategy. Useful even after extraction as a real-world worked example.
@@ -54,7 +54,7 @@ Discover the target project's structure and existing MCP server state:
    - Features: `./project/tests/features/`?
    - Packages: `./project/packages/`?
    - KIs: `./project/.claude/knowledge/` (will exist after framework install)
-4. Read `saturday-mcp/internal/tools/analyze_complexity_tool.go` + `saturday-mcp/internal/tools/retriever.go` + `saturday-mcp/internal/server/tool_provider.go` to internalize the pattern being ported.
+4. Read `shared/mcp-patterns/go/tools/analyze_complexity_tool.go` + `shared/mcp-patterns/go/tools/retriever.go` + `shared/mcp-patterns/go/server/tool_provider.go` to internalize the pattern being ported.
 
 Write findings to `./project/docs/framework-mcp-bridge-investigation.md`.
 
@@ -101,7 +101,7 @@ Verifies: `./project/.claude/agents/`, `.claude/skills/`, `.claude/rules/`, `.cl
 Commit (in target repo, if install created any tracked files): `chore(framework): install ai-assistant-dot-files context framework`.
 
 **Op 2 — Bridge foundation**:
-- If target MCP is Go: copy `saturday-mcp/internal/tools/retriever.go` and `bm25_retriever.go` into the target project's tools directory, adjust the package name.
+- If target MCP is Go: copy `shared/mcp-patterns/go/tools/retriever.go` and `bm25_retriever.go` into the target project's tools directory, adjust the package name.
 - If target MCP is TS/Python: port the `Retriever` interface + `KICorpusRetriever` (LLM-as-retriever) + `BM25Retriever` (sqlite-fts5) to the target language.
 
 Commit: `feat(mcp): add framework retrieval-adapter foundation (bridge Op 2)`.
@@ -111,7 +111,7 @@ Commit: `feat(mcp): add framework retrieval-adapter foundation (bridge Op 2)`.
 - Adapt corpus paths to use `./project/`-shaped env vars
 - Add `packagePath` optional input where relevant
 - Wire into the existing MCP server's tool provider / registration
-- Add unit tests following saturday-mcp's pattern (`internal/tools/*_test.go`)
+- Add unit tests following `shared/mcp-patterns/go/tools/testfixtures.go` pattern
 
 Each commit: `feat(mcp): bridge <tool_name> (bridge Op N)`.
 
