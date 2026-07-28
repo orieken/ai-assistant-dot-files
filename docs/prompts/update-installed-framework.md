@@ -37,7 +37,7 @@ Most projects hit A + D at minimum. Bridge projects hit A + B + D. saturday-mcp-
 Run these checks against the target project and record findings in `./project/docs/framework-update-<YYYY-MM-DD>.md`:
 
 1. **Pattern A**: is `./project/.claude/agents/` present? Are its entries symlinks? `readlink` each to verify they resolve into a valid framework clone path
-2. **Pattern B**: does `./project/mcp/` (or equivalent) exist? Do its `internal/tools/*.go` (or TS/Python equivalents) match filenames + shape from `saturday-mcp/internal/tools/`? A quick shape-check: same tool names? same input schemas? same response struct shapes?
+2. **Pattern B**: does `./project/mcp/` (or equivalent) exist? Do its `internal/tools/*.go` (or TS/Python equivalents) match filenames + shape from `shared/mcp-patterns/go/tools/`? A quick shape-check: same tool names? same input schemas? same response struct shapes?
 3. **Pattern C**: is `saturday-mcp` referenced as a dependency (in `go.mod`, `package.json`, `pyproject.toml`) OR installed as a system binary reachable on `PATH`? If yes, note the pinned version
 4. **Pattern D**: which platform config files exist under `.cursor/`, `.github/`, etc.? Note timestamps to see how stale they are relative to `shared/` source-of-truth
 5. **What's changed upstream**: `cd /path/to/ai-assistant-dot-files && git log --oneline HEAD@{last-update-of-target}..HEAD -- shared/` — enumerate the changed shared/ files since target project last synced (approximate — if target didn't record last-sync, use last framework commit that's in target's `.claude/`)

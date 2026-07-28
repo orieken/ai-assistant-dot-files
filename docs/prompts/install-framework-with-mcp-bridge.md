@@ -79,7 +79,7 @@ Draft `./project/docs/framework-mcp-bridge-plan.md` with:
   - Optional: `<PROJECT>_MCP_PACKAGES_PATH` — the packages monorepo root
 - **Monorepo adaptation** — the target has `./project/packages/` (multi-package). Analytical tools should optionally accept `packagePath` input to scope to a single package (e.g., `@mypackage/core`). Document how this input flows through the existing analyzers (may require small changes to the copied analyzer code).
 - **Language mapping**:
-  - Target MCP in Go → files copy near-verbatim from `saturday-mcp/internal/`
+  - Target MCP in Go → files copy near-verbatim from `shared/mcp-patterns/go/`
   - Target MCP in TypeScript → files need porting (design each analyzer + tool in TS following the same shape); adjust go-specific stdlib calls (`filepath.Walk` → `fast-glob` / `fs.readdir`, etc.)
   - Target MCP in Python → similar porting story
 - **Op-by-op breakdown** — enumerated below.
