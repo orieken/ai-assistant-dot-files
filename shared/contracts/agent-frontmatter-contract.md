@@ -17,20 +17,21 @@ grep-parses.
 | `name` | string | kebab-case; must match filename base (`analyst.md` → `name: analyst`). Referenced by the `Task` tool's `subagent_type` parameter and by other agents citing this one by role. |
 | `description` | string | One sentence. Include `PROACTIVELY` when the pipeline should invoke unconditionally; include `MUST` for hard-required ordering (e.g., "MUST be invoked before developer"). Consumed by the Claude Code / Cursor UI for agent picking and by the orchestrator when deciding pipeline sequencing. |
 | `tools` | comma-separated string | Claude Code tool names (`Read`, `Write`, `Edit`, `MultiEdit`, `Bash`, `Glob`, `Grep`). Use least-privilege — read-only agents (auditors, reviewers) should NOT have `Write`. Enforces capability boundaries. |
-| `model` | string | Usually `inherit`. Can pin (`claude-opus-4-8`, `claude-sonnet-5`, `claude-haiku-4-5`) for cost/quality tradeoffs on specific agents. `inherit` is the norm because the parent session's model choice usually applies; pin only when there's a real reason. |
+| `model_tier` | string (`light`, `default`, `heavy`) | Portable model capability declaration (`light` for read-only auditors, `default` for producers, `heavy` for deep architecture/security). Resolved to a concrete model ID per platform at install time via `shared/model-defaults.yaml`. |
 | `version` | semver string (`X.Y.Z`) | Bump minor on behavior-relevant change (output-format refactor, tool-list change); patch on prose-only edits; major only if the agent's contract with callers breaks. Downstream installs pull versioned agents; `shared/agents/CHANGELOG.md` tracks bumps. |
 
 ## Optional Fields
 
 | Field | Type | Notes |
 |---|---|---|
+| `model` | string | Optional explicit vendor model override (usually `inherit` or a specific `claude-*` ID). If present alongside `model_tier`, `model` takes precedence on Claude Code as an explicit override. |
 | `isolation` | string | `worktree` — agent runs in a temporary git worktree isolated from the main working copy. See `shared/agents/developer.md` for the reference use. |
 
 ## Validation Rule
 
 `validate-artifact` checks:
 
-1. **Field presence** — every required field above (`name`, `description`, `tools`, `model`, `version`)
+1. **Field presence** — every required field above (`name`, `description`, `tools`, `model_tier`, `version`)
    must appear as a top-level YAML key inside the opening `---` / closing `---` frontmatter block.
    Missing any one is a FAIL. This matches the field-presence check in `scripts/health-check.sh` step 2
    (the two enforcement paths agree on shape by design — this contract is the referenceable version of
