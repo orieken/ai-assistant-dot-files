@@ -164,6 +164,24 @@ should_install() {
   fi
 }
 
+resolve_model_tier() {
+  local platform="$1"
+  local overrides_file=""
+  if [[ "$MODE" == "project" && -n "$TARGET_DIR" ]]; then
+    overrides_file="$TARGET_DIR/.claude/model-overrides.yaml"
+  else
+    overrides_file="$HOME/.claude/model-overrides.yaml"
+  fi
+
+  if command -v python3 &>/dev/null; then
+    python3 "$REPO_DIR/scripts/resolve-model-tier.py" \
+      --platform "$platform" \
+      --defaults "$SHARED_DIR/model-defaults.yaml" \
+      --agents-dir "$SHARED_DIR/agents" \
+      ${overrides_file:+--overrides "$overrides_file"} 2>/dev/null || true
+  fi
+}
+
 install_antigravity() {
   log ""
   log "--- Gemini Antigravity (confirmed 2026-07-02 via tests/platform-verification/antigravity.md) ---"
@@ -301,14 +319,17 @@ echo ""
 
 if should_install "claude-code"; then
   install_claude_code
+  resolve_model_tier "claude-code"
 fi
 
 if should_install "cursor"; then
   install_cursor
+  resolve_model_tier "cursor"
 fi
 
 if should_install "gemini"; then
   install_antigravity
+  resolve_model_tier "gemini_antigravity"
 fi
 
 install_generated_configs
