@@ -1,0 +1,47 @@
+# Central mapping from portable model_tier → concrete model per platform.
+# Agents declare `model_tier: light|default|heavy` in their frontmatter.
+# The installer resolves the tier against the target platform's row below.
+#
+# `null` means: this platform does not honor per-agent model selection.
+#   The installer strips the field from the exported agent and emits a
+#   WARNING pointing at the platform's own model-selection docs.
+#
+# Capability reference: see shared/platform-registry.json for per-platform support details.
+
+claude_code:
+  light: claude-haiku-4-5-20251001
+  default: inherit
+  heavy: claude-opus-5
+
+cursor:
+  # Cursor's `.cursor/agents/` subagents accept a model field but the
+  # per-agent honoring is inconsistent across Cursor versions — treat as
+  # advisory only. Users can pin via Cursor Settings → Model.
+  light: null
+  default: null
+  heavy: null
+
+copilot:
+  # GitHub Copilot has no per-agent model API. Global model is picked in
+  # VS Code Copilot settings.
+  light: null
+  default: null
+  heavy: null
+
+gemini_antigravity:
+  # Gemini/Antigravity has no per-agent model selection.
+  light: null
+  default: null
+  heavy: null
+
+roo_code:
+  # TBD — depends on Epic 42 landing. Placeholder null for now.
+  light: null
+  default: null
+  heavy: null
+
+cline:
+  # TBD — depends on Epic 42 landing. Placeholder null for now.
+  light: null
+  default: null
+  heavy: null
