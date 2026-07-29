@@ -66,17 +66,28 @@ done
 echo ""
 
 # --- 2. Agent frontmatter ---------------------------------------------------
-echo "--- Agent Frontmatter (name, description, tools, model, version) ---"
+echo "--- Agent Frontmatter (name, description, tools, model_tier, version) ---"
 for agent_file in "$SHARED_DIR/agents/"*.md; do
   base="$(basename "$agent_file")"
   [[ "$base" == "CHANGELOG.md" ]] && continue
 
   missing=""
-  for field in name description tools model version; do
+  for field in name description tools version; do
     if ! grep -q "^${field}:" "$agent_file"; then
       missing="$missing $field"
     fi
   done
+
+  tier_val=$(grep '^model_tier:' "$agent_file" | head -1 | awk '{print $2}' || true)
+  if [[ -z "$tier_val" ]]; then
+    warn "$base — missing model_tier: (WARN cadence for 1 release cycle; will upgrade to FAIL)"
+  elif [[ "$tier_val" != "light" && "$tier_val" != "default" && "$tier_val" != "heavy" ]]; then
+    fail "$base — invalid model_tier '$tier_val' (must be light, default, or heavy)"
+  fi
+
+  if grep -q "^model:" "$agent_file"; then
+    warn "$base — has explicit 'model:' override alongside model_tier: (Claude Code will use 'model:', other platforms will use 'model_tier:')"
+  fi
 
   if [[ -z "$missing" ]]; then
     pass "$base"
