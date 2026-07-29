@@ -2,6 +2,7 @@
 name: agent-name
 description: One clear sentence stating when to invoke this agent, what artifact/behavior it produces, and any before/after dependencies (e.g., "Use after analyst has produced analysis.md. Produces implementation-notes.md. Expect an iterative loop with code-reviewer."). Include PROACTIVELY or MUST when the pipeline should invoke unconditionally.
 tools: Read, Glob, Grep, Bash
+model_tier: default
 model: inherit
 version: 1.0.0
 ---
@@ -49,7 +50,8 @@ If a section doesn't apply, write "None" as the body — never delete the headin
 | `name` | ✓ | kebab-case; must match filename base (`analyst.md` → `name: analyst`) |
 | `description` | ✓ | One sentence. Include PROACTIVELY / MUST for pipeline-invocation-critical agents |
 | `tools` | ✓ | Comma-separated Claude Code tool names. Use least-privilege — read-only agents shouldn't have Write |
-| `model` | ✓ | Usually `inherit` (matches parent session's model); can pin to a specific model id for cost/quality tradeoffs |
+| `model_tier` | ✓ | Portable capability tier (`light`, `default`, `heavy`). Resolved to concrete model ID per platform via `shared/model-defaults.yaml` |
+| `model` | optional | Optional explicit vendor override (`inherit` or specific `claude-*` model ID). If present, wins over `model_tier` on Claude Code |
 | `version` | ✓ | Semver. Bump minor on behavior-relevant change (like an output-format refactor); patch on prose-only edits |
 | `isolation` | optional | `worktree` = agent runs in a git worktree isolated from the main working copy (see `shared/agents/developer.md`) |
 
