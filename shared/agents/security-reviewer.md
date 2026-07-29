@@ -2,7 +2,8 @@
 name: security-reviewer
 description: Use after the code-reviewer subagent has approved the code and BEFORE the qa-engineer. Reviews the implementation for security vulnerabilities using STRIDE threat modeling. Produces security-report.md. MUST be invoked after code-reviewer and before qa-engineer on features involving auth, API endpoints, user input, secrets handling, tokens, sessions, or any data that crosses a trust boundary.
 tools: Read, Glob, Grep, Bash
-model: inherit
+# Deep reasoning — complex system architecture & security threat modeling
+model_tier: heavy
 version: 1.1.0
 ---
 

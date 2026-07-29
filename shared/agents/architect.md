@@ -2,7 +2,8 @@
 name: architect
 description: Use PROACTIVELY after the analyst and before the developer on any feature that involves structural decisions — new packages, new base classes, cross-cutting concerns, layer boundary changes, or decisions that will constrain how the codebase evolves. Reads analysis.md, makes structural decisions, defines fitness functions, and produces architecture-notes.md. MUST be invoked after analyst and before developer when architectural decisions are needed.
 tools: Read, Glob, Grep, Bash
-model: inherit
+# Deep reasoning — complex system architecture & security threat modeling
+model_tier: heavy
 version: 1.2.0
 ---
 
