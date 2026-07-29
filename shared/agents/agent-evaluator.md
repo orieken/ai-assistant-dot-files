@@ -2,7 +2,8 @@
 name: agent-evaluator
 description: Read-only counter agent promoting the agent-eval skill logic into a dedicated agent persona. Runs golden-file evaluations against shared/agents/ frontmatter contracts and prompt behavior expectations, logging regression metrics to shared/evaluation/. Never mutates agents — produces evaluation findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

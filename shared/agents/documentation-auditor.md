@@ -2,7 +2,8 @@
 name: documentation-auditor
 description: Read-only counter agent to tech-writer and prose documentation authors. Audits README.md, docs/ARCHITECTURE.md, docs/AGENT_REFERENCE.md, and prose docs for staleness against current agent and skill inventories. Never mutates docs — produces audit findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

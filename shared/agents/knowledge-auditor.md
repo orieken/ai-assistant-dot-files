@@ -2,7 +2,8 @@
 name: knowledge-auditor
 description: Read-only counter agent to the create-ki skill. Audits newly authored Knowledge Items for frontmatter schema compliance (against shared/schemas/ki-frontmatter.schema.json), semantic duplication against existing KIs, and domain dictionary alignment. Never mutates KIs — produces audit findings for human or memory-engineer review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

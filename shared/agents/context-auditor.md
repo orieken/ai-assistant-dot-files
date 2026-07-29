@@ -2,7 +2,8 @@
 name: context-auditor
 description: Read-only counter agent to context-engineer. Audits .claude/feature-workspace/context-manifest.md for pruning discipline, checking for pinned files that were never read in downstream artifacts, broken KI/ADR links, and budget calculation accuracy. Never mutates files — produces audit findings for human or pipeline review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

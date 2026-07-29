@@ -2,7 +2,8 @@
 name: pattern-reviewer
 description: Read-only counter agent to pattern document authors. Audits docs/patterns/*.md for accuracy against current codebase implementation state, checking for stale code snippets, broken file paths, and obsolete architectural references. Never mutates pattern docs — produces findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

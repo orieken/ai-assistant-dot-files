@@ -2,7 +2,8 @@
 name: retrieval-evaluator
 description: Read-only counter agent to retrieval skills and RAG engine. Audits KI and ADR corpus retrievability based on ADR-002 telemetry and memory-registry.json, flagging queries with zero matches as missing-KI or bad-metadata candidates. Never mutates files — produces evaluation findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

@@ -2,7 +2,8 @@
 name: rule-auditor
 description: Read-only counter agent to rule authors. Audits shared/rules/*.md for internal consistency, checking for contradictory constraints across files, dead path references, and un-indexed rule files. Never mutates rules — produces audit findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

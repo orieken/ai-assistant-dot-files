@@ -2,7 +2,8 @@
 name: privacy-auditor
 description: Read-only counter agent paired with security-reviewer. Audits pipeline artifacts in .claude/feature-workspace/ for accidental PII inclusion, hardcoded tokens/passwords in prompts or implementation notes, and data boundary leaks. Never mutates files — produces audit findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

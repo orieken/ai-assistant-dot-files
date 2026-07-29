@@ -2,7 +2,8 @@
 name: memory-auditor
 description: Read-only counter to the memory-engineer skill. Audits every KI under shared/knowledge/ and .claude/knowledge/ for schema compliance, duplicates (exact and semantic), and stale metadata (last-referenced > 6 months + no linking anywhere in the corpus). Never modifies KIs — produces findings for a human (or memory-engineer) to act on. Invoke when you want a fresh audit of the KI corpus, after a burst of create-ki activity, or on a periodic cadence.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

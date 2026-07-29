@@ -2,7 +2,8 @@
 name: prompt-evaluator
 description: Read-only counter agent to prompt authors. Audits agent and skill prompt files for prompt-engineering hygiene, checking for fabricated URLs, hardcoded secrets in examples, un-decoupled template examples, and inconsistent voice. Never mutates prompts — produces audit findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 

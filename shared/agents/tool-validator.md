@@ -2,7 +2,8 @@
 name: tool-validator
 description: Read-only counter agent to skill/tool authors. Audits shared/skills/*/SKILL.md for standalone-mode declaration, hidden MCP dependencies, frontmatter schema compliance, and valid parameter declarations. Never mutates skills — produces audit findings for human review.
 tools: Read, Glob, Grep
-model: inherit
+# Read-only auditor / evaluator — pattern-matching against rubric
+model_tier: light
 version: 1.0.0
 ---
 
