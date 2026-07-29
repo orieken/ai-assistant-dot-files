@@ -16,6 +16,11 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-07-29 — Portable model_tier Abstraction
+
+- **`model-tier-auditor` 1.0.0**: Added new read-only counter-agent auditing agent frontmatter for portable `model_tier` declarations (`light`, `default`, `heavy`).
+- **`model_tier` Frontmatter Backfill**: Backfilled portable `model_tier` declarations with operational rationale comments across all 36 shared agents.
+
 ## 2026-07-25 — v3.1.0: AOS Governance Skeleton (Phase 2)
 
 Second phase of the AOS (AI Operating System) migration described in `docs/aos/migration-plan.md`. Phase 2 is **purely additive**: every change is opt-in. A team upgrading to v3.1.0 without configuring `.claude/hooks/` or enabling auditor invocations sees zero behavior change from v3.0.0. That is the backward-compat guarantee this release commits to.

@@ -303,6 +303,7 @@ The following 11 read-only counter-auditor agents implement the opposing-force c
 35. `documentation-auditor` — Counter to `tech-writer` (audits `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts).
 36. `retrieval-evaluator` — Counter to RAG search skills (audits KI + ADR retrievability per ADR-002 telemetry, flagging unmatched zero-hit queries).
 37. `privacy-auditor` — Counter to `security-reviewer` & developers (audits feature workspace artifacts for PII, secrets, and credential leaks).
+38. `model-tier-auditor` — Counter to agent authors (audits `shared/agents/*.md` for portable `model_tier` declarations).
 
 ---
 
