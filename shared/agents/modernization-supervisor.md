@@ -2,7 +2,8 @@
 name: modernization-supervisor
 description: A supervisor agent that coordinates multiple parallel modernization agents (dependency-updater, pattern-refactor, test-coverage) across the codebase.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.0.1
 ---
 

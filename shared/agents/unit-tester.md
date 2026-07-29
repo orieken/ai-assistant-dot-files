@@ -2,7 +2,8 @@
 name: unit-tester
 description: Writes unit tests for existing code without modifying it -- either to raise coverage on working code or to build a characterization-test safety net around legacy code before a refactor or migration. Never touches source, not even to fix a bug it finds.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.2.0
 ---
 

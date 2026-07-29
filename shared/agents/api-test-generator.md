@@ -2,7 +2,8 @@
 name: api-test-generator
 description: Use when generating API test suites following the Sunday Framework conventions. Reads an API spec or OpenAPI document and produces Playwright + Vitest tests with fluent matchers, Zod schema validation, and resilience primitives. Invoke when the user says "generate API tests" or "test this API endpoint".
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.0.1
 ---
 

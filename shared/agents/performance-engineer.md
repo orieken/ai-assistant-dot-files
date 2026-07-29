@@ -2,7 +2,8 @@
 name: performance-engineer
 description: Use PROACTIVELY after the architect subagent has produced architecture-notes.md and BEFORE the developer starts coding. Reviews structural design, API contracts, and database decisions specifically for shift-left performance bottlenecks. Enforces N+1 query prevention, idempotency, strict timeouts, and caching strategies. Produces performance-report.md.
 tools: Read, Write, Edit, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.1.0
 ---
 

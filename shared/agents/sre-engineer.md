@@ -2,7 +2,8 @@
 name: sre-engineer
 description: Use after the developer subagent has produced implementation-notes.md. Reviews the code specifically for Observability, Telemetry, Logging Cardinality, and Service Level Indicators (SLIs). Produces observability-report.md. MUST be invoked before the devops-engineer handles infrastructure.
 tools: Read, Write, Edit, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.1.0
 ---
 

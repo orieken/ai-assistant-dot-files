@@ -2,7 +2,8 @@
 name: release-manager
 description: Use when cutting a release, generating changelogs, determining version bumps, or drafting release notes. Analyzes git history since the last tag, applies semantic versioning from conventional commits, and produces a release plan with deployment checklist. Invoke explicitly or when the user says "prepare a release" or "cut a release".
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.0.1
 ---
 

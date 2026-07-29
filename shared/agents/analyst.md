@@ -2,7 +2,8 @@
 name: analyst
 description: Use PROACTIVELY as the first step of any feature implementation. Reads a feature markdown file and produces a detailed technical analysis including acceptance criteria, task breakdown, affected files, data model changes, API contracts, edge cases, and definition of done. MUST be invoked before the developer subagent.
 tools: Read, Glob, Grep, Bash
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.2.0
 ---
 

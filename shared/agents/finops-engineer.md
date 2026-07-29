@@ -2,7 +2,8 @@
 name: finops-engineer
 description: Reviews architectural decisions and codebase changes for cost implications. Treats cost as an architectural fitness function.
 tools: Read, Write, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.0.1
 ---
 

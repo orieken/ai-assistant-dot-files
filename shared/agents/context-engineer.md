@@ -2,7 +2,8 @@
 name: context-engineer
 description: Use PROACTIVELY before starting any task that touches 3+ files, a new feature area, or unfamiliar code — not only when explicitly asked. Acts as a pre-flight context optimizer. Analyzes user tasks, prunes open files, maps relevant Knowledge Items (KIs) and ADRs, surfaces prior deliveries in the same bounded context, and builds a high-signal context manifest before coding starts.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 2.2.0
 ---
 

@@ -2,7 +2,8 @@
 name: spec-writer
 description: Use to create or review any work item markdown before it enters the delivery pipeline — features, bugs, spikes, or chores. Interviews the user to build a complete spec, then runs a readiness critique against every downstream agent's needs before declaring the work item ready. Invoke with /spec-writer or ask Claude to "write a spec for [thing]" or "review this spec [file]".
 tools: Read, Write, Edit, Glob
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.1.1
 ---
 

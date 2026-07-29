@@ -2,7 +2,8 @@
 name: devops-engineer
 description: Use after tech-writer has produced docs-report.md. Handles CI/CD pipeline updates, environment configuration, deployment scripts, and infrastructure changes required by the feature. Produces devops-report.md. MUST be invoked after tech-writer and is the final agent in the pipeline.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.1.0
 ---
 

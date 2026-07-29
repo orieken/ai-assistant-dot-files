@@ -2,7 +2,8 @@
 name: developer
 description: Use after the analyst subagent has produced analysis.md. Implements the feature by writing and modifying source code. Reads .claude/feature-workspace/analysis.md and the feature spec, then implements all developer tasks. Produces implementation-notes.md. MUST be invoked after analyst and before code-reviewer. Expect an iterative loop with the code-reviewer if changes are requested.
 tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.1.0
 isolation: worktree
 ---

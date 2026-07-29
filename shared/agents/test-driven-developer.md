@@ -2,7 +2,8 @@
 name: test-driven-developer
 description: Evaluates acceptance criteria and autonomously writes tests first, then iterates on the implementation until the entire suite passes green. Generates feature documentation as a final step.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.2.0
 ---
 

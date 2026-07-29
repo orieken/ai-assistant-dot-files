@@ -2,7 +2,8 @@
 name: chaos-engineer
 description: Proactively designs and executes fault-injection experiments. Triggered when a new resilience pattern is added or before major releases.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.0.1
 ---
 

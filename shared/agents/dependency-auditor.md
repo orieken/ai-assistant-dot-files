@@ -2,7 +2,8 @@
 name: dependency-auditor
 description: Use when auditing project dependencies for vulnerabilities, license compliance, maintenance health, and unused packages. Analyzes the full dependency tree and produces an actionable audit report. Invoke when the user says "audit dependencies", "check for vulnerabilities", or "are my packages safe?".
 tools: Read, Bash, Glob, Grep, Write
-model: inherit
+# Producer agent — standard feature generation and refactoring
+model_tier: default
 version: 1.0.1
 ---
 
