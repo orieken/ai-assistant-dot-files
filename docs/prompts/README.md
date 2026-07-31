@@ -28,7 +28,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 
 | Epic | File | Estimated size |
 |---|---|---|
-| **53** | [epic-53-inventory-drift-check.md](epic-53-inventory-drift-check.md) — CI drift detection for `shared/` inventories | Small (1 script + wire-in) |
+| ~~**53**~~ | ~~[epic-53-inventory-drift-check.md](done/epic-53-inventory-drift-check.md)~~ — shipped `41d9c27` | ✓ Done |
 | **42** | [epic-42-roo-code-cline-platform.md](epic-42-roo-code-cline-platform.md) — Roo Code + Cline platform integration | Medium (Phase A investigate + Phase B multi-op) |
 | **44** | [epic-44-jetbrains-exporter.md](epic-44-jetbrains-exporter.md) — JetBrains + Junie system-prompt exporter | Small-medium (same Phase A/B pattern) |
 | **46** | [epic-46-visual-qa-engineer.md](epic-46-visual-qa-engineer.md) — visual-qa-engineer agent + Saturday.ML integration | Medium (Phase A design + Phase B agent/contract/template/pipeline wiring) |
@@ -45,6 +45,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-53-inventory-drift-check.md](done/epic-53-inventory-drift-check.md) | Add `scripts/check-inventory-drift.sh` — counts actual `shared/` files and greps authoritative prose docs for stated counts; wired into `health-check.sh` as WARN-level. Corrected 5 pre-existing drifts in README and AGENT_REFERENCE | Shipped 2026-07-30 in commit `41d9c27` |
 | [done/add-mcp-patterns-directory.md](done/add-mcp-patterns-directory.md) | Extract framework-generic MCP tool patterns (retrievers, analyzers, walkutil, 6 M1 tools, response structs, registration pattern) from `saturday-mcp` into `shared/mcp-patterns/`, then re-point the bridge/update prompts at that directory. Broke the accidental coupling that forced downstream users to also clone saturday-monorepo | Shipped 2026-07-27 in commits `39747a5` → `349281c` (Ops A → D3 + Op C follow-up) |
 | [done/write-blog-posts.md](done/write-blog-posts.md) | Draft dev.to + LinkedIn blog posts covering recent framework + agent developments (Posts 05–10) | Shipped 2026-07-25 in commits `1abd94f` → `47dccce` |
 | [done/implement-automated-delivery-tier-a.md](done/implement-automated-delivery-tier-a.md) | IMPLEMENT interim Tier A auto-proceed & Tier B contract retries in `/deliver-feature` skill based on `.claude/delivery-policy.yaml` | Shipped 2026-07-25 in commit `25b1a50` |
