@@ -20,7 +20,7 @@ Options:
   --dry-run         Show what would be generated without writing
   -h, --help        Show this help
 
-Platforms: claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, roo-code, cline
+Platforms: claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline
 EOF
   exit 0
 }
@@ -380,6 +380,87 @@ generate_agents_md() {
   write_file "$dest_path" "$content"
 }
 
+generate_jetbrains() {
+  echo ""
+  echo "--- JetBrains AI Assistant + Junie (Tier 2: Personas + Rules) ---"
+
+  local rules_dir="$OUTPUT_DIR/.aiassistant/rules"
+  local junie_dir="$OUTPUT_DIR/.junie"
+
+  if $DRY_RUN; then
+    dry ".aiassistant/rules/*.md (10 project rules)"
+    dry ".junie/guidelines.md (Junie legacy path)"
+    return
+  fi
+
+  mkdir -p "$rules_dir" "$junie_dir"
+
+  # Always-active rules — prepend IDE mode hint as HTML comment (no frontmatter standard in JetBrains)
+  local always_hint="<!-- JetBrains AI Assistant Project Rule | Recommended: Always
+     Configure: Settings > AI Assistant > Project Rules > set to 'Always' -->"$'\n\n'
+
+  write_file "$rules_dir/00-approval-gates.md" \
+    "${always_hint}$(extract_rule_content "$SHARED_DIR/rules/approval-gates.md")"
+
+  write_file "$rules_dir/01-design-principles.md" \
+    "${always_hint}$(extract_rule_content "$SHARED_DIR/rules/design-principles.md")"
+
+  write_file "$rules_dir/02-architecture-guardrails.md" \
+    "${always_hint}$(extract_rule_content "$SHARED_DIR/rules/architecture-guardrails.md")"
+
+  write_file "$rules_dir/03-agent-roster.md" \
+    "${always_hint}$(collect_agent_roster)"
+
+  # File-pattern scoped rules
+  local pattern_hint_testing="<!-- JetBrains AI Assistant Project Rule | Recommended: By file patterns: *.spec.*,*.test.*,*.feature
+     Configure: Settings > AI Assistant > Project Rules > set pattern -->"$'\n\n'
+  write_file "$rules_dir/04-testing-conventions.md" \
+    "${pattern_hint_testing}$(testing_rules_body)"
+
+  local pattern_hint_go="<!-- JetBrains AI Assistant Project Rule | Recommended: By file patterns: *.go
+     Configure: Settings > AI Assistant > Project Rules > set pattern -->"$'\n\n'
+  write_file "$rules_dir/05-go-conventions.md" \
+    "${pattern_hint_go}$(go_backend_rules_body)"
+
+  local pattern_hint_ts="<!-- JetBrains AI Assistant Project Rule | Recommended: By file patterns: *.ts
+     Configure: Settings > AI Assistant > Project Rules > set pattern -->"$'\n\n'
+  write_file "$rules_dir/06-typescript-conventions.md" \
+    "${pattern_hint_ts}$(typescript_conventions_body)"
+
+  local pattern_hint_py="<!-- JetBrains AI Assistant Project Rule | Recommended: By file patterns: *.py
+     Configure: Settings > AI Assistant > Project Rules > set pattern -->"$'\n\n'
+  write_file "$rules_dir/07-python-conventions.md" \
+    "${pattern_hint_py}$(python_conventions_body)"
+
+  local pattern_hint_cs="<!-- JetBrains AI Assistant Project Rule | Recommended: By file patterns: *.cs
+     Configure: Settings > AI Assistant > Project Rules > set pattern -->"$'\n\n'
+  write_file "$rules_dir/08-csharp-conventions.md" \
+    "${pattern_hint_cs}$(csharp_conventions_body)"
+
+  local pattern_hint_java="<!-- JetBrains AI Assistant Project Rule | Recommended: By file patterns: *.java
+     Configure: Settings > AI Assistant > Project Rules > set pattern -->"$'\n\n'
+  write_file "$rules_dir/09-java-conventions.md" \
+    "${pattern_hint_java}$(java_conventions_body)"
+
+  # .junie/guidelines.md — Junie's legacy-but-reliable path; same content as AGENTS.md
+  local junie_content=""
+  junie_content+="# Junie Guidelines (Saturday Framework)"$'\n'
+  junie_content+=$'\n'
+  junie_content+="Project guidelines for the JetBrains Junie agent. Junie reads this file before falling back to"$'\n'
+  junie_content+="AGENTS.md at the repository root — same content is kept in sync by the framework installer."$'\n'
+  junie_content+=$'\n'
+  junie_content+="## AI Feature Team & Global Rules"$'\n'
+  junie_content+="You are part of the Saturday Multi-Agent Feature Team. Before beginning any complex task, architectural decision, or feature delivery, you MUST adhere to the rules below."$'\n'
+  junie_content+=$'\n'
+  junie_content+="$(collect_rules)"
+  junie_content+=$'\n'
+  junie_content+="$(collect_craftsmanship_section)"
+  junie_content+=$'\n'
+  junie_content+="$(collect_agent_roster)"
+
+  write_file "$junie_dir/guidelines.md" "$junie_content"
+}
+
 generate_roo_code() {
   echo ""
   echo "--- Roo Code (Tier 2+: Custom Modes) ---"
@@ -481,6 +562,11 @@ echo ""
 
 GENERATED=0
 actual_agent_count=$(find "$SHARED_DIR/agents" -maxdepth 1 -name "*.md" ! -name "CHANGELOG.md" | wc -l | tr -d ' ')
+
+if should_generate "jetbrains"; then
+  generate_jetbrains
+  ((GENERATED += 11)) || true
+fi
 
 if should_generate "roo-code"; then
   generate_roo_code
