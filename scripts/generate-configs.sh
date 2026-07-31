@@ -20,7 +20,7 @@ Options:
   --dry-run         Show what would be generated without writing
   -h, --help        Show this help
 
-Platforms: claude-code, cursor, windsurf, github-copilot, gemini, openai-codex
+Platforms: claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, roo-code, cline
 EOF
   exit 0
 }
@@ -380,6 +380,93 @@ generate_agents_md() {
   write_file "$dest_path" "$content"
 }
 
+generate_roo_code() {
+  echo ""
+  echo "--- Roo Code (Tier 2+: Custom Modes) ---"
+
+  local roomodes_dest="$OUTPUT_DIR/.roomodes"
+  local roo_rules_dir="$OUTPUT_DIR/.roo/rules"
+
+  if $DRY_RUN; then
+    dry ".roomodes (${actual_agent_count:-?} custom modes)"
+    dry ".roo/rules/*.md (framework global rules)"
+    return
+  fi
+
+  # Generate .roomodes YAML — each shared agent becomes a custom mode
+  mkdir -p "$(dirname "$roomodes_dest")"
+  python3 "$REPO_DIR/scripts/generate-roomodes.py" "$SHARED_DIR/agents" > "$roomodes_dest"
+  ok "$roomodes_dest"
+
+  # Copy global framework rules into .roo/rules/ — applies to ALL modes
+  mkdir -p "$roo_rules_dir"
+  for rule_file in "$SHARED_DIR/rules/"*.md; do
+    local rule_name
+    rule_name=$(basename "$rule_file")
+    cp "$rule_file" "$roo_rules_dir/$rule_name"
+    ok "$roo_rules_dir/$rule_name"
+  done
+}
+
+generate_cline() {
+  echo ""
+  echo "--- Cline (Tier 2: Personas + Rules) ---"
+
+  local clinerules_dir="$OUTPUT_DIR/.clinerules"
+
+  if $DRY_RUN; then
+    dry ".clinerules/*.md (framework rules + agent roster)"
+    return
+  fi
+
+  mkdir -p "$clinerules_dir"
+
+  # Always-active rules (no paths restriction)
+  write_file "$clinerules_dir/00-approval-gates.md" \
+    "$(extract_rule_content "$SHARED_DIR/rules/approval-gates.md")"
+
+  write_file "$clinerules_dir/01-design-principles.md" \
+    "$(extract_rule_content "$SHARED_DIR/rules/design-principles.md")"
+
+  write_file "$clinerules_dir/02-architecture-guardrails.md" \
+    "$(extract_rule_content "$SHARED_DIR/rules/architecture-guardrails.md")"
+
+  # Agent roster (always-active, so all modes are surfaced)
+  write_file "$clinerules_dir/03-agent-roster.md" \
+    "$(collect_agent_roster)"
+
+  # Path-scoped rules — only loaded when editing matching files
+  local testing_header
+  testing_header="---"$'\n'"paths:"$'\n'"  - \"**/*.spec.*\""$'\n'"  - \"**/*.test.*\""$'\n'"  - \"**/*.feature\""$'\n'"  - \"**/steps/**\""$'\n'"---"$'\n'
+  write_file "$clinerules_dir/04-testing-conventions.md" \
+    "${testing_header}$(testing_rules_body)"
+
+  local go_header
+  go_header="---"$'\n'"paths:"$'\n'"  - \"**/*.go\""$'\n'"  - \"**/go.mod\""$'\n'"  - \"**/go.sum\""$'\n'"---"$'\n'
+  write_file "$clinerules_dir/05-go-conventions.md" \
+    "${go_header}$(go_backend_rules_body)"
+
+  local ts_header
+  ts_header="---"$'\n'"paths:"$'\n'"  - \"**/*.ts\""$'\n'"---"$'\n'
+  write_file "$clinerules_dir/06-typescript-conventions.md" \
+    "${ts_header}$(typescript_conventions_body)"
+
+  local py_header
+  py_header="---"$'\n'"paths:"$'\n'"  - \"**/*.py\""$'\n'"---"$'\n'
+  write_file "$clinerules_dir/07-python-conventions.md" \
+    "${py_header}$(python_conventions_body)"
+
+  local cs_header
+  cs_header="---"$'\n'"paths:"$'\n'"  - \"**/*.cs\""$'\n'"---"$'\n'
+  write_file "$clinerules_dir/08-csharp-conventions.md" \
+    "${cs_header}$(csharp_conventions_body)"
+
+  local java_header
+  java_header="---"$'\n'"paths:"$'\n'"  - \"**/*.java\""$'\n'"---"$'\n'
+  write_file "$clinerules_dir/09-java-conventions.md" \
+    "${java_header}$(java_conventions_body)"
+}
+
 echo ""
 echo "Context Engineering Framework — Config Generator"
 echo "================================================="
@@ -393,6 +480,18 @@ fi
 echo ""
 
 GENERATED=0
+actual_agent_count=$(find "$SHARED_DIR/agents" -maxdepth 1 -name "*.md" ! -name "CHANGELOG.md" | wc -l | tr -d ' ')
+
+if should_generate "roo-code"; then
+  generate_roo_code
+  rule_count=$(find "$SHARED_DIR/rules" -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')
+  ((GENERATED += 1 + rule_count)) || true
+fi
+
+if should_generate "cline"; then
+  generate_cline
+  ((GENERATED += 10)) || true
+fi
 
 if should_generate "cursor"; then
   generate_cursor
