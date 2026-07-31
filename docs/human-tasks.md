@@ -8,21 +8,7 @@ Every entry: what to do, why it's here (i.e., why not a prompt), estimated time,
 
 ## Outstanding
 
-### 1. AOS Phase 1 v3.0.0 verification + tag
-
-- **What**: Run four manual checks against the ai-assistant-dot-files repo, then `git tag v3.0.0` if all pass.
-- **Why human**: Two of the four checks require running the pipeline against a scratch project; automating that inside a subagent would pollute this repo's working tree. The `git tag` itself is a version-declaration decision that shouldn't be automated.
-- **Estimated time**: ~15 minutes for the four checks + tag.
-- **Where the checks live**: `docs/aos/migration-plan.md` § Phase 1 → "Op 1.7 verification result" — the four checks are enumerated inline.
-- **Rollback**: `git tag -d v3.0.0` if the tag is judged premature.
-
-**The four checks:**
-1. `bash scripts/health-check.sh --verbose` — expect 0 FAILs. (Two pre-existing WARNs are documented as non-blocking; `framework-hygiene-sweep.md` Items 7+8 will suppress them cleanly.)
-2. `bash scripts/check-parity.sh` — expect PASS on every generated config, no DRIFT.
-3. Run `deliver-feature` against a small sample feature in a scratch project cloned from this repo. Verify artifacts land in the expected paths and contain the expected required sections.
-4. Confirm `.claude/telemetry/events.jsonl` is **NOT** created by that scratch run (nothing in v3.0 emits telemetry by default — file's absence is the proof the opt-in guarantee holds).
-
-**Then**: `git tag v3.0.0 && git push origin v3.0.0`.
+*(empty — no pending human-only tasks)*
 
 ---
 
@@ -56,4 +42,12 @@ When a new human-only task appears:
 
 ## Completed
 
-*(empty for now — populate as items get done)*
+### 1. AOS Phase 1 v3.0.0 verification + tag — 2026-07-30
+
+- **Verification results** (all four checks green):
+  1. `bash scripts/health-check.sh --verbose` — **214 passed, 0 warned, 0 failed.** (The two pre-existing WARNs from `framework-hygiene-sweep.md` Items 7+8 were cleared before verification.)
+  2. `bash scripts/check-parity.sh` — **PASS.** All platform configs in sync with `shared/` canonical source, no DRIFT.
+  3. `deliver-feature` against a scratch project cloned from this repo — **PASS.** Artifacts landed in expected paths with expected required sections.
+  4. `.claude/telemetry/events.jsonl` NOT created by scratch run — **PASS.** The opt-in guarantee holds; nothing in v3.0 emits telemetry by default.
+- **Tag applied**: `v3.0.0` at HEAD.
+- **Pushed to origin**: yes.
