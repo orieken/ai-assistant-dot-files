@@ -124,6 +124,50 @@
       "installStrategy": "generate-inline",
       "globalConfigDir": null,
       "notes": "Single instruction file. Include rules and agent roster inline."
+    },
+    {
+      "name": "roo-code",
+      "tier": 2,
+      "tierLabel": "Personas + Modes",
+      "capabilities": {
+        "agents": true,
+        "skills": false,
+        "rules": true,
+        "hooks": false,
+        "subAgentOrchestration": false
+      },
+      "configPaths": {
+        "modes": ".roomodes",
+        "globalRules": ".roo/rules/",
+        "perModeRules": ".roo/rules-{slug}/",
+        "globalModes": "~/.roo/settings/custom_modes.yaml"
+      },
+      "format": "yaml (customModes array) for .roomodes; markdown for .roo/rules/",
+      "installStrategy": "generate-roomodes for .roomodes; copy rules to .roo/rules/",
+      "globalConfigDir": "~/.roo/",
+      "notes": "Roo Code (fork of Cline) supports custom modes via .roomodes YAML at workspace root. Each mode has: slug (kebab-case), name, description, roleDefinition (system prompt body), whenToUse, customInstructions, and groups (read|edit|command|mcp|browser). Edit group accepts optional fileRegex restriction as a tuple. Global modes live in ~/.roo/settings/custom_modes.yaml. Project modes in .roomodes completely override global modes with matching slugs. Rules in .roo/rules/ apply to all modes; .roo/rules-{slug}/ applies to a specific mode. Schema: https://docs.roocode.com/schemas/custom-modes.schema.json. agents: true means each shared agent maps to a custom mode — tool scoping via groups is agent-like but no pipeline orchestration or skill invocation exists. Confirmed via docs.roocode.com/features/custom-modes (2026-07-30)."
+    },
+    {
+      "name": "cline",
+      "tier": 2,
+      "tierLabel": "Personas + Rules",
+      "capabilities": {
+        "agents": false,
+        "skills": false,
+        "rules": true,
+        "hooks": false,
+        "subAgentOrchestration": false
+      },
+      "configPaths": {
+        "rulesDir": ".clinerules/",
+        "rulesSingle": ".clinerules",
+        "crossToolFile": "~/.agents/AGENTS.md",
+        "globalRules": "~/Documents/Cline/Rules/"
+      },
+      "format": "markdown with optional paths: frontmatter for glob-scoped rules",
+      "installStrategy": "generate-inline into .clinerules/ directory",
+      "globalConfigDir": "~/Documents/Cline/Rules/",
+      "notes": "Cline processes all .md and .txt files inside .clinerules/, combining them into a unified ruleset. Optional YAML frontmatter with paths: [glob, ...] scopes a rule to specific files. Rules without frontmatter are always-active. Numeric prefixes (01-, 02-) control application order. Also reads ~/.agents/AGENTS.md for cross-tool instructions (same convention as agents.md standard). No custom modes or agent-equivalent capability — identical rule-only capability level to Windsurf. Global rules at ~/Documents/Cline/Rules/ (macOS/Linux). Confirmed via docs.cline.bot/customization/cline-rules (2026-07-30)."
     }
   ],
   "tiers": {
