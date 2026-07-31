@@ -30,7 +30,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 |---|---|---|
 | ~~**53**~~ | ~~[epic-53-inventory-drift-check.md](done/epic-53-inventory-drift-check.md)~~ — shipped `41d9c27` | ✓ Done |
 | ~~**42**~~ | ~~[epic-42-roo-code-cline-platform.md](done/epic-42-roo-code-cline-platform.md)~~ — shipped `0e47b2f`→`523d4e1` | ✓ Done |
-| **44** | [epic-44-jetbrains-exporter.md](epic-44-jetbrains-exporter.md) — JetBrains + Junie system-prompt exporter | Small-medium (same Phase A/B pattern) |
+| ~~**44**~~ | ~~[epic-44-jetbrains-exporter.md](done/epic-44-jetbrains-exporter.md)~~ — shipped `d047e69`→`3e953df` | ✓ Done |
 | **46** | [epic-46-visual-qa-engineer.md](epic-46-visual-qa-engineer.md) — visual-qa-engineer agent + Saturday.ML integration | Medium (Phase A design + Phase B agent/contract/template/pipeline wiring) |
 | **48** | [epic-48-iac-conventions.md](epic-48-iac-conventions.md) — Terraform / Docker / K8s / GHA rule doc | Small-medium (1 file + agent wire-up) |
 | **49** | [epic-49-mobile-conventions.md](epic-49-mobile-conventions.md) — Swift + Kotlin conventions | Medium (2 files, one commit each) |
@@ -45,6 +45,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-44-jetbrains-exporter.md](done/epic-44-jetbrains-exporter.md) | Add JetBrains AI Assistant + Junie as a single platform entry. Generates `.aiassistant/rules/` (10 files, IDE mode hints) and `.junie/guidelines.md`. Confirmed Junie already reads root `AGENTS.md` so partial support existed — this adds the AI Assistant project-rules layer and explicit Junie path | Shipped 2026-07-30 in commits `d047e69`→`3e953df` |
 | [done/epic-42-roo-code-cline-platform.md](done/epic-42-roo-code-cline-platform.md) | Add Roo Code (custom modes via `.roomodes` YAML, 37 agents mapped) and Cline (`.clinerules/` directory, 10 path-scoped files) as platform targets. Registry entries, config generators, parity checks, install detection, README table — full Phase A+B implementation | Shipped 2026-07-30 in commits `0e47b2f`→`523d4e1` |
 | [done/epic-53-inventory-drift-check.md](done/epic-53-inventory-drift-check.md) | Add `scripts/check-inventory-drift.sh` — counts actual `shared/` files and greps authoritative prose docs for stated counts; wired into `health-check.sh` as WARN-level. Corrected 5 pre-existing drifts in README and AGENT_REFERENCE | Shipped 2026-07-30 in commit `41d9c27` |
 | [done/add-mcp-patterns-directory.md](done/add-mcp-patterns-directory.md) | Extract framework-generic MCP tool patterns (retrievers, analyzers, walkutil, 6 M1 tools, response structs, registration pattern) from `saturday-mcp` into `shared/mcp-patterns/`, then re-point the bridge/update prompts at that directory. Broke the accidental coupling that forced downstream users to also clone saturday-monorepo | Shipped 2026-07-27 in commits `39747a5` → `349281c` (Ops A → D3 + Op C follow-up) |
