@@ -193,6 +193,99 @@ else
 fi
 
 echo ""
+echo "--- Roo Code ---"
+roomodes_file="$REPO_DIR/.roomodes"
+if [[ -f "$roomodes_file" ]]; then
+  if python3 -c "
+import sys, yaml
+data = yaml.safe_load(open('$roomodes_file'))
+modes = data.get('customModes', [])
+sys.exit(0 if modes else 1)
+" 2>/dev/null; then
+    mode_count=$(python3 -c "import yaml; d=yaml.safe_load(open('$roomodes_file')); print(len(d.get('customModes', [])))" 2>/dev/null || echo "?")
+    pass ".roomodes ($mode_count custom modes, valid YAML)"
+  else
+    fail ".roomodes" "file exists but customModes array is empty or YAML is invalid"
+  fi
+
+  # Verify each shared agent has a corresponding mode
+  missing_modes=0
+  for agent_file in "$SHARED_DIR/agents/"*.md; do
+    [[ "$(basename "$agent_file")" == "CHANGELOG.md" ]] && continue
+    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
+    [[ -z "$agent_name" ]] && continue
+    if ! python3 -c "
+import yaml, sys
+data = yaml.safe_load(open('$roomodes_file'))
+slugs = [m['slug'] for m in data.get('customModes', [])]
+sys.exit(0 if '$agent_name' in slugs else 1)
+" 2>/dev/null; then
+      ((missing_modes++)) || true
+    fi
+  done
+  if [[ $missing_modes -eq 0 ]]; then
+    pass ".roomodes agent roster complete"
+  else
+    fail ".roomodes agent roster" "$missing_modes agents missing — regenerate with: scripts/generate-configs.sh --platform roo-code"
+  fi
+else
+  miss ".roomodes (run: scripts/generate-configs.sh --platform roo-code)"
+fi
+
+roo_rules_dir="$REPO_DIR/.roo/rules"
+if [[ -d "$roo_rules_dir" ]]; then
+  rule_count=$(find "$roo_rules_dir" -name "*.md" | wc -l | tr -d ' ')
+  shared_rule_count=$(find "$SHARED_DIR/rules" -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')
+  if [[ "$rule_count" -eq "$shared_rule_count" ]]; then
+    pass ".roo/rules/ ($rule_count rule files)"
+  else
+    fail ".roo/rules/" "$rule_count files present, expected $shared_rule_count — regenerate"
+  fi
+else
+  miss ".roo/rules/ (run: scripts/generate-configs.sh --platform roo-code)"
+fi
+
+echo ""
+echo "--- Cline ---"
+clinerules_dir="$REPO_DIR/.clinerules"
+expected_cline_files=("00-approval-gates.md" "01-design-principles.md" "02-architecture-guardrails.md" "03-agent-roster.md" "04-testing-conventions.md" "05-go-conventions.md" "06-typescript-conventions.md" "07-python-conventions.md" "08-csharp-conventions.md" "09-java-conventions.md")
+if [[ -d "$clinerules_dir" ]]; then
+  missing_cline=0
+  for expected in "${expected_cline_files[@]}"; do
+    if [[ ! -f "$clinerules_dir/$expected" ]]; then
+      fail ".clinerules/$expected" "missing"
+      ((missing_cline++)) || true
+    fi
+  done
+
+  # Check path-scoped files have paths: frontmatter
+  for scoped_file in "04-testing-conventions.md" "05-go-conventions.md" "06-typescript-conventions.md" "07-python-conventions.md" "08-csharp-conventions.md" "09-java-conventions.md"; do
+    full_path="$clinerules_dir/$scoped_file"
+    if [[ -f "$full_path" ]]; then
+      if head -1 "$full_path" | grep -q '^---$' && grep -q '^paths:' "$full_path"; then
+        true
+      else
+        fail ".clinerules/$scoped_file" "missing paths: frontmatter for scope restriction"
+        ((missing_cline++)) || true
+      fi
+    fi
+  done
+
+  if [[ $missing_cline -eq 0 ]]; then
+    pass ".clinerules/ (${#expected_cline_files[@]} files, path-scoped rules verified)"
+  fi
+
+  # Check agent roster is included
+  if grep -q 'analyst\|developer\|qa-engineer' "$clinerules_dir/03-agent-roster.md" 2>/dev/null; then
+    pass ".clinerules/03-agent-roster.md contains agent list"
+  else
+    fail ".clinerules/03-agent-roster.md" "agent names not found — regenerate"
+  fi
+else
+  miss ".clinerules/ (run: scripts/generate-configs.sh --platform cline)"
+fi
+
+echo ""
 echo "--- Claude Code symlinks ---"
 for symlink in ".claude/agents" ".claude/skills" ".claude/rules"; do
   full_path="$REPO_DIR/$symlink"
