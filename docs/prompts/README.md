@@ -31,7 +31,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 | ~~**53**~~ | ~~[epic-53-inventory-drift-check.md](done/epic-53-inventory-drift-check.md)~~ — shipped `41d9c27` | ✓ Done |
 | ~~**42**~~ | ~~[epic-42-roo-code-cline-platform.md](done/epic-42-roo-code-cline-platform.md)~~ — shipped `0e47b2f`→`523d4e1` | ✓ Done |
 | ~~**44**~~ | ~~[epic-44-jetbrains-exporter.md](done/epic-44-jetbrains-exporter.md)~~ — shipped `d047e69`→`3e953df` | ✓ Done |
-| **46** | [epic-46-visual-qa-engineer.md](epic-46-visual-qa-engineer.md) — visual-qa-engineer agent + Saturday.ML integration | Medium (Phase A design + Phase B agent/contract/template/pipeline wiring) |
+| ~~**46**~~ | ~~[epic-46-visual-qa-engineer.md](done/epic-46-visual-qa-engineer.md)~~ — shipped `472c961`→`5d28b74` | ✓ Done |
 | **48** | [epic-48-iac-conventions.md](epic-48-iac-conventions.md) — Terraform / Docker / K8s / GHA rule doc | Small-medium (1 file + agent wire-up) |
 | **49** | [epic-49-mobile-conventions.md](epic-49-mobile-conventions.md) — Swift + Kotlin conventions | Medium (2 files, one commit each) |
 | **50** | [epic-50-rust-conventions.md](epic-50-rust-conventions.md) — Rust conventions | Small-medium (1 file) |
@@ -45,6 +45,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-46-visual-qa-engineer.md](done/epic-46-visual-qa-engineer.md) | Add `visual-qa-engineer` pipeline agent. Wraps `@orieken/saturday-ml-analyzer` (interaction heatmap cold-spot analysis) and Playwright `toHaveScreenshot()` (visual regression). Conditional: UI features with `heatmap-data/` or snapshot baselines. Adds contract, template, pipeline slot after qa-engineer (steps 28-29), workflow diagram, validate-artifact mapping | Shipped 2026-07-30 in commits `472c961`→`5d28b74` |
 | [done/epic-44-jetbrains-exporter.md](done/epic-44-jetbrains-exporter.md) | Add JetBrains AI Assistant + Junie as a single platform entry. Generates `.aiassistant/rules/` (10 files, IDE mode hints) and `.junie/guidelines.md`. Confirmed Junie already reads root `AGENTS.md` so partial support existed — this adds the AI Assistant project-rules layer and explicit Junie path | Shipped 2026-07-30 in commits `d047e69`→`3e953df` |
 | [done/epic-42-roo-code-cline-platform.md](done/epic-42-roo-code-cline-platform.md) | Add Roo Code (custom modes via `.roomodes` YAML, 37 agents mapped) and Cline (`.clinerules/` directory, 10 path-scoped files) as platform targets. Registry entries, config generators, parity checks, install detection, README table — full Phase A+B implementation | Shipped 2026-07-30 in commits `0e47b2f`→`523d4e1` |
 | [done/epic-53-inventory-drift-check.md](done/epic-53-inventory-drift-check.md) | Add `scripts/check-inventory-drift.sh` — counts actual `shared/` files and greps authoritative prose docs for stated counts; wired into `health-check.sh` as WARN-level. Corrected 5 pre-existing drifts in README and AGENT_REFERENCE | Shipped 2026-07-30 in commit `41d9c27` |
