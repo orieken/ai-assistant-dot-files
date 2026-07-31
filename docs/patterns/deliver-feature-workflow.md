@@ -78,7 +78,11 @@ graph TB
     %% Verification
     QA[qa-engineer]:::producer
     QA --> QAM[qa-report.md]:::artifact
-    QAM --> SRE
+    QAM --> VQA
+
+    VQA[<i>visual-qa-engineer</i><br/>if UI + heatmap/baselines]:::conditional
+    VQA --> VQAM[visual-qa-report.md]:::artifact
+    VQAM --> SRE
 
     SRE[sre-engineer]:::producer
     SRE --> ObsM[observability-report.md]:::artifact
@@ -124,6 +128,7 @@ graph TB
 | `security-reviewer` | `security-report.md` | `privacy-auditor` (Phase 2, paired) | Auth/data-crossing features | STRIDE threat modeling |
 | `accessibility-engineer` | `accessibility-report.md` | — | UI features | Semantic HTML + ARIA + keyboard nav |
 | `qa-engineer` | `qa-report.md` | — | Always | Writes tests, runs suite |
+| `visual-qa-engineer` | `visual-qa-report.md` | `visual-qa-report-contract.md` | UI features with heatmap/baselines | Screenshot regression + heatmap cold-spot analysis |
 | `sre-engineer` | `observability-report.md` | (retrieval-evaluator adjacent) | Always | OTel + SLIs + log cardinality |
 | `tech-writer` | `docs-report.md` | `documentation-auditor` (Phase 2) | Always | README + ADRs + inline docs |
 | `devops-engineer` | `devops-report.md` | — | Always | CI/CD + env config + deploy steps |
