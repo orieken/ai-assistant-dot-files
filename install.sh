@@ -10,6 +10,9 @@ DRY_RUN=false
 USE_COPY=false
 PLATFORM_FILTER=""
 SHOW_TOUR=false
+SYNC_MEMORY=false
+SYNC_SUBCOMMAND="pull"
+SYNC_ARGS=()
 
 usage() {
   cat <<'EOF'
@@ -22,6 +25,11 @@ Modes (pick one):
   --project <path>      Symlink configs into a target project directory (also always current --
                          the target keeps depending on this repo's checkout staying where it is)
   --project             Symlink configs into the current directory
+  --sync-memory [pull|push]
+                        Sync Knowledge Items with the org knowledge-hub repo.
+                        pull (default): diff and optionally apply org KIs into shared/knowledge/
+                        push: promote local .claude/knowledge/ KIs to the org repo via PR
+                        Requires .claude/sync-config.yaml — see ADR-003 for setup.
 
 Options:
   --copy                Use real copies instead of symlinks -- required on Windows/WSL (symlinks need
@@ -31,6 +39,7 @@ Options:
   --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline)
   --dry-run             Show what would be installed without doing it
   --tour                Run the onboarding skill after install
+  --confirm             For --sync-memory: apply changes (default is diff-only dry run)
   -h, --help            Show this help
 
 Examples:
@@ -38,6 +47,9 @@ Examples:
   ./install.sh --project /path/to/my-app
   ./install.sh --project --platform claude-code
   ./install.sh --global --dry-run
+  ./install.sh --sync-memory
+  ./install.sh --sync-memory pull --confirm
+  ./install.sh --sync-memory push --confirm
 EOF
   exit 0
 }
@@ -53,6 +65,15 @@ while [[ $# -gt 0 ]]; do
         TARGET_DIR="$(pwd)"; shift
       fi
       ;;
+    --sync-memory)
+      SYNC_MEMORY=true
+      if [[ $# -gt 1 && ( "$2" == "pull" || "$2" == "push" ) ]]; then
+        SYNC_SUBCOMMAND="$2"; shift 2
+      else
+        shift
+      fi
+      ;;
+    --confirm)   SYNC_ARGS+=("--confirm"); shift ;;
     --copy)      USE_COPY=true; shift ;;
     --platform)  PLATFORM_FILTER="$2"; shift 2 ;;
     --dry-run)   DRY_RUN=true; shift ;;
@@ -61,6 +82,11 @@ while [[ $# -gt 0 ]]; do
     *)           echo "Unknown option: $1"; usage ;;
   esac
 done
+
+# --sync-memory is a standalone operation; bypass the install mode requirement.
+if $SYNC_MEMORY; then
+  exec bash "$REPO_DIR/scripts/sync-memory.sh" "$SYNC_SUBCOMMAND" "${SYNC_ARGS[@]}"
+fi
 
 if [[ -z "$MODE" ]]; then
   echo "Error: specify --global or --project <path>"
