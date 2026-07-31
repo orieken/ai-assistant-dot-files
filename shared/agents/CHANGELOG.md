@@ -16,6 +16,10 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-07-30 — Epic 46: Visual QA Engineer
+
+- **`visual-qa-engineer` 1.0.0**: Added new conditional pipeline agent. Runs after qa-engineer on UI-touching features that have `heatmap-data/` or Playwright snapshot baselines. Wraps `@orieken/saturday-ml-analyzer` for interaction coverage analysis and Playwright native `toHaveScreenshot()` for visual regression. Verdict: PASS | FAIL | UNCONFIGURED. An UNCONFIGURED verdict does not block the pipeline (heatmap instrumentation not yet adopted). Produces `visual-qa-report.md` validated by `shared/contracts/visual-qa-report-contract.md`.
+
 ## 2026-07-29 — Portable model_tier Abstraction
 
 - **`model-tier-auditor` 1.0.0**: Added new read-only counter-agent auditing agent frontmatter for portable `model_tier` declarations (`light`, `default`, `heavy`).
