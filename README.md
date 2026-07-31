@@ -120,6 +120,39 @@ To remove: `./uninstall.sh --global` (or `--project <path>`) restores whatever w
 
 ---
 
+## Enterprise Memory Sync
+
+Teams using this framework across multiple repositories can share Knowledge Items (KIs) via an organization-owned `knowledge-hub` git repo. See [ADR-003](docs/adrs/ADR-003-enterprise-memory-sync.md) for the full design rationale.
+
+**Setup** — create `.claude/sync-config.yaml` at the root of your framework checkout:
+
+```yaml
+memory_sync:
+  org_repo: git@github.com:<your-org>/knowledge-hub.git
+  cache_dir: ~/.claude/sync-cache
+  push_pr_base: main
+```
+
+**Pull** — diff org KIs into your local `shared/knowledge/` (dry run first, then apply):
+
+```bash
+./install.sh --sync-memory               # preview changes
+./install.sh --sync-memory pull --confirm  # apply
+```
+
+**Push** — promote mature `.claude/knowledge/` KIs (>30 days old) to the org repo via PR:
+
+```bash
+./install.sh --sync-memory push             # preview candidates
+./install.sh --sync-memory push --confirm   # open PR (requires gh CLI for GitHub)
+```
+
+**Conflict rules**: `shared/knowledge/` → org repo wins on pull. `.claude/knowledge/` → local always wins (project KIs are never overwritten). Name collisions between org and project KIs halt the pull until resolved manually.
+
+**Auth**: SSH is primary. For enterprises where SSH is disabled, set `MEMORY_SYNC_TOKEN=<pat>` in the environment — the script converts the SSH URL to HTTPS automatically.
+
+---
+
 ## Platform Capability Matrix
 
 | Platform | Tier | Capability | Format | Terminology |
