@@ -52,6 +52,34 @@ Recommended execution order matches the 07-31 audit's priority ranking (47 first
 | **45** | [epic-45-refactor-engineer.md](epic-45-refactor-engineer.md) — `refactor-engineer` agent + refactoring contract + fixture + full 38→39 roster ripple | Large — Phase A design pause, then ~7 commits |
 | **43** | [epic-43-mcp-exporter.md](epic-43-mcp-exporter.md) — `shared/mcp/` exporter; Phase A must first rule generator-vs-manifest-vs-superseded (audit flagged scope-clarification needed) | Unknown until Phase A ruling — possibly closes as superseded |
 
+### Project-as-RAG optimization pair (drafted 2026-07-31, from retrieval-optimization discussion)
+
+Exploits the fact that the pipeline *generates* the installed project's corpus — enrich at write
+time so every retrieval tier (today's lexical, ADR-002's future BM25/vector) inherits a better
+corpus. 59 is independent and highest-leverage; 60 is best run after it. Neither depends on AOS
+Phase 3.
+
+| Epic | File | Estimated size |
+|---|---|---|
+| **59** | [epic-59-retrieval-write-time-enrichment.md](epic-59-retrieval-write-time-enrichment.md) — artifact retrieval frontmatter (WARN-first), domain-dictionary query expansion in search-ki/query-memory, persisted summary surrogates, citation-link convention | Medium — 4 commits, no design pause |
+| **60** | [epic-60-retrieval-index-freshness-eval.md](epic-60-retrieval-index-freshness-eval.md) — index-freshness hook examples (against saturday-mcp's reindex), registry retrievalBackends fitness function (ADR-002's deferred check), CODEMAP generator for the source tier, telemetry-sourced retrieval regression set | Medium — 4 commits, per-op halt conditions |
+
+### Structural-gap epics (drafted 2026-07-31, from `framework-gap-audit-2026-07-31.md` §3b)
+
+Eight gaps from the same-day structural review — not backlog items but blind spots ("what is the
+framework missing"). Table order IS the priority order.
+
+| Epic | File | Estimated size |
+|---|---|---|
+| **61** | [epic-61-prompt-regression-harness.md](epic-61-prompt-regression-harness.md) — headless eval runner over the golden-file fixtures; catches model-change behavior drift across all 38 agents. Assembly, not invention | Medium-large — Phase A design pause (runner/judge/cost rulings), then 4 commits |
+| **62** | [epic-62-gate-decision-cost-telemetry.md](epic-62-gate-decision-cost-telemetry.md) — gate_decision events (capture human corrections) + token-spend fields in pipeline-trace; wires extract-lessons to mine what humans fixed | Medium — 4 commits, opt-in guarantee re-proven |
+| **63** | [epic-63-parallel-delivery-isolation.md](epic-63-parallel-delivery-isolation.md) — break the feature-workspace singleton; workspace-per-feature vs git-worktree ruling; legacy resume must survive | Large — Phase A design pause, blast-radius inventory, then per-subsystem commits |
+| **64** | [epic-64-shipped-linter-configs.md](epic-64-shipped-linter-configs.md) — `shared/configs/` with the actual linter configs every convention file prescribes + `install.sh --with-configs` + cap-drift check | Medium — 3 commits |
+| **65** | [epic-65-framework-threat-model.md](epic-65-framework-threat-model.md) — STRIDE the framework itself (memory injection, hooks, sync, prompt supply chain) → `docs/THREAT_MODEL.md`; human-gated cheap mitigations | Medium — 1 commit + pause + approved mitigations |
+| **66** | [epic-66-capability-inventory-lifecycle.md](epic-66-capability-inventory-lifecycle.md) — deprecation convention (status/superseded_by), forgetting-engine extended to the inventory, merge the observed complexity-skill duplicate | Medium — 4 commits |
+| **67** | [epic-67-production-feedback-bugfix-path.md](epic-67-production-feedback-bugfix-path.md) — incident records feed promote-memory; extract-lessons asks "which stage should have caught this?"; thin `deliver-bugfix` pipeline | Medium-large — 4 commits, two halves |
+| **68** | [epic-68-install-version-marker.md](epic-68-install-version-marker.md) — `framework-install.json` written at install; health-check reports install-vs-upstream drift; smallest epic | Small — 3 commits |
+
 ## Completed Prompts (`docs/prompts/done/`)
 
 | File | Scope | Shipped |
