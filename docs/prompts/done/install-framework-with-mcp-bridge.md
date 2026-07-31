@@ -94,7 +94,7 @@ Commit (in target repo): `docs(mcp): propose framework bridge plan`.
 
 **Op 1 — Framework install**:
 ```bash
-cd /path/to/ai-assistant-dot-files && ./install.sh --target /path/to/project
+cd /path/to/ai-assistant-dot-files && ./install.sh --project /path/to/project
 ```
 Verifies: `./project/.claude/agents/`, `.claude/skills/`, `.claude/rules/`, `.claude/knowledge/` all exist and symlink correctly.
 
