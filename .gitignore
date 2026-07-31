@@ -7,6 +7,9 @@
 # Editor-generated local history (e.g. VS Code/Copilot "Local History" extension) — can appear at any depth
 .history/
 
+# JetBrains IDE state
+.idea/
+
 # Feature Team Workspace Outputs
 .claude/feature-workspace/
 /features/
