@@ -39,7 +39,18 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 | ~~**55**~~ | ~~[epic-55-agent-eval-expansion.md](done/epic-55-agent-eval-expansion.md)~~ — shipped batch 1 + batch 2 + Phase C | ✓ Done |
 | ~~**57**~~ | ~~[epic-57-context-manifest-fixtures.md](done/epic-57-context-manifest-fixtures.md)~~ — shipped | ✓ Done |
 
-**Not drafted** — per-epic dispositions live in `docs/audits/framework-gap-audit-2026-07-31.md` §F5 (the 07-25 audit itself carries no inline reasons): Epics 52, 54, and 56 are subsumed by AOS Phase 3 (`docs/aos/prompts/phase-3-runtime.md`) and must not be drafted separately; Epics 43, 45, 47, and 58 remain genuinely open standalone epics, with 47 (`ship-feature`) ranked highest-value.
+**Not drafted** — per-epic dispositions live in `docs/audits/framework-gap-audit-2026-07-31.md` §F5 (the 07-25 audit itself carries no inline reasons): Epics 52, 54, and 56 are subsumed by AOS Phase 3 (`docs/aos/prompts/phase-3-runtime.md`) and must not be drafted separately. Epics 43, 45, 47, and 58 were drafted 2026-07-31 — see the table below.
+
+### Remaining standalone epics (drafted 2026-07-31, from `framework-gap-audit-2026-07-31.md` §F5)
+
+Recommended execution order matches the 07-31 audit's priority ranking (47 first, 43 last).
+
+| Epic | File | Estimated size |
+|---|---|---|
+| **47** | [epic-47-ship-feature.md](epic-47-ship-feature.md) — `ship-feature` release/PR skill; branch → gated commit → gated `gh pr create` → optional release mode delegating to `release-manager` | Medium — 3 commits, no design pause |
+| **58** | [epic-58-documentation-auditor-automation.md](epic-58-documentation-auditor-automation.md) — hook example + scheduler example + WARN-level staleness pointer in health-check; smallest remaining epic | Small — 4 commits, no design pause |
+| **45** | [epic-45-refactor-engineer.md](epic-45-refactor-engineer.md) — `refactor-engineer` agent + refactoring contract + fixture + full 38→39 roster ripple | Large — Phase A design pause, then ~7 commits |
+| **43** | [epic-43-mcp-exporter.md](epic-43-mcp-exporter.md) — `shared/mcp/` exporter; Phase A must first rule generator-vs-manifest-vs-superseded (audit flagged scope-clarification needed) | Unknown until Phase A ruling — possibly closes as superseded |
 
 ## Completed Prompts (`docs/prompts/done/`)
 
