@@ -28,7 +28,7 @@ Options:
                          elevated permissions there), and also the way to make a --project install
                          independent of this repo's checkout (a symlinked project install breaks if
                          this repo is later moved or deleted)
-  --platform <name>     Only install for a specific platform (claude-code, cursor, etc.)
+  --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, roo-code, cline)
   --dry-run             Show what would be installed without doing it
   --tour                Run the onboarding skill after install
   -h, --help            Show this help
@@ -148,6 +148,14 @@ detect_platforms() {
     detected+=("gemini")
   fi
 
+  if [[ -d "$HOME/.vscode/extensions" ]] && ls "$HOME/.vscode/extensions/" 2>/dev/null | grep -qi "roo-cline\|rooveterinaryinc"; then
+    detected+=("roo-code")
+  fi
+
+  if [[ -d "$HOME/.vscode/extensions" ]] && ls "$HOME/.vscode/extensions/" 2>/dev/null | grep -qi "saoudrizwan.claude-dev\|cline"; then
+    detected+=("cline")
+  fi
+
   if [[ -f "$HOME/.openai.md" ]] || [[ -f ".openai.md" ]]; then
     detected+=("openai-codex")
   fi
@@ -204,6 +212,24 @@ install_antigravity() {
     link_or_copy "$SHARED_DIR/skills" "$TARGET_DIR/.agents/skills"
     link_or_copy "$SHARED_DIR/rules" "$TARGET_DIR/.agents/rules"
   fi
+}
+
+install_roo_code() {
+  log ""
+  log "--- Roo Code (Tier 2+: Custom Modes) ---"
+  # .roomodes and .roo/rules/ are generated files — delegate to generate-configs.sh
+  # install_generated_configs() at the end of this script handles both platforms when
+  # PLATFORM_FILTER matches; no symlinks needed (Roo Code has no symlink-based install pattern).
+  log "  [info] .roomodes and .roo/rules/ generated via scripts/generate-configs.sh"
+  resolve_model_tier "roo-code"
+}
+
+install_cline() {
+  log ""
+  log "--- Cline (Tier 2: Personas + Rules) ---"
+  # .clinerules/ is a generated directory — delegate to generate-configs.sh
+  log "  [info] .clinerules/ generated via scripts/generate-configs.sh"
+  resolve_model_tier "cline"
 }
 
 install_cursor() {
@@ -320,6 +346,14 @@ echo ""
 if should_install "claude-code"; then
   install_claude_code
   resolve_model_tier "claude-code"
+fi
+
+if should_install "roo-code"; then
+  install_roo_code
+fi
+
+if should_install "cline"; then
+  install_cline
 fi
 
 if should_install "cursor"; then
