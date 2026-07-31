@@ -28,7 +28,7 @@ Options:
                          elevated permissions there), and also the way to make a --project install
                          independent of this repo's checkout (a symlinked project install breaks if
                          this repo is later moved or deleted)
-  --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, roo-code, cline)
+  --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline)
   --dry-run             Show what would be installed without doing it
   --tour                Run the onboarding skill after install
   -h, --help            Show this help
@@ -148,6 +148,10 @@ detect_platforms() {
     detected+=("gemini")
   fi
 
+  if [[ -d "$HOME/Library/Application Support/JetBrains" ]] || [[ -d "$HOME/.config/JetBrains" ]]; then
+    detected+=("jetbrains")
+  fi
+
   if [[ -d "$HOME/.vscode/extensions" ]] && ls "$HOME/.vscode/extensions/" 2>/dev/null | grep -qi "roo-cline\|rooveterinaryinc"; then
     detected+=("roo-code")
   fi
@@ -212,6 +216,21 @@ install_antigravity() {
     link_or_copy "$SHARED_DIR/skills" "$TARGET_DIR/.agents/skills"
     link_or_copy "$SHARED_DIR/rules" "$TARGET_DIR/.agents/rules"
   fi
+}
+
+install_jetbrains() {
+  log ""
+  log "--- JetBrains AI Assistant + Junie (Tier 2: Personas + Rules) ---"
+  # .aiassistant/rules/ and .junie/guidelines.md are generated files — delegate to generate-configs.sh
+  log "  [info] .aiassistant/rules/ and .junie/guidelines.md generated via scripts/generate-configs.sh"
+
+  if [[ "$MODE" == "global" ]]; then
+    # Global Junie guidelines
+    local junie_global_dir="$HOME/.junie"
+    if ! $DRY_RUN; then mkdir -p "$junie_global_dir" 2>/dev/null || true; fi
+    log "  [info] global ~/.junie/AGENTS.md should mirror AGENTS.md — copy manually or re-run with --project"
+  fi
+  resolve_model_tier "jetbrains"
 }
 
 install_roo_code() {
@@ -346,6 +365,10 @@ echo ""
 if should_install "claude-code"; then
   install_claude_code
   resolve_model_tier "claude-code"
+fi
+
+if should_install "jetbrains"; then
+  install_jetbrains
 fi
 
 if should_install "roo-code"; then
