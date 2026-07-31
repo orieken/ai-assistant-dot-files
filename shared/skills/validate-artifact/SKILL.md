@@ -36,6 +36,7 @@ field-presence checks that `scripts/health-check.sh` already runs across the who
 | accessibility-engineer | `.claude/feature-workspace/accessibility-report.md` | `shared/contracts/accessibility-contract.md` |
 | security-reviewer | `.claude/feature-workspace/security-report.md` | `shared/contracts/security-contract.md` |
 | qa-engineer | `.claude/feature-workspace/qa-report.md` | `shared/contracts/qa-contract.md` |
+| visual-qa-engineer | `.claude/feature-workspace/visual-qa-report.md` | `shared/contracts/visual-qa-report-contract.md` |
 | sre-engineer | `.claude/feature-workspace/observability-report.md` | `shared/contracts/observability-contract.md` |
 | tech-writer | `.claude/feature-workspace/docs-report.md` | `shared/contracts/docs-contract.md` |
 | devops-engineer | `.claude/feature-workspace/devops-report.md` | `shared/contracts/devops-contract.md` |
