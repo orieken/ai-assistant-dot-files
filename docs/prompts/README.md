@@ -35,7 +35,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 | ~~**48**~~ | ~~[epic-48-iac-conventions.md](done/epic-48-iac-conventions.md)~~ — shipped `aa954e2` | ✓ Done |
 | ~~**49**~~ | ~~[epic-49-mobile-conventions.md](done/epic-49-mobile-conventions.md)~~ — shipped `aea8172`→`0bc5107` | ✓ Done |
 | ~~**50**~~ | ~~[epic-50-rust-conventions.md](done/epic-50-rust-conventions.md)~~ — shipped `e67653a` | ✓ Done |
-| **51** | [epic-51-enterprise-memory-sync.md](epic-51-enterprise-memory-sync.md) — `install.sh --sync-memory` + ADR-003 | Medium-large (design + protocol + tooling) |
+| ~~**51**~~ | ~~[epic-51-enterprise-memory-sync.md](done/epic-51-enterprise-memory-sync.md)~~ — shipped `146e3bb`→`69d6c3d` | ✓ Done |
 | **55** | [epic-55-agent-eval-expansion.md](epic-55-agent-eval-expansion.md) — golden-file coverage for all 36 agents | Medium (audit + fill + enforce) |
 | **57** | [epic-57-context-manifest-fixtures.md](epic-57-context-manifest-fixtures.md) — fixtures for `check-context-budget.sh` | Small (1 commit) |
 
@@ -45,6 +45,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-51-enterprise-memory-sync.md](done/epic-51-enterprise-memory-sync.md) | ADR-003 (separate git repo model) + `scripts/sync-memory.sh` (pull/push with --confirm gate) + `install.sh --sync-memory` flag + `memory-registry.json` enterpriseSync stanza + README workflow docs + `health-check.sh` Memory Sync section | Shipped 2026-07-31 in commits `146e3bb`→`69d6c3d` |
 | [done/epic-50-rust-conventions.md](done/epic-50-rust-conventions.md) | Add `shared/rules/rust-conventions.md` covering Clean Architecture layer separation, cargo + clippy as CI fitness function, clippy::cognitive_complexity capped at 6, thiserror/anyhow error strategy, tokio async runtime, #![forbid(unsafe_code)], proptest + rstest + mockall + criterion | Shipped 2026-07-30 in commit `e67653a` |
 | [done/epic-49-mobile-conventions.md](done/epic-49-mobile-conventions.md) | Add `shared/rules/swift-conventions.md` (SwiftUI + Swift Concurrency, SwiftLint `< 7`, XCTest + Nimble + swift-snapshot-testing) and `shared/rules/kotlin-conventions.md` (Jetpack Compose + Coroutines, detekt `< 7`, JUnit 5 + MockK + Paparazzi). No agent wiring today — mobile features will pick up on first use | Shipped 2026-07-30 in commits `aea8172`→`0bc5107` |
 | [done/epic-48-iac-conventions.md](done/epic-48-iac-conventions.md) | Add `shared/rules/iac-conventions.md` covering Terraform/OpenTofu, Dockerfile, Kubernetes/Helm, and GitHub Actions guardrails. Wired into `devops-engineer.md` pre-read block. Propagated to all platform generated configs | Shipped 2026-07-30 in commit `aa954e2` |
