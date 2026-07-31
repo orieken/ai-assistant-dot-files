@@ -1,0 +1,8 @@
+# Fuzzy patterns expected in devops-engineer's devops-report.md.
+# Contract section headings checked via devops-contract.md.
+
+AWS_S3_BUCKET|AWS_REGION
+CI|pipeline|workflow
+IAM|policy|permission
+secret|env.*var
+lifecycle|s3.*rule

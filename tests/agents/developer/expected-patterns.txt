@@ -1,0 +1,11 @@
+# Fuzzy patterns expected in developer's implementation-notes.md when run against
+# input-analysis.md. One extended-regex pattern per line, case-insensitive (grep -Ei).
+#
+# Contract section headings are checked separately by test-agents.sh via
+# shared/contracts/implementation-contract.md.
+
+StorageAdapter|storage.adapter
+interface
+422
+race|concurrent
+s3.*delete|delete.*s3

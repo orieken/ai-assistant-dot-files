@@ -1,0 +1,9 @@
+# Fuzzy patterns expected in performance-engineer's performance-report.md.
+# The fixture deliberately contains: missing index, connection pool exhaustion
+# risk at scale, and long-polling holding DB connections.
+
+N\+1|index|missing.index
+connection.pool|pool.*exhaustion|pool.*size
+WebSocket|SSE|Server-Sent|long.poll
+pagination|unbounded
+timeout

@@ -1,0 +1,9 @@
+# Fuzzy patterns expected in data-engineer's data-engineering-notes.md.
+# The fixture deliberately contains: NOT NULL column without DEFAULT (violates
+# Expand/Contract), table lock risk at 8M rows, and code-before-migration order.
+
+NOT NULL|not.null
+DEFAULT|default
+Expand|Contract|expand.contract
+lock|lock.*table|table.lock
+backfill

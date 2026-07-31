@@ -1,0 +1,8 @@
+# Fuzzy patterns expected in visual-qa-engineer's visual-qa-report.md.
+# Contract section headings checked via visual-qa-report-contract.md.
+
+cold.spot|cold spot|heatmap
+Export CSV|bottom.right
+mobile|375
+baseline|snapshot
+PASS|FAIL|UNCONFIGURED

@@ -1,0 +1,8 @@
+# Fuzzy patterns expected in tech-writer's docs-report.md.
+# Contract section headings checked via docs-contract.md.
+
+StorageAdapter|storage.adapter
+AWS_S3_BUCKET|AWS_REGION
+env.*var|environment.variable
+README|runbook|ADR
+CHANGELOG|changelog

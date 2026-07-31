@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in product-owner's challenge output.
+
+ROI|return.on.invest|business.value
+8.week|effort|scope
+indefinitely|storage|retention
+alternative|exist.*solution|Slack|existing
+MVP|minimal|reduce.*scope

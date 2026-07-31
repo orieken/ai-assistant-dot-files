@@ -1,0 +1,8 @@
+# Fuzzy patterns expected in sre-engineer's observability-report.md.
+# Contract section headings checked via observability-contract.md.
+
+span|trace|OpenTelemetry|OTel
+metric|counter|histogram
+log.*cardinality|structured.log
+SLI|SLO|latency|error.rate
+alert|threshold

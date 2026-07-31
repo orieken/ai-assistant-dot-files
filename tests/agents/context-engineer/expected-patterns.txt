@@ -1,0 +1,8 @@
+# Fuzzy patterns expected in context-engineer's context-manifest.md.
+# Contract section headings checked via context-manifest-contract.md.
+
+auth.middleware|auth-middleware
+redis.client|redis-client
+ADR-007|adr.*007
+rate.limit|rate-limit
+budget|token.*budget

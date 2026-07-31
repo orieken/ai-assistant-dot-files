@@ -1,0 +1,8 @@
+# Fuzzy patterns expected in release-manager's release plan output.
+# Fixture contains a BREAKING CHANGE → should trigger major version bump.
+
+BREAKING.CHANGE|breaking.change|major
+v2\.0\.0|2\.0\.0
+migration|migrate
+stripe.*13|dep.*bump
+CHANGELOG|changelog

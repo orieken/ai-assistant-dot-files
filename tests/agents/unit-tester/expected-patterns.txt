@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in unit-tester's test file output.
+
+describe|it\(|test\(
+free.*0|no.discount|tier.*free
+cap|0\.4|40.percent
+coupon.*SAVE20|SAVE20.*coupon
+enterprise.*pro|pro.*enterprise

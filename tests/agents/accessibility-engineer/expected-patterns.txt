@@ -1,0 +1,9 @@
+# Fuzzy patterns expected in accessibility-engineer's accessibility-report.md.
+# Fixture contains: missing label on input, icon div without button/role,
+# low-contrast placeholder color, no aria-live for error, no key handler on list items.
+
+label|aria-label|aria-labelledby
+role.*button|<button|button
+contrast|color.contrast
+aria-live|aria.live
+keyboard|keydown|key.*handler
