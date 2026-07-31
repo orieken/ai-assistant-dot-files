@@ -33,7 +33,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 | ~~**44**~~ | ~~[epic-44-jetbrains-exporter.md](done/epic-44-jetbrains-exporter.md)~~ — shipped `d047e69`→`3e953df` | ✓ Done |
 | ~~**46**~~ | ~~[epic-46-visual-qa-engineer.md](done/epic-46-visual-qa-engineer.md)~~ — shipped `472c961`→`5d28b74` | ✓ Done |
 | ~~**48**~~ | ~~[epic-48-iac-conventions.md](done/epic-48-iac-conventions.md)~~ — shipped `aa954e2` | ✓ Done |
-| **49** | [epic-49-mobile-conventions.md](epic-49-mobile-conventions.md) — Swift + Kotlin conventions | Medium (2 files, one commit each) |
+| ~~**49**~~ | ~~[epic-49-mobile-conventions.md](done/epic-49-mobile-conventions.md)~~ — shipped `aea8172`→`0bc5107` | ✓ Done |
 | **50** | [epic-50-rust-conventions.md](epic-50-rust-conventions.md) — Rust conventions | Small-medium (1 file) |
 | **51** | [epic-51-enterprise-memory-sync.md](epic-51-enterprise-memory-sync.md) — `install.sh --sync-memory` + ADR-003 | Medium-large (design + protocol + tooling) |
 | **55** | [epic-55-agent-eval-expansion.md](epic-55-agent-eval-expansion.md) — golden-file coverage for all 36 agents | Medium (audit + fill + enforce) |
@@ -45,6 +45,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-49-mobile-conventions.md](done/epic-49-mobile-conventions.md) | Add `shared/rules/swift-conventions.md` (SwiftUI + Swift Concurrency, SwiftLint `< 7`, XCTest + Nimble + swift-snapshot-testing) and `shared/rules/kotlin-conventions.md` (Jetpack Compose + Coroutines, detekt `< 7`, JUnit 5 + MockK + Paparazzi). No agent wiring today — mobile features will pick up on first use | Shipped 2026-07-30 in commits `aea8172`→`0bc5107` |
 | [done/epic-48-iac-conventions.md](done/epic-48-iac-conventions.md) | Add `shared/rules/iac-conventions.md` covering Terraform/OpenTofu, Dockerfile, Kubernetes/Helm, and GitHub Actions guardrails. Wired into `devops-engineer.md` pre-read block. Propagated to all platform generated configs | Shipped 2026-07-30 in commit `aa954e2` |
 | [done/epic-46-visual-qa-engineer.md](done/epic-46-visual-qa-engineer.md) | Add `visual-qa-engineer` pipeline agent. Wraps `@orieken/saturday-ml-analyzer` (interaction heatmap cold-spot analysis) and Playwright `toHaveScreenshot()` (visual regression). Conditional: UI features with `heatmap-data/` or snapshot baselines. Adds contract, template, pipeline slot after qa-engineer (steps 28-29), workflow diagram, validate-artifact mapping | Shipped 2026-07-30 in commits `472c961`→`5d28b74` |
 | [done/epic-44-jetbrains-exporter.md](done/epic-44-jetbrains-exporter.md) | Add JetBrains AI Assistant + Junie as a single platform entry. Generates `.aiassistant/rules/` (10 files, IDE mode hints) and `.junie/guidelines.md`. Confirmed Junie already reads root `AGENTS.md` so partial support existed — this adds the AI Assistant project-rules layer and explicit Junie path | Shipped 2026-07-30 in commits `d047e69`→`3e953df` |
