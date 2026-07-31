@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in context-auditor's audit output.
+
+never.opened|speculative|unpinned
+unrelated|ADR-003|copy.paste
+budget.*discrepancy|discrepancy.*budget|18.400.*11.200
+broken.*link|ki-jwt-validation|file.*not.*exist
+token.budget|token.*budget

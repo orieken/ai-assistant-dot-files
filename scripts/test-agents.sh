@@ -18,11 +18,41 @@ CONTRACTS_DIR="$REPO_DIR/shared/contracts"
 # bash 3.2 (macOS default) has no associative arrays — use a function instead.
 contract_for_agent() {
   case "$1" in
+    # Pipeline agents
     analyst) echo "analysis-contract.md" ;;
     architect) echo "architecture-contract.md" ;;
     code-reviewer) echo "review-contract.md" ;;
     security-reviewer) echo "security-contract.md" ;;
     qa-engineer) echo "qa-contract.md" ;;
+    tech-writer) echo "docs-contract.md" ;;
+    devops-engineer) echo "devops-contract.md" ;;
+    sre-engineer) echo "observability-contract.md" ;;
+    data-engineer) echo "data-contract.md" ;;
+    performance-engineer) echo "performance-contract.md" ;;
+    accessibility-engineer) echo "accessibility-contract.md" ;;
+    visual-qa-engineer) echo "visual-qa-contract.md" ;;
+    # Delivery-role agents
+    developer) echo "implementation-contract.md" ;;
+    context-engineer) echo "context-manifest-contract.md" ;;
+    spec-writer) echo "spec-contract.md" ;;
+    product-owner) echo "product-review-contract.md" ;;
+    release-manager) echo "release-plan-contract.md" ;;
+    test-driven-developer) echo "tdd-contract.md" ;;
+    unit-tester) echo "unit-test-contract.md" ;;
+    # Counter/auditor agents (no contract files — output is audit findings, no fixed schema)
+    agent-evaluator) echo "" ;;
+    context-auditor) echo "" ;;
+    documentation-auditor) echo "" ;;
+    documentation-manager) echo "" ;;
+    knowledge-auditor) echo "" ;;
+    memory-auditor) echo "" ;;
+    model-tier-auditor) echo "" ;;
+    pattern-reviewer) echo "" ;;
+    privacy-auditor) echo "" ;;
+    prompt-evaluator) echo "" ;;
+    retrieval-evaluator) echo "" ;;
+    rule-auditor) echo "" ;;
+    tool-validator) echo "" ;;
     *) echo "" ;;
   esac
 }

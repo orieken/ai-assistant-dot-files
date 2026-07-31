@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in memory-auditor's audit output.
+
+stale|6.months|no.incoming.link
+duplicate|semantic.*overlap|ki-redis-patterns.*ki-redis-sliding|near-identical
+missing.*field|created.*missing|schema.*compliance
+ki-postgres-indexing|ki-redis-patterns|stale.*candidate
+STALE|DUPLICATE|SCHEMA

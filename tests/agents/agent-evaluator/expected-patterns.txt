@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in agent-evaluator's evaluation output.
+
+PASS|FAIL
+rubric.*criteria|criteria.*rubric
+pattern.*match|match.*pattern
+quote|evidence|specific.line
+regression

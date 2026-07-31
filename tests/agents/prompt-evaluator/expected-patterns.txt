@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in prompt-evaluator's audit output.
+
+hardcoded.*secret|password.*hardcoded|hunter2|postgres.*url
+fabricated.*url|internal.*url|company-internal|external.*url
+ADR-011|tightly.coupled|example.*specific
+inconsistent.*voice|voice
+BLOCKER|HIGH|FAIL

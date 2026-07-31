@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in documentation-auditor's audit output.
+
+legacy-formatter|deprecated.*listed|still.*listed
+sre-engineer|visual-qa-engineer|missing.*table|not.*listed
+epic-planner|deprecated.*skill|replaced.*spec-writer
+stale|outdated|STALE
+agent.*inventory|inventory.*agent

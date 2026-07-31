@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in tool-validator's audit output.
+
+standalone.*false|hidden.*MCP|MCP.*dependency|requires_mcp
+42_invalid|invalid.*parameter|param.*name
+memory-server|MCP.*declared|frontmatter.*mcp
+schema.*compliance|frontmatter
+FAIL|WARN|BLOCKER

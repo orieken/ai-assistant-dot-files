@@ -54,8 +54,35 @@ finding, or regressed the quality of its reasoning.
 | `analyst` | `input-feature-spec.md` | Password reset feature spec with explicit non-enumeration and token-expiry constraints |
 | `architect` | `input-analysis.md` | Analysis with a new cross-bounded-context call and a brand-new external dependency |
 | `qa-engineer` | `input-implementation-notes.md` | Implementation notes calling out three specific edge cases QA must cover |
+| `developer` | `input-analysis.md` | Avatar upload with StorageAdapter interface, migration, concurrent upload, S3 deletion |
+| `sre-engineer` | `input-implementation-notes.md` | Payment webhook — missing spans, no retry observability, no SLI |
+| `tech-writer` | `input-qa-report.md` | Avatar upload QA report — StorageAdapter docs gap, AWS env vars, S3 lifecycle gap |
+| `devops-engineer` | `input-docs-report.md` | Avatar upload docs — S3/IAM gap, CI secrets, lifecycle policy |
+| `performance-engineer` | `input-architecture-notes.md` | Real-time notification feed — missing index, pool exhaustion, unbounded SELECT |
+| `data-engineer` | `input-analysis.md` | Multi-tenant migration — NOT NULL without DEFAULT, table lock, backfill order |
+| `accessibility-engineer` | `input-component.vue` | UserSearchBar.vue — missing label, icon div, low contrast, no aria-live |
+| `visual-qa-engineer` | `input-qa-report.md` | Dashboard — cold spot (Export CSV), no mobile sparkline baselines |
+| `context-engineer` | `input-task.md` | Rate limiting — auth middleware, redis client, ADR-007, budget calculation |
+| `spec-writer` | `input-user-request.md` | "Add dark mode" — persistence, system preference, scope, definition of done |
+| `product-owner` | `input-feature-spec.md` | In-app chat — ROI, 8-week effort, indefinite storage, MVP scope |
+| `release-manager` | `input-git-log.md` | Git log since v1.7.0 — BREAKING CHANGE (OAuth2), Stripe 12→13 bump |
+| `test-driven-developer` | `input-acceptance-criteria.md` | Email uniqueness — anti-enumeration, 409 Conflict, domain-layer test |
+| `unit-tester` | `input-source.ts` | discount-calculator.ts — free/pro/enterprise tiers, SAVE10/SAVE20, 40% cap |
+| `agent-evaluator` | `input-eval-case.md` | Evaluating analyst's password-reset output — rubric grading, pattern check |
+| `context-auditor` | `input-manifest.md` | Context manifest — unpinned file, unrelated ADR, budget discrepancy, broken KI link |
+| `documentation-auditor` | `input-agent-reference.md` | AGENT_REFERENCE.md — removed agent still listed, two agents missing, deprecated skill |
+| `documentation-manager` | `input-session.md` | WebSocket ad-hoc session — missing ADR, KI, OTel gap, magic number |
+| `knowledge-auditor` | `input-ki-draft.md` | Redis sliding window KI — magic number in snippet, ADR cross-reference, schema check |
+| `memory-auditor` | `input-ki-corpus.md` | KI corpus — two stale KIs, semantic duplicate, missing `created` field |
+| `model-tier-auditor` | `input-agent-frontmatter.md` | Agent frontmatter — missing field, invalid enum, profile mismatch |
+| `pattern-reviewer` | `input-pattern-doc.md` | Site-Centric pattern doc — stale class name (v2.1), broken SiteManager path |
+| `privacy-auditor` | `input-pipeline-artifact.md` | Payment webhook notes — hardcoded test key, PII logging |
+| `prompt-evaluator` | `input-prompt-draft.md` | data-migrator prompt — hardcoded DB password, internal URL, coupled example |
+| `retrieval-evaluator` | `input-telemetry.md` | Retrieval telemetry — three zero-match queries, missing-KI gaps |
+| `rule-auditor` | `input-rules-excerpt.md` | Rules excerpt — path inconsistency, un-indexed rule file, redundant constraints |
+| `tool-validator` | `input-skill-draft.md` | summarize-session SKILL.md — hidden MCP dependency, invalid param name |
 
-## Coverage Status (Epic 55 audit — 2026-07-31)
+## Coverage Status (Epic 55 — post-expansion 2026-07-31)
 
 38 agents total. Covered = has `input-*` + `expected-patterns.txt` + `eval-rubric.md`.
 
@@ -66,33 +93,33 @@ finding, or regressed the quality of its reasoning.
 | `code-reviewer` | ✓ | |
 | `qa-engineer` | ✓ | |
 | `security-reviewer` | ✓ | |
-| `developer` | — | pipeline; implementation-contract.md |
-| `sre-engineer` | — | pipeline; observability-contract.md |
-| `tech-writer` | — | pipeline; docs-contract.md |
-| `devops-engineer` | — | pipeline; devops-contract.md |
-| `performance-engineer` | — | pipeline; performance-contract.md |
-| `data-engineer` | — | pipeline; data-engineering-contract.md |
-| `accessibility-engineer` | — | pipeline; accessibility-contract.md |
-| `visual-qa-engineer` | — | pipeline; visual-qa-report-contract.md |
-| `context-engineer` | — | pipeline; context-manifest-contract.md |
-| `spec-writer` | — | pipeline; no output contract |
-| `product-owner` | — | pipeline challenger; no output contract |
-| `release-manager` | — | ad-hoc; no output contract |
-| `test-driven-developer` | — | pipeline; no output contract |
-| `unit-tester` | — | backfill; no output contract |
-| `agent-evaluator` | — | counter agent; no output contract |
-| `context-auditor` | — | counter agent; no output contract |
-| `documentation-auditor` | — | counter agent; no output contract |
-| `documentation-manager` | — | counter agent; no output contract |
-| `knowledge-auditor` | — | counter agent; no output contract |
-| `memory-auditor` | — | counter agent; no output contract |
-| `model-tier-auditor` | — | counter agent; no output contract |
-| `pattern-reviewer` | — | counter agent; no output contract |
-| `privacy-auditor` | — | counter agent; no output contract |
-| `prompt-evaluator` | — | counter agent; no output contract |
-| `retrieval-evaluator` | — | counter agent; no output contract |
-| `rule-auditor` | — | counter agent; no output contract |
-| `tool-validator` | — | counter agent; no output contract |
+| `developer` | ✓ | batch 1 |
+| `sre-engineer` | ✓ | batch 1 |
+| `tech-writer` | ✓ | batch 1 |
+| `devops-engineer` | ✓ | batch 1 |
+| `performance-engineer` | ✓ | batch 1 |
+| `data-engineer` | ✓ | batch 1 |
+| `accessibility-engineer` | ✓ | batch 1 |
+| `visual-qa-engineer` | ✓ | batch 1 |
+| `context-engineer` | ✓ | batch 1 |
+| `spec-writer` | ✓ | batch 1 |
+| `product-owner` | ✓ | batch 1 |
+| `release-manager` | ✓ | batch 1 |
+| `test-driven-developer` | ✓ | batch 1 |
+| `unit-tester` | ✓ | batch 1 |
+| `agent-evaluator` | ✓ | batch 2 |
+| `context-auditor` | ✓ | batch 2 |
+| `documentation-auditor` | ✓ | batch 2 |
+| `documentation-manager` | ✓ | batch 2 |
+| `knowledge-auditor` | ✓ | batch 2 |
+| `memory-auditor` | ✓ | batch 2 |
+| `model-tier-auditor` | ✓ | batch 2 |
+| `pattern-reviewer` | ✓ | batch 2 |
+| `privacy-auditor` | ✓ | batch 2 |
+| `prompt-evaluator` | ✓ | batch 2 |
+| `retrieval-evaluator` | ✓ | batch 2 |
+| `rule-auditor` | ✓ | batch 2 |
+| `tool-validator` | ✓ | batch 2 |
 | `api-test-generator` | — | specialist; deferred |
 | `chaos-engineer` | — | specialist; deferred |
 | `dependency-auditor` | — | specialist; deferred |
@@ -100,7 +127,7 @@ finding, or regressed the quality of its reasoning.
 | `finops-engineer` | — | specialist; deferred |
 | `modernization-supervisor` | — | multi-agent coordinator; deferred (non-deterministic orchestration) |
 
-**Pre-expansion: 5 / 38 covered (13%)**
+**Post-expansion: 32 / 38 covered (84%)**
 
 ## Adding a new fixture
 1. Create `tests/agents/<agent-name>/` if it doesn't exist.

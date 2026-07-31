@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in retrieval-evaluator's audit output.
+
+expand.contract|missing.*KI|create-ki
+circuit.breaker|resilience|retry.*KI
+WebSocket|fanout|pub.sub.*KI
+ZERO.MATCH|zero.*match|no.*KI
+metadata.*gap|tags.*missing|tag.*recommendation

@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in privacy-auditor's audit output.
+
+sk_test|hardcoded.*key|API.key.*hardcoded
+customer_email|customer_name|PII.*log|logging.*PII
+BLOCKER|HIGH|CRITICAL
+secret.*env|STRIPE_API_KEY.*env
+redact|remove.*key|rotate

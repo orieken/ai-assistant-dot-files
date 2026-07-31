@@ -417,6 +417,51 @@ except Exception:
 fi
 echo ""
 
+# --- Agent golden-file fixture coverage (FAIL if any non-deferred agent lacks one) -----------
+echo "--- Agent Golden-File Fixtures (tests/agents/) ---"
+TESTS_AGENTS_DIR="$REPO_DIR/tests/agents"
+# Specialists deferred in Epic 55 — non-deterministic or large-surface agents documented
+# in tests/agents/README.md as "specialist; deferred" or "multi-agent coordinator; deferred"
+deferred_agents="api-test-generator chaos-engineer dependency-auditor dx-engineer finops-engineer modernization-supervisor"
+
+if [[ ! -d "$TESTS_AGENTS_DIR" ]]; then
+  fail "tests/agents/ directory not found"
+else
+  for agent_file in "$SHARED_DIR/agents/"*.md; do
+    base="$(basename "$agent_file")"
+    [[ "$base" == "CHANGELOG.md" ]] && continue
+    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' | tr -d '"' || true)
+    [[ -z "$agent_name" ]] && continue
+
+    # Skip deferred specialists
+    if echo "$deferred_agents" | grep -qw "$agent_name"; then
+      pass "$agent_name — deferred specialist (documented in tests/agents/README.md)"
+      continue
+    fi
+
+    fixture_dir="$TESTS_AGENTS_DIR/$agent_name"
+    if [[ ! -d "$fixture_dir" ]]; then
+      fail "$agent_name — no fixture directory at tests/agents/$agent_name/"
+      continue
+    fi
+
+    has_input=$(find "$fixture_dir" -maxdepth 1 -name "input-*" | wc -l | tr -d ' ')
+    has_patterns=false; [[ -f "$fixture_dir/expected-patterns.txt" ]] && has_patterns=true
+    has_rubric=false;   [[ -f "$fixture_dir/eval-rubric.md" ]]       && has_rubric=true
+
+    if [[ "$has_input" -gt 0 ]] && $has_patterns && $has_rubric; then
+      pass "$agent_name — fixture complete (input + patterns + rubric)"
+    else
+      missing_pieces=""
+      [[ "$has_input" -eq 0 ]] && missing_pieces="$missing_pieces input-*"
+      $has_patterns || missing_pieces="$missing_pieces expected-patterns.txt"
+      $has_rubric   || missing_pieces="$missing_pieces eval-rubric.md"
+      fail "$agent_name — fixture incomplete — missing:$missing_pieces"
+    fi
+  done
+fi
+echo ""
+
 # --- Inventory drift ---------------------------------------------------------
 echo "--- Inventory drift ---"
 drift_output=$("$REPO_DIR/scripts/check-inventory-drift.sh" 2>&1 || true)

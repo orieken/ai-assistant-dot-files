@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in pattern-reviewer's audit output.
+
+stale.*snippet|AbstractPage|BasePage.*renamed|v2.1
+broken.*path|SiteManager.*moved|orchestration
+stale|outdated|STALE
+line.*12|BaseSite.*line|file.path
+PASS|FAIL|STALE

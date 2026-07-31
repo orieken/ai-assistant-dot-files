@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in model-tier-auditor's audit output.
+
+missing.*model_tier|model_tier.*missing|context-engineer
+invalid.*enum|observability.*invalid|sre-engineer
+mismatch|operational.profile|chaos-engineer
+FAIL|WARN|model_tier
+budget|reasoning|standard

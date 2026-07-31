@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in documentation-manager's candidate record output.
+
+ADR|architecture.*decision|decision.*record
+KI|knowledge.item|create-ki
+OTel|OpenTelemetry|observability
+EventEmitter|single.*instance|multi.instance|fanout
+hardcoded|magic.number|heartbeat

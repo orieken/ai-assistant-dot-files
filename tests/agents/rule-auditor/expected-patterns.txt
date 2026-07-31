@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in rule-auditor's audit output.
+
+contradictory|conflict|duplicate.*rule|redundant
+DOMAIN_DICTIONARY|path.*inconsistency|docs/DOMAIN_DICTIONARY
+iac-conventions|un-indexed|not.*listed|missing.*index
+no raw any|strict.*true|consistent|PASS
+FAIL|WARN|inconsistency

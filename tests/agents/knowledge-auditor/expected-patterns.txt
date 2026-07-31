@@ -1,0 +1,7 @@
+# Fuzzy patterns expected in knowledge-auditor's audit output.
+
+schema|frontmatter|required.field
+duplicate|similar.*KI|existing.*KI|overlap
+RATE_LIMIT_MAX|hardcoded|magic.number|constant
+ADR-007|cross.reference|link.*valid
+last-referenced|stale|recency
