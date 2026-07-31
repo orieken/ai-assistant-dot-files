@@ -55,6 +55,53 @@ finding, or regressed the quality of its reasoning.
 | `architect` | `input-analysis.md` | Analysis with a new cross-bounded-context call and a brand-new external dependency |
 | `qa-engineer` | `input-implementation-notes.md` | Implementation notes calling out three specific edge cases QA must cover |
 
+## Coverage Status (Epic 55 audit — 2026-07-31)
+
+38 agents total. Covered = has `input-*` + `expected-patterns.txt` + `eval-rubric.md`.
+
+| Agent | Covered | Notes |
+|---|---|---|
+| `analyst` | ✓ | |
+| `architect` | ✓ | |
+| `code-reviewer` | ✓ | |
+| `qa-engineer` | ✓ | |
+| `security-reviewer` | ✓ | |
+| `developer` | — | pipeline; implementation-contract.md |
+| `sre-engineer` | — | pipeline; observability-contract.md |
+| `tech-writer` | — | pipeline; docs-contract.md |
+| `devops-engineer` | — | pipeline; devops-contract.md |
+| `performance-engineer` | — | pipeline; performance-contract.md |
+| `data-engineer` | — | pipeline; data-engineering-contract.md |
+| `accessibility-engineer` | — | pipeline; accessibility-contract.md |
+| `visual-qa-engineer` | — | pipeline; visual-qa-report-contract.md |
+| `context-engineer` | — | pipeline; context-manifest-contract.md |
+| `spec-writer` | — | pipeline; no output contract |
+| `product-owner` | — | pipeline challenger; no output contract |
+| `release-manager` | — | ad-hoc; no output contract |
+| `test-driven-developer` | — | pipeline; no output contract |
+| `unit-tester` | — | backfill; no output contract |
+| `agent-evaluator` | — | counter agent; no output contract |
+| `context-auditor` | — | counter agent; no output contract |
+| `documentation-auditor` | — | counter agent; no output contract |
+| `documentation-manager` | — | counter agent; no output contract |
+| `knowledge-auditor` | — | counter agent; no output contract |
+| `memory-auditor` | — | counter agent; no output contract |
+| `model-tier-auditor` | — | counter agent; no output contract |
+| `pattern-reviewer` | — | counter agent; no output contract |
+| `privacy-auditor` | — | counter agent; no output contract |
+| `prompt-evaluator` | — | counter agent; no output contract |
+| `retrieval-evaluator` | — | counter agent; no output contract |
+| `rule-auditor` | — | counter agent; no output contract |
+| `tool-validator` | — | counter agent; no output contract |
+| `api-test-generator` | — | specialist; deferred |
+| `chaos-engineer` | — | specialist; deferred |
+| `dependency-auditor` | — | specialist; deferred |
+| `dx-engineer` | — | specialist; deferred |
+| `finops-engineer` | — | specialist; deferred |
+| `modernization-supervisor` | — | multi-agent coordinator; deferred (non-deterministic orchestration) |
+
+**Pre-expansion: 5 / 38 covered (13%)**
+
 ## Adding a new fixture
 1. Create `tests/agents/<agent-name>/` if it doesn't exist.
 2. Add `input-*` — the smallest input that reliably exercises the behavior you want to guard.
