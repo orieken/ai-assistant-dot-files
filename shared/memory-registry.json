@@ -14,7 +14,21 @@
       "retrievalBackend": "lexical",
       "format": "markdown-frontmatter",
       "frontmatterFields": ["name", "tags", "domain", "created"],
-      "notes": "Portable KIs apply across any project using this framework; project KIs are local to one codebase. See shared/knowledge/README.md."
+      "syncFrontmatterFields": ["sync_source", "sync_pulled"],
+      "notes": "Portable KIs apply across any project using this framework; project KIs are local to one codebase. KIs pulled from an org knowledge-hub repo carry sync_source (org repo URL) and sync_pulled (ISO date) frontmatter fields. See shared/knowledge/README.md and docs/adrs/ADR-003-enterprise-memory-sync.md.",
+      "enterpriseSync": {
+        "protocol": "separate-git-repo",
+        "adr": "docs/adrs/ADR-003-enterprise-memory-sync.md",
+        "configFile": ".claude/sync-config.yaml",
+        "syncScript": "scripts/sync-memory.sh",
+        "installAlias": "./install.sh --sync-memory [pull|push]",
+        "conflictResolution": {
+          "shared/knowledge/": "org-repo-wins",
+          ".claude/knowledge/": "local-wins"
+        },
+        "authStrategies": ["SSH (primary)", "HTTPS + MEMORY_SYNC_TOKEN env var (fallback)"],
+        "pushFlow": "PR only — never direct commit to org repo"
+      }
     },
     {
       "name": "adrs",
