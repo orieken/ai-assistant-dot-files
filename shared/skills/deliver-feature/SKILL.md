@@ -55,21 +55,23 @@ Do NOT use when the user only wants a single agent's output (e.g., just an analy
 ### Phase 3: Verification and Shipping
 26. **Invoke qa-engineer** -> produces `qa-report.md`. Tests must be green.
 27. **Invoke validate-artifact** against `shared/contracts/qa-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
-28. **Invoke sre-engineer** -> produces `observability-report.md`.
-29. **Invoke validate-artifact** against `shared/contracts/observability-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
-30. **Invoke tech-writer** -> produces `docs-report.md`. **Checkpoint**.
-31. **Invoke validate-artifact** against `shared/contracts/docs-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
-32. **Invoke devops-engineer** -> produces `devops-report.md`. **Checkpoint**.
-33. **Invoke validate-artifact** against `shared/contracts/devops-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
+28. **Invoke visual-qa-engineer** (if the feature touches UI components AND `heatmap-data/` or Playwright visual baselines exist in the project) -> produces `visual-qa-report.md`. A verdict of `UNCONFIGURED` is not a FAIL — pipeline proceeds. A verdict of `FAIL` (screenshot diff or coverage < 80%) blocks until resolved. **Checkpoint**.
+29. **Invoke validate-artifact** against `shared/contracts/visual-qa-report-contract.md` (only if visual-qa-engineer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS or SKIP.
+30. **Invoke sre-engineer** -> produces `observability-report.md`.
+31. **Invoke validate-artifact** against `shared/contracts/observability-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
+32. **Invoke tech-writer** -> produces `docs-report.md`. **Checkpoint**.
+33. **Invoke validate-artifact** against `shared/contracts/docs-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
+34. **Invoke devops-engineer** -> produces `devops-report.md`. **Checkpoint**.
+35. **Invoke validate-artifact** against `shared/contracts/devops-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
 
 ### Phase 4: Persistence and Delivery
-34. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/`.
-35. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
-36. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
-37. **Update feature index** — add the new feature entry to `docs/features/README.md`.
-38. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered.
-39. **PAUSE / Policy Evaluation**: Show `docs/features/<feature-name>/` listing. If `strict-human` or policy `autoProceedPersistence: false`, wait for human confirmation.
-40. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
+36. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/`.
+37. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
+38. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
+39. **Update feature index** — add the new feature entry to `docs/features/README.md`.
+40. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered.
+41. **PAUSE / Policy Evaluation**: Show `docs/features/<feature-name>/` listing. If `strict-human` or policy `autoProceedPersistence: false`, wait for human confirmation.
+42. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
 
 ## Human Checkpoints & Policy Evaluation
 
@@ -234,6 +236,7 @@ docs/features/<feature-name>/
   accessibility-report.md    <- accessibility-engineer output (if invoked)
   security-report.md         <- security-reviewer output (if invoked)
   qa-report.md               <- qa-engineer output
+  visual-qa-report.md        <- visual-qa-engineer output (if invoked)
   observability-report.md    <- sre-engineer output
   docs-report.md             <- tech-writer output
   devops-report.md           <- devops-engineer output
@@ -259,6 +262,7 @@ docs/features/<feature-name>/
 | accessibility-engineer | [x.y.z] | PASS / SKIPPED | PASS (N retries) / n/a | [N violations found, N fixed] |
 | security-reviewer | [x.y.z] | PASS / SKIPPED | PASS (N retries) / n/a | [N findings, N critical fixed] |
 | qa-engineer | [x.y.z] | PASS | PASS (N retries) | [N tests, N passed, SLAs verified: yes/no] |
+| visual-qa-engineer | [x.y.z] | PASS / FAIL / UNCONFIGURED / SKIPPED | PASS (N retries) / n/a | [Coverage Score: N%, N cold spots, N visual diffs] |
 | sre-engineer | [x.y.z] | PASS | PASS (N retries) | [N spans added, N alerts configured] |
 | tech-writer | [x.y.z] | PASS | PASS (N retries) | [N docs updated] |
 | devops-engineer | [x.y.z] | PASS | PASS (N retries) | [N CI changes, N env vars] |
