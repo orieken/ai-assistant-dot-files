@@ -39,7 +39,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 | ~~**55**~~ | ~~[epic-55-agent-eval-expansion.md](done/epic-55-agent-eval-expansion.md)~~ — shipped batch 1 + batch 2 + Phase C | ✓ Done |
 | ~~**57**~~ | ~~[epic-57-context-manifest-fixtures.md](done/epic-57-context-manifest-fixtures.md)~~ — shipped | ✓ Done |
 
-**Not drafted — reasons documented inline in the audit** (superseded, resolved, or scope-clarification needed): Epics 43, 45, 47, 52, 54, 56, 58.
+**Not drafted** — per-epic dispositions live in `docs/audits/framework-gap-audit-2026-07-31.md` §F5 (the 07-25 audit itself carries no inline reasons): Epics 52, 54, and 56 are subsumed by AOS Phase 3 (`docs/aos/prompts/phase-3-runtime.md`) and must not be drafted separately; Epics 43, 45, 47, and 58 remain genuinely open standalone epics, with 47 (`ship-feature`) ranked highest-value.
 
 ## Completed Prompts (`docs/prompts/done/`)
 

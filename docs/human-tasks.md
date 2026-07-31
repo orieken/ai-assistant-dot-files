@@ -8,7 +8,17 @@ Every entry: what to do, why it's here (i.e., why not a prompt), estimated time,
 
 ## Outstanding
 
-*(empty — no pending human-only tasks)*
+### 1. AOS Phase 2 v3.1.0 verification + tag
+
+- **What**: Verify the Phase 2 governance skeleton (shipped 2026-07-25, commits `28d398d` → `48102a4`, changelog entry present) and apply + push the `v3.1.0` git tag. Suggested verification, mirroring the Phase 1 checklist below:
+  1. `bash scripts/health-check.sh --verbose` — expect 0 failed (counter-agent detection + hooks validation sections included).
+  2. `bash scripts/check-parity.sh` — expect no DRIFT.
+  3. Confirm the backward-compat guarantee: a project without `.claude/hooks/` config or auditor opt-in sees zero behavior change from v3.0.0 (`validate-artifact` stays structural-only by default).
+  4. `git tag v3.1.0 <sha> && git push origin v3.1.0`.
+- **Why human**: Tagging + pushing a release is a human step per repo convention (same as the Phase 1 v3.0.0 entry under Completed).
+- **Estimated time**: ~15 minutes.
+- **Source of truth**: `docs/aos/prompts/phase-2-governance.md`, `shared/agents/CHANGELOG.md` v3.1.0 entry.
+- **How this fell through**: Phase 1's tag went through this file; Phase 2's equivalent entry was never added, so the tag step was silently skipped (caught by `docs/audits/framework-gap-audit-2026-07-31.md` F2).
 
 ---
 
