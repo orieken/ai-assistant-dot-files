@@ -2,7 +2,7 @@
 
 Every agent in this framework produces an output that *something* checks — another agent's review, a
 structural contract, a human approval gate, an aggregate metric measured after the fact, or (stated plainly
-where true) nothing yet. This doc makes that explicit for all 26 agents, one at a time, instead of leaving
+where true) nothing yet. This doc makes that explicit for all 37 agents, one at a time, instead of leaving
 it scattered implicitly across `deliver-feature/SKILL.md`, `shared/contracts/`, and each agent's own file.
 
 This is documentation of what already exists in v2 today — it does not introduce new agents or roles. Where
@@ -13,7 +13,7 @@ actually has running today.)
 
 ## How to read "Counterbalance"
 
-Four different *kinds* of check show up across these 26 agents, and they're not interchangeable:
+Four different *kinds* of check show up across these 37 agents, and they're not interchangeable:
 
 | Kind | What it catches | Example |
 |---|---|---|
@@ -309,7 +309,7 @@ The following 11 read-only counter-auditor agents implement the opposing-force c
 
 ## What this survey actually shows
 
-Reading all 26 agents together, three patterns stand out:
+Reading all 37 agents together, three patterns stand out:
 
 1. **The 14 pipeline agents are well-checked.** Every one has at least a structural contract; most have a
    real downstream reviewer or a human approval gate too. This is the part of the framework that's had the

@@ -362,6 +362,19 @@ else
 fi
 echo ""
 
+# --- Inventory drift ---------------------------------------------------------
+echo "--- Inventory drift ---"
+drift_output=$("$REPO_DIR/scripts/check-inventory-drift.sh" 2>&1 || true)
+drift_count=$(echo "$drift_output" | grep -cE '^\s+DRIFT' || true)
+if [[ "$drift_count" -gt 0 ]]; then
+  while IFS= read -r drift_line; do
+    warn "inventory: $drift_line"
+  done < <(echo "$drift_output" | grep -E '^\s+DRIFT' || true)
+else
+  pass "no inventory drift in authoritative prose docs"
+fi
+echo ""
+
 echo "==========================================="
 echo "Results: $PASS_COUNT passed, $WARN_COUNT warned, $FAIL_COUNT failed"
 if ! $VERBOSE; then
