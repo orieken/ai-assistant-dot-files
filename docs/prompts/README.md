@@ -37,7 +37,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 | ~~**50**~~ | ~~[epic-50-rust-conventions.md](done/epic-50-rust-conventions.md)~~ — shipped `e67653a` | ✓ Done |
 | ~~**51**~~ | ~~[epic-51-enterprise-memory-sync.md](done/epic-51-enterprise-memory-sync.md)~~ — shipped `146e3bb`→`69d6c3d` | ✓ Done |
 | ~~**55**~~ | ~~[epic-55-agent-eval-expansion.md](done/epic-55-agent-eval-expansion.md)~~ — shipped batch 1 + batch 2 + Phase C | ✓ Done |
-| **57** | [epic-57-context-manifest-fixtures.md](epic-57-context-manifest-fixtures.md) — fixtures for `check-context-budget.sh` | Small (1 commit) |
+| ~~**57**~~ | ~~[epic-57-context-manifest-fixtures.md](done/epic-57-context-manifest-fixtures.md)~~ — shipped | ✓ Done |
 
 **Not drafted — reasons documented inline in the audit** (superseded, resolved, or scope-clarification needed): Epics 43, 45, 47, 52, 54, 56, 58.
 
@@ -45,6 +45,7 @@ Ten Epic-numbered handoffs drafted 2026-07-26 from that audit. Recommended execu
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-57-context-manifest-fixtures.md](done/epic-57-context-manifest-fixtures.md) | 3 hand-authored `tests/fixtures/context-manifests/` fixtures (passing, warning-no-cuts, missing-status); `check-context-budget.sh` rewritten to scan both real manifests and fixtures, make missing-Status a FAIL instead of SKIP, and document expected fixture outcomes | Shipped 2026-07-31 |
 | [done/epic-55-agent-eval-expansion.md](done/epic-55-agent-eval-expansion.md) | Golden-file fixture expansion from 5/38 to 32/38 agents (84%). Batch 1: 14 pipeline agents (developer, sre-engineer, tech-writer, devops-engineer, performance-engineer, data-engineer, accessibility-engineer, visual-qa-engineer, context-engineer, spec-writer, product-owner, release-manager, test-driven-developer, unit-tester). Batch 2: 13 counter/auditor agents (agent-evaluator, context-auditor, documentation-auditor, documentation-manager, knowledge-auditor, memory-auditor, model-tier-auditor, pattern-reviewer, privacy-auditor, prompt-evaluator, retrieval-evaluator, rule-auditor, tool-validator). Phase C: `test-agents.sh` contract_for_agent() expanded to all 33 covered agents; `health-check.sh` fixture-coverage enforcement section added (FAIL when non-deferred agent lacks fixture directory) | Shipped 2026-07-31 |
 | [done/epic-51-enterprise-memory-sync.md](done/epic-51-enterprise-memory-sync.md) | ADR-003 (separate git repo model) + `scripts/sync-memory.sh` (pull/push with --confirm gate) + `install.sh --sync-memory` flag + `memory-registry.json` enterpriseSync stanza + README workflow docs + `health-check.sh` Memory Sync section | Shipped 2026-07-31 in commits `146e3bb`→`69d6c3d` |
 | [done/epic-50-rust-conventions.md](done/epic-50-rust-conventions.md) | Add `shared/rules/rust-conventions.md` covering Clean Architecture layer separation, cargo + clippy as CI fitness function, clippy::cognitive_complexity capped at 6, thiserror/anyhow error strategy, tokio async runtime, #![forbid(unsafe_code)], proptest + rstest + mockall + criterion | Shipped 2026-07-30 in commit `e67653a` |
