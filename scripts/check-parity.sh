@@ -193,6 +193,49 @@ else
 fi
 
 echo ""
+echo "--- JetBrains AI Assistant + Junie ---"
+AIASSISTANT_RULES_DIR="$REPO_DIR/.aiassistant/rules"
+EXPECTED_JETBRAINS_RULES=("00-approval-gates.md" "01-design-principles.md" "02-architecture-guardrails.md" "03-agent-roster.md" "04-testing-conventions.md" "05-go-conventions.md" "06-typescript-conventions.md" "07-python-conventions.md" "08-csharp-conventions.md" "09-java-conventions.md")
+
+if [[ -d "$AIASSISTANT_RULES_DIR" ]]; then
+  missing_jb=0
+  for expected in "${EXPECTED_JETBRAINS_RULES[@]}"; do
+    if [[ ! -f "$AIASSISTANT_RULES_DIR/$expected" ]]; then
+      fail ".aiassistant/rules/$expected" "missing — regenerate with: scripts/generate-configs.sh --platform jetbrains"
+      ((missing_jb++)) || true
+    fi
+  done
+  if [[ $missing_jb -eq 0 ]]; then
+    pass ".aiassistant/rules/ (${#EXPECTED_JETBRAINS_RULES[@]} rule files)"
+  fi
+  # Verify always-active rules contain framework content markers
+  if grep -q "Approval Gate\|irreversible" "$AIASSISTANT_RULES_DIR/00-approval-gates.md" 2>/dev/null; then
+    pass ".aiassistant/rules/00-approval-gates.md has approval-gates content"
+  else
+    fail ".aiassistant/rules/00-approval-gates.md" "approval-gates content not found — regenerate"
+  fi
+  # Verify a scoped rule has the IDE mode hint comment
+  if grep -q "JetBrains AI Assistant Project Rule" "$AIASSISTANT_RULES_DIR/04-testing-conventions.md" 2>/dev/null; then
+    pass ".aiassistant/rules scoped rules carry IDE mode hints"
+  else
+    fail ".aiassistant/rules/04-testing-conventions.md" "missing IDE mode hint comment — regenerate"
+  fi
+else
+  miss ".aiassistant/rules/ (run: scripts/generate-configs.sh --platform jetbrains)"
+fi
+
+junie_guidelines="$REPO_DIR/.junie/guidelines.md"
+if [[ -f "$junie_guidelines" ]]; then
+  if grep -q "Junie Guidelines" "$junie_guidelines" && grep -q "AI Feature Team" "$junie_guidelines"; then
+    pass ".junie/guidelines.md (Junie guidelines present)"
+  else
+    fail ".junie/guidelines.md" "expected content markers not found — regenerate"
+  fi
+else
+  miss ".junie/guidelines.md (run: scripts/generate-configs.sh --platform jetbrains)"
+fi
+
+echo ""
 echo "--- Roo Code ---"
 roomodes_file="$REPO_DIR/.roomodes"
 if [[ -f "$roomodes_file" ]]; then
