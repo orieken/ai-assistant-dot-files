@@ -362,6 +362,61 @@ else
 fi
 echo ""
 
+# --- Memory sync health (opt-in — only checked when sync-config exists) -----
+echo "--- Memory Sync (enterprise KI sync via ADR-003) ---"
+SYNC_CONFIG="$REPO_DIR/.claude/sync-config.yaml"
+if [[ ! -f "$SYNC_CONFIG" ]]; then
+  pass "memory sync config absent — enterprise sync not configured (opt-in; see ADR-003)"
+else
+  # Read org_repo and cache_dir from the config using the same no-pyyaml approach as sync-memory.sh
+  sync_org_repo=$(grep "^\s*org_repo:" "$SYNC_CONFIG" | head -1 | sed 's/.*org_repo:\s*//' | tr -d '"' || true)
+  sync_cache_base=$(grep "^\s*cache_dir:" "$SYNC_CONFIG" | head -1 | sed 's/.*cache_dir:\s*//' | tr -d '"' || true)
+  sync_cache_base="${sync_cache_base/#\~/$HOME}"
+  sync_slug=$(echo "$sync_org_repo" | sed 's|.*[:/]||; s|\.git$||' || true)
+  last_sync_file="${sync_cache_base}/${sync_slug}/.last-sync"
+
+  if [[ -n "$sync_org_repo" ]]; then
+    pass "sync config present — org repo: $sync_org_repo"
+  else
+    fail "sync config found but memory_sync.org_repo is empty"
+  fi
+
+  if [[ -f "$last_sync_file" ]]; then
+    last_sync=$(cat "$last_sync_file")
+    pass "last sync: $last_sync"
+
+    # Warn if last sync is more than 30 days ago
+    if command -v python3 &>/dev/null; then
+      days_since=$(python3 -c "
+import datetime, sys
+try:
+    ts = '${last_sync}'.rstrip('Z')
+    last = datetime.datetime.fromisoformat(ts)
+    now = datetime.datetime.utcnow()
+    print((now - last).days)
+except Exception:
+    print(-1)
+" 2>/dev/null || echo "-1")
+      if [[ "$days_since" -ge 30 ]]; then
+        warn "last sync was $days_since day(s) ago — consider running: ./install.sh --sync-memory"
+      elif [[ "$days_since" -ge 0 ]]; then
+        pass "sync age: $days_since day(s)"
+      fi
+    fi
+  else
+    warn "never synced — run: ./install.sh --sync-memory"
+  fi
+
+  # Report sync-stamped KIs in shared/knowledge/
+  synced_count=$(grep -rl '^sync_source:' "$SHARED_DIR/knowledge" 2>/dev/null | wc -l | tr -d ' ' || echo 0)
+  if [[ "$synced_count" -gt 0 ]]; then
+    pass "$synced_count KI(s) in shared/knowledge/ pulled from org repo"
+  else
+    pass "no org-pulled KIs in shared/knowledge/ yet"
+  fi
+fi
+echo ""
+
 # --- Inventory drift ---------------------------------------------------------
 echo "--- Inventory drift ---"
 drift_output=$("$REPO_DIR/scripts/check-inventory-drift.sh" 2>&1 || true)
