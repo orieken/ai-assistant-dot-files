@@ -45,9 +45,11 @@ run_check() {
   local cmd="$2"
 
   echo "--- $label ---"
+  # python3-yaml matches the GitHub runner image, which ships PyYAML preinstalled — check-parity.sh's
+  # .roomodes validation needs it, and a bare python3 here would diverge from what CI actually runs.
   if docker run --rm -v "$REPO_DIR:/repo:ro" -w /repo "$IMAGE" bash -c "
     apt-get update -qq >/dev/null 2>&1
-    apt-get install -y -qq python3 >/dev/null 2>&1
+    apt-get install -y -qq python3 python3-yaml >/dev/null 2>&1
     $cmd
   "; then
     echo "  PASS  $label"

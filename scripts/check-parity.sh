@@ -14,6 +14,7 @@ echo ""
 pass() { echo "  PASS  $1"; }
 fail() { echo "  DRIFT $1"; echo "        $2"; has_drift=1; }
 miss() { echo "  MISS  $1"; has_drift=1; }
+skip() { echo "  SKIP  $1"; }
 
 CORE_CONCEPTS=(
   "cyclomatic complexity"
@@ -239,37 +240,44 @@ echo ""
 echo "--- Roo Code ---"
 roomodes_file="$REPO_DIR/.roomodes"
 if [[ -f "$roomodes_file" ]]; then
-  if python3 -c "
+  # A missing yaml module is an environment gap, not config drift — without this guard the
+  # ImportError below is swallowed by 2>/dev/null and misreported as "YAML is invalid".
+  if ! python3 -c "import yaml" 2>/dev/null; then
+    skip ".roomodes (python3 yaml module unavailable — install: apt-get install python3-yaml, or pip install pyyaml)"
+    skip ".roomodes agent roster (same reason)"
+  else
+    if python3 -c "
 import sys, yaml
 data = yaml.safe_load(open('$roomodes_file'))
 modes = data.get('customModes', [])
 sys.exit(0 if modes else 1)
 " 2>/dev/null; then
-    mode_count=$(python3 -c "import yaml; d=yaml.safe_load(open('$roomodes_file')); print(len(d.get('customModes', [])))" 2>/dev/null || echo "?")
-    pass ".roomodes ($mode_count custom modes, valid YAML)"
-  else
-    fail ".roomodes" "file exists but customModes array is empty or YAML is invalid"
-  fi
+      mode_count=$(python3 -c "import yaml; d=yaml.safe_load(open('$roomodes_file')); print(len(d.get('customModes', [])))" 2>/dev/null || echo "?")
+      pass ".roomodes ($mode_count custom modes, valid YAML)"
+    else
+      fail ".roomodes" "file exists but customModes array is empty or YAML is invalid"
+    fi
 
-  # Verify each shared agent has a corresponding mode
-  missing_modes=0
-  for agent_file in "$SHARED_DIR/agents/"*.md; do
-    [[ "$(basename "$agent_file")" == "CHANGELOG.md" ]] && continue
-    agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
-    [[ -z "$agent_name" ]] && continue
-    if ! python3 -c "
+    # Verify each shared agent has a corresponding mode
+    missing_modes=0
+    for agent_file in "$SHARED_DIR/agents/"*.md; do
+      [[ "$(basename "$agent_file")" == "CHANGELOG.md" ]] && continue
+      agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
+      [[ -z "$agent_name" ]] && continue
+      if ! python3 -c "
 import yaml, sys
 data = yaml.safe_load(open('$roomodes_file'))
 slugs = [m['slug'] for m in data.get('customModes', [])]
 sys.exit(0 if '$agent_name' in slugs else 1)
 " 2>/dev/null; then
-      ((missing_modes++)) || true
+        ((missing_modes++)) || true
+      fi
+    done
+    if [[ $missing_modes -eq 0 ]]; then
+      pass ".roomodes agent roster complete"
+    else
+      fail ".roomodes agent roster" "$missing_modes agents missing — regenerate with: scripts/generate-configs.sh --platform roo-code"
     fi
-  done
-  if [[ $missing_modes -eq 0 ]]; then
-    pass ".roomodes agent roster complete"
-  else
-    fail ".roomodes agent roster" "$missing_modes agents missing — regenerate with: scripts/generate-configs.sh --platform roo-code"
   fi
 else
   miss ".roomodes (run: scripts/generate-configs.sh --platform roo-code)"

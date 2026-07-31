@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install PyYAML (needed by the .roomodes validation; don't rely on runner preinstall)
+        run: python3 -m pip install --quiet pyyaml
       - name: Run check-parity.sh
         run: bash scripts/check-parity.sh
 
@@ -31,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install PyYAML (health-check shells out to check-parity.sh, which needs it)
+        run: python3 -m pip install --quiet pyyaml
       - name: Run health-check.sh
         run: bash scripts/health-check.sh --verbose
 
