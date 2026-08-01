@@ -28,6 +28,21 @@ Do NOT use when:
 3. **Log Scheduled Event**: Append schedule event log to `.claude/telemetry/events.jsonl`.
 4. **Report Schedule Configuration**: Output status confirmation report.
 
+## Examples
+
+### Weekly documentation-auditor run
+
+```markdown
+Schedule a weekly documentation-auditor run every Monday at 00:00 UTC.
+Findings write to: docs/audits/doc-audit-YYYY-MM-DD.md
+```
+
+Cron expression: `0 0 * * 1`
+Action: invoke `documentation-auditor` agent
+Output convention: `docs/audits/doc-audit-YYYY-MM-DD.md` (dated findings file)
+
+Copy the expression into your `schedule` tool invocation or `.claude/hooks/` entry.
+
 ## Output Format
 
 ```markdown
@@ -35,6 +50,7 @@ Do NOT use when:
 
 ## Active Timers / Cron Schedules
 - Event: `weekly-memory-audit` | Cadence: `0 0 * * 1` | Action: `memory-auditor`
+- Event: `weekly-doc-audit`    | Cadence: `0 0 * * 1` | Action: `documentation-auditor`
 ```
 
 ## Guardrails
