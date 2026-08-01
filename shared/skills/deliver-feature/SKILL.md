@@ -93,6 +93,7 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
 40. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered.
 41. **PAUSE / Policy Evaluation**: Show `docs/features/<feature-name>/` listing. If `strict-human` or policy `autoProceedPersistence: false`, wait for human confirmation.
 42. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
+43. **[Optional] Open a PR via `ship-feature`** — after Friday is confirmed, ask: "Would you like to open a pull request?" If the user says yes (or if `--ship` was passed at invocation), invoke `/ship-feature <feature-name>`. This step is **opt-in only** — never auto-invoke. Existing `deliver-feature` behavior is unchanged when the user does not request it. See `shared/skills/ship-feature/SKILL.md` for branch, commit, and PR gate details.
 
 ## Human Checkpoints & Policy Evaluation
 
