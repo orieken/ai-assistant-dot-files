@@ -1,6 +1,6 @@
 ---
 name: deliver-feature
-description: The main pipeline orchestrator — kicks off the full agent sequence for a feature and persists all artifacts to docs/features/<feature-name>/.
+description: The main pipeline orchestrator — kicks off the full agent sequence for a feature and persists all artifacts to docs/features/<feature-name>/. In AOS Phase 3 (v3.2), this skill is also the entry point for FeatureDeliveryWorkflow when invoked via /orchestrate. External invocation contract unchanged.
 triggers:
   keywords: ["deliver", "build", "pipeline", "feature"]
   intentPatterns: ["Deliver *", "Implement *", "Build *", "Start delivery on *", "/deliver-feature *"]
@@ -11,6 +11,27 @@ standalone: true
 When the user asks to implement a feature, build a specific feature markdown file, or explicitly runs the `/deliver-feature` command. This delegates work to the full agent sequence.
 
 Do NOT use when the user only wants a single agent's output (e.g., just an analysis or just a code review). Use the specific agent or skill instead.
+
+## Relationship to FeatureDeliveryWorkflow (AOS Phase 3)
+
+This skill is the **external invocation contract** — teams keep typing `/deliver-feature <spec>`.
+
+In AOS Phase 3, the `FeatureDeliveryWorkflow` (`shared/workflows/feature-delivery-workflow.md`) defines
+the same pipeline as a first-class Workflow object consumable by the `/orchestrate` runtime. The workflow
+adds:
+- Resumable checkpoints (resume after interruption without restarting)
+- Parallel branch execution (e.g., security + accessibility concurrently)
+- Automatic audit-after-producer invocation for every contract-bound artifact
+- Explicit named stage boundaries for Phase 4 policy hooks
+
+**To use the runtime path**: `/orchestrate --workflow feature-delivery --spec <file>`
+
+**To use this skill directly (unchanged behavior)**: `/deliver-feature <file>`
+
+**Legacy fallback** (if runtime causes regression): `/orchestrate --legacy --workflow feature-delivery --spec <file>`
+
+The process documented below is this skill's standalone behavior — identical to v3.1. The workflow's
+stage definitions mirror this process exactly, so behavior is preserved regardless of invocation path.
 
 ## Context To Load First
 1. The feature file (passed as argument or in `features/`)
