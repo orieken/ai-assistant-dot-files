@@ -1,9 +1,9 @@
 ---
 name: query-memory
-description: Registry-aware search across every memory source in shared/memory-registry.json — KIs and ADRs (by delegating to search-ki), plus the feature archive, DOMAIN_DICTIONARY.md, and TEAM_TOPOLOGY.md, which search-ki doesn't cover. Lexical only for now (the registry marks LightRAG disabled); verifies any future non-lexical result against canonical markdown before trusting it.
+description: Registry-aware search across every memory source in shared/memory-registry.json — KIs and ADRs (by delegating to search-ki), plus the feature archive, DOMAIN_DICTIONARY.md, and TEAM_TOPOLOGY.md, which search-ki doesn't cover. Accepts optional --semantic flag (AOS Phase 3) to delegate the KI/ADR portion to search-ki-semantic instead of search-ki.
 triggers:
   keywords: ["query-memory", "search all memory", "search everything we know about"]
-  intentPatterns: ["What do we know about *", "Search all memory for *", "/query-memory *"]
+  intentPatterns: ["What do we know about *", "Search all memory for *", "/query-memory *", "/query-memory --semantic *"]
 standalone: true
 ---
 
@@ -12,10 +12,16 @@ When a question could plausibly be answered by *any* memory source, not specific
 do we know about rate limiting" might be a KI, but might also be sitting in a past feature's retrospective,
 or be a DOMAIN_DICTIONARY.md term whose definition already answers the question.
 
-Do NOT use when the question is specifically about KIs/ADRs — use `search-ki` directly, it's the more
-targeted tool and this skill calls into it anyway for that portion. Do NOT use for a single retrospective's
-promotion decision — use `promote-memory`. Do NOT use to audit the corpus for duplicates — use
-`memory-engineer`.
+Do NOT use when the question is specifically about KIs/ADRs — use `search-ki` (or `search-ki-semantic` with
+`--semantic`) directly; it's the more targeted tool. Do NOT use for a single retrospective's promotion
+decision — use `promote-memory`. Do NOT use to audit the corpus for duplicates — use `memory-engineer`.
+
+## Flags
+
+| Flag | Effect |
+|---|---|
+| *(none)* | Lexical mode. KI/ADR portion delegates to `search-ki`. Default, unchanged from v3.1. |
+| `--semantic` | Semantic mode. KI/ADR portion delegates to `search-ki-semantic` (LLM-as-retriever). Use when lexical returns nothing for a concept you expect to be documented. Other sources (feature archive, domain dictionary) are still searched lexically. |
 
 ## Context To Load First
 1. `shared/memory-registry.json` — which sources exist and their retrieval backend
@@ -30,9 +36,9 @@ markdown read, but check the registry rather than hardcoding that assumption, si
 without this skill needing a rewrite.
 
 ### 2. Delegate the KI/ADR Portion
-Invoke `search-ki` for the `knowledge-items` and `adrs` registry sources — don't reimplement its pre-filter
-and judgment-based ranking here, that would be exactly the duplicated-logic problem `memory-engineer` exists
-to catch elsewhere.
+If `--semantic` flag is set: invoke `search-ki-semantic`. Otherwise: invoke `search-ki` (default).
+Don't reimplement KI/ADR ranking logic here — delegate to the appropriate skill, which is the correct
+owner of that corpus's retrieval logic.
 
 ### 3. Search the Remaining Sources Directly
 For `feature-archive`, `domain-dictionary`, and `team-topology` (the sources `search-ki` doesn't cover):
