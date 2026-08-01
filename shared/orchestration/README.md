@@ -33,13 +33,25 @@ The two built-in Phase 3 workflows are:
 
 See [`pipeline-schema.md`](pipeline-schema.md) for the YAML pipeline definition format.
 
+## Audit-After-Producer (Default Composition)
+
+Every workflow stage that ends with a contract-bound artifact automatically invokes the corresponding
+Phase 2 counter agent before the pipeline proceeds. Failures send the artifact back to the producer
+with specific violations.
+
+To disable per-project: `workflowAuditsEnabled: false` in `.claude/delivery-policy.yaml`.
+
+See [`audit-composition-pattern.md`](audit-composition-pattern.md) for the full producer→auditor
+mapping, retry protocol, and config knob reference.
+
 ## File Map
 
 ```
 shared/orchestration/
-├── README.md            ← this file
-├── interface.md         ← Workflow plug-in contract
-└── pipeline-schema.md   ← declarative pipeline format
+├── README.md                     ← this file
+├── interface.md                  ← Workflow plug-in contract
+├── pipeline-schema.md            ← declarative pipeline format
+└── audit-composition-pattern.md  ← default audit-after-producer pattern + config knob
 ```
 
 Skills and agents:
