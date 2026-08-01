@@ -475,6 +475,44 @@ else
 fi
 echo ""
 
+# --- Documentation Auditor freshness (opt-in) --------------------------------
+# Silently skipped when docs/audits/ doesn't exist — the convention is opt-in.
+# WARN only; never FAIL — running the auditor is a human judgment call.
+echo "--- Documentation Auditor Freshness ---"
+DOC_AUDIT_DIR="$REPO_DIR/docs/audits"
+DOC_AUDIT_MAX_DAYS=14
+if [[ ! -d "$DOC_AUDIT_DIR" ]]; then
+  pass "docs/audits/ absent — doc-audit freshness check skipped (opt-in)"
+else
+  newest_audit=$(find "$DOC_AUDIT_DIR" -maxdepth 1 -name "doc-audit-*.md" | sort | tail -1 || true)
+  if [[ -z "$newest_audit" ]]; then
+    warn "no doc-audit-*.md in docs/audits/ — consider running documentation-auditor"
+  else
+    audit_date=$(basename "$newest_audit" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' || true)
+    if [[ -z "$audit_date" ]]; then
+      warn "newest doc-audit filename has no parseable date — consider re-running documentation-auditor"
+    elif command -v python3 &>/dev/null; then
+      days_since=$(python3 -c "
+import datetime
+try:
+    last = datetime.datetime.strptime('${audit_date}', '%Y-%m-%d')
+    now = datetime.datetime.utcnow()
+    print((now - last).days)
+except Exception:
+    print(-1)
+" 2>/dev/null || echo "-1")
+      if [[ "$days_since" -ge $DOC_AUDIT_MAX_DAYS ]]; then
+        warn "doc-audit findings are $days_since day(s) old ($(basename "$newest_audit")) — consider re-running documentation-auditor"
+      else
+        pass "doc-audit findings are $days_since day(s) old ($(basename "$newest_audit"))"
+      fi
+    else
+      pass "doc-audit findings present ($(basename "$newest_audit")) — python3 unavailable, skipping age check"
+    fi
+  fi
+fi
+echo ""
+
 # --- Install-vs-upstream drift (installed projects only) --------------------
 echo "--- Install Version Marker ---"
 MARKER_FILE="$PWD/.claude/framework-install.json"
