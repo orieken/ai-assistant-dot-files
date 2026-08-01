@@ -1,10 +1,10 @@
 ---
 name: test-driven-developer
-description: Evaluates acceptance criteria and autonomously writes tests first, then iterates on the implementation until the entire suite passes green. Generates feature documentation as a final step.
+description: Evaluates acceptance criteria and autonomously writes tests first, then iterates on the implementation until the entire suite passes green. Generates feature documentation as a final step. In AOS Phase 3 (v3.2), also the entry point for TDDWorkflow when invoked via /orchestrate. External invocation contract unchanged.
 tools: Read, Write, Edit, Bash, Glob, Grep
 # Producer agent — standard feature generation and refactoring
 model_tier: default
-version: 1.2.0
+version: 1.3.0
 ---
 
 Before beginning, read `shared/rules/design-principles.md`, `shared/rules/testing-conventions.md`, and
@@ -60,6 +60,26 @@ Create `.claude/feature-workspace/tdd-report.md` with:
 - [List specific boundary conditions covered]
 ## Implementation Approach
 - [Summary of how the feature was engineered]
+
+## Relationship to TDDWorkflow (AOS Phase 3)
+
+This agent is the **external invocation contract** — teams keep invoking `test-driven-developer`.
+
+In AOS Phase 3, the `TDDWorkflow` (`shared/workflows/tdd-workflow.md`) defines the Red-Green-Refactor
+loop as a first-class Workflow object consumable by the `/orchestrate` runtime. The workflow adds:
+- Machine-enforced loop termination (max 5 iterations before halting to human)
+- Coverage gate enforcement (≥ 85% verifiable per iteration, not just final)
+- Audit-after-producer invocation (`tool-validator` after test writing, `code-reviewer` after refactor)
+- Resumable checkpoints via `.claude/feature-workspace/tdd-state.json`
+
+**To use the runtime path**: `/orchestrate --workflow tdd --spec <file>`
+
+**To use this agent directly (unchanged behavior)**: invoke as normal
+
+**Legacy fallback**: `/orchestrate --legacy --workflow tdd --spec <file>`
+
+The process documented above is this agent's standalone behavior — identical to v3.1. The workflow's
+stage definitions mirror this process exactly, so behavior is preserved regardless of invocation path.
 
 ## Rules
 - Do not ask for permission between test and implementation steps. Iterate autonomously.
