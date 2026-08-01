@@ -52,6 +52,20 @@ ok()   { echo "  [removed] $1"; }
 skip() { echo "  [skip] $1"; }
 dry()  { echo "  [dry-run] $1"; }
 
+remove_marker() {
+  local path="$1"
+  if [[ ! -f "$path" ]]; then
+    skip "$path (not found)"
+    return
+  fi
+  if $DRY_RUN; then
+    dry "would remove $path"
+  else
+    rm -f "$path"
+    ok "$path"
+  fi
+}
+
 remove_if_framework() {
   local path="$1"
 
@@ -144,6 +158,10 @@ if [[ "$MODE" == "global" ]]; then
   log ""
   log "--- OpenAI ---"
   remove_if_framework "$HOME/.openai.md"
+
+  log ""
+  log "--- Framework Version Marker ---"
+  remove_marker "$HOME/.claude/framework-install.json"
 else
   log "--- Claude Code ---"
   remove_if_framework "$TARGET_DIR/.claude/agents"
@@ -177,6 +195,10 @@ else
   log ""
   log "--- OpenAI ---"
   remove_if_framework "$TARGET_DIR/.openai.md"
+
+  log ""
+  log "--- Framework Version Marker ---"
+  remove_marker "$TARGET_DIR/.claude/framework-install.json"
 fi
 
 echo ""

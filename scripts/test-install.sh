@@ -52,6 +52,30 @@ assert_file() {
   fi
 }
 
+assert_install_marker() {
+  local path="$1"
+  local label="$2"
+  if [[ ! -f "$path" ]]; then
+    fail "$label -- marker missing ($path)"
+    return
+  fi
+  if ! command -v python3 &>/dev/null; then
+    pass "$label (exists; content validation skipped — no python3)"
+    return
+  fi
+  if python3 -c "
+import json, sys
+d = json.load(open('$path'))
+required = ['source_repo', 'git_tag', 'commit_sha', 'installed_at', 'mode', 'framework_level', 'platforms']
+missing = [k for k in required if k not in d]
+sys.exit(1 if missing else 0)
+" 2>/dev/null; then
+    pass "$label (valid JSON with required fields)"
+  else
+    fail "$label -- invalid JSON or missing required fields"
+  fi
+}
+
 assert_frontmatter() {
   local path="$1"
   local label="$2"
@@ -83,6 +107,7 @@ assert_symlink "$target/.claude/rules" "shared/rules" "claude-code .claude/rules
 assert_file "$target/ARCHITECTURE_RULES.md" "claude-code ARCHITECTURE_RULES.md"
 assert_file "$target/DOMAIN_DICTIONARY.md" "claude-code DOMAIN_DICTIONARY.md"
 assert_file "$target/CLAUDE.md" "claude-code CLAUDE.md template"
+assert_install_marker "$target/.claude/framework-install.json" "claude-code framework-install.json"
 echo ""
 
 echo "--- cursor ---"

@@ -413,6 +413,54 @@ install_aos_layers() {
   fi
 }
 
+write_install_marker() {
+  local target_claude_dir
+  if [[ "$MODE" == "global" ]]; then
+    target_claude_dir="$HOME/.claude"
+  else
+    target_claude_dir="$TARGET_DIR/.claude"
+  fi
+
+  local git_tag commit_sha installed_at install_mode
+  git_tag=$(cd "$REPO_DIR" && git describe --tags --abbrev=0 2>/dev/null || echo "unknown")
+  commit_sha=$(cd "$REPO_DIR" && git rev-parse HEAD 2>/dev/null || echo "unknown")
+  installed_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  install_mode=$(if $USE_COPY; then echo "copy"; else echo "symlink"; fi)
+
+  local platforms_json
+  if [[ -n "$PLATFORM_FILTER" ]]; then
+    platforms_json="[\"$PLATFORM_FILTER\"]"
+  elif [[ ${#DETECTED_PLATFORMS[@]} -eq 0 ]]; then
+    platforms_json="[]"
+  else
+    platforms_json="["
+    local first=true
+    for p in "${DETECTED_PLATFORMS[@]}"; do
+      if $first; then
+        platforms_json="${platforms_json}\"$p\""
+        first=false
+      else
+        platforms_json="${platforms_json}, \"$p\""
+      fi
+    done
+    platforms_json="${platforms_json}]"
+  fi
+
+  mkdir -p "$target_claude_dir"
+  cat > "$target_claude_dir/framework-install.json" <<EOF
+{
+  "source_repo": "$REPO_DIR",
+  "git_tag": "$git_tag",
+  "commit_sha": "$commit_sha",
+  "installed_at": "$installed_at",
+  "mode": "$install_mode",
+  "framework_level": "$FRAMEWORK_LEVEL",
+  "platforms": $platforms_json
+}
+EOF
+  ok "wrote $target_claude_dir/framework-install.json (version $git_tag @ ${commit_sha:0:8})"
+}
+
 install_generated_configs() {
   local output_dir
   if [[ "$MODE" == "global" ]]; then
@@ -485,6 +533,10 @@ if [[ "$FRAMEWORK_LEVEL" == "full" ]]; then
 fi
 
 install_generated_configs
+
+if ! $DRY_RUN; then
+  write_install_marker
+fi
 
 echo ""
 echo "========================================"
