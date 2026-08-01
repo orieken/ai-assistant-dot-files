@@ -13,6 +13,7 @@ SHOW_TOUR=false
 SYNC_MEMORY=false
 SYNC_SUBCOMMAND="pull"
 SYNC_ARGS=()
+FRAMEWORK_LEVEL="base"   # "base" = current framework only; "full" = AOS layers included
 
 usage() {
   cat <<'EOF'
@@ -31,6 +32,16 @@ Modes (pick one):
                         push: promote local .claude/knowledge/ KIs to the org repo via PR
                         Requires .claude/sync-config.yaml — see ADR-003 for setup.
 
+Framework level (optional, default --base):
+  --base                Install the base framework only (current behavior, v2.x/v3.x parity).
+                         No AOS runtime layers are wired. This is the default.
+  --full                Install the base framework PLUS AOS runtime layers (v3.2+):
+                         - Copies shared/hooks/ example hook files to .claude/hooks/ (disabled by default)
+                         - Symlinks shared/rag/ and shared/orchestration/ into the project
+                         - Prints AOS opt-in next steps
+                         AOS layers are opt-in even in --full mode: files are present but no hook is
+                         enabled unless you explicitly set enabled: true in .claude/hooks/.
+
 Options:
   --copy                Use real copies instead of symlinks -- required on Windows/WSL (symlinks need
                          elevated permissions there), and also the way to make a --project install
@@ -45,6 +56,7 @@ Options:
 Examples:
   ./install.sh --global
   ./install.sh --project /path/to/my-app
+  ./install.sh --project --full                    # install with AOS layers
   ./install.sh --project --platform claude-code
   ./install.sh --global --dry-run
   ./install.sh --sync-memory
@@ -78,6 +90,8 @@ while [[ $# -gt 0 ]]; do
     --platform)  PLATFORM_FILTER="$2"; shift 2 ;;
     --dry-run)   DRY_RUN=true; shift ;;
     --tour)      SHOW_TOUR=true; shift ;;
+    --base)      FRAMEWORK_LEVEL="base"; shift ;;
+    --full)      FRAMEWORK_LEVEL="full"; shift ;;
     -h|--help)   usage ;;
     *)           echo "Unknown option: $1"; usage ;;
   esac
@@ -349,6 +363,56 @@ install_claude_code() {
   fi
 }
 
+install_aos_layers() {
+  log ""
+  log "--- AOS Runtime Layers (--full mode) ---"
+
+  local target_claude_dir
+  if [[ "$MODE" == "global" ]]; then
+    target_claude_dir="$HOME/.claude"
+  else
+    target_claude_dir="$TARGET_DIR/.claude"
+  fi
+
+  # Link shared/rag/ and shared/orchestration/ for reference from the project
+  link_or_copy "$SHARED_DIR/rag" "$target_claude_dir/rag-interface"
+  link_or_copy "$SHARED_DIR/orchestration" "$target_claude_dir/orchestration-interface"
+
+  # Seed .claude/hooks/ with example hook files (all disabled by default)
+  local hooks_dir="$target_claude_dir/hooks"
+  if $DRY_RUN; then
+    dry "would create $hooks_dir/ and copy shared/hooks/examples/*.yaml (all disabled by default)"
+  else
+    mkdir -p "$hooks_dir"
+    if [[ -d "$SHARED_DIR/hooks/examples" ]]; then
+      for f in "$SHARED_DIR/hooks/examples/"*.yaml; do
+        [[ -f "$f" ]] || continue
+        local dest="$hooks_dir/$(basename "$f")"
+        if [[ ! -f "$dest" ]]; then
+          cp "$f" "$dest"
+          ok "seeded $dest (disabled by default)"
+        else
+          skip "$dest (already exists)"
+        fi
+      done
+    fi
+    # Also seed the Phase 3 hooks if they don't exist yet
+    for src in \
+      "$SHARED_DIR/hooks/on-retrospective-written.yaml" \
+      "$SHARED_DIR/hooks/scheduled-monthly.yaml"; do
+      [[ -f "$src" ]] || continue
+      local dest="$hooks_dir/$(basename "$src")"
+      if [[ ! -f "$dest" ]]; then
+        cp "$src" "$dest"
+        ok "seeded $dest (disabled by default)"
+      else
+        skip "$dest (already exists)"
+      fi
+    done
+    ok "AOS hooks seeded in $hooks_dir/ — all disabled by default"
+  fi
+}
+
 install_generated_configs() {
   local output_dir
   if [[ "$MODE" == "global" ]]; then
@@ -376,6 +440,7 @@ echo "Mode:     $MODE"
 if [[ "$MODE" == "project" ]]; then
   echo "Target:   $TARGET_DIR"
 fi
+echo "Level:    $FRAMEWORK_LEVEL$(if [[ "$FRAMEWORK_LEVEL" == "base" ]]; then echo " (default — base framework only)"; else echo " (base + AOS runtime layers)"; fi)"
 echo "Strategy: $(if $USE_COPY; then echo 'copy'; else echo 'symlink'; fi)"
 echo "Dry run:  $DRY_RUN"
 if [[ -n "$PLATFORM_FILTER" ]]; then
@@ -415,6 +480,10 @@ if should_install "gemini"; then
   resolve_model_tier "gemini_antigravity"
 fi
 
+if [[ "$FRAMEWORK_LEVEL" == "full" ]]; then
+  install_aos_layers
+fi
+
 install_generated_configs
 
 echo ""
@@ -439,10 +508,23 @@ else
     echo "  2. Edit CLAUDE.md — update the stack placeholders"
     echo "  3. Write a feature: cp features/TEMPLATE.md features/my-feature.md"
     echo "  4. Launch: run 'claude' and type '/deliver-feature features/my-feature.md'"
+    if [[ "$FRAMEWORK_LEVEL" == "full" ]]; then
+      echo ""
+      echo "AOS Runtime Layers (--full install):"
+      echo "  - Hook files seeded in .claude/hooks/ — all disabled by default."
+      echo "    To activate: edit a hook file and set 'enabled: true', then restart your AI tool."
+      echo "  - RAG interface available at .claude/rag-interface/ — see its README for opt-in path."
+      echo "  - Orchestration interface available at .claude/orchestration-interface/."
+      echo "    Use /orchestrate --workflow feature-delivery instead of /deliver-feature for runtime features."
+      echo "  - See docs/aos/migration-guide.md for the full AOS opt-in guide."
+    fi
   else
     echo "  1. Open any project with your AI tool of choice"
     echo "  2. The framework rules and personas are active globally"
     echo "  3. For project-specific setup: ./install.sh --project /path/to/project"
+    if [[ "$FRAMEWORK_LEVEL" == "full" ]]; then
+      echo "  4. See docs/aos/migration-guide.md for AOS opt-in steps"
+    fi
   fi
 fi
 
