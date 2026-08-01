@@ -17,6 +17,7 @@ Hooks trigger on specific pipeline events (aligned with `shared/telemetry/event-
 | `on-validation-fail` | `validate-artifact` returns `FAIL` for a stage | Log contract retry event |
 | `on-ki-created` | `create-ki` or `memory-expansion` writes a new KI | Invoke `knowledge-auditor` |
 | `on-pipeline-complete` | Feature delivery pipeline finishes Phase 4 | Trigger retrospective / scorecard sweep |
+| `on-inventory-change` | A file under `shared/agents/` or `shared/skills/` is added, modified, or removed | Invoke `documentation-auditor` to check for prose staleness |
 
 ---
 
