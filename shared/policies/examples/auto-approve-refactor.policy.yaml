@@ -1,0 +1,28 @@
+name: auto-approve-refactor
+version: "1.0"
+description: >
+  Auto-approve git commits that are pure refactors: code-reviewer returned APPROVED,
+  no behavior change detected, all fitness functions pass, diff stays under 200 LOC.
+enabled: true
+
+matcher:
+  gate: git-commit
+
+condition:
+  codeReviewer.verdict:
+    equals: "APPROVED"
+  codeReviewer.behaviorChange:
+    equals: false
+  fitnessFunction.allPass: true
+  diffLines:
+    lessThan: 200
+  filePaths:
+    noneMatch: "**/security/**"
+  filePaths:
+    noneMatch: "**/auth/**"
+
+action:
+  type: auto-approve
+  reason: >
+    Code-reviewer approved with no behavior change, all fitness functions pass,
+    diff is under 200 LOC and touches no security/auth paths — safe to auto-commit.
