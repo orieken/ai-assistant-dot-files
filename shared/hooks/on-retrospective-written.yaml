@@ -1,0 +1,27 @@
+version: "1.0"
+
+# Hook: on-retrospective-written
+# Triggers the learning-engine skill whenever a feature retrospective is written to docs/features/.
+# This is an opt-in AOS Phase 3 hook. Copy to .claude/hooks/ and set enabled: true to activate.
+# Default: disabled. Teams that don't enable this hook see zero behavior change from v3.1.
+
+hooks:
+  - id: "learning-engine-on-retrospective"
+    event: "on-retrospective-written"
+    enabled: false
+    description: >
+      After a retrospective lands in docs/features/<name>/retrospective.md, invoke the learning-engine
+      skill to scan it (and prior retrospectives) for patterns worth promoting to docs/lessons-learned/.
+      The engine produces a draft proposal — it never writes to lessons-learned/ without explicit human
+      confirmation ("approve" or "yes").
+    action:
+      type: "skill"
+      target: "learning-engine"
+      args:
+        passContext: true
+        scope: "latest"          # "latest" = scan only the just-written retrospective; "all" = full sweep
+        draftOnly: true          # never persist without human confirmation (non-negotiable)
+    guardrails:
+      - "learning-engine must pause for human confirmation before writing to docs/lessons-learned/"
+      - "If the skill is not found, log a warning and skip — do not block the retrospective write"
+      - "draftOnly: true is non-negotiable and must not be overridden by args or policy"
