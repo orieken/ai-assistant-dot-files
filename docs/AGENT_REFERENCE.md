@@ -300,7 +300,7 @@ The following 11 read-only counter-auditor agents implement the opposing-force c
 32. `rule-auditor` — Counter to rule authors (audits `shared/rules/*.md` for cross-rule contradictions and dead references).
 33. `pattern-reviewer` — Counter to pattern doc authors (audits `docs/patterns/*.md` for accuracy against live codebase implementation).
 34. `tool-validator` — Counter to skill authors (audits `shared/skills/*/SKILL.md` for standalone mode declarations and script dependencies).
-35. `documentation-auditor` — Counter to `tech-writer` (audits `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts).
+35. `documentation-auditor` — Counter to `tech-writer` (audits `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts). Findings: `docs/audits/doc-audit-YYYY-MM-DD.md`. Automation paths: (a) hook — copy `shared/hooks/examples/on-inventory-change-doc-audit.yaml` to `.claude/hooks/` to trigger on `shared/agents/` or `shared/skills/` changes; (b) scheduled — see `shared/skills/scheduler/SKILL.md` for a weekly cron example; (c) freshness nudge — `scripts/health-check.sh` WARNs when the newest findings file is older than 14 days.
 36. `retrieval-evaluator` — Counter to RAG search skills (audits KI + ADR retrievability per ADR-002 telemetry, flagging unmatched zero-hit queries).
 37. `privacy-auditor` — Counter to `security-reviewer` & developers (audits feature workspace artifacts for PII, secrets, and credential leaks).
 38. `model-tier-auditor` — Counter to agent authors (audits `shared/agents/*.md` for portable `model_tier` declarations).

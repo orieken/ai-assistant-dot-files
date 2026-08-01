@@ -37,6 +37,13 @@ You are strictly read-only: you never edit documentation files directly.
 4. **Audit `docs/prompts/README.md`**:
    - Check that prompt index tables accurately reflect active vs completed prompts in `docs/prompts/` and `docs/prompts/done/`.
 
+## Findings Output Convention
+
+Write findings to `docs/audits/doc-audit-YYYY-MM-DD.md` (e.g.,
+`docs/audits/doc-audit-2026-08-01.md`). Create `docs/audits/` if it does not
+exist. This convention is what `health-check.sh` and the scheduler example
+use to locate the most recent run.
+
 ## Output Format
 
 ```markdown
