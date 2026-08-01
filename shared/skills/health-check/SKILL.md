@@ -1,6 +1,6 @@
 ---
 name: health-check
-description: Validates the ai-assistant-dot-files installation — symlinks, agent/skill frontmatter, platform config drift, domain dictionary orphans, inter-agent contracts, changelog/version consistency, Knowledge Item frontmatter, and memory registry integrity. Wraps scripts/health-check.sh for everything scriptable and adds AI judgment on top for anything that requires reading prose. Also detects and reports the presence of opt-in AOS layers (telemetry, evaluation, hooks, orchestration, rag) and counter agents when they exist — never fails on their absence.
+description: Validates the ai-assistant-dot-files installation — symlinks, agent/skill frontmatter, platform config drift, domain dictionary orphans, inter-agent contracts, changelog/version consistency, Knowledge Item frontmatter, and memory registry integrity. Wraps scripts/health-check.sh for everything scriptable and adds AI judgment on top for anything that requires reading prose. Also detects and reports the presence of opt-in AOS layers (telemetry, evaluation, hooks, orchestration, rag, policies) and counter agents when they exist — never fails on their absence.
 triggers:
   keywords: ["health-check", "health", "check installation", "verify setup", "check setup"]
   intentPatterns: ["Check my setup", "Is everything installed?", "Run health check", "Verify my installation", "/health-check"]
@@ -57,6 +57,7 @@ Do NOT use for debugging application code in a project you're building features 
    - `shared/hooks/` — same shape (Phase 2)
    - `shared/orchestration/` — same shape (Phase 3)
    - `shared/rag/` — same shape (Phase 3)
+   - `shared/policies/` — same shape (Phase 4)
    - Counter agents under `shared/agents/` matching `*-auditor.md`, `*-evaluator.md`, `*-reviewer.md`, or `*-validator.md`.
      DO NOT include the review-shaped producers whose names happen to end in `-reviewer` — those
      (`code-reviewer`, `security-reviewer`, `accessibility-engineer`-style producers) are producers-in-
@@ -65,7 +66,29 @@ Do NOT use for debugging application code in a project you're building features 
      `rule-auditor`, `pattern-reviewer`, `tool-validator`, `documentation-auditor`, `retrieval-evaluator`, `privacy-auditor`.
    - Validate hook configs under `shared/hooks/examples/` and `.claude/hooks/` against `shared/hooks/hooks-schema.md`.
 
-5. **Produce the health report** — synthesize the script's output plus your judgment calls into the format
+5. **Validate policy syntax and coverage** (v3.3+, Phase 4): check for the presence of `.claude/policies/`
+   in the running project and in `shared/policies/examples/`. This step NEVER fails if no policies exist —
+   the opt-in guarantee applies. When policies are present:
+   - Parse each `.policy.yaml` file and validate it against `shared/policies/policy-schema.md`. Required
+     fields: `name`, `version`, `description`, `enabled`, `matcher` (with at least one `gate`), `condition`,
+     `action` (with `type`). A policy that fails to parse is a **FAIL** — a malformed policy is worse than
+     no policy because it may silently block automation without a clear error.
+   - Check `matcher.gate` values: any gate not in the valid set from `policy-schema.md` is a **WARN**;
+     any gate in the always-human set (1=`ship-to-friday`, 3=`db-migration`, 4=`db-contract-phase`,
+     5=`external-api`, 8=`deploy`) is a **WARN** (the evaluator silently ignores it — flag so the author
+     knows their policy will never fire).
+   - Build a coverage map: for each policy-eligible gate (`git-commit`, `out-of-boundary-write`,
+     `fitness-function-wiring`), report which policy names cover it. An uncovered eligible gate is an
+     "absent" observation, never a failure.
+   - **Conflict detection**: if two or more enabled policies target the same gate with conflicting actions
+     (`auto-approve` AND `require-human` on the same gate), report the conflict. This is a **FAIL** for
+     the case where the conflict is clearly unintentional (two `auto-approve` policies with contradictory
+     conditions covering the same gate). A `require-human` + `auto-approve` conflict is expected behavior
+     (inversion policy pattern) — report it as informational, not a failure.
+   - Validate that `action.type` is one of: `auto-approve`, `auto-reject`, `require-human`, `escalate`.
+     Any other value is a **FAIL**.
+
+6. **Produce the health report** — synthesize the script's output plus your judgment calls into the format
    below; don't just paste the raw script output. The AOS Layers section always appears at the bottom of
    the report, even when everything is absent — it's an inventory, not a pass/fail check.
 
@@ -112,9 +135,26 @@ Opt-in per the AOS migration plan — absence is never a failure, only an invent
 | `shared/hooks/` | Yes / No | [Present — Phase 2: hooks-schema + examples] |
 | `shared/orchestration/` | Yes / No | [Same shape — Phase 3] |
 | `shared/rag/` | Yes / No | [Same shape — Phase 3] |
+| `shared/policies/` | Yes / No | [Same shape — Phase 4; includes policy-schema.md + examples/] |
 
 Counter agents present under `shared/agents/`: [comma-separated list, or "None"]
 Landed in v3.1: 11 counter agents (memory-auditor + 10 Phase 2 counter-auditors).
+
+## Policy Layer (v3.3+)
+Opt-in per-project — absence is never a failure.
+
+| Check | Pass | Warn | Fail |
+|---|---|---|---|
+| Policy YAML parse | [N] | — | [N] |
+| Gate IDs valid | [N] | [N] | — |
+| Action types valid | [N] | — | [N] |
+| Coverage conflicts | — | [N] | [N] |
+
+Policies found in `.claude/policies/`: [comma-separated list of policy names, or "None / not configured"]
+Coverage map (policy-eligible gates):
+- `git-commit`: covered by [policy names] | uncovered
+- `out-of-boundary-write`: covered by [policy names] | uncovered
+- `fitness-function-wiring`: covered by [policy names] | uncovered
 ```
 
 ## Guardrails
