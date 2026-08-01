@@ -475,6 +475,39 @@ else
 fi
 echo ""
 
+# --- Install-vs-upstream drift (installed projects only) --------------------
+echo "--- Install Version Marker ---"
+MARKER_FILE="$PWD/.claude/framework-install.json"
+if [[ "$PWD" == "$REPO_DIR" ]]; then
+  pass "running in framework repo — marker check skipped (no installed project drift to report)"
+elif [[ -f "$MARKER_FILE" ]]; then
+  if ! command -v python3 &>/dev/null; then
+    warn "framework-install.json found but python3 unavailable — skipping drift check"
+  elif ! python3 -c "import json; json.load(open('$MARKER_FILE'))" 2>/dev/null; then
+    fail "framework-install.json found but is not valid JSON"
+  else
+    installed_tag=$(python3 -c "import json; d=json.load(open('$MARKER_FILE')); print(d.get('git_tag',''))" 2>/dev/null || true)
+    installed_sha=$(python3 -c "import json; d=json.load(open('$MARKER_FILE')); print(d.get('commit_sha',''))" 2>/dev/null || true)
+    installed_mode=$(python3 -c "import json; d=json.load(open('$MARKER_FILE')); print(d.get('mode',''))" 2>/dev/null || true)
+    source_repo=$(python3 -c "import json; d=json.load(open('$MARKER_FILE')); print(d.get('source_repo',''))" 2>/dev/null || true)
+
+    if [[ -z "$source_repo" || ! -d "$source_repo" ]]; then
+      pass "framework-install.json present — source repo not found at '$source_repo' (moved or deleted), skipping drift check"
+    else
+      current_tag=$( (cd "$source_repo" && git describe --tags --abbrev=0 2>/dev/null) || echo "unknown")
+      current_sha=$( (cd "$source_repo" && git rev-parse HEAD 2>/dev/null) || echo "unknown")
+      if [[ "$installed_tag" == "$current_tag" ]]; then
+        pass "framework up to date — installed $installed_tag ($installed_mode) matches source $current_tag"
+      else
+        warn "framework drift — installed $installed_tag (${installed_sha:0:8}) but source is now $current_tag (${current_sha:0:8}) — re-run install.sh to update"
+      fi
+    fi
+  fi
+else
+  pass "no framework-install.json in $PWD/.claude/ — marker check skipped (pre-marker install or not an installed project)"
+fi
+echo ""
+
 echo "==========================================="
 echo "Results: $PASS_COUNT passed, $WARN_COUNT warned, $FAIL_COUNT failed"
 if ! $VERBOSE; then
