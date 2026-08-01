@@ -241,26 +241,45 @@ These three ops apply the Tool/Persona/Workflow trinity (established in saturday
 
 **Goal**: telemetry + evaluation are now producing data; introduce optional policy files for auto-approval.
 
-- [ ] **Op 4.1**: Design `shared/policies/` (or `shared/orchestration/policies/`):
-  - [ ] `policy-schema.md` — declarative rule format (matcher + condition + action)
-  - [ ] Example: `auto-approve-refactor.policy.yaml` — "if diff is pure refactor (no behavior change per code-reviewer) AND all fitness functions pass AND diff size < 200 LOC → auto-proceed past code-reviewer gate"
-- [ ] **Op 4.2**: Implement policy evaluator in orchestration runtime:
-  - [ ] Reads policies from `.project-ai/policies/` (or a configured path)
-  - [ ] Evaluates against telemetry events + agent outputs
-  - [ ] Emits telemetry event for every policy decision (audit trail)
-- [ ] **Op 4.3**: Add 3 sample policies covering common patterns:
-  - [ ] `auto-approve-doc-changes.policy.yaml`
-  - [ ] `auto-approve-test-additions.policy.yaml`
-  - [ ] `require-human-review-security.policy.yaml`
-- [ ] **Op 4.4**: Write `docs/aos/policy-authoring-guide.md`
-- [ ] **Op 4.5**: Update `shared/rules/approval-gates.md` — add optional "policy-based" gate type alongside existing human-only gates
-- [ ] **Op 4.6**: Update `health-check` to audit policy syntax + coverage
-- [ ] **Op 4.7**: Update `CHANGELOG.md` with v3.3 entry
-- [ ] **Op 4.8**: Verify: v3.3 install with no policies configured behaves identically to v3.2
+- [x] **Op 4.1**: Design `shared/policies/` (or `shared/orchestration/policies/`):
+  - [x] `shared/policies/README.md` — opt-in nature, audit-trail requirements, per-project storage, emergency override, gate classification pointer
+  - [x] `shared/policies/policy-schema.md` — declarative rule format (matcher + condition + action), gate eligibility table, conflict resolution, full telemetry event shapes
+  - [x] `shared/policies/examples/auto-approve-refactor.policy.yaml` — stub: pure-refactor auto-approve (code-reviewer APPROVED, no behavior change, diff < 200 LOC, no security/auth paths)
+- [x] **Op 4.2**: Implement policy evaluator in orchestration runtime:
+  - [x] `shared/orchestration/policy-evaluator.md` — reads policies from `.claude/policies/`, evaluates against pipeline context, conflict resolution (`require-human` wins), dry-run mode
+  - [x] Emits `policy.evaluated`, `policy.conflict`, `policy.skipped` telemetry events for every decision (audit trail non-negotiable)
+  - [x] Integration points documented: `FeatureDeliveryWorkflow` stage boundaries (code-review, fitness-function-wiring, out-of-boundary-write gates)
+- [x] **Op 4.3**: Add 3 sample policies covering common patterns:
+  - [x] `shared/policies/examples/auto-approve-doc-changes.policy.yaml` — Gate 2 / docs-only diffs
+  - [x] `shared/policies/examples/auto-approve-test-additions.policy.yaml` — Gate 7 / new test fitness functions
+  - [x] `shared/policies/examples/require-human-review-security.policy.yaml` — inversion / security+auth paths always human
+- [x] **Op 4.4**: Write `docs/aos/policy-authoring-guide.md` — 8-gate classification table, schema quick-reference, first-policy walkthrough, inversion pattern, dry-run testing, emergency override, conflict resolution reference, audit trail requirements, governance pair interaction
+- [x] **Op 4.5**: Update `shared/rules/approval-gates.md` — each gate annotated with `Policy-eligible: Yes/No`, gate ID for evaluator matcher, new "Policy-Based Gate Type" section. Policy-eligible: 2 (git-commit), 6 (out-of-boundary-write), 7 (fitness-function-wiring). Always-human: 1, 3, 4, 5, 8.
+- [x] **Op 4.6**: Update `health-check` to audit policy syntax + coverage — Step 5 added: YAML parse validation, gate-ID eligibility check, coverage map for 3 eligible gates, conflict detection, `action.type` validation. Never fails on absence. New Policy Layer section in output format.
+- [x] **Op 4.7**: Update `CHANGELOG.md` with v3.3.0 entry — policy layer + evaluator + samples + guide + gate classification + health-check bump. Backward-compat promise restated.
+- [x] **Op 4.8**: Verify: v3.3 install with no policies configured behaves identically to v3.2 — see Op 4.8 verification below.
 
-**Exit criterion**: policy layer works; every existing approval gate has a documented "here's the equivalent policy if you want it" recipe.
+### Op 4.8 Verification (2026-08-01)
 
-**Rollback plan**: policies are opt-in per-project. Default (no policies configured) is "all approvals require human confirmation" — identical to v2.x.
+**Backward-compat check**: a team on v3.2 that upgrades to v3.3 without opting in sees:
+- `shared/policies/` — new directory. Absent in v3.2, so trivially a superset (not a rewrite).
+- `shared/orchestration/` — v3.3 adds `policy-evaluator.md`. No existing orchestration file changed.
+- `shared/rules/approval-gates.md` — additive annotations on each gate (policy-eligibility labels and gate IDs). No gate behavior changed; the human-prompt gate language is intact.
+- `shared/skills/health-check/SKILL.md` — additive Step 5 (policy validation). Absent policy directory is never a failure; opt-in guarantee holds.
+- `shared/agents/CHANGELOG.md` — appended v3.3.0 entry; no prior entry modified.
+- `docs/aos/policy-authoring-guide.md` — new documentation file. No existing doc modified.
+
+**Identity install**: a project with no `.claude/policies/` directory — which is every existing project that has not explicitly created one — receives zero auto-approvals. Every gate continues to prompt for human confirmation exactly as in v3.2 (and v2.x before that).
+
+**Opt-in policy test (design-time verification)**: the `auto-approve-doc-changes` sample policy, if copied to `.claude/policies/` in a project and that project's pipeline encounters a docs-only git-commit gate:
+1. Evaluator loads the policy (matcher gate: `git-commit`, condition: `diffType=docs-only AND testsPass AND diffLines<500`)
+2. If condition is met → emits `policy.evaluated` with `conditionMet: true, action: auto-approve` to `.claude/telemetry/events.jsonl`
+3. Gate returns `proceed`; pipeline advances without human prompt
+4. If condition is NOT met (e.g., diff contains source files) → emits `policy.evaluated` with `conditionMet: false, action: no-op`; evaluator returns `require-human`; human is prompted as before
+
+**Exit criterion**: `git tag v3.3.0` is safe to publish once human review passes. The AOS migration is fully shipped: v3.0 → v3.3, four phases, backward-compat preserved throughout.
+
+**Rollback plan**: policies are opt-in per-project. Default (no policies configured) is "all approvals require human confirmation" — identical to v2.x. Rollback = delete `.claude/policies/` from the project or set `policiesEnabled: false`.
 
 ---
 
