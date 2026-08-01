@@ -1,154 +1,259 @@
 # AOS Migration Guide
 
-Companion doc to `docs/aos/migration-plan.md`. That file is the
-architectural plan; this file is the operator-facing "what do I actually
-do" — one section per phase, tracking what's live and what's still to come.
+Companion doc to `docs/aos/migration-plan.md`. That file is the architectural plan; this file is the
+operator-facing "what do I actually do" — one section per live phase, tracking what's available and
+how to opt in.
 
-**Status at v3.0.0**: Phase 1 shipped. Nothing forces adoption yet. Every
-AOS layer is opt-in, and the default install path is unchanged from v2.x.
-Later phases will add more layers and eventually a `--full` install mode.
+**Status at v3.2.0**: Phases 1-3 shipped. Four AOS layers are now available:
+telemetry (v3.0), governance counter agents + hooks (v3.1), RAG + orchestration runtime + Learning/Forgetting engines (v3.2). All are opt-in. Default install is unchanged from v2.x.
 
 ---
 
-## Upgrading from v2.x
+## Upgrading from Any Prior Version
 
 **Nothing to do. All AOS additions are opt-in.**
 
-A v2.x install upgraded to v3.0.0 without invoking any new AOS-specific
-capability behaves identically to v2.x. Every agent's version, every skill's
-behavior, every rule, every contract, and every blueprint stays the same.
-`deliver-feature` still orchestrates the same pipeline in the same order and
-writes the same artifacts to the same paths. `validate-artifact` still runs
-the same structural checks. `health-check` still passes on the same criteria
-(it now also prints an "AOS Layers" inventory at the bottom, but that section
-never fails — presence or absence of AOS layers is informational).
+A v2.x or v3.x install upgraded to v3.2.0 without invoking any AOS-specific capability behaves
+identically to the prior version. `deliver-feature`, `validate-artifact`, `health-check`, and every
+existing skill, agent, rule, contract, and blueprint work exactly as they did before.
 
-You may re-run `install.sh` after pulling v3.0.0 to pick up the new files
-in `shared/telemetry/`, `shared/evaluation/`, and the `memory-auditor` agent —
-they'll be symlinked/copied into your `.claude/` (or `.cursor/`, or platform
-equivalent) alongside everything you already had. If you skip re-running
-`install.sh`, everything you already had keeps working; you just don't have
-the new files visible in your platform config until you refresh.
+Re-run `install.sh` (or `install.sh --full` if you want AOS layers pre-seeded) after pulling v3.2.0
+to pick up new files. If you skip re-running `install.sh`, everything you had keeps working.
 
 ---
 
-## Opting into telemetry
+## Phase 1 (v3.0): Telemetry + First Counter Agent
 
-**Not yet — Phase 2 wires it.**
+### Opting into telemetry
 
-The `shared/telemetry/` layer landed in v3.0.0 with the schema (`event-schema.md`),
-the recorder skill (`event-recorder.md`), and the layer overview (`README.md`).
-But no producer in the framework emits events yet — `deliver-feature`,
-`validate-artifact`, and every existing agent still behave exactly as they did
-in v2.x. There is nothing to opt into today because there is nothing to opt
-into against.
+**Design is live; no producer emits events by default yet.** See `shared/telemetry/README.md` for the
+event schema and recorder skill. Telemetry emission is wired in Phase 3 (v3.2) via hooks.
 
-Phase 2 will add the `shared/hooks/` layer, at which point telemetry-emission
-becomes a hook-driven, per-project opt-in. Phase 3 wires the continuous
-evaluation triggers that consume the emitted events.
+### Opting into memory-auditor
 
-If you want to see the design ahead of time:
-- `shared/telemetry/README.md` — layer overview + retention convention
-- `shared/telemetry/event-schema.md` — the event types and fields
-- `shared/telemetry/event-recorder.md` — the append-only recorder skill
-- `docs/aos/migration-plan.md` — Phase 2 and 3 sections
-
----
-
-## Opting into memory-auditor
-
-**Available now — invoke on demand.**
-
-`memory-auditor` is the first AOS counter agent, paired with the existing
-`memory-engineer` skill. It is read-only (tools: `Read, Glob, Grep`) and
-never modifies KIs — it produces a findings report you or `memory-engineer`
-then act on with explicit approval.
-
-To invoke it in Claude Code:
+Available now — invoke on demand:
 
 ```
 > Use the memory-auditor agent to audit shared/knowledge/ and .claude/knowledge/.
 ```
 
-Or, if your platform supports slash-shortcut invocation of subagents,
-whatever the platform-specific spelling is (`@memory-auditor`, etc. — see
-your platform's own docs).
-
-What it checks:
-
-- **Schema compliance** — every KI has `name`, `tags`, `domain`, `created`
-  in its frontmatter, matching the format in `shared/knowledge/README.md`.
-- **Exact duplicates** — two or more KIs share the same frontmatter `name:`.
-- **Semantic-overlap candidates** — pairs of KIs whose bodies cover
-  substantially the same subject in different words. These are surfaced for
-  human/memory-engineer judgment — the auditor never merges anything.
-- **Stale-metadata candidates** — KIs older than 6 months with zero
-  references anywhere in the corpus. Also surfaced for human judgment —
-  stale is not the same as wrong.
-
-Findings default to stdout. To write to a file instead:
-
-```
-> Use the memory-auditor agent and save the report to .claude/audits/memory-audit-2026-07-22.md.
-```
-
-`.claude/audits/` is created if missing. Absence of this directory in your
-project is fine — the auditor creates it on first file-write.
-
-### Difference vs `memory-engineer`
-
-- `memory-engineer` (skill under `shared/skills/memory-engineer/`) — the
-  producer-shaped curator. Can propose merges, cross-references, registry
-  edits, and expiration decisions. Findings still require human approval;
-  it does not act unilaterally.
-- `memory-auditor` (agent under `shared/agents/memory-auditor.md`) — the
-  read-only counter. Reports what's wrong; never proposes edits. Cheap
-  enough to invoke as a scheduled or hook-driven check without worrying
-  about unwanted edit recommendations.
-
-Run both when convenient. When both have run recently, treat the
-`memory-engineer` sweep as the more comprehensive judgment; the auditor
-is the fast, hook-friendly first pass.
+What it checks: schema compliance, exact duplicates, semantic-overlap candidates, stale-metadata
+candidates. Read-only — never modifies files, surfaces findings for human judgment.
 
 ---
 
-## What's coming next
+## Phase 2 (v3.1): Governance Skeleton
 
-**Phase 2 (v3.1)** — see `docs/aos/migration-plan.md`, Phase 2 section:
+### Counter Agents (all 15 pairs now live)
 
-- 10 more counter agents (`context-auditor`, `knowledge-auditor`,
-  `prompt-evaluator`, `agent-evaluator`, `rule-auditor`, `pattern-reviewer`,
-  `tool-validator`, `documentation-auditor`, `retrieval-evaluator`,
-  `privacy-auditor`), all following the `memory-auditor` shape.
-- 4 opposing-force skill pairs (Memory Expansion / Compression, Learning /
-  Forgetting, Cost / Quality, Scheduler).
-- `shared/hooks/` layer with an event → skill/agent config schema and
-  example hooks.
-- `validate-artifact` gets an optional post-structural-check invocation of
-  the corresponding counter agent (opt-in via config; default remains
-  structural only).
+All counter agents are in `shared/agents/`. They are read-only, invocable on demand, and can be
+triggered by `validate-artifact` if you configure it. Default: structural check only.
 
-**Phase 3 (v3.2)** — orchestration runtime, RAG layer, Learning/Forgetting
-engines, and the Trinity-native workflow refactor of `deliver-feature` and
-`test-driven-developer`. This is also where telemetry emission gets wired
-and `install.sh` gains `--base` (default, current behavior) and `--full`
-modes.
+| Counter Agent | Audits |
+|---|---|
+| `memory-auditor` | KI schema, duplicates, staleness |
+| `context-auditor` | Context manifests and context-engineer output |
+| `knowledge-auditor` | KI frontmatter schema, semantic duplication |
+| `prompt-evaluator` | Agent/skill prompt hygiene, no fabricated URLs |
+| `agent-evaluator` | Agent frontmatter contracts, prompt behavior |
+| `rule-auditor` | Rule internal consistency, dead paths |
+| `pattern-reviewer` | Pattern docs accuracy against codebase |
+| `tool-validator` | Skill frontmatter, standalone-mode declarations |
+| `documentation-auditor` | README/ARCHITECTURE docs staleness |
+| `retrieval-evaluator` | KI retrievability via memory-registry telemetry |
+| `privacy-auditor` | PII in pipeline artifacts, hardcoded tokens |
+| `security-reviewer` | STRIDE threat modeling (producer — already existed) |
+| `model-tier-auditor` | Agent frontmatter model_tier declarations |
 
-**Phase 4 (v3.3)** — policy layer for auto-approval on documented safe
-paths (doc-only changes, pure refactors, test additions).
+Invoke any counter agent directly: `> Use the <agent-name> agent to audit <scope>.`
 
-Each phase ships independently and is independently revertable. Each phase
-holds the same backward-compat guarantee: install it without opting in,
-and nothing changes from the phase before.
+### Hooks Layer
+
+`shared/hooks/` contains the hook schema and example hooks. Hooks are the mechanism for wiring
+counter agents to events automatically.
+
+**To use hooks in your project:**
+1. Create `.claude/hooks/` directory in your project.
+2. Copy example hooks from `shared/hooks/examples/` (or from `shared/hooks/on-*.yaml`).
+3. Set `enabled: true` on the hooks you want to activate.
+4. Restart your AI tool — hooks are read at session start.
+
+Example: enable `knowledge-auditor` on every KI write:
+```yaml
+# .claude/hooks/on-ki-created.yaml
+version: "1.0"
+hooks:
+  - id: "knowledge-auditor-on-ki-created"
+    event: "on-ki-created"
+    enabled: true        # ← flip this
+    action:
+      type: "agent"
+      target: "knowledge-auditor"
+```
+
+### validate-artifact with Auditor Invocation
+
+`validate-artifact` can optionally invoke the corresponding counter agent after passing its
+structural check. To enable:
+
+```yaml
+# .claude/delivery-policy.yaml
+validateArtifactMode: "structural+audit"   # default is "structural"
+```
+
+When this is set, every `validate-artifact` call that passes structural validation also runs the
+corresponding auditor (e.g., `knowledge-auditor` for KI artifacts). If the auditor returns findings,
+they are surfaced as warnings; the pipeline proceeds unless findings are Critical severity.
+
+---
+
+## Phase 3 (v3.2): Runtime
+
+### Install Mode: --base vs --full
+
+```bash
+./install.sh --project /path/to/my-app            # --base (default), same as before
+./install.sh --project /path/to/my-app --full     # --full: also seeds AOS layers
+```
+
+`--full` seeds `.claude/hooks/` with example hooks (all disabled), links the RAG and orchestration
+interface directories, and prints AOS next steps. All AOS capabilities remain opt-in even in `--full`
+mode — no hook is enabled until you set `enabled: true`.
+
+### RAG Layer (`/search-ki-semantic` + `query-memory --semantic`)
+
+Semantic search over the framework KI corpus using the LLM-as-retriever adapter.
+
+**When to use**: when `/search-ki` returns empty for a concept you believe is documented.
+
+```
+> /search-ki-semantic circuit breaker pattern for external HTTP calls
+```
+
+Or from `query-memory`:
+
+```
+> /query-memory --semantic what do we know about graceful degradation
+```
+
+The `--semantic` flag loads the full KI+ADR corpus into context and judges relevance holistically —
+it catches paraphrases and conceptual matches that lexical search misses. See
+`shared/rag/README.md` for the three-corpus model and `shared/rag/retriever.interface.md` for the
+adapter contract.
+
+### Learning Engine (Hook: `on-retrospective-written`)
+
+The learning engine is now wired as an opt-in hook that fires after a retrospective is written.
+
+**To activate:**
+```yaml
+# .claude/hooks/on-retrospective-written.yaml  (seeded by --full install)
+hooks:
+  - id: "learning-engine-on-retrospective"
+    event: "on-retrospective-written"
+    enabled: true        # ← flip this
+```
+
+What happens: after a retrospective lands in `docs/features/<name>/retrospective.md`, the learning
+engine scans it for promotable patterns and produces a draft proposal in
+`.claude/feature-workspace/proposed-lessons.md`. It **always pauses for human confirmation** before
+writing to `docs/lessons-learned/`. The `draftOnly: true` guardrail is non-negotiable.
+
+To run the learning engine manually: `/learning-engine` or `> run the learning-engine skill`.
+
+### Forgetting Engine (Scheduled Monthly)
+
+```yaml
+# .claude/hooks/scheduled-monthly.yaml  (seeded by --full install)
+hooks:
+  - id: "forgetting-engine-monthly"
+    event: "scheduled-monthly"
+    enabled: true        # ← flip this
+    schedule:
+      cron: "0 9 1 * *"   # first of every month
+```
+
+Requires a cron runner (GitHub Actions, `/schedule` skill, `CronCreate`). The forgetting engine
+scans `shared/knowledge/` and `docs/lessons-learned/` for items that are ADR-superseded, temporally
+stale (> 6 months, no links), or reference removed framework concepts. Produces a tiered proposal —
+never archives without explicit human confirmation.
+
+To run manually: `/forgetting-engine`.
+
+### Orchestration Runtime (`/orchestrate`)
+
+The orchestration runtime wraps existing skills to add resumable checkpoints, parallel branches, and
+automatic audit-after-producer behavior.
+
+**Your existing `/deliver-feature` calls work identically.** `/orchestrate` is the opt-in path.
+
+```
+/orchestrate --workflow feature-delivery --spec features/my-feature.md
+```
+
+```
+/orchestrate --workflow tdd --spec features/my-feature.md
+```
+
+`--legacy` flag routes to the pre-workflow skill directly if a regression is introduced:
+```
+/orchestrate --legacy --workflow feature-delivery --spec features/my-feature.md
+```
+
+See `shared/orchestration/README.md` for the runtime overview and `shared/orchestration/interface.md`
+for the Workflow plug-in contract.
+
+### FeatureDeliveryWorkflow and TDDWorkflow
+
+Two built-in workflows are defined as part of Phase 3 (Ops 3.11-3.12):
+
+- `shared/workflows/feature-delivery-workflow.md` — wraps `deliver-feature`
+- `shared/workflows/tdd-workflow.md` — wraps `test-driven-developer`
+
+Both add the **audit-after-producer** composition pattern (Op 3.13): every stage that produces a
+contract-bound artifact automatically invokes its corresponding counter agent before proceeding.
+This is enabled by default in the workflow but can be disabled per-project:
+
+```yaml
+# .claude/delivery-policy.yaml
+workflowAuditsEnabled: false   # disable audit-after-producer in workflow stages
+```
+
+---
+
+## Phase 4 (v3.3): Policy Layer (Coming Next)
+
+Policy files enable auto-approval on documented safe paths — e.g., "if the diff is a pure refactor
+AND all fitness functions pass AND diff < 200 LOC, auto-proceed past the code-reviewer gate."
+
+See `docs/aos/migration-plan.md` Phase 4 section for the planned scope.
+
+---
+
+## Quick Reference
+
+| Capability | How to try it | Config to persist it |
+|---|---|---|
+| Semantic KI search | `/search-ki-semantic <query>` | None — invoke on demand |
+| Semantic all-memory search | `/query-memory --semantic <query>` | None |
+| Learning engine (manual) | `/learning-engine` | None |
+| Learning engine (on retrospective) | Enable in `.claude/hooks/on-retrospective-written.yaml` | `enabled: true` |
+| Forgetting engine (manual) | `/forgetting-engine` | None |
+| Forgetting engine (monthly) | Configure cron + `.claude/hooks/scheduled-monthly.yaml` | `enabled: true` + cron |
+| Orchestration runtime | `/orchestrate --workflow feature-delivery --spec <file>` | None required |
+| Orchestration for TDD | `/orchestrate --workflow tdd --spec <file>` | None required |
+| Audit-after-producer | Automatic in workflow stages | Disable: `workflowAuditsEnabled: false` |
+| AOS layers seeded at install | `install.sh --full` | Once per project |
 
 ---
 
 ## Related
 
 - `docs/aos/migration-plan.md` — the architectural plan this guide operationalizes
-- `docs/aos/AOS_Governance_Design_Pack/` — the underlying vision and 15
-  governance pairs
-- `shared/agents/CHANGELOG.md` — the v3.0.0 entry and every future phase entry
+- `docs/aos/governance-pairs.md` — all 15 governance pairs mapped to agents/skills
+- `shared/agents/CHANGELOG.md` — v3.0, v3.1, v3.2 entries
+- `shared/orchestration/README.md` — orchestration runtime opt-in guide
+- `shared/rag/README.md` — three-corpus retrieval model
 
 ---
 *Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
