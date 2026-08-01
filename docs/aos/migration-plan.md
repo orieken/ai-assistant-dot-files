@@ -187,14 +187,15 @@ Verified 2026-07-25. `scripts/health-check.sh` reports `214 passed, 0 warned, 0 
 - [ ] **Op 3.2**: Implement orchestration wrapper for `deliver-feature`:
   - [ ] Preserve exact `deliver-feature` skill behavior for teams that don't opt in
   - [ ] New `orchestrate` skill invokes the runtime; runtime can replay pipeline events, restart from checkpoints, run branches in parallel
-- [ ] **Op 3.3**: Design `shared/rag/` — corpus-aware retrieval adapter interface (see `docs/adrs/ADR-002-corpus-aware-retrieval-strategy.md`):
-  - [ ] `README.md` — three-corpus model: framework KIs, installed-project docs/, installed-project source
-  - [ ] `retriever.interface.md` — pluggable adapter contract (`Retrieve(query, corpus) → results`); implementations swap without touching consumers
-  - [ ] Three adapter shapes documented: `llm-as-retriever` (framework corpus, default), `bm25` via sqlite-fts5 (installed-project docs, default), `vector` via sqlite-vec (installed-project feature-archive + optional source, opt-in)
-- [ ] **Op 3.4**: Implement retrieval per corpus, graduated by complexity:
-  - [ ] **Framework corpus** — `search-ki` keeps its lexical implementation unchanged; new `search-ki-semantic` skill uses `llm-as-retriever` over the KI corpus (small enough to fit in context — corpus stays under ~200 KIs per the memory-registry health-check); `query-memory --semantic` opt-in flag routes to same
-  - [ ] **Installed-project docs** — MCP tools in the broad framework-MCP (saturday-mcp per mcp-expand scope): `search_docs` (BM25 over the installed project's `docs/`), `search_features` (vector similarity over `docs/features/` — the semantic "have we built this before?" query the analyst runs today via grep+mtime), `search_adrs` (BM25 over `docs/adrs/`). Index lives in `.claude/rag/` per install; rebuilt via a `/reindex` skill on demand plus install-time initial pass
-  - [ ] **Installed-project source** — **DEFERRED**. Lean on the client's built-in code search (Claude Code Grep/Glob/Read) initially. Add vector-backed code retrieval only if telemetry shows the built-in isn't sufficient. Adapter interface is ready for it when the time comes
+- [x] **Op 3.3**: Design `shared/rag/` — corpus-aware retrieval adapter interface (see `docs/adrs/ADR-002-corpus-aware-retrieval-strategy.md`):
+  - [x] `README.md` — three-corpus model: framework KIs, installed-project docs/, installed-project source
+  - [x] `retriever.interface.md` — pluggable adapter contract (`Retrieve(query, corpus) → results`); implementations swap without touching consumers
+  - [x] Three adapter shapes documented: `llm-as-retriever` (framework corpus, default), `bm25` via sqlite-fts5 (installed-project docs, default), `vector` via sqlite-vec (installed-project feature-archive + optional source, opt-in)
+  - **Handoff note (2026-08-01)**: This op is labeled 3.1 in `docs/aos/prompts/phase-3-runtime.md` due to re-numbering mid-execution when the corpus-aware reframing landed via b55c0dd. Same deliverables, different sequence in the handoff prompt.
+- [x] **Op 3.4**: Implement retrieval per corpus, graduated by complexity:
+  - [x] **Framework corpus** — `search-ki` keeps its lexical implementation unchanged; `search-ki-semantic` skill added (LLM-as-retriever over full KI corpus); `query-memory --semantic` opt-in flag delegates to `search-ki-semantic`
+  - [x] **Installed-project docs BM25** — **No re-work needed**. Shipped in `saturday-mcp` Milestone 1 (commit `5a47441`): `search_docs`, `search_adrs`, `search_features` MCP tools. The adapter interface in `shared/rag/adapters/bm25.md` documents the shape; implementation lives in saturday-mcp. Framework-level re-implementation would duplicate, not add.
+  - [x] **Installed-project source** — **DEFERRED** (see `shared/rag/adapters/source-retrieval.deferred.md`)
 - [ ] **Op 3.5**: Implement Learning engine skill:
   - [ ] Watches retrospectives + failed validations; proposes new KIs (draft mode, human approves)
   - [ ] Opt-in via hook (`on-retrospective-written → learning-engine`)
