@@ -1,0 +1,34 @@
+name: require-human-review-security
+version: "1.0"
+description: >
+  INVERSION POLICY — explicitly requires human confirmation whenever any changed file
+  touches security or auth paths, regardless of what other auto-approve policies say.
+  Applies to the git-commit gate. require-human always beats auto-approve in conflict resolution.
+enabled: true
+
+matcher:
+  gates:
+    - git-commit
+    - out-of-boundary-write
+
+condition:
+  any:
+    - filePaths:
+        anyMatch: "**/security/**"
+    - filePaths:
+        anyMatch: "**/auth/**"
+    - filePaths:
+        anyMatch: "**/authentication/**"
+    - filePaths:
+        anyMatch: "**/authorization/**"
+    - filePaths:
+        anyMatch: "**/secrets/**"
+    - filePaths:
+        anyMatch: "**/credentials/**"
+
+action:
+  type: require-human
+  reason: >
+    One or more changed files touch security, auth, or credential paths. Per framework policy,
+    these changes always require explicit human review regardless of reviewer verdicts or
+    diff size. This policy cannot be overridden by auto-approve policies (require-human wins).

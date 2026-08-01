@@ -1,0 +1,22 @@
+name: auto-approve-doc-changes
+version: "1.0"
+description: >
+  Auto-approve git commits when the diff is documentation-only (no source or test changes),
+  tests pass, and diff stays under 500 lines. Targets Gate 2 (Creating a Git Commit).
+enabled: true
+
+matcher:
+  gate: git-commit
+
+condition:
+  diffType:
+    equals: "docs-only"
+  testsPass: true
+  diffLines:
+    lessThan: 500
+
+action:
+  type: auto-approve
+  reason: >
+    All changed files are documentation (docs/, *.md, *.mdx) — no source or test paths
+    touched, tests pass. Doc-only diffs carry zero behavioral risk.
