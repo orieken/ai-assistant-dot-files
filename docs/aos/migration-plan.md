@@ -196,26 +196,42 @@ Verified 2026-07-25. `scripts/health-check.sh` reports `214 passed, 0 warned, 0 
   - [x] **Framework corpus** — `search-ki` keeps its lexical implementation unchanged; `search-ki-semantic` skill added (LLM-as-retriever over full KI corpus); `query-memory --semantic` opt-in flag delegates to `search-ki-semantic`
   - [x] **Installed-project docs BM25** — **No re-work needed**. Shipped in `saturday-mcp` Milestone 1 (commit `5a47441`): `search_docs`, `search_adrs`, `search_features` MCP tools. The adapter interface in `shared/rag/adapters/bm25.md` documents the shape; implementation lives in saturday-mcp. Framework-level re-implementation would duplicate, not add.
   - [x] **Installed-project source** — **DEFERRED** (see `shared/rag/adapters/source-retrieval.deferred.md`)
-- [ ] **Op 3.5**: Implement Learning engine skill:
-  - [ ] Watches retrospectives + failed validations; proposes new KIs (draft mode, human approves)
-  - [ ] Opt-in via hook (`on-retrospective-written → learning-engine`)
-- [ ] **Op 3.6**: Implement Forgetting engine skill:
-  - [ ] Scans KIs for staleness (last-referenced > N months + no recent linking), proposes expiration
-  - [ ] Opt-in via scheduled hook
-- [ ] **Op 3.7**: Update `install.sh` with `--base` (default, current behavior) and `--full` (AOS layers included) modes
-- [ ] **Op 3.8**: Write `docs/aos/migration-guide.md` proper — how to opt in per layer
-- [ ] **Op 3.9**: Update `CHANGELOG.md` with v3.2 entry
-- [ ] **Op 3.10**: Verify: v3.2 `--base` install behaves identically to v3.1
+- [x] **Op 3.5**: Implement Learning engine skill:
+  - [x] Watches retrospectives + failed validations; proposes new KIs (draft mode, human approves)
+  - [x] Opt-in via hook (`on-retrospective-written → learning-engine`) — `shared/hooks/on-retrospective-written.yaml`
+- [x] **Op 3.6**: Implement Forgetting engine skill:
+  - [x] Scans KIs for staleness (last-referenced > N months + no recent linking), proposes expiration
+  - [x] Opt-in via scheduled hook — `shared/hooks/scheduled-monthly.yaml`
+- [x] **Op 3.7**: Update `install.sh` with `--base` (default, current behavior) and `--full` (AOS layers included) modes
+- [x] **Op 3.8**: Write `docs/aos/migration-guide.md` proper — how to opt in per layer
+- [x] **Op 3.9**: Update `shared/agents/CHANGELOG.md` with v3.2 entry (2026-08-01)
+- [x] **Op 3.10**: Verify: v3.2 `--base` install behaves identically to v3.1 — see Op 3.10 verification below
 
 ### Trinity-native workflow refactor (part of Phase 3)
 
 These three ops apply the Tool/Persona/Workflow trinity (established in saturday-mcp) to the framework itself. Skills that currently orchestrate agents become thin callers of first-class Workflows; agents that hold multi-step loops internally get those loops extracted into Workflows.
 
-- [ ] **Op 3.11**: Refactor `/deliver-feature` skill's orchestration logic into a `FeatureDeliveryWorkflow`. Skill becomes a thin caller; workflow owns the state machine (named internal roles for analyst/architect/developer/reviewer/qa/tech-writer/devops, resumable checkpoints backed by `.claude/feature-workspace/` state, explicit stage boundaries where policy evaluation can hook in later in Phase 4). External invocation contract stays identical — teams keep typing `/deliver-feature <spec>`.
-- [ ] **Op 3.12**: Extract the Red-Green-Refactor loop from `test-driven-developer` agent into a `TDDWorkflow`. Internal roles: test-writer (played by `unit-tester`), implementer (played by `developer`), refactor-reviewer (played by `developer` + `code-reviewer` audit), coverage-auditor (played by `unit-tester` in audit mode). Agent becomes a thin caller; workflow owns the loop, retry policy, and coverage gates.
-- [ ] **Op 3.13**: Establish "workflow-invokes-audit-after-producer" as the default composition pattern. Every workflow step that ends with a contract-bound artifact automatically invokes the corresponding counter agent from Phase 2 (e.g., `analyst` step → `context-auditor` audit → proceed or retry). Auditor-on-failure sends the artifact back to the producer with the specific violations. Config knob exists to disable per-project, but default is "audits run."
+- [x] **Op 3.11**: Refactor `/deliver-feature` skill's orchestration logic into a `FeatureDeliveryWorkflow`. Skill becomes a thin caller; workflow owns the state machine (named internal roles for analyst/architect/developer/reviewer/qa/tech-writer/devops, resumable checkpoints backed by `.claude/feature-workspace/` state, explicit stage boundaries where policy evaluation can hook in later in Phase 4). External invocation contract stays identical — teams keep typing `/deliver-feature <spec>`.
+- [x] **Op 3.12**: Extract the Red-Green-Refactor loop from `test-driven-developer` agent into a `TDDWorkflow`. Internal roles: test-writer (played by `unit-tester`), implementer (played by `developer`), refactor-reviewer (played by `developer` + `code-reviewer` audit), coverage-auditor (played by `unit-tester` in audit mode). Agent becomes a thin caller; workflow owns the loop, retry policy, and coverage gates.
+- [x] **Op 3.13**: Establish "workflow-invokes-audit-after-producer" as the default composition pattern. Every workflow step that ends with a contract-bound artifact automatically invokes the corresponding counter agent from Phase 2 (e.g., `analyst` step → `context-auditor` audit → proceed or retry). Auditor-on-failure sends the artifact back to the producer with the specific violations. Config knob exists to disable per-project, but default is "audits run."
 
-**Exit criterion**: the full AOS runtime exists and works; opt-in path documented; `/deliver-feature` and `/test-driven-developer` are now workflows (Tool/Persona/Workflow trinity applied to the framework itself).
+### Op 3.10 Verification (2026-08-01)
+
+**Backward-compat check**: a team on v3.1 that upgrades to v3.2 without opting in sees:
+- `shared/agents/` — v3.2 adds `search-ki-semantic` skill only; no existing agent file changed except
+  `test-driven-developer` (additive workflow reference, behavior unchanged).
+- `shared/skills/` — v3.2 adds `search-ki-semantic/`, `orchestrate/`; updates `query-memory` (additive `--semantic` flag, no default change), `learning-engine` (additive formalization), `forgetting-engine` (additive formalization), `deliver-feature` (additive workflow reference). No skill moved, renamed, or removed.
+- `shared/hooks/` — v3.2 adds `on-retrospective-written.yaml`, `scheduled-monthly.yaml`. Both are `enabled: false` by default. No existing hook modified.
+- `shared/rag/` — new directory. No existing file modified.
+- `shared/orchestration/` — new directory. No existing file modified.
+- `shared/workflows/` — new directory. No existing file modified.
+- `install.sh` — `--base` (default) produces identical output to v3.1 install. `--full` is opt-in.
+- `docs/aos/migration-guide.md` — expanded (documentation only, no behavioral change).
+
+**Identity install**: `install.sh --base` → same agents, same skills, same rules, same configs as v3.1.
+**Opt-in guarantee holds**: no hook is enabled, no workflow is active, no RAG is used by default.
+
+**Exit criterion**: all 13 ops complete; `git tag v3.2.0` is safe to publish once human review passes.
 
 **Rollback plan**: Learning/Forgetting are drafts-only by default (never auto-mutate memory). RAG runs alongside lexical, not instead of. Orchestration wraps, doesn't replace — the pre-workflow skill implementation stays available under a `--legacy` flag through v3.x so any team hitting a workflow-introduced regression can revert per-project without waiting for a framework patch.
 

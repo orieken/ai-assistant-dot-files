@@ -16,6 +16,53 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-08-01 — v3.2.0: AOS Runtime (Phase 3)
+
+Third phase of the AOS migration. Phase 3 wires the runtime layers: RAG retrieval, orchestration,
+Learning/Forgetting engines. All additions are opt-in. A team on v3.1.0 that does not invoke
+`/orchestrate`, `--semantic` flags, Learning/Forgetting engines, or the `FeatureDeliveryWorkflow`/
+`TDDWorkflow` sees **zero behavior change**.
+
+**RAG Layer (Ops 3.1-3.4)**
+- `shared/rag/` scaffold: three-corpus model (LLM-as-retriever / BM25 / vector) per ADR-002.
+- `shared/skills/search-ki-semantic/` (new): full-corpus LLM-as-retriever for the KI+ADR corpus.
+- `query-memory` updated: `--semantic` flag delegates KI/ADR portion to `search-ki-semantic`.
+- Source retrieval deferred: `shared/rag/adapters/source-retrieval.deferred.md` documents the rationale.
+- No re-work for installed-project BM25: shipped in `saturday-mcp` M1 (commit `5a47441`).
+
+**Learning/Forgetting Engines Wired (Ops 3.5-3.6)**
+- `shared/hooks/on-retrospective-written.yaml` (new): triggers `learning-engine` on retrospective write.
+- `shared/hooks/scheduled-monthly.yaml` (new): monthly `forgetting-engine` + `memory-auditor` schedule.
+- `learning-engine` SKILL.md formalized: invocation modes, duplicate-check step, explicit human-confirmation language.
+- `forgetting-engine` SKILL.md formalized: staleness criteria, confidence tiers, archive-not-delete guarantee.
+
+**Orchestration Runtime (Ops 3.7-3.10)**
+- `shared/orchestration/` scaffold: README, interface.md (Workflow contract), pipeline-schema.md.
+- `shared/skills/orchestrate/` (new): `/orchestrate` runtime entry point with `--legacy`, `--dry-run`, `--resume` flags.
+- `install.sh`: `--base` (default, unchanged behavior) and `--full` (seeds AOS layers) modes.
+- `docs/aos/migration-guide.md`: full v3.2 operator guide with per-layer opt-in steps.
+
+**Trinity-Native Workflow Refactor (Ops 3.11-3.13)**
+- `shared/workflows/feature-delivery-workflow.md` (new): `FeatureDeliveryWorkflow` — 14 named stages,
+  resumable checkpoints, explicit Phase 4 policy boundaries, audit-after-producer on each contract artifact.
+  `deliver-feature` skill is unchanged external entry point (v3.1 behavior preserved).
+- `shared/workflows/tdd-workflow.md` (new): `TDDWorkflow` — 6-stage Red-Green-Refactor loop with
+  named roles, coverage gate (≥ 85%), max-iteration halt, audit blocks on test-writing + refactor.
+  `test-driven-developer` agent is unchanged external entry point (v1.3.0).
+- `shared/orchestration/audit-composition-pattern.md` (new): producer→auditor mapping, retry protocol,
+  config knob (`workflowAuditsEnabled: false` to disable per-project).
+
+| Agent / Skill | Version | Change |
+|---|---|---|
+| `test-driven-developer` | 1.3.0 | Added TDDWorkflow reference and runtime invocation path (additive). |
+| `search-ki-semantic` | 1.0.0 | New skill: LLM-as-retriever for framework KI corpus (Phase 3 Op 3.2). |
+| `orchestrate` | 1.0.0 | New skill: /orchestrate runtime entry point (Phase 3 Op 3.8). |
+| `learning-engine` | 1.1.0 | Formalized invocation modes, duplicate-check step, human-confirmation language. |
+| `forgetting-engine` | 1.1.0 | Formalized staleness criteria, confidence tiers, archive-not-delete guarantee. |
+| `deliver-feature` | *(no version bump — no behavior change)* | Added workflow reference comment. |
+
+---
+
 ## 2026-07-30 — Epic 46: Visual QA Engineer
 
 - **`visual-qa-engineer` 1.0.0**: Added new conditional pipeline agent. Runs after qa-engineer on UI-touching features that have `heatmap-data/` or Playwright snapshot baselines. Wraps `@orieken/saturday-ml-analyzer` for interaction coverage analysis and Playwright native `toHaveScreenshot()` for visual regression. Verdict: PASS | FAIL | UNCONFIGURED. An UNCONFIGURED verdict does not block the pipeline (heatmap instrumentation not yet adopted). Produces `visual-qa-report.md` validated by `shared/contracts/visual-qa-report-contract.md`.
