@@ -16,6 +16,64 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-08-01 — v3.3.0: AOS Policy Layer (Phase 4)
+
+Fourth and final phase of the AOS migration. Phase 4 introduces the policy layer that makes
+graduated automation possible. **A team on v3.2.0 that upgrades to v3.3.0 and does not create
+any `.claude/policies/` files sees zero behavior change.** Default policy set is empty; all
+approvals still require human confirmation. Policies are strictly opt-in per-project. This is
+the backward-compatibility guarantee for the fifth and final time.
+
+**Policy Layer (Ops 4.1-4.3)**
+- `shared/policies/` scaffold: `README.md` (opt-in nature, audit-trail requirements, per-project
+  storage), `policy-schema.md` (declarative matcher + condition + action format, gate eligibility
+  table, conflict-resolution rules, telemetry event shapes), `examples/` (4 reference policies).
+- `shared/policies/examples/auto-approve-refactor.policy.yaml`: Tier A auto-proceed on pure-refactor
+  commits (code-reviewer APPROVED, no behavior change, fitness functions pass, diff < 200 LOC,
+  no security/auth paths).
+- `shared/policies/examples/auto-approve-doc-changes.policy.yaml`: auto-proceed on docs-only git
+  commits (diffType docs-only, tests pass, diff < 500 lines). Targets Gate 2.
+- `shared/policies/examples/auto-approve-test-additions.policy.yaml`: auto-proceed on fitness
+  function wiring when the wired function is a new test (dry-run pass, all paths in test dirs,
+  zero security criticals). Targets Gate 7.
+- `shared/policies/examples/require-human-review-security.policy.yaml`: inversion policy —
+  explicitly requires human on any file matching security/auth/credential paths regardless of
+  other policies. Targets Gates 2 and 6. Demonstrates that `require-human` always beats
+  `auto-approve` in conflict resolution.
+
+**Policy Evaluator (Op 4.2)**
+- `shared/orchestration/policy-evaluator.md`: spec for the evaluator that bridges `.claude/policies/`
+  to `FeatureDeliveryWorkflow` stage boundaries. Algorithm: load → filter → evaluate → conflict-
+  resolve → emit telemetry → return `proceed | halt | require-human`. Every decision emits a
+  `policy.evaluated` telemetry event — no silent auto-approvals. Conflict resolution: `require-human`
+  always beats `auto-approve`. Dry-run mode: `--dry-run-policies` validates policies against
+  historical telemetry without mutating pipeline state.
+
+**Approval Gates Classification (Op 4.5)**
+- `shared/rules/approval-gates.md` updated: each of the 8 gates now annotated with policy
+  eligibility (`Policy-eligible: Yes (Tier A)` or `No — Always Human`) and gate ID for the
+  evaluator's matcher. Policy-eligible gates: 2 (`git-commit`), 6 (`out-of-boundary-write`),
+  7 (`fitness-function-wiring`). Always-human gates: 1, 3, 4, 5, 8. New "Policy-Based Gate Type"
+  section explains the v3.3 opt-in mechanism.
+
+**Policy Authoring Guide (Op 4.4)**
+- `docs/aos/policy-authoring-guide.md`: comprehensive operator guide covering the 8-gate
+  eligibility table, schema quick-reference, first-policy walkthrough, inversion policy pattern,
+  dry-run testing, emergency override (`policiesEnabled: false`), conflict resolution reference,
+  audit trail requirements, and governance pair interaction (audits run before policy evaluation).
+
+**Health Check Extension (Op 4.6)**
+- `shared/skills/health-check/SKILL.md` extended with Step 5 (policy validation): parses each
+  `.policy.yaml`, validates required fields, checks gate IDs against the eligible set, reports
+  coverage map for the 3 eligible gates, detects conflicting policies, validates `action.type`
+  values. Never fails on absence of policies. New "Policy Layer" section in health report output.
+
+| Agent / Skill | Version | Change |
+|---|---|---|
+| `health-check` | 1.3.0 | Added Step 5: policy syntax validation, gate-ID eligibility check, coverage-conflict detection, policy layer section in output format. |
+
+---
+
 ## 2026-08-01 — v3.2.0: AOS Runtime (Phase 3)
 
 Third phase of the AOS migration. Phase 3 wires the runtime layers: RAG retrieval, orchestration,
