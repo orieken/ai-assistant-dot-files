@@ -116,7 +116,14 @@ claude
 > Act as the code-reviewer persona from shared/agents/code-reviewer.md and review my current changes.
 ```
 
-To remove: `./uninstall.sh --global` (or `--project <path>`) restores whatever was backed up during install.
+**Version marker** — every non-dry-run install writes `.claude/framework-install.json` into the
+target (or `~/.claude/` for `--global`). It records the installed git tag, commit SHA, install
+date, mode (symlink/copy), and framework level. `health-check.sh` reads this marker when invoked
+from within an installed project and reports a WARN if the source repo has moved ahead — making
+drift from `--copy` installs visible without manual archaeology. Pre-v3.3 installs have no marker;
+the legacy forensic detection in `docs/prompts/update-installed-framework.md` remains the fallback.
+
+To remove: `./uninstall.sh --global` (or `--project <path>`) restores whatever was backed up during install (and removes the version marker).
 
 ---
 

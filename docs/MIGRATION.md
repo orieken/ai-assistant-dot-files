@@ -79,3 +79,63 @@ migrated (`[skip]`) rather than erroring or duplicating anything.
 - `v1.0.0` — the last commit before the restructure began (`e7d5557`).
 - `v2.0.0` — the completed canonical `shared/` layer, including everything built across Epics 1-21 in
   `docs/features/context-engineering-framework/TODO.md`.
+
+---
+
+# Framework Version Marker (v3.3+, Epic 68)
+
+Starting with v3.3, every non-dry-run `install.sh` run writes a **version marker** into the installed
+target. This makes drift between an install and the upstream framework repo detectable without manual
+archaeology.
+
+## Marker location
+
+| Install mode | Marker path |
+|---|---|
+| `--global` | `~/.claude/framework-install.json` |
+| `--project <path>` | `<path>/.claude/framework-install.json` |
+
+## Marker format
+
+```json
+{
+  "source_repo": "/path/to/ai-assistant-dot-files",
+  "git_tag": "v3.3.0",
+  "commit_sha": "abc1234def5678901234567890abcdef12345678",
+  "installed_at": "2026-08-01T12:00:00Z",
+  "mode": "symlink",
+  "framework_level": "base",
+  "platforms": ["claude-code", "cursor"]
+}
+```
+
+Fields:
+- `source_repo` — absolute path to the framework clone at install time
+- `git_tag` — the most recent git tag in the framework repo at install time
+- `commit_sha` — full HEAD SHA at install time
+- `installed_at` — ISO 8601 UTC timestamp
+- `mode` — `"symlink"` (default) or `"copy"` (when `--copy` was passed)
+- `framework_level` — `"base"` or `"full"` (AOS layers)
+- `platforms` — platforms installed; the specific platform if `--platform` was used, or all
+  auto-detected platforms if not
+
+## Drift detection
+
+Run `bash <framework>/scripts/health-check.sh` from within an installed project directory. The
+"Install Version Marker" section reads the marker and compares `git_tag` against the source repo's
+current HEAD tag:
+
+- **PASS** — installed tag matches source repo: no drift.
+- **WARN** — tags differ: re-run `install.sh` to update the install and refresh the marker.
+- **PASS** (silent skip) — `source_repo` path no longer resolves (repo moved or deleted).
+- **PASS** (skipped) — no marker present (pre-v3.3 install, see below).
+
+## Pre-marker installs (before v3.3)
+
+Installs done before Epic 68 / v3.3 have no `framework-install.json`. They are not broken — the
+framework operates normally without the marker. Drift detection simply skips silently when no
+marker is found. To gain drift detection: re-run `install.sh` against the project and the marker
+will be written.
+
+For update detection on pre-marker installs, use the filesystem forensic path documented in
+`docs/prompts/update-installed-framework.md` (the `done/` version covers this in detail).
