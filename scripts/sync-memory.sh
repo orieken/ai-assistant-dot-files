@@ -221,17 +221,23 @@ pull_kis() {
       continue
     fi
 
-    # Stamp sync_source + sync_pulled if not already present
+    # Stamp sync_source + sync_pulled + sync_commit_sha if not already present.
+    # sync_commit_sha records the org repo's HEAD SHA at pull time, enabling auditors
+    # to trace which org-repo state introduced this KI (THREAT_MODEL.md F-04).
+    local org_head_sha
+    org_head_sha=$(git -C "$CACHE_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
     if ! grep -q '^sync_source:' "$org_ki"; then
       local today
       today=$(date +%Y-%m-%d)
-      python3 - "$org_ki" "$local_ki" "$ORG_REPO" "$today" <<'PYEOF'
+      python3 - "$org_ki" "$local_ki" "$ORG_REPO" "$today" "$org_head_sha" <<'PYEOF'
 import sys
-src, dst, repo, today = sys.argv[1:]
+src, dst, repo, today, sha = sys.argv[1:]
 content = open(src).read()
 parts = content.split('---', 2)
 if len(parts) >= 3:
-    parts[1] = parts[1].rstrip('\n') + f'\nsync_source: {repo}\nsync_pulled: {today}\n'
+    parts[1] = parts[1].rstrip('\n') + (
+        f'\nsync_source: {repo}\nsync_pulled: {today}\nsync_commit_sha: {sha}\n'
+    )
     content = '---'.join(parts)
 open(dst, 'w').write(content)
 PYEOF

@@ -46,3 +46,19 @@ not Knowledge Items themselves.
 This is a structural check only. It does not verify the KI's body content is accurate, non-duplicative
 in *meaning* (only in `name`), or worth keeping — those judgments belong to `memory-engineer` on the
 periodic curation pass and to `promote-memory` when the KI is first authored from a retrospective.
+
+## Sync Provenance Fields (optional — set by `sync-memory.sh pull`)
+
+KIs pulled from an org knowledge-hub via ADR-003 sync carry three additional frontmatter fields
+stamped automatically by `sync-memory.sh pull`. They are optional (locally-authored KIs never have
+them), but when present must conform to the shapes below. Declared in `ki-frontmatter.schema.json`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `sync_source` | string | Remote URL of the org knowledge-hub (e.g., `git@github.com/org/knowledge-hub`). Presence signals externally-sourced content. Agents must apply `shared/rules/memory-trust-boundary.md` when this field is set. |
+| `sync_pulled` | ISO date (`YYYY-MM-DD`) | Date `sync-memory.sh pull` applied this KI. |
+| `sync_commit_sha` | string (7–40 hex chars) | Git commit SHA of the org repo at pull time. Enables auditors to trace the exact org-repo state that introduced this KI. |
+
+These fields enable traceability for security audits (THREAT_MODEL.md F-04, F-08) and allow
+`memory-auditor` to distinguish locally-authored KIs from externally-sourced ones when assessing
+trust level.

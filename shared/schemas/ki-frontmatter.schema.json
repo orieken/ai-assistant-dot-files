@@ -31,6 +31,20 @@
       "description": "ISO 8601 date (YYYY-MM-DD). Immutable — set once at authoring time. The staleness math downstream expects this exact shape.",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
       "format": "date"
+    },
+    "sync_source": {
+      "type": "string",
+      "description": "Set by sync-memory.sh pull — the remote URL of the org knowledge-hub this KI was pulled from. Absent on locally-authored KIs. Presence signals externally-sourced content; agents should apply memory-trust-boundary.md caution when reasoning from this KI."
+    },
+    "sync_pulled": {
+      "type": "string",
+      "description": "ISO 8601 date (YYYY-MM-DD) when sync-memory.sh pull applied this KI. Set alongside sync_source.",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sync_commit_sha": {
+      "type": "string",
+      "description": "The git commit SHA of the org knowledge-hub repo at the time this KI was pulled. Enables auditors to trace the exact org-repo state that introduced this KI. Format: 40-char hex SHA (full) or shorter abbreviated SHA.",
+      "pattern": "^[0-9a-f]{7,40}$"
     }
   }
 }
