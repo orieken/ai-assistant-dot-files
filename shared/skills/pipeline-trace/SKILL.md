@@ -37,7 +37,10 @@ standalone: true
       "status": "PASS",
       "iterations": 1,
       "contractRetries": 0,
-      "budgetUtilization": 0.42
+      "budgetUtilization": 0.42,
+      "tokensIn": 45231,
+      "tokensOut": 3892,
+      "estimatedCostUsd": 0.021
     },
     {
       "agent": "code-reviewer",
@@ -49,7 +52,10 @@ standalone: true
       "status": "APPROVED",
       "iterations": 3,
       "changesRequestedCount": 2,
-      "budgetUtilization": null
+      "budgetUtilization": null,
+      "tokensIn": null,
+      "tokensOut": null,
+      "estimatedCostUsd": null
     }
   ]
 }
@@ -76,6 +82,14 @@ Field notes:
   REQUESTED before APPROVED.
 - `durationSeconds` accumulates across retries — it's total wall-clock time spent on that agent's step
   across every attempt, not just the final successful one.
+- `tokensIn`: input token count (prompt + cache reads) consumed by this agent's step, as reported by
+  the runtime. Use `null` when the runtime does not surface per-subagent token counts for this session
+  (Claude Code does not always expose them). **Never fabricate or estimate this value.**
+- `tokensOut`: output token count (generated tokens) for this agent's step. Same null rule as `tokensIn`.
+- `estimatedCostUsd`: derived cost in USD using the model's published input/output pricing at the time
+  the trace was written. Computed only when *both* `tokensIn` and `tokensOut` are non-null; otherwise
+  `null`. Never inferred from a partial count. Used by `pipeline-retrospective` and `agent-scorecard`
+  to surface spend trends when data is available.
 
 ## Process
 1. Read the relevant `pipeline-trace.json` (in-progress in `.claude/feature-workspace/`, or persisted in

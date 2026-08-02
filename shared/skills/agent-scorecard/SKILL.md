@@ -36,7 +36,8 @@ item — see `docs/features/context-engineering-framework/TODO.md`, Epic 15).
 
 ## Context To Load First
 1. `docs/features/*/delivery-summary.md` — determine which features fall in the scoring period
-2. `docs/features/*/pipeline-trace.json` — for code-reviewer's `changesRequestedCount`
+2. `docs/features/*/pipeline-trace.json` — for code-reviewer's `changesRequestedCount` and per-agent
+   `estimatedCostUsd` (present only when the runtime surfaced token counts; `null` otherwise)
 3. `docs/features/*/security-report.md`, `analysis.md`, `architecture-notes.md` — per-agent artifacts
 4. `docs/features/*/retrospective.md` (if present) — for disputed-finding signals
 5. `shared/contracts/analysis-contract.md` — required section list for the analyst completeness score
@@ -75,6 +76,16 @@ item — see `docs/features/context-engineering-framework/TODO.md`, Epic 15).
 - [agent]: [metric] at [X%], below the [floor]% floor. [Brief diagnosis grounded in the actual artifacts —
   e.g. "3 of 5 features this month had analysis.md missing a non-empty Edge Cases and Risks section"]
 — or "None this period"
+
+## Cost Summary (when data available)
+| Agent | Avg Cost (USD) | Total Cost (USD) |
+|---|---|---|
+| analyst | $[N] | $[N] |
+| ... | ... | ... |
+
+> Populated only when `estimatedCostUsd` is non-null in `pipeline-trace.json` for at least one feature
+> this period. Omit this section entirely when all traces have null cost data. Not a scored metric —
+> shown as informational context. For trend analysis across periods, see `pipeline-retrospective`.
 
 ## Methodology & Known Limitations
 - [Restate the security-reviewer proxy caveat if it's scored this period]

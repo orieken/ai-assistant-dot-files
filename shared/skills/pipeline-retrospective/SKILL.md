@@ -27,6 +27,9 @@ Do NOT use for a single delivery's narrative (what went well/poorly on this one 
    "insufficient data" instead of a trend claim if fewer than 3 exist).
 2. For each agent that appears across the collected traces, compute:
    - Average `durationSeconds` and average `iterations`.
+   - If `tokensIn`, `tokensOut`, and `estimatedCostUsd` are non-null in at least one trace, also
+     compute average `estimatedCostUsd` per agent. Omit cost columns entirely when *all* traces have
+     null cost data (never fill with zeros or estimates — see `pipeline-trace` field notes on null).
    - Trend: split the N traces into an older half and a newer half (by `completedAt`); compare each
      metric's average between halves. Report `IMPROVING` / `STABLE` / `DEGRADING` (>15% change = not stable).
    - If `agentVersion` changes partway through the collected traces, check whether the trend boundary lines
@@ -52,10 +55,12 @@ Do NOT use for a single delivery's narrative (what went well/poorly on this one 
 - Date range: [oldest completedAt] to [newest completedAt]
 
 ## Per-Agent Trends
-| Agent | Avg Duration | Avg Iterations | Duration Trend | Iteration Trend | Version Change Aligns? |
-|---|---|---|---|---|---|
-| analyst | [Ns] | [N] | IMPROVING/STABLE/DEGRADING | IMPROVING/STABLE/DEGRADING | Yes (v[x.y.z] -> v[x.y.z]) / No version change in window |
-| ... | ... | ... | ... | ... | ... |
+| Agent | Avg Duration | Avg Iterations | Duration Trend | Iteration Trend | Avg Cost (USD) | Version Change Aligns? |
+|---|---|---|---|---|---|---|
+| analyst | [Ns] | [N] | IMPROVING/STABLE/DEGRADING | IMPROVING/STABLE/DEGRADING | $[N] / n/a | Yes (v[x.y.z] -> v[x.y.z]) / No version change in window |
+| ... | ... | ... | ... | ... | ... | ... |
+
+> **Avg Cost (USD)**: populated only when `estimatedCostUsd` is non-null in at least one trace for that agent. Show `n/a` otherwise — never fill with 0 or an estimate.
 
 ## Biggest Bottleneck
 [agent] — average [Ns] per run, [context on why, e.g. "consistently the longest single step"]
