@@ -462,6 +462,28 @@ else
 fi
 echo ""
 
+# --- Cap drift (shared/configs/ vs. convention files) -----------------------
+echo "--- Linter Config Cap Drift ---"
+if [[ -d "$REPO_DIR/shared/configs" ]]; then
+  cap_drift_output=$("$REPO_DIR/scripts/check-cap-drift.sh" 2>&1 || true)
+  cap_drift_count=$(echo "$cap_drift_output" | grep -cE '^\s+FAIL' || true)
+  cap_warn_count=$(echo "$cap_drift_output" | grep -cE '^\s+WARN' || true)
+  if [[ "$cap_drift_count" -gt 0 ]]; then
+    while IFS= read -r line; do
+      fail "cap-drift: $line"
+    done < <(echo "$cap_drift_output" | grep -E '^\s+FAIL' || true)
+  elif [[ "$cap_warn_count" -gt 0 ]]; then
+    while IFS= read -r line; do
+      warn "cap-drift: $line"
+    done < <(echo "$cap_drift_output" | grep -E '^\s+WARN' || true)
+  else
+    pass "all config caps match their source conventions"
+  fi
+else
+  pass "shared/configs/ absent — cap-drift check skipped"
+fi
+echo ""
+
 # --- Inventory drift ---------------------------------------------------------
 echo "--- Inventory drift ---"
 drift_output=$("$REPO_DIR/scripts/check-inventory-drift.sh" 2>&1 || true)
