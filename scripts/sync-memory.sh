@@ -73,6 +73,21 @@ fi
 
 # Auth: MEMORY_SYNC_TOKEN env var converts SSH URL to HTTPS for enterprises
 # where SSH is disabled.
+#
+# SECURITY (THREAT_MODEL.md F-05): Embedding a token in a git URL exposes it in:
+#   - `ps aux` output during clone/fetch (visible to other users on shared machines)
+#   - git remote config cached at $CACHE_DIR/.git/config (`git remote -v` leaks it)
+#   - shell history if set inline: `MEMORY_SYNC_TOKEN=ghp_xxx bash sync-memory.sh`
+#
+# Safer alternatives (use one if your platform supports it):
+#   1. SSH key auth — leave org_repo as git@github.com:org/repo.git; no token needed.
+#   2. GH_TOKEN env var — the `gh` CLI picks this up natively for GitHub operations.
+#   3. git credential helper — `git config --global credential.helper store` or
+#      `git config --global credential.helper osxkeychain` (macOS); the helper supplies
+#      credentials without embedding them in URLs.
+#
+# If you must use MEMORY_SYNC_TOKEN, never set it inline in a shell command that
+# appears in your history. Instead, export it from a secret manager or CI secrets store.
 if [[ -n "${MEMORY_SYNC_TOKEN:-}" && "$ORG_REPO" =~ ^git@github.com: ]]; then
   ORG_REPO=$(echo "$ORG_REPO" | sed "s|git@github.com:|https://$MEMORY_SYNC_TOKEN@github.com/|")
 fi
