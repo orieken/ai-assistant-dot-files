@@ -1,0 +1,17 @@
+# Framework fitness-function floor — SwiftLint (Swift)
+# Source convention: shared/rules/swift-conventions.md
+# CAP: 6  (cyclomatic complexity — enforces the framework-wide "< 7" rule)
+#
+# Drop this file into a project as .swiftlint.yml at the repo root (or merge into
+# an existing .swiftlint.yml). Only the complexity cap is set here — this is a
+# floor, not a full lint policy. Treat SwiftLint warnings as CI failures.
+
+opt_in_rules:
+  - cyclomatic_complexity
+
+cyclomatic_complexity:
+  # warning: functions with complexity exceeding this value generate a warning.
+  # 6 means warn when complexity > 6 (i.e., >= 7), enforcing the cap at 6.
+  warning: 6
+  # error: set one above warning so all violations are at least a warning.
+  error: 7

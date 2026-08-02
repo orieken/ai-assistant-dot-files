@@ -1,0 +1,14 @@
+# Framework fitness-function floor — detekt (Kotlin)
+# Source convention: shared/rules/kotlin-conventions.md
+# CAP: 6  (cyclomatic complexity — enforces the framework-wide "< 7" rule)
+#
+# Drop this file into a project as detekt.yml at the repo root (or merge into an
+# existing detekt.yml). Only the complexity cap is set here — this is a floor,
+# not a full lint policy. Treat detekt failures as CI build failures.
+
+complexity:
+  ComplexMethod:
+    active: true
+    # threshold: methods with cyclomatic complexity exceeding this are flagged.
+    # 6 means flag complexity > 6 (i.e., >= 7), enforcing the cap at 6.
+    threshold: 6

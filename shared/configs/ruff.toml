@@ -1,0 +1,16 @@
+# Framework fitness-function floor — ruff (Python)
+# Source convention: shared/rules/python-conventions.md
+# CAP: 6  (McCabe cyclomatic complexity — enforces the framework-wide "< 7" rule)
+#
+# Drop this file into a project as ruff.toml (or merge into an existing pyproject.toml
+# under [tool.ruff]). Only the complexity cap is set here — this is a floor, not a
+# full lint policy.
+
+[lint]
+# Enable the McCabe complexity check (C901).
+select = ["C901"]
+
+[lint.mccabe]
+# max-complexity: functions with complexity > this value are flagged.
+# 6 means flag complexity > 6 (i.e., >= 7), enforcing the cap at 6.
+max-complexity = 6

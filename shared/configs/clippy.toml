@@ -1,0 +1,17 @@
+# Framework fitness-function floor — Clippy (Rust)
+# Source convention: shared/rules/rust-conventions.md
+# CAP: 6  (cognitive complexity — enforces the framework-wide "< 7" rule)
+#
+# Drop this file into a project as clippy.toml at the crate root (or .clippy.toml).
+# Clippy reads this file automatically when running `cargo clippy`.
+# Only the cognitive complexity cap is set here — this is a floor, not a full policy.
+#
+# Note: the `cognitive_complexity` lint must also be enabled in code or via
+# `cargo clippy -- -W clippy::cognitive_complexity`. The convention requires:
+#   #![warn(clippy::cognitive_complexity)]
+#   #![forbid(unsafe_code)]
+# at every crate root (not expressible in clippy.toml — add them to src/lib.rs or src/main.rs).
+
+# cognitive-complexity-threshold: functions with cognitive complexity exceeding this
+# value are flagged. 6 means flag complexity > 6 (i.e., >= 7), enforcing the cap at 6.
+cognitive-complexity-threshold = 6

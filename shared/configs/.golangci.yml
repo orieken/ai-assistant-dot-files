@@ -1,0 +1,24 @@
+# Framework fitness-function floor — golangci-lint
+# Source convention: shared/rules/go-conventions.md  (also CLAUDE.md § Go Quick Reference)
+# CAP: 6  (cyclomatic complexity — enforces the framework-wide "< 7" rule)
+#
+# Drop this file into a project as .golangci.yml (or merge into an existing one).
+# Only the complexity caps are set here — this is a floor, not a full lint policy.
+
+linters:
+  enable:
+    - gocyclo
+    - revive
+
+linters-settings:
+  gocyclo:
+    # min-complexity: the minimum complexity golangci-lint reports.
+    # 7 means "flag functions with cyclomatic complexity >= 7", enforcing a cap of 6.
+    min-complexity: 7
+
+  revive:
+    rules:
+      - name: cyclomatic
+        # argument is the maximum allowed complexity (functions exceeding this are flagged).
+        # 6 means flag complexity > 6 (i.e., >= 7), enforcing the same cap.
+        arguments: [6]
