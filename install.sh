@@ -14,6 +14,7 @@ SYNC_MEMORY=false
 SYNC_SUBCOMMAND="pull"
 SYNC_ARGS=()
 FRAMEWORK_LEVEL="base"   # "base" = current framework only; "full" = AOS layers included
+WITH_CONFIGS=false       # --with-configs: copy shared/configs/ into the target project
 
 usage() {
   cat <<'EOF'
@@ -47,6 +48,10 @@ Options:
                          elevated permissions there), and also the way to make a --project install
                          independent of this repo's checkout (a symlinked project install breaks if
                          this repo is later moved or deleted)
+  --with-configs        Copy linter fitness-function configs from shared/configs/ into the target
+                         project root. Files are always copied (never symlinked) so teams can edit
+                         them. Existing files are left untouched (idempotent). Only meaningful with
+                         --project mode — silently skipped in --global mode.
   --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline)
   --dry-run             Show what would be installed without doing it
   --tour                Run the onboarding skill after install
@@ -57,6 +62,7 @@ Examples:
   ./install.sh --global
   ./install.sh --project /path/to/my-app
   ./install.sh --project --full                    # install with AOS layers
+  ./install.sh --project --with-configs            # also copy linter configs
   ./install.sh --project --platform claude-code
   ./install.sh --global --dry-run
   ./install.sh --sync-memory
@@ -90,10 +96,11 @@ while [[ $# -gt 0 ]]; do
     --platform)  PLATFORM_FILTER="$2"; shift 2 ;;
     --dry-run)   DRY_RUN=true; shift ;;
     --tour)      SHOW_TOUR=true; shift ;;
-    --base)      FRAMEWORK_LEVEL="base"; shift ;;
-    --full)      FRAMEWORK_LEVEL="full"; shift ;;
-    -h|--help)   usage ;;
-    *)           echo "Unknown option: $1"; usage ;;
+    --base)           FRAMEWORK_LEVEL="base"; shift ;;
+    --full)           FRAMEWORK_LEVEL="full"; shift ;;
+    --with-configs)   WITH_CONFIGS=true; shift ;;
+    -h|--help)        usage ;;
+    *)                echo "Unknown option: $1"; usage ;;
   esac
 done
 
@@ -413,6 +420,41 @@ install_aos_layers() {
   fi
 }
 
+install_configs() {
+  if [[ "$MODE" != "project" ]]; then
+    skip "--with-configs is only meaningful in --project mode; skipping"
+    return
+  fi
+
+  log ""
+  log "--- Linter Configs (--with-configs) ---"
+
+  local configs_src="$SHARED_DIR/configs"
+  local configs_dest="$TARGET_DIR"
+
+  if [[ ! -d "$configs_src" ]]; then
+    log "  [warn] $configs_src not found — skipping config install"
+    return
+  fi
+
+  for src_file in "$configs_src"/*; do
+    [[ -f "$src_file" ]] || continue
+    local filename
+    filename="$(basename "$src_file")"
+    # Skip README.md — it's framework documentation, not a project config.
+    [[ "$filename" == "README.md" ]] && continue
+    local dest_file="$configs_dest/$filename"
+    if [[ -e "$dest_file" ]]; then
+      skip "$filename (already exists — not overwritten)"
+    elif $DRY_RUN; then
+      dry "would copy $src_file -> $dest_file"
+    else
+      cp "$src_file" "$dest_file"
+      ok "copied $filename -> $dest_file"
+    fi
+  done
+}
+
 write_install_marker() {
   local target_claude_dir
   if [[ "$MODE" == "global" ]]; then
@@ -530,6 +572,10 @@ fi
 
 if [[ "$FRAMEWORK_LEVEL" == "full" ]]; then
   install_aos_layers
+fi
+
+if $WITH_CONFIGS; then
+  install_configs
 fi
 
 install_generated_configs

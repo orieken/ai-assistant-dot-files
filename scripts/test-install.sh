@@ -155,6 +155,29 @@ mkdir -p "$target"
 assert_file "$target/.openai.md" "openai-codex .openai.md"
 echo ""
 
+echo "--- --with-configs ---"
+target="$SCRATCH_ROOT/with-configs"
+mkdir -p "$target"
+"$REPO_DIR/install.sh" --project "$target" --platform claude-code --with-configs >/dev/null 2>&1
+# Verify at least one config was copied (ruff.toml is a safe cross-platform canary).
+assert_file "$target/ruff.toml" "with-configs ruff.toml copied"
+# Verify README.md was not copied (it is framework docs, not a project config).
+if [[ -f "$target/README.md" ]]; then
+  fail "with-configs README.md should NOT be copied to project root"
+else
+  pass "with-configs README.md not copied (correct)"
+fi
+# Verify idempotency: running again with an existing ruff.toml should not overwrite it.
+echo "idempotency-test" > "$target/ruff.toml"
+"$REPO_DIR/install.sh" --project "$target" --platform claude-code --with-configs >/dev/null 2>&1
+content=$(cat "$target/ruff.toml")
+if [[ "$content" == "idempotency-test" ]]; then
+  pass "with-configs idempotent (existing ruff.toml not overwritten)"
+else
+  fail "with-configs not idempotent (existing ruff.toml was overwritten)"
+fi
+echo ""
+
 echo "==========================================="
 echo "Results: $PASS_COUNT passed, $FAIL_COUNT failed"
 if [[ $FAIL_COUNT -gt 0 ]]; then
