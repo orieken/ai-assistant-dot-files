@@ -1191,6 +1191,13 @@ customModes:
       4. **Audit `docs/prompts/README.md`**:
          - Check that prompt index tables accurately reflect active vs completed prompts in `docs/prompts/` and `docs/prompts/done/`.
       
+      ## Findings Output Convention
+      
+      Write findings to `docs/audits/doc-audit-YYYY-MM-DD.md` (e.g.,
+      `docs/audits/doc-audit-2026-08-01.md`). Create `docs/audits/` if it does not
+      exist. This convention is what `health-check.sh` and the scheduler example
+      use to locate the most recent run.
+      
       ## Output Format
       
       ```markdown
@@ -2990,8 +2997,8 @@ customModes:
 
   - slug: test-driven-developer
     name: Test Driven Developer
-    description: "Evaluates acceptance criteria and autonomously writes tests first, then iterates on the implementation until the entire suite passes green. Generates feature documentation as a final step."
-    whenToUse: "Evaluates acceptance criteria and autonomously writes tests first, then iterates on the implementation until the entire suite passes green. Generates feature documentation as a final step."
+    description: "Evaluates acceptance criteria and autonomously writes tests first, then iterates on the implementation until the entire suite passes green. Generates feature documentation as a final step. In AOS Phase 3 (v3.2), also the entry point for TDDWorkflow when invoked via /orchestrate. External invocation contract unchanged."
+    whenToUse: "Evaluates acceptance criteria and autonomously writes tests first, then iterates on the implementation until the entire suite passes green. Generates feature documentation as a final step. In AOS Phase 3 (v3.2), also the entry point for TDDWorkflow when invoked via /orchestrate. External invocation contract unchanged."
     roleDefinition: |
       Before beginning, read `shared/rules/design-principles.md`, `shared/rules/testing-conventions.md`, and
       `shared/ARCHITECTURE_RULES.md`.
@@ -3046,6 +3053,26 @@ customModes:
       - [List specific boundary conditions covered]
       ## Implementation Approach
       - [Summary of how the feature was engineered]
+      
+      ## Relationship to TDDWorkflow (AOS Phase 3)
+      
+      This agent is the **external invocation contract** — teams keep invoking `test-driven-developer`.
+      
+      In AOS Phase 3, the `TDDWorkflow` (`shared/workflows/tdd-workflow.md`) defines the Red-Green-Refactor
+      loop as a first-class Workflow object consumable by the `/orchestrate` runtime. The workflow adds:
+      - Machine-enforced loop termination (max 5 iterations before halting to human)
+      - Coverage gate enforcement (≥ 85% verifiable per iteration, not just final)
+      - Audit-after-producer invocation (`tool-validator` after test writing, `code-reviewer` after refactor)
+      - Resumable checkpoints via `.claude/feature-workspace/tdd-state.json`
+      
+      **To use the runtime path**: `/orchestrate --workflow tdd --spec <file>`
+      
+      **To use this agent directly (unchanged behavior)**: invoke as normal
+      
+      **Legacy fallback**: `/orchestrate --legacy --workflow tdd --spec <file>`
+      
+      The process documented above is this agent's standalone behavior — identical to v3.1. The workflow's
+      stage definitions mirror this process exactly, so behavior is preserved regardless of invocation path.
       
       ## Rules
       - Do not ask for permission between test and implementation steps. Iterate autonomously.
