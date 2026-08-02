@@ -5,6 +5,8 @@ triggers:
   keywords: ["complexity", "technical debt", "refactoring"]
   intentPatterns: ["Check complexity of *", "Is * too complex?", "Complexity report on *", "What's the most complex file in *?"]
 standalone: true
+status: deprecated
+superseded_by: analyze-complexity
 ---
 
 ## When To Use
