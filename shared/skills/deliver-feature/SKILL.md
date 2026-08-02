@@ -98,7 +98,7 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
 39. **Update feature index** — add the new feature entry to `docs/features/README.md`.
 40. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered.
 41. **PAUSE / Policy Evaluation**: Show `docs/features/<feature-name>/` listing. If `strict-human` or policy `autoProceedPersistence: false`, wait for human confirmation.
-42. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
+42. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`. **Gate Decision Telemetry** (opt-in only, see below): after the human responds, record a `gate_decision` event to `.claude/telemetry/events.jsonl` — `gate_id: 1`, `gate_name: "friday_ship"`, `outcome` is `approved` / `rejected` (no artifact checksum diff applies here since Gate #1 doesn't gate a single file; `artifact_path: null`).
 43. **[Optional] Open a PR via `ship-feature`** — after Friday is confirmed, ask: "Would you like to open a pull request?" If the user says yes, invoke `/ship-feature <feature-name>`. If `--ship` was passed at invocation, proceed directly without the prompt — the flag counts as prior consent (this is consistent with "opt-in only": the user must explicitly pass `--ship` or answer yes). Never auto-invoke when neither condition is met. Existing `deliver-feature` behavior is unchanged when the user does not request it. See `shared/skills/ship-feature/SKILL.md` for branch, commit, and PR gate details.
 
 ## Human Checkpoints & Policy Evaluation
@@ -111,6 +111,37 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
 - After code-review CHANGES REQUESTED loop (step 21): confirm all findings resolved.
 - After security Critical finding (step 25): explicit "fix confirmed" before QA starts (halt escalation).
 - Before shipping to Friday (step 40): explicit "ship" confirmation.
+
+### Gate Decision Telemetry (opt-in, non-negotiable guarantee)
+
+**Emit `gate_decision` events ONLY when telemetry is enabled** (i.e., `.claude/telemetry/events.jsonl`
+already exists and the user has opted in per `shared/telemetry/README.md`). If telemetry is not enabled,
+skip silently — do not create the file, do not log, do not warn. Pipeline correctness never depends on
+telemetry emission.
+
+**When to emit**: immediately after the human responds to any Non-Negotiable Human Gate halt (gates 1, 3,
+4, 5, 8). Also emit for any policy-eligible gate pause that resolves via explicit human confirmation rather
+than AUTO_PROCEED.
+
+**Edit detection**: before presenting the gate halt, note the artifact's checksum from `pipeline-state.json`
+(the `completedAgents[].checksum` entry for the most recent agent that produced it). After the human
+confirms, recompute the checksum using the same `sha256` of the artifact's current file content. If the
+checksums differ, the human edited the artifact — set `outcome: "edited_then_approved"`. If unchanged,
+`outcome: "approved"`. If the human rejected (said anything other than the gate's approval word), `outcome:
+"rejected"`.
+
+**Minimum event shape** at each gate halt in this skill:
+
+| Gate | `gate_id` | `gate_name` | `artifact_path` |
+|---|---|---|---|
+| Step 42 Friday ship (Gate #1) | 1 | `friday_ship` | null (no single artifact) |
+| Analyst PAUSE (step 11) | — | — | `.claude/feature-workspace/analysis.md` |
+| Architect RFC PAUSE (step 13) | — | — | `.claude/feature-workspace/architecture-notes.md` |
+| Security Critical halt (step 25) | — | — | `.claude/feature-workspace/security-report.md` |
+
+Policy-evaluation pauses (AUTO_PROCEED / PAUSE_HUMAN) emit `policy.evaluated` events instead; do not
+double-emit `gate_decision` for those — `policy.evaluated` already captures the decision signal for
+non-Non-Negotiable gates.
 
 ## Checkpointing & Pipeline State
 
