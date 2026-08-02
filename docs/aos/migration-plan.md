@@ -178,15 +178,17 @@ Verified 2026-07-25. `scripts/health-check.sh` reports `214 passed, 0 warned, 0 
 
 ## Phase 3 — Runtime (v3.2)
 
+**Status**: complete as of 2026-08-01. `git tag v3.2.0` published.
+
 **Goal**: first-class orchestration + RAG + Learning/Forgetting engines. This is where AOS starts to feel like a real OS.
 
-- [ ] **Op 3.1**: Design `shared/orchestration/` runtime interface:
-  - [ ] `README.md` — what the runtime does, opt-in usage
-  - [ ] `interface.md` — how orchestration wraps existing pipelines
-  - [ ] `pipeline-schema.md` — declarative pipeline definition format
-- [ ] **Op 3.2**: Implement orchestration wrapper for `deliver-feature`:
-  - [ ] Preserve exact `deliver-feature` skill behavior for teams that don't opt in
-  - [ ] New `orchestrate` skill invokes the runtime; runtime can replay pipeline events, restart from checkpoints, run branches in parallel
+- [x] **Op 3.1**: Design `shared/orchestration/` runtime interface:
+  - [x] `README.md` — what the runtime does, opt-in usage
+  - [x] `interface.md` — how orchestration wraps existing pipelines
+  - [x] `pipeline-schema.md` — declarative pipeline definition format
+- [x] **Op 3.2**: Implement orchestration wrapper for `deliver-feature`:
+  - [x] Preserve exact `deliver-feature` skill behavior for teams that don't opt in
+  - [x] New `orchestrate` skill invokes the runtime; runtime can replay pipeline events, restart from checkpoints, run branches in parallel
 - [x] **Op 3.3**: Design `shared/rag/` — corpus-aware retrieval adapter interface (see `docs/adrs/ADR-002-corpus-aware-retrieval-strategy.md`):
   - [x] `README.md` — three-corpus model: framework KIs, installed-project docs/, installed-project source
   - [x] `retriever.interface.md` — pluggable adapter contract (`Retrieve(query, corpus) → results`); implementations swap without touching consumers
@@ -238,6 +240,8 @@ These three ops apply the Tool/Persona/Workflow trinity (established in saturday
 ---
 
 ## Phase 4 — Policy layer (v3.3)
+
+**Status**: complete as of 2026-08-01. `git tag v3.3.0` published.
 
 **Goal**: telemetry + evaluation are now producing data; introduce optional policy files for auto-approval.
 
