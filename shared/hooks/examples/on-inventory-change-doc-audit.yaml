@@ -2,11 +2,10 @@ version: "1.0"
 hooks:
   - id: "documentation-auditor-inventory-change"
     event: "on-inventory-change"
-    enabled: true
+    enabled: false   # Copy to .claude/hooks/ in your project and set enabled: true to activate.
     action:
       type: "agent"
       target: "documentation-auditor"
       args:
         passContext: true
         # Findings land in docs/audits/doc-audit-YYYY-MM-DD.md.
-        # Copy this file to .claude/hooks/ in your project to opt in.

@@ -2,7 +2,7 @@ version: "1.0"
 hooks:
   - id: "knowledge-auditor-ki-created"
     event: "on-ki-created"
-    enabled: true
+    enabled: false   # Copy to .claude/hooks/ in your project and set enabled: true to activate.
     action:
       type: "agent"
       target: "knowledge-auditor"
