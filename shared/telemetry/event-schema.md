@@ -1,5 +1,11 @@
 # Telemetry Event Schema (AOS v3.0, Phase 1)
 
+**Schema version: v1.1.0**
+- v1.0.0 — initial Phase 1 schema (agent.invoked, agent.completed, artifact.written, validation.passed, validation.failed)
+- v1.1.0 — added `gate_decision` event type; extended `outcome` enum with gate-specific values; noted undocumented `policy.evaluated` and `contract.retry` types emitted by `deliver-feature` (schema entry pending)
+
+Downstream aggregators must read this version line to detect schema evolution.
+
 Human-readable schema for events written to `.claude/telemetry/events.jsonl`.
 Format is **JSONL** — one JSON object per line, newline-delimited, append-only.
 Every event is a self-contained, order-independent record.
@@ -29,7 +35,7 @@ serializing to a single line before writing.
 | Field | Type | Description |
 |---|---|---|
 | `artifact_path` | string \| null | Path to the artifact this event refers to, relative to the project root (`.claude/feature-workspace/analysis.md`). Omit or `null` if the event isn't tied to a specific artifact. |
-| `outcome` | string \| null | One of `success`, `failure`, `changes_requested`, `skipped`. Omit or `null` for events that don't have a binary/enum outcome (e.g., `agent.invoked`). |
+| `outcome` | string \| null | One of `success`, `failure`, `changes_requested`, `skipped` (general events); or `approved`, `rejected`, `edited_then_approved` (gate_decision events only — see below). Omit or `null` for events that don't have a binary/enum outcome (e.g., `agent.invoked`). |
 | `metadata` | object | Free-form JSON object for producer-specific context. Must NOT contain secrets, PII, credentials, or unbounded data (log lines, full artifact bodies). Suggested keys below. |
 
 ### Suggested `metadata` keys (conventions, not required)
@@ -102,6 +108,46 @@ check. Include the specific rule names that failed in `metadata.violations`.
 ```json
 {"timestamp":"2026-07-22T14:34:04.882Z","event_type":"validation.failed","agent_or_skill_name":"validate-artifact","artifact_path":".claude/feature-workspace/analysis.md","outcome":"failure","metadata":{"pipeline_id":"df-abc123","contract":"analysis-contract.md","violations":["missing-required-section:acceptance-criteria","missing-required-section:definition-of-done"]}}
 ```
+
+### `gate_decision`
+
+Emitted **after** a human responds to a gate halt (`shared/rules/approval-gates.md`, gates 1–8).
+The event captures whether the artifact was approved as-is, rejected outright, or edited by the
+human before approving — the last being the richest corrective signal the system receives.
+
+Emitted only when telemetry is enabled (opt-in guarantee is non-negotiable — see
+`shared/telemetry/README.md`). Never emitted silently or as a side-effect of default operation.
+
+```json
+{"timestamp":"2026-07-22T14:52:00.182Z","event_type":"gate_decision","agent_or_skill_name":"deliver-feature","artifact_path":".claude/feature-workspace/analysis.md","outcome":"edited_then_approved","metadata":{"pipeline_id":"df-abc123","feature":"user-registration","gate_id":1,"gate_name":"friday_ship","reason":null}}
+```
+
+**Outcome values (gate_decision only)**
+
+| Outcome | Meaning |
+|---|---|
+| `approved` | Human confirmed with the gate's approval word; artifact checksum unchanged since the halt was presented. |
+| `rejected` | Human declined or said "no"; pipeline halted or rolled back. |
+| `edited_then_approved` | Human edited the artifact (checksum changed between gate-presented and gate-approved) before confirming. This is the corrective-signal case `extract-lessons` and `retrospective` mine. |
+
+**Edit detection heuristic**: compare the artifact's current checksum against the checksum recorded
+for that step in `pipeline-state.json` at the moment the gate halt was presented. If they differ,
+the artifact was edited — use `edited_then_approved` as the outcome. Checksum format matches
+`pipeline-state.json`'s existing `sha256:<hash>` entries.
+
+**Required `metadata` keys** (in addition to the standard suggested keys):
+
+| Key | Type | Description |
+|---|---|---|
+| `gate_id` | integer (1–8) | The gate number from `approval-gates.md`. |
+| `gate_name` | string | Short slug for the gate: `friday_ship`, `git_commit`, `db_expand_migrate`, `db_contract`, `external_api`, `out_of_boundary_write`, `fitness_function`, `deploy`. |
+| `reason` | string \| null | Optional free-text human explanation, verbatim from whatever the human typed after approval/rejection, if any. Short only — never a full artifact body. `null` when no reason given. |
+
+**Optional `metadata` keys** (same suggested keys as other events):
+`pipeline_id`, `feature`, `iteration` (for gate halts that can repeat, e.g. Gate #2 on re-staged commits).
+
+- `artifact_path`: the artifact that was gated (e.g. the analysis.md presented at the analyst checkpoint, or null for Gate #1 Friday ship which doesn't gate a single artifact).
+- `agent_or_skill_name`: the skill that owned the gate halt (`deliver-feature`, `ship-feature`, `db-migration`, etc.).
 
 ## Adding a new event type
 
