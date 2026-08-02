@@ -1,8 +1,8 @@
 ---
 name: ship-feature
-description: Automates branch creation, Conventional Commit assembly, PR compilation, and optional release tagging — with human approval gates at every irreversible step. Triggers on "ship", "create PR", "open pull request", "tag release", or when the user says "I'm done, ship this".
+description: Automates branch creation, Conventional Commit assembly, PR compilation, and optional release tagging — with human approval gates at every irreversible step.
 triggers:
-  keywords: ["ship", "create pr", "open pr", "pull request", "release tag", "ship feature", "ship this"]
+  keywords: ["create pr", "open pr", "pull request", "release tag", "ship feature", "ship this"]
   intentPatterns: ["Ship * to a PR", "Create a pull request for *", "Open a PR for *", "Tag a release for *", "I'm done with *, ship it", "/ship-feature *"]
 standalone: true   # must work without MCP/external systems
 ---
@@ -64,6 +64,9 @@ Do NOT use when:
    ```
    Wait for explicit "commit" or "approve commit" before running any `git add` or `git commit`.
 10. On approval: stage the listed paths, create the commit, show the resulting `git log --oneline -1`.
+10a. Check whether `<branch>` exists on origin: `git ls-remote --exit-code origin <branch>`. If it
+    does not, run `git push -u origin <branch>` and report the push before the Gate #5 halt.
+    Never push to `<default-branch>` — only the feature branch.
 
 ### Phase 3 — PR (Gate #5)
 11. Compile the PR body. Priority order for source material:
@@ -136,9 +139,8 @@ Standalone fallback: <"used git-log body — no feature artifacts found" | "used
 - **Never run `git add -A` or `git add .`** — stage only explicit paths confirmed by the user.
 - **Never hardcode remote names, repo slugs, or branch names** — derive all of them from `git remote`
   and `gh repo view` at runtime.
-- **Never push to the remote** — `gh pr create` opens the PR from the already-pushed branch; if the
-  branch is not yet on origin, run `git push -u origin <branch>` and report it before the gate halt,
-  but do not push to default-branch remotes.
+- **Never push directly to the default-branch remote.** Pushing the feature branch to origin is
+  required before `gh pr create` (handled in step 10a) — that is the only permitted push.
 - **Every gate halt must name the gate number and quote the exact approval word it is waiting for.**
 - **`git tag` is local and reversible; `gh release create` is an external mutation (Gate #5).** They
   are always presented together in a single Gate #5 halt — approving one implicitly approves the other

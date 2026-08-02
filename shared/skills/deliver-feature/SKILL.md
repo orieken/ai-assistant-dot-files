@@ -12,6 +12,12 @@ When the user asks to implement a feature, build a specific feature markdown fil
 
 Do NOT use when the user only wants a single agent's output (e.g., just an analysis or just a code review). Use the specific agent or skill instead.
 
+## Invocation Flags
+
+| Flag | Behaviour |
+|---|---|
+| `--ship` | After the Friday gate (step 42) is confirmed, automatically proceed to open a PR via `/ship-feature` without an interactive prompt. Counts as prior consent — equivalent to the user answering "yes" at step 43. |
+
 ## Relationship to FeatureDeliveryWorkflow (AOS Phase 3)
 
 This skill is the **external invocation contract** — teams keep typing `/deliver-feature <spec>`.
@@ -93,7 +99,7 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
 40. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered.
 41. **PAUSE / Policy Evaluation**: Show `docs/features/<feature-name>/` listing. If `strict-human` or policy `autoProceedPersistence: false`, wait for human confirmation.
 42. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
-43. **[Optional] Open a PR via `ship-feature`** — after Friday is confirmed, ask: "Would you like to open a pull request?" If the user says yes (or if `--ship` was passed at invocation), invoke `/ship-feature <feature-name>`. This step is **opt-in only** — never auto-invoke. Existing `deliver-feature` behavior is unchanged when the user does not request it. See `shared/skills/ship-feature/SKILL.md` for branch, commit, and PR gate details.
+43. **[Optional] Open a PR via `ship-feature`** — after Friday is confirmed, ask: "Would you like to open a pull request?" If the user says yes, invoke `/ship-feature <feature-name>`. If `--ship` was passed at invocation, proceed directly without the prompt — the flag counts as prior consent (this is consistent with "opt-in only": the user must explicitly pass `--ship` or answer yes). Never auto-invoke when neither condition is met. Existing `deliver-feature` behavior is unchanged when the user does not request it. See `shared/skills/ship-feature/SKILL.md` for branch, commit, and PR gate details.
 
 ## Human Checkpoints & Policy Evaluation
 
