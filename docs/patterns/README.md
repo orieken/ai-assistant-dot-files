@@ -65,6 +65,12 @@ structure, a concrete example, and the trade-offs each pattern brings, not just 
   valuable as executable spec and regression safety, but the design lever is elsewhere (complexity
   thresholds, SOLID, `code-reviewer`). References Saturday and Sunday patterns for the top two levels
   rather than restating them.
+- [agent-skill-pair-convention.md](agent-skill-pair-convention.md) — when the same `name` appears in
+  both `shared/agents/` and `shared/skills/`: two intentional sub-patterns (**Delegation Wrapper**
+  where the skill is a thin routing shell that invokes the agent, and **Parallel Implementation**
+  where agent and skill independently implement the same workflow for pipeline vs. ad-hoc contexts),
+  plus rules for detecting and resolving accidental pairs. Confirmed pairs: `spec-writer` and
+  `context-engineer`.
 - [framework-meta-patterns.md](framework-meta-patterns.md) — **patterns novel to (or specific to) this
   framework itself**, for anyone building a similar multi-agent orchestration system rather than for
   teams *using* this framework. **Pipeline / Orchestration Pattern** (`deliver-feature`'s 14-agent
