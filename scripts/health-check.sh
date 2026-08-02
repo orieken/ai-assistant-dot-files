@@ -484,6 +484,29 @@ else
 fi
 echo ""
 
+# --- Hook script-type check (security: THREAT_MODEL.md F-03/F-07) -----------
+echo "--- Hook Security (script-type hooks) ---"
+hooks_dir="$REPO_DIR/.claude/hooks"
+if [[ -d "$hooks_dir" ]]; then
+  script_hooks=$(grep -rl 'type:.*"script"\|type: script' "$hooks_dir" 2>/dev/null | sort || true)
+  if [[ -n "$script_hooks" ]]; then
+    while IFS= read -r hook_file; do
+      # Only warn if the hook is enabled (enabled: true or no enabled field, which defaults to true)
+      if grep -qE '^\s*enabled:\s*true' "$hook_file" 2>/dev/null || \
+         ! grep -qE '^\s*enabled:' "$hook_file" 2>/dev/null; then
+        warn "hook script-type enabled: $(basename "$hook_file") — review per shared/hooks/README.md security constraints"
+      else
+        pass "hook script-type disabled: $(basename "$hook_file") (enabled: false — safe)"
+      fi
+    done <<< "$script_hooks"
+  else
+    pass "no script-type hooks in .claude/hooks/"
+  fi
+else
+  pass ".claude/hooks/ absent — hook security check skipped"
+fi
+echo ""
+
 # --- Inventory drift ---------------------------------------------------------
 echo "--- Inventory drift ---"
 drift_output=$("$REPO_DIR/scripts/check-inventory-drift.sh" 2>&1 || true)
