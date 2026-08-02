@@ -18,6 +18,9 @@ Do NOT use for root cause analysis of a specific bug — use `/five-whys` instea
 2. `docs/features/<feature-name>/delivery-summary.md` — pipeline run status
 3. `CLAUDE.md` — project constraints for benchmarking
 4. The most recent `docs/agent-metrics/scorecard-*.md` (if one exists) — for the Agent Scorecard Cross-Reference section
+5. `.claude/telemetry/events.jsonl` (if it exists — opt-in, absence is not an error) — filter to
+   `gate_decision` events where `metadata.feature` matches this feature's slug. These are the human
+   correction signals for this delivery's gate halts.
 
 ## Process
 
@@ -50,14 +53,29 @@ Do NOT use for root cause analysis of a specific bug — use `/five-whys` instea
    - **What went poorly** — things that required rework, were missed, or caused delays
    - **What to improve** — actionable process changes for next time
 
-5. **Cross-reference the latest agent scorecard** (if `docs/agent-metrics/scorecard-*.md` exists): for each
+5. **Gate Corrections (opt-in)**: If `.claude/telemetry/events.jsonl` exists, filter to
+   `gate_decision` events for this feature. For each event with outcome `rejected` or
+   `edited_then_approved`:
+   - Note the gate (`gate_id`), the owning agent (`agent_or_skill_name`), and the artifact
+     (`artifact_path`).
+   - If a `reason` is present, include it verbatim (short quotes only; never reproduce a full
+     artifact body that may appear in reason).
+   - Summarize: "Gate #N was edited before approval — [what changed at a high level]" or
+     "Gate #N was rejected — [stated reason or 'no reason given']."
+   - Omit this step (and the output section) entirely when events.jsonl does not exist.
+
+6. **Cross-reference the latest agent scorecard** (if `docs/agent-metrics/scorecard-*.md` exists): for each
    agent that ran in this delivery, check whether it was flagged `UNDERPERFORMING` in the most recent
    scorecard. If so, and this delivery shows the same symptom (e.g. scorecard flags code-reviewer's
    first-pass acceptance rate as low, and this delivery also needed multiple CHANGES REQUESTED loops), call
    it out explicitly — that's corroborating evidence, not a coincidence. If no scorecard exists yet, note
    that in the output rather than skipping the section silently.
 
-6. **Produce the retrospective** at `docs/features/<feature-name>/retrospective.md`.
+7. **Produce the retrospective** at `docs/features/<feature-name>/retrospective.md`.
+
+   Include a "Gate Corrections" section only when at least one `gate_decision` event was found for
+   this feature (step 5 above). Omit the section entirely when telemetry is not enabled or no events
+   match.
 
 ## Output Format
 
@@ -101,6 +119,16 @@ Delivery status: Complete | Complete with notes | Blocked
 
 ## Patterns Identified
 [Recurring themes across this and prior deliveries, if other retrospectives exist in docs/features/]
+
+## Gate Corrections
+[Include this section ONLY when gate_decision events exist in .claude/telemetry/events.jsonl for this
+feature. Omit entirely when telemetry is not enabled or no matching events exist.]
+
+| Gate | Agent | Outcome | Reason |
+|---|---|---|---|
+| Gate #[N] ([name]) | [agent] | rejected / edited_then_approved | [stated reason or "none given"] |
+
+[If every gate was approved without edits: "All gate halts approved without edits."]
 
 ## Agent Scorecard Cross-Reference
 [For each agent in this delivery flagged UNDERPERFORMING in the latest docs/agent-metrics/scorecard-*.md:

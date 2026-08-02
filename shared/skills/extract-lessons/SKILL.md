@@ -23,6 +23,10 @@ in terms of things that recur *across* deliveries.
 4. `docs/features/*/context-manifest.md` — for the KI usage tally
 5. `shared/knowledge/*.md` and `.claude/knowledge/*.md` — the current KI corpus
 6. `.claude/rules/approval-gates.md` — this skill's promotion step is gated by it, not exempt from it
+7. `.claude/telemetry/events.jsonl` (if it exists — telemetry is opt-in; its absence is not an error) —
+   scan for `gate_decision` events with outcome `rejected` or `edited_then_approved`. These are
+   first-class corrective signals: a human overriding or editing an artifact at a gate is the
+   strongest real-world evidence that the producing agent needs improvement.
 
 ## Process
 
@@ -61,8 +65,23 @@ Tally, across all `context-manifest.md` files, how many times each KI in `shared
   tags don't match how tasks actually get described).
 - KIs referenced frequently — evidence the KI system is paying for itself.
 
-### 5. Write the record
-Write `docs/lessons-learned/lessons-[YYYY-MM-DD].md` with every finding from steps 1-4, **regardless of
+### 5. Gate decision patterns -> candidate agent improvement
+If `.claude/telemetry/events.jsonl` exists, scan it for `gate_decision` events. Filter to outcomes
+`rejected` or `edited_then_approved`. Group by `gate_id` + `agent_or_skill_name`. For any combination
+with 3+ occurrences across distinct features (identified via `metadata.feature`):
+- Identify the owning agent (the one whose artifact was gated on the specified step).
+- Draft a hypothesis for what consistent mistake caused the human to reject or edit. Check the `reason`
+  metadata field (when non-null) across the matching events for recurring language. Compare
+  `artifact_path` entries against the actual artifact files when available.
+- If a hypothesis is credible, draft it as a candidate agent-prompt improvement (same gating as step 2:
+  present, require explicit confirmation, don't auto-apply).
+- Record every gate-decision pattern in the lessons-learned output regardless of promotion decision.
+
+Never read or process this step when `.claude/telemetry/events.jsonl` does not exist — the opt-in
+guarantee is absolute (see `shared/telemetry/README.md`).
+
+### 6. Write the record
+Write `docs/lessons-learned/lessons-[YYYY-MM-DD].md` with every finding from steps 1-5, **regardless of
 whether the user approves any promotion** — the lessons file is the permanent record that a pattern was
 noticed; promotion to a rule/prompt/KI is a separate, gated action tracked in the same file's status column.
 
@@ -93,6 +112,17 @@ Write `docs/lessons-learned/lessons-[YYYY-MM-DD].md`:
 | KI | Times Referenced | Last Referenced | Note |
 |---|---|---|---|
 | [ki name] | [N] | [feature name / "never"] | [flag if 0] |
+
+## Gate Corrections (opt-in — omit when events.jsonl absent)
+Raw events (rejected or edited_then_approved outcomes, any count):
+| Gate | Agent | Feature | Outcome | Reason |
+|---|---|---|---|---|
+| Gate #[N] ([name]) | [agent] | [feature] | rejected / edited_then_approved | [reason or "none given"] |
+
+Recurring patterns (3+ events for same gate + agent):
+| Gate + Agent | Count | Features | Hypothesis | Proposed Action | Status |
+|---|---|---|---|---|---|
+| Gate #[N] / [agent] | [N] | [feature list] | [draft hypothesis] | [prompt edit / rule change / none] | Proposed / Approved / Declined |
 
 ## Declined / Deferred
 [Anything the user explicitly declined to promote, and why — so it isn't silently re-proposed identically next run]

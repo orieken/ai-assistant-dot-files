@@ -63,6 +63,22 @@ and Phase 3 (paired with the Learning/Forgetting engines).
 - Hook definitions — those land in `shared/hooks/` in Phase 2.
 - Policy files — those land in `shared/policies/` (or equivalent) in Phase 4.
 
+## Quality Signals (Phase 3 candidates)
+
+When the hook layer lands (Phase 3), evaluations will gain access to telemetry signals beyond timing
+and iteration count. The signal introduced in Epic 62 is **gate-rejection rate**:
+
+- **Per-agent gate-rejection rate**: across all `gate_decision` events (see `shared/telemetry/event-schema.md`)
+  tied to a given `agent_or_skill_name`, what fraction had outcome `rejected` or `edited_then_approved`
+  vs. `approved`? A consistently high edit rate for a specific agent is evidence that the agent's
+  output often needs human correction before a gate passes — a quality signal `agent-scorecard` should
+  surface alongside its four existing scored metrics once enough baseline data exists.
+
+In v3.0 (Phase 1), `agent-scorecard` surfaces raw gate-correction counts from `events.jsonl` when the
+file exists (informational only — no scored floor yet). `extract-lessons` mines patterns across multiple
+deliveries and surfaces them as candidate prompt improvements. `retrospective` shows per-delivery gate
+corrections when telemetry is enabled. The scored floor and automated hook are Phase 3 work.
+
 ## Related
 
 - `shared/telemetry/README.md` — the event source these evaluations will
