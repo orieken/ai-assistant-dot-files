@@ -1,9 +1,9 @@
 ---
 name: forgetting-engine
-description: Identifies and flags obsolete or superseded lessons and Knowledge Items for expiration. Opposing-force pair with learning-engine. In AOS Phase 3, scheduled monthly via shared/hooks/scheduled-monthly.yaml (opt-in, disabled by default).
+description: Identifies and flags obsolete or superseded lessons and Knowledge Items for expiration, and audits the capability inventory for duplicate skills, keyword collisions, and agent+skill name pairs. Opposing-force pair with learning-engine. In AOS Phase 3, scheduled monthly via shared/hooks/scheduled-monthly.yaml (opt-in, disabled by default).
 triggers:
-  keywords: [forgetting engine, expire lesson, archive ki, decay memory]
-  intentPatterns: ["identify obsolete lessons", "run forgetting engine"]
+  keywords: [forgetting engine, expire lesson, archive ki, decay memory, capability inventory, skill overlap, keyword collision, duplicate skill, inventory audit]
+  intentPatterns: ["identify obsolete lessons", "run forgetting engine", "audit capability inventory", "find duplicate skills *", "check skill keyword overlap"]
 standalone: true
 ---
 
@@ -24,6 +24,7 @@ Do NOT use when:
 |---|---|---|
 | Manual | Human runs `/forgetting-engine` | Full sweep of knowledge + lessons-learned |
 | Scheduled | `scheduled-monthly` hook | Full sweep, configurable staleness threshold |
+| Capability Inventory | Human runs `/forgetting-engine capability-inventory` or asks about duplicate/overlapping skills | Scans `shared/agents/` + `shared/skills/` for collisions, description overlap, and dual name-pairs |
 
 ## Staleness Criteria
 
@@ -37,11 +38,18 @@ Items flagged by criteria 1 are high-confidence expiration candidates. Items fla
 
 ## Context To Load First
 
+### KI / Lesson Sweep Mode
 1. `shared/knowledge/README.md` — corpus overview
 2. `shared/memory-registry.json` — which sources are tracked and their metadata
 3. `shared/knowledge/*.md` — KI corpus
 4. `docs/lessons-learned/*.md` — lessons corpus (if directory exists)
 5. `docs/adrs/*.md` — to identify supersession relationships
+
+### Capability Inventory Mode
+1. `shared/schemas/agent-frontmatter.schema.json` — field definitions (status, superseded_by)
+2. `shared/schemas/skill-frontmatter.schema.json` — field definitions
+3. `shared/agents/*.md` — all agent frontmatter (name, description, status, superseded_by)
+4. `shared/skills/*/SKILL.md` — all skill frontmatter (name, description, triggers, status, superseded_by)
 
 ## Process
 
@@ -88,7 +96,60 @@ N items flagged for expiration (H high-confidence, M medium, L low).
    - Do NOT delete files — archive only.
    - Update `shared/memory-registry.json` if the expired item had a registered source entry.
 
-## Output Format
+## Capability Inventory Audit
+
+Run this mode when asked about duplicate skills, keyword collisions, or agent+skill name pairs. It produces PROPOSALS only — never applies changes automatically.
+
+### Process
+
+**CI.1 — Read all frontmatter.** Glob `shared/agents/*.md` (skip `CHANGELOG.md`) and `shared/skills/*/SKILL.md`. Extract `name`, `description`, `triggers.keywords`, and `status` for each.
+
+**CI.2 — Detect keyword collisions.** Two or more skills share the same keyword in `triggers.keywords`. Flag as a collision. Assess severity:
+  - Same keyword + similar description → HIGH: strong merge candidate.
+  - Same keyword + different scopes → MEDIUM: may need disambiguation in descriptions or keyword narrowing.
+
+**CI.3 — Detect description overlap.** Compare descriptions pairwise. Flag pairs whose descriptions convey the same job in different words (≥ 2 of 3 of: same domain, same action verb class, same audience). Assess:
+  - Same domain + same action → HIGH merge candidate.
+  - Same domain + complementary actions → LOW: keep both, document difference.
+
+**CI.4 — Detect agent+skill name pairs.** List names that appear in both `shared/agents/*.md` and `shared/skills/*/SKILL.md`. For each pair, assess:
+  - **Intentional wrapper**: the skill's description says it "invokes" or "wraps" the agent → mark WRAPPER.
+  - **Accidental**: descriptions diverge or the skill duplicates the agent's behavior → mark COLLISION.
+
+**CI.5 — Draft inventory proposal** in `.claude/feature-workspace/proposed-inventory-changes.md`:
+
+```markdown
+# Capability Inventory Proposal: YYYY-MM-DD
+
+## Keyword Collisions
+
+| Keyword | Skills Sharing It | Severity | Recommendation |
+|---|---|---|---|
+| complexity | analyze-complexity, complexity-check | HIGH | merge into analyze-complexity |
+
+## Description Overlap Pairs
+
+| Capability A | Capability B | Overlap Reason | Recommendation |
+|---|---|---|---|
+| analyze-complexity | complexity-check | same domain + same action verb class | merge |
+
+## Agent+Skill Name Pairs
+
+| Name | Agent file | Skill file | Assessment | Recommendation |
+|---|---|---|---|---|
+| spec-writer | shared/agents/spec-writer.md | shared/skills/spec-writer/SKILL.md | WRAPPER — skill description says "invokes the spec-writer agent" | document as wrapper convention |
+
+## Summary
+N collision(s), M overlap pair(s), P name pair(s).
+Recommended: X merge(s), Y deprecation(s), Z documentation-only changes.
+```
+
+**CI.6 — Pause for human review.** Present the proposal and ask:
+> "Capability inventory scan found N issues. Reply with which items to act on (e.g., 'merge analyze-complexity + complexity-check', 'document spec-writer as wrapper', 'skip all') and I'll implement only the approved ones."
+
+Do NOT apply any change without explicit approval.
+
+## Output Format (KI / Lesson Sweep)
 
 See Draft Expiration Proposal template in step 4.
 
@@ -99,6 +160,7 @@ See Draft Expiration Proposal template in step 4.
 - If invoked via scheduled hook and no candidates are found, emit "no expirations proposed" and exit cleanly.
 - Low-confidence candidates must surface a "Keep (update instead of expire)" option.
 - If `archive/` directory does not exist, create it before moving the first file.
+- **Capability inventory proposals are PROPOSALS only.** Never rename, delete, or modify agent or skill files without explicit per-item human approval from the CI.6 confirmation step. The scan is diagnostic, not prescriptive.
 
 ## Opposing Force
 
