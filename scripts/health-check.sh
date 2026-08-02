@@ -123,6 +123,74 @@ for skill_dir in "$SHARED_DIR/skills/"*/; do
 done
 echo ""
 
+# --- 3a. Capability deprecation validation -----------------------------------
+# WARN: deprecated with no superseded_by (no migration pointer).
+# FAIL: superseded_by points at a name that doesn't exist in agent or skill inventory.
+echo "--- Capability Deprecation (status/superseded_by) ---"
+
+# Build name inventories (agents + skills) for cross-reference lookups.
+_all_cap_names=""
+for _cap_file in "$SHARED_DIR/agents/"*.md; do
+  _base="$(basename "$_cap_file")"
+  [[ "$_base" == "CHANGELOG.md" ]] && continue
+  _n=$(grep '^name:' "$_cap_file" | head -1 | sed 's/name: *//' || true)
+  [[ -n "$_n" ]] && _all_cap_names="$_all_cap_names $_n"
+done
+for _cap_dir in "$SHARED_DIR/skills/"*/; do
+  _cap_skill="${_cap_dir}SKILL.md"
+  [[ -f "$_cap_skill" ]] || continue
+  _n=$(grep '^name:' "$_cap_skill" | head -1 | sed 's/name: *//' || true)
+  [[ -n "$_n" ]] && _all_cap_names="$_all_cap_names $_n"
+done
+
+_dep_found=0
+_dep_issues=0
+
+# Check agents
+for _cap_file in "$SHARED_DIR/agents/"*.md; do
+  _base="$(basename "$_cap_file")"
+  [[ "$_base" == "CHANGELOG.md" ]] && continue
+  _status=$(grep '^status:' "$_cap_file" | head -1 | sed 's/status: *//' || true)
+  [[ "$_status" == "deprecated" ]] || continue
+  ((_dep_found++)) || true
+  _aname=$(grep '^name:' "$_cap_file" | head -1 | sed 's/name: *//' || true)
+  _succ=$(grep '^superseded_by:' "$_cap_file" | head -1 | sed 's/superseded_by: *//' || true)
+  if [[ -z "$_succ" ]]; then
+    warn "agent $_aname — deprecated with no superseded_by (add superseded_by: <name>)"
+    ((_dep_issues++)) || true
+  elif ! echo "$_all_cap_names" | tr ' ' '\n' | grep -qxF "$_succ"; then
+    fail "agent $_aname — superseded_by: '$_succ' does not name an existing agent or skill"
+    ((_dep_issues++)) || true
+  else
+    pass "agent $_aname — deprecated, superseded by '$_succ' (exists)"
+  fi
+done
+
+# Check skills
+for _cap_dir in "$SHARED_DIR/skills/"*/; do
+  _skill_name="$(basename "$_cap_dir")"
+  _cap_skill="${_cap_dir}SKILL.md"
+  [[ -f "$_cap_skill" ]] || continue
+  _status=$(grep '^status:' "$_cap_skill" | head -1 | sed 's/status: *//' || true)
+  [[ "$_status" == "deprecated" ]] || continue
+  ((_dep_found++)) || true
+  _succ=$(grep '^superseded_by:' "$_cap_skill" | head -1 | sed 's/superseded_by: *//' || true)
+  if [[ -z "$_succ" ]]; then
+    warn "skill $_skill_name — deprecated with no superseded_by (add superseded_by: <name>)"
+    ((_dep_issues++)) || true
+  elif ! echo "$_all_cap_names" | tr ' ' '\n' | grep -qxF "$_succ"; then
+    fail "skill $_skill_name — superseded_by: '$_succ' does not name an existing agent or skill"
+    ((_dep_issues++)) || true
+  else
+    pass "skill $_skill_name — deprecated, superseded by '$_succ' (exists)"
+  fi
+done
+
+if [[ "$_dep_found" -eq 0 ]]; then
+  pass "no deprecated capabilities"
+fi
+echo ""
+
 # --- 4. Platform config drift (delegates to check-parity.sh) ---------------
 echo "--- Platform Config Drift ---"
 if bash "$REPO_DIR/scripts/check-parity.sh" > /tmp/health-check-parity.$$ 2>&1; then

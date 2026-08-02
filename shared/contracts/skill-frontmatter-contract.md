@@ -33,6 +33,22 @@ Both sub-keys must be present. An empty list is acceptable if the skill is manua
 only fires when the user explicitly types the slash-command), but the key itself must exist so parsers
 don't have to distinguish "missing" from "explicitly empty".
 
+## Optional Fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `status` | string (`active` \| `deprecated`) | Lifecycle status. Absent means `active`. Set to `deprecated` when the skill is superseded and kept only for backward compatibility. Always pair with `superseded_by`. |
+| `superseded_by` | string | kebab-case name of the agent or skill that replaces this one. Required when `status: deprecated`; `health-check.sh` will FAIL if the referenced name does not exist in the agent or skill inventory. Omit when `status` is `active` or absent. |
+
+## Deprecation Validation
+
+`scripts/health-check.sh` enforces two rules for deprecated skills:
+
+1. **WARN** — `status: deprecated` present but no `superseded_by` field. The skill is marked as deprecated but provides no migration path. Add `superseded_by: <name>` to resolve.
+2. **FAIL** — `superseded_by: <name>` present but `<name>` does not match any existing agent or skill `name` frontmatter field. The migration pointer is broken. Either create the replacement or correct the name.
+
+Deprecated skills remain installed and fully functional. Generators annotate deprecated entries in platform config rosters as `*(deprecated — use <superseded_by>)*`.
+
 ## Validation Rule
 
 `validate-artifact` checks:

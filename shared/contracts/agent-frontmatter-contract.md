@@ -26,6 +26,17 @@ grep-parses.
 |---|---|---|
 | `model` | string | Optional explicit vendor model override (usually `inherit` or a specific `claude-*` ID). If present alongside `model_tier`, `model` takes precedence on Claude Code as an explicit override. |
 | `isolation` | string | `worktree` — agent runs in a temporary git worktree isolated from the main working copy. See `shared/agents/developer.md` for the reference use. |
+| `status` | string (`active` \| `deprecated`) | Lifecycle status. Absent means `active`. Set to `deprecated` when the agent is superseded and kept only for backward compatibility. Always pair with `superseded_by`. |
+| `superseded_by` | string | kebab-case name of the agent or skill that replaces this one. Required when `status: deprecated`; `health-check.sh` will FAIL if the referenced name does not exist in the agent or skill inventory. Omit when `status` is `active` or absent. |
+
+## Deprecation Validation
+
+`scripts/health-check.sh` enforces two rules for deprecated agents:
+
+1. **WARN** — `status: deprecated` present but no `superseded_by` field. The agent is marked as deprecated but provides no migration path. Add `superseded_by: <name>` to resolve.
+2. **FAIL** — `superseded_by: <name>` present but `<name>` does not match any existing agent or skill `name` frontmatter field. The migration pointer is broken. Either create the replacement or correct the name.
+
+Deprecated agents remain installed and fully functional — the convention is informational, not a removal mechanism. Generators annotate deprecated entries in platform config rosters as `*(deprecated — use <superseded_by>)*`.
 
 ## Validation Rule
 

@@ -75,11 +75,19 @@ collect_agent_roster() {
   result+=$'\n'"The following specialized personas are available. Invoke them by name when you need domain-specific expertise. Note: on this platform these are personas — context frames with no tool access or autonomous pipeline participation, per \`DOMAIN_DICTIONARY.md\`. Full multi-step agent orchestration is only available on Tier 1 (Claude Code)."$'\n'
 
   for agent_file in "$SHARED_DIR/agents/"*.md; do
-    local agent_name agent_desc
+    local agent_name agent_desc agent_status agent_successor
     agent_name=$(grep '^name:' "$agent_file" | head -1 | sed 's/name: *//' || true)
     agent_desc=$(grep '^description:' "$agent_file" | head -1 | sed 's/description: *//' || true)
+    agent_status=$(grep '^status:' "$agent_file" | head -1 | sed 's/status: *//' || true)
+    agent_successor=$(grep '^superseded_by:' "$agent_file" | head -1 | sed 's/superseded_by: *//' || true)
     if [[ -n "$agent_name" ]]; then
-      result+=$'\n'"- **$agent_name**: $agent_desc"
+      if [[ "$agent_status" == "deprecated" && -n "$agent_successor" ]]; then
+        result+=$'\n'"- **$agent_name** *(deprecated — use $agent_successor)*: $agent_desc"
+      elif [[ "$agent_status" == "deprecated" ]]; then
+        result+=$'\n'"- **$agent_name** *(deprecated)*: $agent_desc"
+      else
+        result+=$'\n'"- **$agent_name**: $agent_desc"
+      fi
     fi
   done
   echo "$result"

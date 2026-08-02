@@ -45,6 +45,16 @@
       "type": "boolean",
       "description": "Must be true. Skills that require MCP servers or external network calls to function are not portable across installs — enforces the 'everything must work offline' discipline.",
       "enum": [true]
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status. Absent means active. Set to 'deprecated' when the skill is superseded and kept only for backward compatibility. Pair with superseded_by.",
+      "enum": ["active", "deprecated"]
+    },
+    "superseded_by": {
+      "type": "string",
+      "description": "kebab-case name of the agent or skill that replaces this one. Required when status is 'deprecated'. health-check.sh will FAIL if the referenced name does not exist.",
+      "pattern": "^[a-z][a-z0-9-]*$"
     }
   }
 }
