@@ -80,11 +80,11 @@ a git commit, same as any other rule change in this repo.
    ask the user to run `/spec-writer` first.
 2. **Derive the feature name** — kebab-case from the feature file name.
 3. **Load or create `.claude/atdd-config.json`** per the "Config File" section above.
-4. **Check for an existing `.claude/feature-workspace/pipeline-state.json`.** If one exists for this
+4. **Check for an existing `.claude/feature-workspace/<feature-name>/pipeline-state.json`.** If one exists for this
    feature and its `pipeline` field is `deliver-atdd`, invoke `resume-pipeline` instead of continuing
    here. If it exists for a different pipeline (e.g. `deliver-feature`), stop and surface the conflict
    — don't overwrite another pipeline's state without explicit confirmation.
-5. **Create the feature workspace and archive** — `.claude/feature-workspace/` and
+5. **Create the feature workspace and archive** — `.claude/feature-workspace/<feature-name>/` and
    `docs/features/<feature-name>/`, same convention as `deliver-feature`. Reuse the same
    `pipeline-state.json` and `pipeline-trace.json` shapes documented in
    `shared/skills/deliver-feature/SKILL.md`, with `"pipeline": "deliver-atdd"` as an added top-level
@@ -92,10 +92,10 @@ a git commit, same as any other rule change in this repo.
 
 ### Phase 1: Scenario writing
 6. **Invoke qa-engineer** with narrow scope: write the acceptance scenarios (Gherkin `Given/When/Then`)
-   for this feature only. No step definitions yet, no run. Output: `.claude/feature-workspace/scenarios.feature`.
+   for this feature only. No step definitions yet, no run. Output: `.claude/feature-workspace/<feature-name>/scenarios.feature`.
 7. **Gate: scenario-review.** If `gates.scenario-review == "active"`: PAUSE. Show the user the scenario
    file and ask "do these scenarios match the intent? (yes to proceed / edit to revise)." If edits are
-   requested, back up the current scenarios to `.claude/feature-workspace/.history/scenarios.feature.<timestamp>`,
+   requested, back up the current scenarios to `.claude/feature-workspace/<feature-name>/.history/scenarios.feature.<timestamp>`,
    send back to qa-engineer with the specific corrections, re-present. Repeat until approved. If
    `gates.scenario-review == "phased-out"`: continue directly to Phase 2, but note the skip in
    `pipeline-trace.json`.
@@ -106,7 +106,7 @@ a git commit, same as any other rule change in this repo.
    in `shared/rules/testing-conventions.md`). The step definitions are **expected to fail at this
    phase** — implementation doesn't exist yet. That's the point of ATDD, not a bug. Output: step
    definitions written to the project's normal test location + summary in
-   `.claude/feature-workspace/test-code-report.md`.
+   `.claude/feature-workspace/<feature-name>/test-code-report.md`.
 9. **Gate: test-code-review.** If `gates.test-code-review == "active"`: PAUSE. Show the user the
    `test-code-report.md` and the diff of new test files. Ask "does the step definition code correctly
    automate the scenarios?" (Not "does it pass" — it won't yet.) Same edit/re-present loop as Phase 1.
@@ -116,14 +116,14 @@ a git commit, same as any other rule change in this repo.
 10. **Invoke test-driven-developer** with the feature spec + `scenarios.feature` as its acceptance
     criteria. It runs its own inner red-green loop autonomously per its existing contract
     (`shared/agents/test-driven-developer.md`, step 2 already includes the `search-ki` lookup added
-    in v1.1.0). Output: `.claude/feature-workspace/tdd-report.md`.
+    in v1.1.0). Output: `.claude/feature-workspace/<feature-name>/tdd-report.md`.
 11. **No gate here.** The inner unit-test/dev loop is autonomous by design (see
     `docs/AGENT_REFERENCE.md` entry #24) — reintroducing a gate here would defeat the whole reason to
     use this workflow over `deliver-feature`, which already has an in-loop `code-reviewer`.
 
 ### Phase 4: Acceptance run
 12. **Invoke qa-engineer** to run the full scenario suite against the finished implementation. Output:
-    `.claude/feature-workspace/acceptance-report.md` — which scenarios passed, which failed, coverage
+    `.claude/feature-workspace/<feature-name>/acceptance-report.md` — which scenarios passed, which failed, coverage
     if available. Uses the `run-tests` skill (`shared/skills/run-tests/SKILL.md`) under the hood, same
     as qa-engineer already does inside `deliver-feature`.
 13. **If any scenario fails**: this is a real problem, not a gate. Either the implementation is
@@ -135,13 +135,13 @@ a git commit, same as any other rule change in this repo.
     guess.
 
 ### Phase 5: Ship (always gated)
-14. **Write delivery summary** to `.claude/feature-workspace/delivery-summary.md` — see "Delivery
+14. **Write delivery summary** to `.claude/feature-workspace/<feature-name>/delivery-summary.md` — see "Delivery
     Summary Format" below.
 15. **Ship-readiness gate.** PAUSE. Show the summary + acceptance report + all scenarios green.
     Ask "ready to ship?" This gate is NOT in the config — it always runs, matching
     `approval-gates.md`'s general principle that irreversible/external-facing actions never delegate
     the final "yes."
-16. **On confirmation**: persist all artifacts from `.claude/feature-workspace/` to
+16. **On confirmation**: persist all artifacts from `.claude/feature-workspace/<feature-name>/` to
     `docs/features/<feature-name>/`, write the feature archive README, add an entry to
     `docs/features/README.md` — same persistence steps as `deliver-feature`, Phase 4.
 

@@ -54,12 +54,12 @@ You are a **Principal Context Engineer**. You treat the context window of AI age
    - For each pinned file, estimate tokens (~line count × 8 chars/line ÷ 4 chars/token — a rough heuristic, not exact).
    - Sum the total and compare against the target agent's tier budget (of a 200k-token context window): Analyst/Architect ≤60%, Developer ≤80%, Reviewer agents ≤40%.
    - Flag `WARNING` if the estimate exceeds the tier budget, and recommend specific files to cut from the Pinpoint list.
-8. **Compile and Write** the context manifest to `.claude/feature-workspace/context-manifest.md`.
+8. **Compile and Write** the context manifest to `.claude/feature-workspace/<feature-name>/context-manifest.md`.
 
 ## Output Format
 
 Read `shared/templates/context-manifest.template.md` and produce your artifact at
-`.claude/feature-workspace/context-manifest.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/context-manifest.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

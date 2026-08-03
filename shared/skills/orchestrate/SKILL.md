@@ -38,7 +38,7 @@ Do NOT use when:
 1. The workflow file: `shared/workflows/<workflow-id>.md` or `docs/workflows/<workflow-id>.md`
 2. `shared/orchestration/interface.md` — workflow contract
 3. `shared/orchestration/pipeline-schema.md` — field reference
-4. `checkpointStore` file (default `.claude/feature-workspace/pipeline-state.json`) — if it exists and `--resume` is set or `resumable: true`
+4. `checkpointStore` file (default `.claude/feature-workspace/<feature-name>/pipeline-state.json`) — if it exists and `--resume` is set or `resumable: true`
 
 ## Process
 
@@ -75,7 +75,7 @@ For each stage in order:
 
 ### 3. Complete
 
-10. Write delivery summary to `.claude/feature-workspace/delivery-summary.md`.
+10. Write delivery summary to `.claude/feature-workspace/<feature-name>/delivery-summary.md`.
 11. Persist all artifacts to `docs/features/<feature-name>/` (if this is a feature workflow).
 12. Log `workflow.completed` telemetry event.
 
