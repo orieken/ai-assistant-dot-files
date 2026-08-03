@@ -15,6 +15,7 @@ SYNC_SUBCOMMAND="pull"
 SYNC_ARGS=()
 FRAMEWORK_LEVEL="base"   # "base" = current framework only; "full" = AOS layers included
 WITH_CONFIGS=false       # --with-configs: copy shared/configs/ into the target project
+WITH_MCP=false           # --with-mcp: copy shared/mcp/ scaffold into the target project
 
 usage() {
   cat <<'EOF'
@@ -52,6 +53,9 @@ Options:
                          project root. Files are always copied (never symlinked) so teams can edit
                          them. Existing files are left untouched (idempotent). Only meaningful with
                          --project mode — silently skipped in --global mode.
+  --with-mcp            Copy the shared/mcp/ reference scaffold into <target>/<project-name>-mcp/
+                         and run go mod tidy to produce a ready-to-build MCP server. Only
+                         meaningful with --project mode — silently skipped in --global mode.
   --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline)
   --dry-run             Show what would be installed without doing it
   --tour                Run the onboarding skill after install
@@ -63,6 +67,7 @@ Examples:
   ./install.sh --project /path/to/my-app
   ./install.sh --project --full                    # install with AOS layers
   ./install.sh --project --with-configs            # also copy linter configs
+  ./install.sh --project --with-mcp               # also scaffold an MCP server
   ./install.sh --project --platform claude-code
   ./install.sh --global --dry-run
   ./install.sh --sync-memory
@@ -99,6 +104,7 @@ while [[ $# -gt 0 ]]; do
     --base)           FRAMEWORK_LEVEL="base"; shift ;;
     --full)           FRAMEWORK_LEVEL="full"; shift ;;
     --with-configs)   WITH_CONFIGS=true; shift ;;
+    --with-mcp)       WITH_MCP=true; shift ;;
     -h|--help)        usage ;;
     *)                echo "Unknown option: $1"; usage ;;
   esac
@@ -503,6 +509,45 @@ EOF
   ok "wrote $target_claude_dir/framework-install.json (version $git_tag @ ${commit_sha:0:8})"
 }
 
+install_mcp() {
+  if [[ "$MODE" != "project" ]]; then
+    skip "--with-mcp is only meaningful in --project mode; skipping"
+    return
+  fi
+
+  log ""
+  log "--- MCP Server Scaffold (--with-mcp) ---"
+
+  local project_name
+  project_name="$(basename "$TARGET_DIR")"
+  local dest="$TARGET_DIR/${project_name}-mcp"
+  local mcp_src="$REPO_DIR/shared/mcp"
+
+  if [[ -d "$dest" ]]; then
+    skip "$dest already exists — not overwritten"
+    return
+  fi
+
+  if $DRY_RUN; then
+    dry "would copy $mcp_src -> $dest"
+    dry "would run: go mod tidy in $dest"
+    return
+  fi
+
+  cp -r "$mcp_src" "$dest"
+  ok "copied MCP scaffold to $dest"
+
+  if command -v go &>/dev/null; then
+    if (cd "$dest" && go mod tidy 2>&1); then
+      ok "go mod tidy succeeded in $dest"
+    else
+      log "  [warn] go mod tidy failed — run it manually in $dest"
+    fi
+  else
+    log "  [warn] 'go' not found — run 'go mod tidy' manually in $dest before building"
+  fi
+}
+
 install_generated_configs() {
   local output_dir
   if [[ "$MODE" == "global" ]]; then
@@ -576,6 +621,10 @@ fi
 
 if $WITH_CONFIGS; then
   install_configs
+fi
+
+if $WITH_MCP; then
+  install_mcp
 fi
 
 install_generated_configs
