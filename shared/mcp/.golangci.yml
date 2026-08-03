@@ -1,0 +1,15 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - gocyclo
+    - revive
+    - errcheck
+    - staticcheck
+    - govet
+    - ineffassign
+
+linters-settings:
+  gocyclo:
+    min-complexity: 7
