@@ -1,7 +1,7 @@
 # MCP Exporter Scope Ruling (Epic 43 Phase A)
 
 **Decision date**: 2026-08-02
-**Status**: Phase A complete — awaiting Phase B approval
+**Status**: ✅ Complete — Phase A (ruling) and Phase B (implementation) both delivered
 
 ---
 
