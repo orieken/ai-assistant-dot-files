@@ -1,7 +1,7 @@
 # Parallel-Delivery Workspace Isolation — Design (Epic 63 Phase A)
 
-**Status**: Phase A design — awaiting human approval before Phase B implementation begins.
-**Source**: `docs/audits/framework-gap-audit-2026-07-31.md` § 3b / `docs/prompts/epic-63-parallel-delivery-isolation.md`
+**Status**: Complete — Phase A design approved; Phase B implemented in commits `10c41bd`→`77ad560` (v3.3.8).
+**Source**: `docs/audits/framework-gap-audit-2026-07-31.md` § 3b / `docs/prompts/done/epic-63-parallel-delivery-isolation.md`
 
 ---
 
@@ -237,4 +237,4 @@ measurable constraint:
 
 ---
 
-*Epic 63 Phase A — awaiting approval to begin Phase B.*
+*Epic 63 — complete. Phase B shipped 2026-08-02 in commits `10c41bd`→`77ad560`, tagged `v3.3.8`.*
