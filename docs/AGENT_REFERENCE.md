@@ -2,7 +2,7 @@
 
 Every agent in this framework produces an output that *something* checks — another agent's review, a
 structural contract, a human approval gate, an aggregate metric measured after the fact, or (stated plainly
-where true) nothing yet. This doc makes that explicit for all 38 agents, one at a time, instead of leaving
+where true) nothing yet. This doc makes that explicit for all 39 agents, one at a time, instead of leaving
 it scattered implicitly across `deliver-feature/SKILL.md`, `shared/contracts/`, and each agent's own file.
 
 This is documentation of what already exists in v2 today — it does not introduce new agents or roles. Where
@@ -13,7 +13,7 @@ actually has running today.)
 
 ## How to read "Counterbalance"
 
-Four different *kinds* of check show up across these 38 agents, and they're not interchangeable:
+Four different *kinds* of check show up across these 39 agents, and they're not interchangeable:
 
 | Kind | What it catches | Example |
 |---|---|---|
@@ -286,36 +286,50 @@ production code. If a seam is genuinely required to make legacy code testable, t
 something this agent can do unilaterally — it's gated behind `approval-gates.md` gate #6, reported and
 held rather than performed.
 
+### 27. `refactor-engineer`
+**Role**: Large-scale or multi-target structural refactoring — complexity violations flagged by
+`health-check.sh`, framework migrations, Boy Scout Rule debt from code-review, or an explicit modernization
+sprint. Builds a characterization-test safety net via `unit-tester` before any code changes, applies
+named Fowler operations (Extract Function, Replace Conditional with Polymorphism, etc.) to lower cyclomatic
+complexity and eliminate duplication, verifies behavior preservation with a passing test suite, and
+produces `refactoring-notes.md` validated by `refactoring-contract.md`.
+**Counterbalance**: **Structural contract** (`refactoring-contract.md` + `validate-artifact`) guards
+the output; `unit-tester` provides the behavioral safety net that makes the refactor safe. The "no
+behavior added in the same run" rule is an attestation in the contract itself, not just convention.
+**Gap**: No `code-reviewer` auto-chained after the refactor (unlike `backfill-unit-tests`). The contract
+validates structure and attestation, but a human should review the diff before committing if the scope
+is large — the complexity tool output is a mechanical check, not a substitute for a code-quality read.
+
 ---
 
 ## AOS Counter-Auditor Agents (v3.0 - v3.1)
 
 The following 11 read-only counter-auditor agents implement the opposing-force checks defined in `docs/aos/governance-pairs.md`:
 
-27. `memory-auditor` — Counter to `memory-engineer` (audits KI corpus for schema validity, exact/semantic duplicates, and stale metadata).
-28. `context-auditor` — Counter to `context-engineer` (audits `context-manifest.md` for pruning discipline, broken file paths, and token pressure accuracy).
-29. `knowledge-auditor` — Counter to `create-ki` (audits newly authored KIs against `ki-frontmatter.schema.json` and corpus overlap).
-30. `prompt-evaluator` — Counter to prompt authors (audits agent/skill prompts for secret leaks, fabricated URLs, and template decoupling).
-31. `agent-evaluator` — Counter to agent persona authors (promotes `agent-eval` logic to run golden-file evals against frontmatter contracts).
-32. `rule-auditor` — Counter to rule authors (audits `shared/rules/*.md` for cross-rule contradictions and dead references).
-33. `pattern-reviewer` — Counter to pattern doc authors (audits `docs/patterns/*.md` for accuracy against live codebase implementation).
-34. `tool-validator` — Counter to skill authors (audits `shared/skills/*/SKILL.md` for standalone mode declarations and script dependencies).
-35. `documentation-auditor` — Counter to `tech-writer` (audits `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts). Findings: `docs/audits/doc-audit-YYYY-MM-DD.md`. Automation paths: (a) hook — copy `shared/hooks/examples/on-inventory-change-doc-audit.yaml` to `.claude/hooks/` to trigger on `shared/agents/` or `shared/skills/` changes; (b) scheduled — see `shared/skills/scheduler/SKILL.md` for a weekly cron example; (c) freshness nudge — `scripts/health-check.sh` WARNs when the newest findings file is older than 14 days.
-36. `retrieval-evaluator` — Counter to RAG search skills (audits KI + ADR retrievability per ADR-002 telemetry, flagging unmatched zero-hit queries).
-37. `privacy-auditor` — Counter to `security-reviewer` & developers (audits feature workspace artifacts for PII, secrets, and credential leaks).
-38. `model-tier-auditor` — Counter to agent authors (audits `shared/agents/*.md` for portable `model_tier` declarations).
+28. `memory-auditor` — Counter to `memory-engineer` (audits KI corpus for schema validity, exact/semantic duplicates, and stale metadata).
+29. `context-auditor` — Counter to `context-engineer` (audits `context-manifest.md` for pruning discipline, broken file paths, and token pressure accuracy).
+30. `knowledge-auditor` — Counter to `create-ki` (audits newly authored KIs against `ki-frontmatter.schema.json` and corpus overlap).
+31. `prompt-evaluator` — Counter to prompt authors (audits agent/skill prompts for secret leaks, fabricated URLs, and template decoupling).
+32. `agent-evaluator` — Counter to agent persona authors (promotes `agent-eval` logic to run golden-file evals against frontmatter contracts).
+33. `rule-auditor` — Counter to rule authors (audits `shared/rules/*.md` for cross-rule contradictions and dead references).
+34. `pattern-reviewer` — Counter to pattern doc authors (audits `docs/patterns/*.md` for accuracy against live codebase implementation).
+35. `tool-validator` — Counter to skill authors (audits `shared/skills/*/SKILL.md` for standalone mode declarations and script dependencies).
+36. `documentation-auditor` — Counter to `tech-writer` (audits `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts). Findings: `docs/audits/doc-audit-YYYY-MM-DD.md`. Automation paths: (a) hook — copy `shared/hooks/examples/on-inventory-change-doc-audit.yaml` to `.claude/hooks/` to trigger on `shared/agents/` or `shared/skills/` changes; (b) scheduled — see `shared/skills/scheduler/SKILL.md` for a weekly cron example; (c) freshness nudge — `scripts/health-check.sh` WARNs when the newest findings file is older than 14 days.
+37. `retrieval-evaluator` — Counter to RAG search skills (audits KI + ADR retrievability per ADR-002 telemetry, flagging unmatched zero-hit queries).
+38. `privacy-auditor` — Counter to `security-reviewer` & developers (audits feature workspace artifacts for PII, secrets, and credential leaks).
+39. `model-tier-auditor` — Counter to agent authors (audits `shared/agents/*.md` for portable `model_tier` declarations).
 
 ---
 
 ## What this survey actually shows
 
-Reading all 38 agents together, three patterns stand out:
+Reading all 39 agents together, three patterns stand out:
 
 1. **The 14 pipeline agents are well-checked.** Every one has at least a structural contract; most have a
    real downstream reviewer or a human approval gate too. This is the part of the framework that's had the
    most iteration (three independent audits this session all confirmed the contract layer, once complete,
    holds up).
-2. **The 11 standalone agents are inconsistently checked** — though less inconsistently than before
+2. **The 12 standalone agents are inconsistently checked** — though less inconsistently than before
    `unit-tester` arrived with a real auto-chained reviewer rather than just a report a human might read.
    Some (`release-manager`, `data-engineer`-adjacent
    `devops-engineer`) are well-gated because they touch genuinely irreversible actions. Others

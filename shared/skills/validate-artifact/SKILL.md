@@ -40,6 +40,7 @@ field-presence checks that `scripts/health-check.sh` already runs across the who
 | sre-engineer | `.claude/feature-workspace/<feature-name>/observability-report.md` | `shared/contracts/observability-contract.md` |
 | tech-writer | `.claude/feature-workspace/<feature-name>/docs-report.md` | `shared/contracts/docs-contract.md` |
 | devops-engineer | `.claude/feature-workspace/<feature-name>/devops-report.md` | `shared/contracts/devops-contract.md` |
+| refactor-engineer | `.claude/feature-workspace/<feature-name>/refactoring-notes.md` | `shared/contracts/refactoring-contract.md` |
 | humans (agent author) | `shared/agents/*.md` | `shared/contracts/agent-frontmatter-contract.md` |
 | humans (skill author) | `shared/skills/*/SKILL.md` | `shared/contracts/skill-frontmatter-contract.md` |
 | humans (KI author) | `shared/knowledge/*.md`, `.claude/knowledge/*.md` | `shared/contracts/ki-frontmatter-contract.md` |
