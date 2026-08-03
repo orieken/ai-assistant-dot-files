@@ -69,6 +69,19 @@ external services, no external dependencies. Works fully offline. Creates the
 `.claude/telemetry/` directory and `events.jsonl` file on first write if
 either is missing.
 
+## Concurrent-delivery behavior (Epic 63)
+
+As of Epic 63, `deliver-feature` supports multiple named workspaces
+(`.claude/feature-workspace/<feature-name>/`) running concurrently. Two
+deliveries in-flight both append to the shared `events.jsonl`. Concurrent
+appends are safe at the line level (each event is one JSON line) and remain
+distinguishable because every event carries a `pipeline_id` field. In the
+extremely unlikely case that two simultaneous sub-second writes produce a
+corrupted line, `pipeline-retrospective` and consumers that parse JSONL are
+expected to skip malformed lines rather than halting — the telemetry layer
+is fire-and-forget and never a source of pipeline correctness. No format or
+schema change is needed for concurrent use.
+
 ## Related
 
 - `shared/telemetry/event-schema.md` — the event format

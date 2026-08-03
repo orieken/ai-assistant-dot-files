@@ -189,8 +189,48 @@ Phase 0 + one artifact each, confirming no cross-contamination of `pipeline-stat
 Per `shared/rules/architecture-guardrails.md` §7, every architectural decision must produce a
 measurable constraint:
 
-- **Grep fitness**: `grep -r '\.claude/feature-workspace/[^<]' shared/skills/ shared/agents/` must
-  return zero matches after Phase B (all hardcoded singleton paths replaced).
+- **Pipeline-orchestrator grep**: the following command must return zero matches after Phase B —
+  it scopes to the four orchestrator skills and the pipeline agents that are directly invoked
+  by `deliver-feature` or `deliver-atdd`:
+
+  ```
+  grep -r '\.claude/feature-workspace/[^<]' \
+    shared/skills/deliver-feature/ \
+    shared/skills/deliver-atdd/ \
+    shared/skills/resume-pipeline/ \
+    shared/skills/pipeline-trace/ \
+    shared/skills/context-engineer/ \
+    shared/skills/validate-artifact/ \
+    shared/skills/orchestrate/ \
+    shared/agents/analyst.md \
+    shared/agents/architect.md \
+    shared/agents/developer.md \
+    shared/agents/code-reviewer.md \
+    shared/agents/security-reviewer.md \
+    shared/agents/performance-engineer.md \
+    shared/agents/data-engineer.md \
+    shared/agents/accessibility-engineer.md \
+    shared/agents/sre-engineer.md \
+    shared/agents/qa-engineer.md \
+    shared/agents/visual-qa-engineer.md \
+    shared/agents/tech-writer.md \
+    shared/agents/devops-engineer.md \
+    shared/agents/privacy-auditor.md \
+    shared/agents/context-auditor.md \
+    shared/agents/context-engineer.md
+  ```
+
+  Two expected exceptions exist in `deliver-feature/SKILL.md`'s "Workspace Path Resolution"
+  section: the two lines that describe the legacy singleton detection (`look for a flat
+  .claude/feature-workspace/pipeline-state.json`) and the migration step (`Move all files
+  from .claude/feature-workspace/ into`). These intentionally reference the old flat path;
+  they are not artifact paths that need to change.
+
+  Standalone skills (e.g., `five-whys`, `adr`, `threat-model`) and non-pipeline agents
+  (e.g., `chaos-engineer`, `release-manager`) use `.claude/feature-workspace/` as a scratch
+  area for ad-hoc output and are intentionally excluded from this check — they are invoked
+  without a feature-name context and do not participate in `deliver-feature`'s concurrency model.
+
 - **Health check**: existing `scripts/health-check.sh` must remain green at every commit.
 - **Legacy path**: manual verification that a delivery started with the pre-Phase-B layout can
   resume after the workspace migration step runs.
