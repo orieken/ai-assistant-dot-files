@@ -54,7 +54,9 @@ shared/                              <- single source of truth, edit here only
 ├── DOMAIN_DICTIONARY.md
 ├── TEAM_TOPOLOGY.md               <- Bounded Context -> team/type/interaction-mode registry (Skelton & Pais)
 ├── memory-registry.json           <- catalog of every durable memory source + retrieval backend
-└── platform-registry.json           <- tier/capability/format per platform
+├── platform-registry.json           <- tier/capability/format per platform
+├── mcp/                             <- MCP server scaffold (6 M1 tools, stdio transport, Go)
+└── mcp-patterns/go/                 <- copy-me templates; compile with build tags removed
 
         │  scripts/generate-configs.sh (reads shared/ + platform-registry.json)
         ▼
