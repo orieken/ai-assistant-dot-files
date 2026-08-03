@@ -28,16 +28,16 @@ Identify "hot paths" (high-read, low-write data) and mandate caching strategies 
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/analysis.md` — understand the feature scope and expected load.
-2. **Read** `.claude/feature-workspace/architecture-notes.md` — understand the planned structure and sequence of operations.
+1. **Read** `.claude/feature-workspace/<feature-name>/analysis.md` — understand the feature scope and expected load.
+2. **Read** `.claude/feature-workspace/<feature-name>/architecture-notes.md` — understand the planned structure and sequence of operations.
 3. **Analyze** the design for the four key risks: Idempotency, Timeouts, N+1 Queries, and Caching.
 4. **Identify** missing reliability structures. If the developer needs to use a `CircuitBreaker` or `ExponentialBackoffStrategy` for external calls, dictate it now.
-5. **Write** `.claude/feature-workspace/performance-report.md`.
+5. **Write** `.claude/feature-workspace/<feature-name>/performance-report.md`.
 
 ## Output Format
 
 Read `shared/templates/performance-report.template.md` and produce your artifact at
-`.claude/feature-workspace/performance-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/performance-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

@@ -31,17 +31,17 @@ Traces, logs, and metrics must NEVER contain cleartext passwords, authentication
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/analysis.md` to understand the business value of the feature.
-2. **Read** `.claude/feature-workspace/implementation-notes.md` to understand the code structure.
+1. **Read** `.claude/feature-workspace/<feature-name>/analysis.md` to understand the business value of the feature.
+2. **Read** `.claude/feature-workspace/<feature-name>/implementation-notes.md` to understand the code structure.
 3. **Read** the implementation files to review logging payload formats and OTel span configurations.
 4. **Fix** any high-cardinality logs using the `Edit` or `Write` tools to enforce stable message strings and explicit context maps.
 5. **Define** the specific SLIs the business should track for this feature.
-6. **Write** `.claude/feature-workspace/observability-report.md`.
+6. **Write** `.claude/feature-workspace/<feature-name>/observability-report.md`.
 
 ## Output Format
 
 Read `shared/templates/observability-report.template.md` and produce your artifact at
-`.claude/feature-workspace/observability-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/observability-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

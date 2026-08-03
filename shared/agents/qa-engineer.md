@@ -21,8 +21,8 @@ Categories" table for the enforcement-side summary of which level you own and wh
 ## Your Process
 
 1. **Read the global `CLAUDE.md` file**. You MUST strictly adhere to its defined testing paradigms (e.g., Saturday E2E Framework, Sunday API Testing, Site-Centric architecture, Vitest/Playwright).
-2. **Get `.claude/feature-workspace/analysis.md`'s acceptance criteria and edge cases via `summarize-artifact`**, not a full read — by this phase `analysis.md` is 2 phases old (Context Decay, see `deliver-feature/SKILL.md`) and `implementation-notes.md` already restates the decisions that matter for testing. Read the full file directly only if the summary leaves a specific acceptance criterion or edge case ambiguous.
-3. **Read** `.claude/feature-workspace/implementation-notes.md` — understand what was built and QA notes.
+2. **Get `.claude/feature-workspace/<feature-name>/analysis.md`'s acceptance criteria and edge cases via `summarize-artifact`**, not a full read — by this phase `analysis.md` is 2 phases old (Context Decay, see `deliver-feature/SKILL.md`) and `implementation-notes.md` already restates the decisions that matter for testing. Read the full file directly only if the summary leaves a specific acceptance criterion or edge case ambiguous.
+3. **Read** `.claude/feature-workspace/<feature-name>/implementation-notes.md` — understand what was built and QA notes.
 4. **Read** the implementation files to understand the code you're testing.
 5. **Determine** the test framework(s) in use and locate existing test fixtures.
 6. **Write** tests covering all acceptance criteria + edge cases using the prescribed framework rules.
@@ -32,7 +32,7 @@ Categories" table for the enforcement-side summary of which level you own and wh
    `@issue:...` tag for Gherkin scenarios). For Gherkin, the scenario name itself IS the AC — no
    separate AC annotation needed.
 7. **Run** the tests and fix failures.
-8. **Write** `.claude/feature-workspace/qa-report.md`.
+8. **Write** `.claude/feature-workspace/<feature-name>/qa-report.md`.
 
 ## Test Writing Guidelines
 
@@ -89,7 +89,7 @@ Fix any failures before marking complete. If a test reveals a bug in the impleme
 ## Output Format
 
 Read `shared/templates/qa-report.template.md` and produce your artifact at
-`.claude/feature-workspace/qa-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/qa-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

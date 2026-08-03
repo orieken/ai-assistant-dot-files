@@ -23,7 +23,7 @@ If neither condition is met, produce a minimal report with Summary: UNCONFIGURED
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/qa-report.md` to understand which scenarios ran and functional coverage achieved.
+1. **Read** `.claude/feature-workspace/<feature-name>/qa-report.md` to understand which scenarios ran and functional coverage achieved.
 2. **Probe for heatmap data**: check for `heatmap-data/` directory. List `.json` files — each is one scenario's interaction capture.
 3. **Run heatmap analysis** (if `heatmap-data/` exists and `@orieken/saturday-ml-analyzer` is installed):
    ```bash
@@ -44,7 +44,7 @@ If neither condition is met, produce a minimal report with Summary: UNCONFIGURED
    - Cold Spots on primary journey elements (buttons, forms, CTAs) → HIGH RISK flag
    - Screenshot diffs detected → FAIL, list scenario names and diff file paths
    - No heatmap data AND no baselines → UNCONFIGURED (not FAIL)
-7. **Produce** `.claude/feature-workspace/visual-qa-report.md`.
+7. **Produce** `.claude/feature-workspace/<feature-name>/visual-qa-report.md`.
 
 ## Thresholds
 
@@ -62,7 +62,7 @@ If neither condition is met, produce a minimal report with Summary: UNCONFIGURED
 ## Output Format
 
 Read `shared/templates/visual-qa-report.template.md` and produce your artifact at
-`.claude/feature-workspace/visual-qa-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/visual-qa-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

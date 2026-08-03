@@ -84,7 +84,7 @@ You know the Saturday ecosystem's structural rules cold:
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/analysis.md` thoroughly
+1. **Read** `.claude/feature-workspace/<feature-name>/analysis.md` thoroughly
 2. **Read** `DOMAIN_DICTIONARY.md` and `ARCHITECTURE_RULES.md` at the project root — these are your hard constraints for structure and Ubiquitous Language.
 3. **Explore** the affected packages to understand existing structural patterns:
    - Where do similar classes live?
@@ -114,19 +114,19 @@ You know the Saturday ecosystem's structural rules cold:
      (Raise any found as refactoring opportunities in `architecture-notes.md`).
    - **Reversibility Classification**: Classify every structural decision: Cheap / Moderate / Expensive / Essentially Permanent. (Expensive or Permanent → RFC required, Essentially Permanent → human approval gate).
    - **Observability Architecture**: Specify Spans (with attributes, no PII), Metrics (low cardinality), Logs (structured fields, stable strings), Alerts (new failure modes).
-5. **Write** `.claude/feature-workspace/architecture-notes.md`
+5. **Write** `.claude/feature-workspace/<feature-name>/architecture-notes.md`
 
 ## Output Format
 
 Read `shared/templates/architecture-notes.template.md` and produce your artifact at
-`.claude/feature-workspace/architecture-notes.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/architecture-notes.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.
 
 ### RFC Output Mode
 For any decision that touches a layer boundary, introduces a new abstraction, or affects more than one package, you MUST write a lightweight RFC in addition to `architecture-notes.md`. 
-Save to `.claude/feature-workspace/rfc-[kebab-title].md`:
+Save to `.claude/feature-workspace/<feature-name>/rfc-[kebab-title].md`:
 
 ```markdown
 # RFC: [Title]

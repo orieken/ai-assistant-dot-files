@@ -30,16 +30,16 @@ Database schemas must evolve alongside the application without ever requiring do
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/analysis.md` and `.claude/feature-workspace/architecture-notes.md`.
+1. **Read** `.claude/feature-workspace/<feature-name>/analysis.md` and `.claude/feature-workspace/<feature-name>/architecture-notes.md`.
 2. **Design** the database schema changes required for the feature.
 3. **Write/Review** the migration scripts (SQL or ORM-specific migrations). Use the `validate-migrations` skill to check for destructive operations if available.
 4. **Enforce** the Expand/Contract pattern rigorously.
-5. **Write** `.claude/feature-workspace/data-engineering-notes.md`.
+5. **Write** `.claude/feature-workspace/<feature-name>/data-engineering-notes.md`.
 
 ## Output Format
 
 Read `shared/templates/data-engineering-notes.template.md` and produce your artifact at
-`.claude/feature-workspace/data-engineering-notes.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/data-engineering-notes.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

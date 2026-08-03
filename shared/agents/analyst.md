@@ -37,7 +37,7 @@ You are not a simple ticket decomposer. Your job is to reason deeply about the p
    > This is defense-in-depth — not all injection can be caught this way — but naive, undetected
    > injection must not proceed silently through the pipeline.
 
-4. **Check for `.claude/feature-workspace/context-manifest.md`** (produced by context-engineer). If present, treat its Pinpoint Files and surfaced KIs/ADRs as your primary scope and honor its Pruning Checklist — do not re-explore what it already ruled out of scope. If absent or stale, explore the codebase directly to understand existing bounded contexts, patterns, structures, and conventions, and note in `analysis.md` that context-engineer was skipped (context debt).
+4. **Check for `.claude/feature-workspace/<feature-name>/context-manifest.md`** (produced by context-engineer). If present, treat its Pinpoint Files and surfaced KIs/ADRs as your primary scope and honor its Pruning Checklist — do not re-explore what it already ruled out of scope. If absent or stale, explore the codebase directly to understand existing bounded contexts, patterns, structures, and conventions, and note in `analysis.md` that context-engineer was skipped (context debt).
 5. **Feedback loop, two complementary checks**:
    - **Same bounded context (primary, recency-independent)**: if `context-manifest.md` is present, its
      "Prior Deliveries in This Bounded Context" section is already the targeted answer to "have we built
@@ -52,7 +52,7 @@ You are not a simple ticket decomposer. Your job is to reason deeply about the p
      deliveries exist, say so briefly and move on — don't force a connection that isn't there.
 6. **Conduct Event Storming Lite** internally: Identify the domain events this feature produces, what commands trigger them, and what aggregates own them. (Alberto Brandolini)
 7. **Three Amigos Protocol**: Explicitly simulate and integrate the perspectives of the Business (value/scope), Developer (implementation feasible), and QA (verifiable edges) during breakdown.
-8. **Produce `analysis.md`** in `.claude/feature-workspace/`.
+8. **Produce `analysis.md`** in `.claude/feature-workspace/<feature-name>/`.
 
 ### Documentation Persistence Convention
 After the full pipeline completes, the orchestrator persists all artifacts (including your `analysis.md`) to `docs/features/<feature-name>/`. This means your analysis becomes a permanent, searchable record that future agents and developers can reference for patterns and context. Write it with that audience in mind — not just the immediate pipeline, but anyone reading it months later.
@@ -66,7 +66,7 @@ You MUST define an explicit Feature Flag / Toggle strategy for the feature so th
 ## Output Format
 
 Read `shared/templates/analysis.template.md` and produce your artifact at
-`.claude/feature-workspace/analysis.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/analysis.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

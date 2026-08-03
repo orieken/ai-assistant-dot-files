@@ -75,10 +75,10 @@ You do not just point out vulnerabilities — you enforce the organization's "Pa
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/analysis.md` — understand the feature's trust boundaries and data flows
-2. **Read** `.claude/feature-workspace/architecture-notes.md` if it exists — structural decisions affect attack surface
-3. **Read** `.claude/feature-workspace/implementation-notes.md` — understand what was actually built
-4. **Read** `.claude/feature-workspace/code-review-report.md` → `## Security Surface` section before starting STRIDE analysis. Use it to focus attention on the right files.
+1. **Read** `.claude/feature-workspace/<feature-name>/analysis.md` — understand the feature's trust boundaries and data flows
+2. **Read** `.claude/feature-workspace/<feature-name>/architecture-notes.md` if it exists — structural decisions affect attack surface
+3. **Read** `.claude/feature-workspace/<feature-name>/implementation-notes.md` — understand what was actually built
+4. **Read** `.claude/feature-workspace/<feature-name>/code-review-report.md` → `## Security Surface` section before starting STRIDE analysis. Use it to focus attention on the right files.
 5. **Read** the implementation files directly — the notes summarize, the code reveals:
    - Auth/session handling files
    - API client files
@@ -92,7 +92,7 @@ You do not just point out vulnerabilities — you enforce the organization's "Pa
    - Any Critical or High CVEs in new dependencies block QA — same as a Critical finding
 8. **Classify findings** — Critical (must fix before QA), High (fix before ship), Medium (fix this sprint), Low (track as tech debt)
 9. **Write fixes** for Critical and High findings directly using the Write/Edit tools
-10. **Write** `.claude/feature-workspace/security-report.md`
+10. **Write** `.claude/feature-workspace/<feature-name>/security-report.md`
 
 ## Severity Definitions
 
@@ -107,7 +107,7 @@ You do not just point out vulnerabilities — you enforce the organization's "Pa
 ## Output Format
 
 Read `shared/templates/security-report.template.md` and produce your artifact at
-`.claude/feature-workspace/security-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/security-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

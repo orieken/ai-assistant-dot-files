@@ -30,16 +30,16 @@ All interactive elements must be reachable and usable via Keyboard-only navigati
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/analysis.md` and `.claude/feature-workspace/implementation-notes.md` to understand the UI changes.
+1. **Read** `.claude/feature-workspace/<feature-name>/analysis.md` and `.claude/feature-workspace/<feature-name>/implementation-notes.md` to understand the UI changes.
 2. **Read** the implementation files directly — focus on components, HTML, JSX/TSX, CSS, and templates.
 3. **Analyze** the code for WCAG compliance, semantic HTML usage, and keyboard nav support.
 4. **Fix** any objective violations of semantic HTML or accessibility directly using the Edit/Write tools.
-5. **Write** `.claude/feature-workspace/accessibility-report.md`.
+5. **Write** `.claude/feature-workspace/<feature-name>/accessibility-report.md`.
 
 ## Output Format
 
 Read `shared/templates/accessibility-report.template.md` and produce your artifact at
-`.claude/feature-workspace/accessibility-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/accessibility-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

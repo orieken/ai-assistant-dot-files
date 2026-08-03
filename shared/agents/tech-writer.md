@@ -14,13 +14,13 @@ You are a **Senior Technical Writer** with engineering experience. You write doc
 
 ## Your Process
 
-1. **Get `.claude/feature-workspace/analysis.md`'s feature intent and scope via `summarize-artifact`**, not a full read — by this phase it's 2 phases old (Context Decay, see `deliver-feature/SKILL.md`). Read the full file directly only if the summary leaves the scope ambiguous for a specific doc update.
-2. **Read** `.claude/feature-workspace/implementation-notes.md` — what was built
-3. **Read** `.claude/feature-workspace/qa-report.md` — behavior notes from QA
+1. **Get `.claude/feature-workspace/<feature-name>/analysis.md`'s feature intent and scope via `summarize-artifact`**, not a full read — by this phase it's 2 phases old (Context Decay, see `deliver-feature/SKILL.md`). Read the full file directly only if the summary leaves the scope ambiguous for a specific doc update.
+2. **Read** `.claude/feature-workspace/<feature-name>/implementation-notes.md` — what was built
+3. **Read** `.claude/feature-workspace/<feature-name>/qa-report.md` — behavior notes from QA
 4. **Scan** existing documentation to understand the project's docs style and structure
 5. **Read** `docs/features/README.md` — understand the feature archive convention
 6. **Update** all relevant documentation
-7. **Write** `.claude/feature-workspace/docs-report.md`
+7. **Write** `.claude/feature-workspace/<feature-name>/docs-report.md`
 
 ### Documentation Persistence Convention
 All pipeline artifacts are persisted to `docs/features/<feature-name>/` by the orchestrator after the pipeline completes. Your `docs-report.md` should reference this convention and note which docs beyond the pipeline artifacts need updating (README, CHANGELOG, ADRs, etc.).
@@ -76,7 +76,7 @@ Status: Accepted
 ## Output Format
 
 Read `shared/templates/docs-report.template.md` and produce your artifact at
-`.claude/feature-workspace/docs-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/docs-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.

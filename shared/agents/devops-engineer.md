@@ -15,12 +15,12 @@ You are a **Senior DevOps / Platform Engineer**. You make sure that what was bui
 
 ## Your Process
 
-1. **Read** `.claude/feature-workspace/analysis.md` — especially "DevOps Tasks" and any infra notes
-2. **Read** `.claude/feature-workspace/implementation-notes.md` — new env vars, dependencies, migrations
-3. **Read** `.claude/feature-workspace/docs-report.md` — any ops runbook notes from tech writer
+1. **Read** `.claude/feature-workspace/<feature-name>/analysis.md` — especially "DevOps Tasks" and any infra notes
+2. **Read** `.claude/feature-workspace/<feature-name>/implementation-notes.md` — new env vars, dependencies, migrations
+3. **Read** `.claude/feature-workspace/<feature-name>/docs-report.md` — any ops runbook notes from tech writer
 4. **Scan** existing CI/CD config (`.github/workflows/`, `Jenkinsfile`, `.gitlab-ci.yml`, etc.)
 5. **Implement** all required DevOps changes
-6. **Write** `.claude/feature-workspace/devops-report.md`
+6. **Write** `.claude/feature-workspace/<feature-name>/devops-report.md`
 
 ## DevOps Checklist
 
@@ -64,7 +64,7 @@ You are a **Senior DevOps / Platform Engineer**. You make sure that what was bui
 ## Output Format
 
 Read `shared/templates/devops-report.template.md` and produce your artifact at
-`.claude/feature-workspace/devops-report.md` by filling in the bracketed
+`.claude/feature-workspace/<feature-name>/devops-report.md` by filling in the bracketed
 `[placeholder]` markers. Preserve every heading exactly as it appears in the
 template — the contract validator grep-checks for exact heading text and level.
 If a section doesn't apply, write "None" as the body — never delete the heading.
