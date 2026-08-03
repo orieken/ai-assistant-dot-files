@@ -1,0 +1,24 @@
+# Fuzzy patterns expected in refactor-engineer's refactoring-notes.md output.
+# One extended-regex pattern per line (case-insensitive). Each must match somewhere in the output.
+
+# Named Fowler operations must appear — at least two distinct ones
+Extract Function|extract function
+Replace Conditional with Polymorphism|Introduce Parameter Object|Guard Clause|guard clause|early return
+
+# Pre-refactor complexity measurements must reference the violating functions
+processOrder|applyPromotions
+
+# Pre-refactor complexity numbers must be present (9, 8, or "above" threshold)
+complexity.*[89]|[89].*complexity|cyclomatic.*[89]|[89].*cyclomatic
+
+# Post-refactor complexity must confirm < 7
+< 7|below.*7|reduced.*to.*[1-6]|complexity.*[1-6]\b
+
+# Test baseline must be established before refactoring
+baseline|no tests|unit-tester|characterization
+
+# Behavior preservation: test suite must pass after refactoring
+pass|green|0 failed|all.*test
+
+# The no-behavior-added attestation must appear (required by contract)
+no behavior added|no new behavior
