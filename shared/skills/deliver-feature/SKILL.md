@@ -46,6 +46,24 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
 4. `CLAUDE.md`
 5. `docs/features/README.md` (for artifact persistence conventions)
 
+## Workspace Path Resolution
+
+Every file path that was previously `.claude/feature-workspace/<file>` is now
+`.claude/feature-workspace/<feature-name>/<file>`, where `<feature-name>` is the kebab-case slug
+derived in Phase 0 step 2. Agents invoked by this skill receive the resolved workspace path in
+their prompt preamble so they never hardcode it.
+
+**Legacy detection** (pre-Epic-63 singleton installs): at Phase 0 step 3, before the normal
+workspace check, look for a flat `.claude/feature-workspace/pipeline-state.json` file that lives
+directly at the root (not inside any `<feature-name>/` subdirectory). If found:
+1. Read the `feature` field from the state file (use `default` if the field is absent).
+2. Move all files from `.claude/feature-workspace/` into
+   `.claude/feature-workspace/<feature>/` — rename in place; do not copy-then-delete.
+3. Log a `workspace.migrated` event to `.claude/telemetry/events.jsonl` (if telemetry is
+   enabled).
+4. Continue from the migrated path. The migration is idempotent: if the named subdirectory
+   already exists, skip silently.
+
 ## Process
 
 ### Phase 0: Setup
@@ -58,14 +76,14 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
    > halt until the human confirms the spec is safe. The `analyst` agent repeats this check — this
    > is the pipeline-entry check before any agent processes the spec.
 
-2. **Derive the feature name** — kebab-case from the feature file name (e.g., `features/user-auth.md` becomes `user-auth`).
-3. **Check for an existing `.claude/feature-workspace/pipeline-state.json`.** If one exists for this feature: stop and invoke `resume-pipeline` instead of continuing here — do not blindly clean the workspace out from under an in-progress or crashed run. If the user explicitly asked to start over ("start fresh", "restart delivery"), archive the old state file to `.claude/feature-workspace/.history/pipeline-state.json.<timestamp>` and proceed. If no state file exists, create the feature workspace: `.claude/feature-workspace/` — clean any prior artifacts.
+2. **Derive the feature name** — kebab-case from the feature file name (e.g., `features/user-auth.md` becomes `user-auth`). This slug is the workspace directory name for this delivery.
+3. **Run legacy workspace detection** (see "Workspace Path Resolution" above), then **check for an existing `.claude/feature-workspace/<feature-name>/pipeline-state.json`.** If one exists: stop and invoke `resume-pipeline` instead of continuing here — do not blindly clean the workspace out from under an in-progress or crashed run. If the user explicitly asked to start over ("start fresh", "restart delivery"), archive the old state file to `.claude/feature-workspace/<feature-name>/.history/pipeline-state.json.<timestamp>` and proceed. If no workspace exists yet, create it: `.claude/feature-workspace/<feature-name>/`.
 4. **Create the feature archive directory**: `docs/features/<feature-name>/` — this is where all final artifacts are persisted.
-5. **Initialize `.claude/feature-workspace/pipeline-state.json` and `.claude/feature-workspace/pipeline-trace.json`** — see "Checkpointing & Pipeline State" and "Pipeline Tracing" below.
+5. **Initialize `.claude/feature-workspace/<feature-name>/pipeline-state.json` and `.claude/feature-workspace/<feature-name>/pipeline-trace.json`** — see "Checkpointing & Pipeline State" and "Pipeline Tracing" below.
 6. **Check for `.claude/delivery-policy.yaml`** — if present, parse policy mode (`policy-driven` | `strict-human`), `maxContractRetries` (default 3), `maxDiffLines` (default 200), and stage `autoProceed` settings into pipeline state. If missing, default mode to `strict-human` (100% backward compatible, standard human prompt at every checkpoint). Log initial `policy.evaluated` event to `.claude/telemetry/events.jsonl`.
 
 ### Phase 1: Discovery and Design
-7. **Invoke context-engineer** -> produces `context-manifest.md` in `.claude/feature-workspace/`. This scopes the bounded context, pins the specific files analyst/developer must read, lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the user which files it recommends cutting before continuing. **Checkpoint**: record in `pipeline-state.json`.
+7. **Invoke context-engineer** -> produces `context-manifest.md` in `.claude/feature-workspace/<feature-name>/`. This scopes the bounded context, pins the specific files analyst/developer must read, lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the user which files it recommends cutting before continuing. **Checkpoint**: record in `pipeline-state.json`.
 8. **Invoke validate-artifact** against `shared/contracts/context-manifest-contract.md`. If FAIL: if `policy-driven` mode is active and `attempts < maxContractRetries` (default 3), log `contract.retry` to `.claude/telemetry/events.jsonl` and re-invoke context-engineer with the specific contract violations; otherwise send back to human. Repeat until PASS. **Checkpoint** on PASS.
 9. **Invoke analyst** -> reads `context-manifest.md` first, then produces `analysis.md`.
 10. **Invoke validate-artifact** against `shared/contracts/analysis-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries` (log `contract.retry`), re-invoking analyst. Repeat until PASS. **Checkpoint** on PASS.
@@ -81,7 +99,7 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
 18. **Invoke developer** -> reads `context-manifest.md` first, then produces `implementation-notes.md`.
 19. **Invoke validate-artifact** against `shared/contracts/implementation-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
 20. **Invoke code-reviewer** -> produces `code-review-report.md`.
-21. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): apply Tier B retry loop up to `maxContractRetries`. If verdict is CHANGES REQUESTED (qualitative, independent of structural check): back up current `implementation-notes.md` and `code-review-report.md` to `.claude/feature-workspace/.history/` (see Rollback), then repeat from step 18 until APPROVED and structurally valid. **Checkpoint** on final PASS+APPROVED.
+21. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): apply Tier B retry loop up to `maxContractRetries`. If verdict is CHANGES REQUESTED (qualitative, independent of structural check): back up current `implementation-notes.md` and `code-review-report.md` to `.claude/feature-workspace/<feature-name>/.history/` (see Rollback), then repeat from step 18 until APPROVED and structurally valid. **Checkpoint** on final PASS+APPROVED.
 22. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `accessibility-report.md`. **Checkpoint**.
 23. **Invoke validate-artifact** against `shared/contracts/accessibility-contract.md` (only if accessibility-engineer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS or SKIP.
 24. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`.
@@ -100,8 +118,8 @@ stage definitions mirror this process exactly, so behavior is preserved regardle
 35. **Invoke validate-artifact** against `shared/contracts/devops-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
 
 ### Phase 4: Persistence and Delivery
-36. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/`.
-37. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/` to `docs/features/<feature-name>/`.
+36. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/<feature-name>/`.
+37. **Persist all artifacts** — copy every produced artifact from `.claude/feature-workspace/<feature-name>/` to `docs/features/<feature-name>/`.
 38. **Create feature archive index** — write `docs/features/<feature-name>/README.md` listing all artifacts with descriptions and links.
 39. **Update feature index** — add the new feature entry to `docs/features/README.md`.
 40. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered.
@@ -143,9 +161,9 @@ checksums differ, the human edited the artifact — set `outcome: "edited_then_a
 | Gate | `gate_id` | `gate_name` | `artifact_path` |
 |---|---|---|---|
 | Step 42 Friday ship (Gate #1) | 1 | `friday_ship` | null (no single artifact) |
-| Analyst PAUSE (step 11) | — | — | `.claude/feature-workspace/analysis.md` |
-| Architect RFC PAUSE (step 13) | — | — | `.claude/feature-workspace/architecture-notes.md` |
-| Security Critical halt (step 25) | — | — | `.claude/feature-workspace/security-report.md` |
+| Analyst PAUSE (step 11) | — | — | `.claude/feature-workspace/<feature-name>/analysis.md` |
+| Architect RFC PAUSE (step 13) | — | — | `.claude/feature-workspace/<feature-name>/architecture-notes.md` |
+| Security Critical halt (step 25) | — | — | `.claude/feature-workspace/<feature-name>/security-report.md` |
 
 Policy-evaluation pauses (AUTO_PROCEED / PAUSE_HUMAN) emit `policy.evaluated` events instead; do not
 double-emit `gate_decision` for those — `policy.evaluated` already captures the decision signal for
@@ -153,8 +171,8 @@ non-Non-Negotiable gates.
 
 ## Checkpointing & Pipeline State
 
-After every step marked **Checkpoint** above, write/update both `.claude/feature-workspace/pipeline-state.json`
-(resumability — see below) and `.claude/feature-workspace/pipeline-trace.json` (timing/performance history —
+After every step marked **Checkpoint** above, write/update both `.claude/feature-workspace/<feature-name>/pipeline-state.json`
+(resumability — see below) and `.claude/feature-workspace/<feature-name>/pipeline-trace.json` (timing/performance history —
 see "Pipeline Tracing" below). They're updated together but serve different consumers: `pipeline-state.json`
 is read by `resume-pipeline` to continue an interrupted run; `pipeline-trace.json` is read by
 `pipeline-retrospective` and `agent-scorecard` to analyze trends across many runs.
@@ -190,7 +208,7 @@ is read by `resume-pipeline` to continue an interrupted run; `pipeline-trace.jso
 ```
 
 - Compute the checksum as `sha256` of the artifact's current file content.
-- Before overwriting an artifact that already exists in `.claude/feature-workspace/` (a re-run of the same agent, e.g. after a validate-artifact FAIL or a CHANGES REQUESTED loop), copy the existing version to `.claude/feature-workspace/.history/<artifact-name>.<unix-timestamp>.md` first, so it can be restored by a rollback.
+- Before overwriting an artifact that already exists in `.claude/feature-workspace/<feature-name>/` (a re-run of the same agent, e.g. after a validate-artifact FAIL or a CHANGES REQUESTED loop), copy the existing version to `.claude/feature-workspace/<feature-name>/.history/<artifact-name>.<unix-timestamp>.md` first, so it can be restored by a rollback.
 - Skipped agents (conditional agents whose trigger condition was false) get a `completedAgents` entry with `"status": "SKIPPED"` and no artifact/checksum, so a later resume doesn't try to re-evaluate the skip condition against a possibly-changed `analysis.md`.
 - If an artifact on disk doesn't match the checksum recorded for its step (someone hand-edited a workspace file outside the pipeline), treat that step as **not** completed — re-run the agent rather than trusting stale state.
 
@@ -198,7 +216,7 @@ is read by `resume-pipeline` to continue an interrupted run; `pipeline-trace.jso
 
 If an agent's artifact turns out to be wrong (not just a validate-artifact FAIL, which self-heals via the retry loop, but a case where a human or a later agent determines an *earlier* artifact was flawed):
 
-1. Identify the artifact to roll back to its previous version, and find its latest entry in `.claude/feature-workspace/.history/`.
+1. Identify the artifact to roll back to its previous version, and find its latest entry in `.claude/feature-workspace/<feature-name>/.history/`.
 2. Restore that history file over the current artifact.
 3. In `pipeline-state.json`, remove (or mark `"stale": true` on) every `completedAgents` entry for that agent and every agent after it in the pipeline — they consumed content that no longer exists.
 4. Re-run the pipeline starting at the rolled-back agent's step.
@@ -208,7 +226,7 @@ For resuming an interrupted run or replaying from a specific phase, use the `res
 
 ## Pipeline Tracing
 
-Alongside `pipeline-state.json`, maintain `.claude/feature-workspace/pipeline-trace.json` — a timing and
+Alongside `pipeline-state.json`, maintain `.claude/feature-workspace/<feature-name>/pipeline-trace.json` — a timing and
 iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard` (see
 `shared/skills/pipeline-trace/SKILL.md` for the full schema and query usage). Minimal shape:
 
@@ -284,7 +302,7 @@ whose gist, not exact wording, is what still matters.
 ## Output Format
 
 ### Working Artifacts (temporary)
-All agents write to `.claude/feature-workspace/` during execution.
+All agents write to `.claude/feature-workspace/<feature-name>/` during execution.
 
 ### Persisted Artifacts (permanent)
 After pipeline completion, all artifacts are copied to `docs/features/<feature-name>/`:
@@ -382,10 +400,11 @@ Status: Complete | Complete with notes | Blocked
 - Never send CHANGES REQUESTED code to the security reviewer or QA
 - Never ship to Friday without explicit "ship" or "yes" from the user
 - Never persist artifacts to docs/features/ until the delivery summary is written
-- Never overwrite an existing workspace artifact without first backing it up to `.claude/feature-workspace/.history/` — rollback depends on that history existing
+- Never overwrite an existing workspace artifact without first backing it up to `.claude/feature-workspace/<feature-name>/.history/` — rollback depends on that history existing
 - Never trust a `pipeline-state.json` entry whose checksum doesn't match the artifact currently on disk — re-run that step instead of resuming past it
 - Never fabricate timing data in `pipeline-trace.json` — if a step's start/end time wasn't actually observed, omit the entry rather than estimating it
 - The feature archive in docs/features/<feature-name>/ is append-only — never delete prior delivery artifacts
+- Multiple named workspaces may exist concurrently — each feature's delivery is isolated. However, Gate #2 (git-commit) shares the single git index: two concurrent deliveries MUST NOT both attempt Gate #2 at the same time. Coordinate commit gates sequentially when running parallel deliveries
 
 ## Standalone Mode
 All agents run locally. Friday POST is the only external call — non-blocking if Friday is not running. Artifact persistence to docs/features/ works entirely offline.
