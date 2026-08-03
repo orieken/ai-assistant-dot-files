@@ -75,7 +75,7 @@ prose pin with the underlying reference when the summary adds no unique informat
 For each pinned file, estimate tokens (~line count × 8 chars/line ÷ 4 chars/token — a rough heuristic). Sum the total and compare against the consuming agent's tier budget (of a 200k-token context window): Analyst/Architect ≤60%, Developer ≤80%, Reviewer agents ≤40%. Flag `WARNING` if over budget and recommend specific cuts.
 
 ### 6. Compile a Context Manifest
-Generate a concise `context-manifest.md` in the current feature workspace (e.g., `.claude/feature-workspace/context-manifest.md` or output directly). 
+Generate a concise `context-manifest.md` in the active feature workspace (e.g., `.claude/feature-workspace/<feature-name>/context-manifest.md`, where `<feature-name>` is provided by the orchestrator; or output directly when invoked standalone). 
 
 ## Output Format
 

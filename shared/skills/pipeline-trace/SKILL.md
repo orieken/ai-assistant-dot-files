@@ -8,7 +8,7 @@ standalone: true
 ---
 
 ## When To Use
-- `deliver-feature` writes to `.claude/feature-workspace/pipeline-trace.json` directly as part of its own
+- `deliver-feature` writes to `.claude/feature-workspace/<feature-name>/pipeline-trace.json` directly as part of its own
   Checkpoint bookkeeping (see `deliver-feature/SKILL.md`, "Pipeline Tracing") — it does not invoke this
   skill on every step, the same way it doesn't invoke a separate skill to write `pipeline-state.json`.
 - Invoke this skill when a human asks an ad-hoc question about timing/iterations for a specific feature's
@@ -17,7 +17,7 @@ standalone: true
   `pipeline-retrospective` instead — this skill only looks at one run at a time.
 
 ## Context To Load First
-1. `.claude/feature-workspace/pipeline-trace.json` (in-progress run) or `docs/features/<feature-name>/pipeline-trace.json` (completed run)
+1. `.claude/feature-workspace/<feature-name>/pipeline-trace.json` (in-progress run) or `docs/features/<feature-name>/pipeline-trace.json` (completed run)
 
 ## Schema
 ```json
@@ -92,7 +92,7 @@ Field notes:
   to surface spend trends when data is available.
 
 ## Process
-1. Read the relevant `pipeline-trace.json` (in-progress in `.claude/feature-workspace/`, or persisted in
+1. Read the relevant `pipeline-trace.json` (in-progress in `.claude/feature-workspace/<feature-name>/`, or persisted in
    `docs/features/<feature-name>/` for a completed run).
 2. Answer the specific question asked — total duration, slowest agent, which agent looped, etc. — by
    reading the `agents` array directly. No aggregation across multiple files here (that's
