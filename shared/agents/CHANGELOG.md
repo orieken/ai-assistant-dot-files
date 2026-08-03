@@ -16,6 +16,12 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-08-02 — Epic 45: Refactor Engineer
+
+| Agent | Version | Change |
+|---|---|---|
+| refactor-engineer | 1.0.0 | New agent — structural refactoring with Fowler operations, characterization-test safety net, and behavior-preservation attestation |
+
 ## 2026-08-01 — v3.3.0: AOS Policy Layer (Phase 4)
 
 Fourth and final phase of the AOS migration. Phase 4 introduces the policy layer that makes
