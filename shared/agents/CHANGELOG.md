@@ -16,6 +16,12 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-08-04 — Epic 60: Retrieval Regression Set
+
+| Agent | Version | Change |
+|---|---|---|
+| retrieval-evaluator | 1.1.0 | Added regression set runner: reads approved cases from shared/evaluation/retrieval-regression.md, simulates retrieval for each, reports PASS/FAIL. Added telemetry sweep for new retrieval.queried event type (pending schema v1.2.0). Updated description to reflect expanded scope. |
+
 ## 2026-08-02 — Epic 45: Refactor Engineer
 
 | Agent | Version | Change |
