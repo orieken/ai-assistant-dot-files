@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for code-review-report.md. Consumed by the code-reviewer agent.
 Structure defined here; contract in shared/contracts/review-contract.md validates

@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for accessibility-report.md. Consumed by the accessibility-engineer agent.
 Structure defined here; contract in shared/contracts/accessibility-contract.md validates

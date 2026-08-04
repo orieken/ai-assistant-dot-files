@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for performance-report.md. Consumed by the performance-engineer agent.
 Structure defined here; contract in shared/contracts/performance-contract.md validates

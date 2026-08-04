@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for visual-qa-report.md. Consumed by the visual-qa-engineer agent.
 Contract in shared/contracts/visual-qa-report-contract.md validates required headings.

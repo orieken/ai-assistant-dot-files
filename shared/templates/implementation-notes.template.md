@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for implementation-notes.md. Consumed by the developer agent.
 Structure defined here; contract in shared/contracts/implementation-contract.md validates

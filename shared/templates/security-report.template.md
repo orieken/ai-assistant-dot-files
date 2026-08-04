@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for security-report.md. Consumed by the security-reviewer agent.
 Structure defined here; contract in shared/contracts/security-contract.md validates

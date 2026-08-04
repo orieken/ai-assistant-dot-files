@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for data-engineering-notes.md. Consumed by the data-engineer agent.
 Structure defined here; contract in shared/contracts/data-engineering-contract.md validates

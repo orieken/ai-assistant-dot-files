@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for architecture-notes.md. Consumed by the architect agent.
 Structure defined here; contract in shared/contracts/architecture-contract.md validates

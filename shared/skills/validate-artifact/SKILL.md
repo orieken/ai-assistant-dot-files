@@ -52,7 +52,8 @@ field-presence checks that `scripts/health-check.sh` already runs across the who
 2. Grep the artifact for each required heading — exact string and heading level (`##` vs `###`) must match.
 3. Apply the contract's "Validation Rule" content checks (e.g., "Overall Status must contain APPROVED or CHANGES REQUESTED", "Test Results must show Failed: 0").
 4. Record every miss — missing heading or failed content rule — as a violation.
-5. Report `PASS` (zero violations) or `FAIL` (one or more violations).
+5. **Check retrieval frontmatter (WARN-level)**: check whether the artifact starts with a YAML frontmatter block (`---` on the first line). If the frontmatter block is missing entirely, record one WARN. If the block is present, check that all seven retrieval fields are present (`feature`, `bounded_context`, `domain_terms`, `files_touched`, `issue_refs`, `linked_adrs`, `linked_kis`); record a WARN for each missing field. WARNs do not affect the PASS/FAIL status — they are surfaced separately in the output.
+6. Report `PASS` (zero structural violations) or `FAIL` (one or more structural violations). WARNs appear in the output regardless of PASS/FAIL status.
 
 ### Frontmatter files (agents, skills, KIs)
 Same PASS/FAIL semantics; the validation switches from heading-grepping to frontmatter-parsing.
@@ -86,6 +87,10 @@ Status: PASS | FAIL
 
 ## Content Rule Violations (if any)
 - [rule] — [what was found instead]
+
+## Retrieval Frontmatter Warnings (if any)
+- WARN: Missing retrieval frontmatter block — add a YAML `---` block at the top of the file (see contract's "Retrieval Frontmatter (WARN)" section for required fields)
+- WARN: Retrieval frontmatter field `<field>` is missing or empty
 
 ## Present Sections
 - [heading] ✓

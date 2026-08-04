@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for refactoring-notes.md. Consumed by the refactor-engineer agent.
 Contract in shared/contracts/refactoring-contract.md validates required headings.

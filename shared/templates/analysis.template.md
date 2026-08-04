@@ -1,3 +1,13 @@
+---
+feature: "<feature-name>"
+bounded_context: "<owning-bounded-context>"
+domain_terms: []
+files_touched: []
+issue_refs: []
+linked_adrs: []
+linked_kis: []
+---
+
 <!--
 Template for analysis.md. Consumed by the analyst agent.
 Structure defined here; contract in shared/contracts/analysis-contract.md validates
