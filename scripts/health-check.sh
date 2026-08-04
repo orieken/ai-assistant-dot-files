@@ -413,6 +413,45 @@ for p in data.get('optionalPaths', []):
     fi
   done <<< "$registry_paths"
 
+  # ADR-002 mechanical check: every registry source must declare a retrievalBackend from the
+  # allowed enum {lexical, llm-as-retriever, bm25, vector}. Note: the actual registry field is
+  # "retrievalBackend" (singular), while ADR-002 describes it as "retrievalBackends" (plural) —
+  # follow the registry as-is per Epic 60 Op 2 escalation rule; the ADR discrepancy is noted here.
+  # Degrades to SKIP (never false-FAIL) if python3 is unavailable.
+  if command -v python3 >/dev/null 2>&1; then
+    registry_backend_check=$(python3 -c "
+import json, sys
+VALID = {'lexical', 'llm-as-retriever', 'bm25', 'vector'}
+data = json.load(open('$REGISTRY'))
+problems = []
+for s in data.get('sources', []):
+    name = s.get('name', '?')
+    backend = s.get('retrievalBackend')
+    if backend is None:
+        problems.append('MISSING:' + name)
+    elif backend not in VALID:
+        problems.append('INVALID:' + name + ':' + str(backend))
+print('\n'.join(problems))
+" 2>/dev/null || true)
+    if [[ -z "$registry_backend_check" ]]; then
+      pass "all registry sources have a valid retrievalBackend"
+    else
+      while IFS= read -r problem; do
+        [[ -z "$problem" ]] && continue
+        kind="${problem%%:*}"
+        rest="${problem#*:}"
+        if [[ "$kind" == "MISSING" ]]; then
+          fail "registry source '$rest' missing retrievalBackend field (must be one of: lexical, llm-as-retriever, bm25, vector)"
+        else
+          src="${rest%%:*}"; val="${rest#*:}"
+          fail "registry source '$src' has invalid retrievalBackend '$val' (must be one of: lexical, llm-as-retriever, bm25, vector)"
+        fi
+      done <<< "$registry_backend_check"
+    fi
+  else
+    warn "python3 unavailable — skipping retrievalBackend enum check (ADR-002 fitness function)"
+  fi
+
   # No two KIs should share an exact frontmatter name: — a real duplicate, not just an overlap
   # memory-engineer would judge more subtly; this is the cheap, deterministic half of that check.
   ki_names=$( (grep -h '^name:' "$SHARED_DIR"/knowledge/*.md "$REPO_DIR"/.claude/knowledge/*.md 2>/dev/null || true) | sed 's/^name: *//' | sort)
