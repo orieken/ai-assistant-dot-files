@@ -65,6 +65,20 @@ while IFS= read -r match; do
   fi
 done < <(grep -nE '[0-9]+ agents|[0-9]+ skills' "$readme" 2>/dev/null || true)
 
+# Also check heading-format counts: "## Agent Roster (N)" and "## Skill Catalog (N)"
+while IFS= read -r match; do
+  lineno=$(echo "$match" | cut -d: -f1)
+  text=$(echo "$match" | cut -d: -f2-)
+  if echo "$text" | grep -qiE 'Agent Roster \([0-9]+\)'; then
+    n=$(echo "$text" | grep -oE '\([0-9]+\)' | tr -d '()' | head -1)
+    check_claim "README.md" "$lineno" "Agent Roster heading" "$n" "$actual_agents"
+  fi
+  if echo "$text" | grep -qiE 'Skill Catalog \([0-9]+\)'; then
+    n=$(echo "$text" | grep -oE '\([0-9]+\)' | tr -d '()' | head -1)
+    check_claim "README.md" "$lineno" "Skill Catalog heading" "$n" "$actual_skills"
+  fi
+done < <(grep -nE 'Agent Roster \([0-9]+\)|Skill Catalog \([0-9]+\)' "$readme" 2>/dev/null || true)
+
 # --- docs/AGENT_REFERENCE.md -------------------------------------------------
 agent_ref="$REPO_DIR/docs/AGENT_REFERENCE.md"
 if [[ -f "$agent_ref" ]]; then
