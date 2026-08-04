@@ -1,5 +1,5 @@
 {
-  "optionalPaths": [".claude/knowledge/"],
+  "optionalPaths": [".claude/knowledge/", "docs/features/*/summary.md"],
   "sources": [
     {
       "name": "knowledge-items",
@@ -51,6 +51,17 @@
       "retrievalBackend": "lexical",
       "format": "markdown (multiple files per feature directory)",
       "notes": "Retrieved via context-engineer's bounded-context grep (recency-independent) and analyst's 3-most-recent scan (recency-based) — see docs/runbooks/context-engineering.md section 2."
+    },
+    {
+      "name": "feature-archive-summaries",
+      "type": "Retrieval Surrogate",
+      "paths": ["docs/features/*/summary.md"],
+      "owner": "deliver-feature (writes via summarize-artifact --persist), memory-engineer (does not curate — surrogates are overwritten on re-delivery, not manually edited)",
+      "portable": false,
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown with HTML retrieval-surrogate comment header",
+      "notes": "Written by deliver-feature step 37a after all pipeline artifacts are persisted. These are the files that future BM25/vector retrieval tiers should index first — they contain a ~200-word distillation of the feature's scope and outcome. The HTML comment at the top carries machine-readable metadata (retrieval-surrogate: true, feature, source-artifact, generated, index-first). Lexical search over these surrogates is faster than grepping full artifact sets; vector tiers that land later should build their initial index from these files rather than raw analysis.md files."
     },
     {
       "name": "lessons-learned",
