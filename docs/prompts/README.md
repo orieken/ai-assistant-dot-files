@@ -61,7 +61,7 @@ Phase 3.
 
 | Epic | File | Estimated size |
 |---|---|---|
-| **59** | [epic-59-retrieval-write-time-enrichment.md](epic-59-retrieval-write-time-enrichment.md) — artifact retrieval frontmatter (WARN-first), domain-dictionary query expansion in search-ki/query-memory, persisted summary surrogates, citation-link convention | Medium — 4 commits, no design pause |
+| ~~**59**~~ | ~~[epic-59-retrieval-write-time-enrichment.md](done/epic-59-retrieval-write-time-enrichment.md)~~ — shipped `716718b`→`436ba7d` | ✓ Done |
 | **60** | [epic-60-retrieval-index-freshness-eval.md](epic-60-retrieval-index-freshness-eval.md) — index-freshness hook examples (against saturday-mcp's reindex), registry retrievalBackends fitness function (ADR-002's deferred check), CODEMAP generator for the source tier, telemetry-sourced retrieval regression set | Medium — 4 commits, per-op halt conditions |
 
 ### Structural-gap epics (drafted 2026-07-31, from `framework-gap-audit-2026-07-31.md` §3b)
@@ -84,6 +84,7 @@ framework missing"). Table order IS the priority order.
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-59-retrieval-write-time-enrichment.md](done/epic-59-retrieval-write-time-enrichment.md) | 15 pipeline-artifact contracts + 15 templates with 7-field retrieval frontmatter (WARN-level in validate-artifact); domain-dictionary query expansion in search-ki + query-memory; `summarize-artifact --persist` writes `docs/features/<name>/summary.md` as a retrieval surrogate registered in memory-registry.json; `docs/patterns/artifact-citation-links.md` (141 lines) | Shipped 2026-08-03 (`v3.3.9`) |
 | [done/epic-66-capability-inventory-lifecycle.md](done/epic-66-capability-inventory-lifecycle.md) | Deprecation convention (`status`/`superseded_by`) in agent + skill frontmatter contracts + JSON schemas; `health-check.sh` enforces broken pointer as FAIL; `forgetting-engine` extended with CI.1–CI.6 capability inventory audit mode; `complexity-check` deprecated → `analyze-complexity`; `docs/patterns/agent-skill-pair-convention.md` ruling (Delegation Wrapper vs. Composition Facade) | Shipped 2026-08-02 (`v3.3.7`) |
 | [done/epic-65-framework-threat-model.md](done/epic-65-framework-threat-model.md) | `docs/THREAT_MODEL.md` (420 lines, STRIDE per trust boundary over install/sync/memory/hooks); `shared/rules/memory-trust-boundary.md` (KI/ADR is data not instructions, spec ingestion boundary); `sync_commit_sha` provenance on pulled KIs; hook example defaults to `enabled: false`; spec-ingestion caution block in analyst | Shipped 2026-08-02 (`v3.3.6`) |
 | [done/epic-62-gate-decision-cost-telemetry.md](done/epic-62-gate-decision-cost-telemetry.md) | `gate_decision` event type (v1.1.0 schema): 3-way outcome enum, edit-detection heuristic, checksum comparison; opt-in emission in `deliver-feature` at gates 1/3/4/5/8; token spend fields in `pipeline-trace`; `extract-lessons` step 5 mines gate corrections (3+ occurrences → hypothesis) | Shipped 2026-08-02 (`v3.3.5`) |
