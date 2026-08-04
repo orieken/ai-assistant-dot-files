@@ -62,3 +62,30 @@ jobs:
         run: |
           git fetch origin "${{ github.base_ref }}"
           bash scripts/check-agent-versions-ci.sh "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}"
+
+  agent-eval-regression:
+    name: Agent prompt regression (opt-in)
+    runs-on: ubuntu-latest
+    # Skips cleanly on forks and PRs without a key — same pattern as commit 6c422cb.
+    # The script itself also guards with SKIP when ANTHROPIC_API_KEY is absent,
+    # so this if: condition is belt-and-suspenders.
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.AGENT_EVAL_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install claude CLI
+        run: |
+          # Install the claude CLI so run-agent-evals.sh can invoke claude --bare -p.
+          # Requires Node.js (available on ubuntu-latest).
+          npm install -g @anthropic-ai/claude-code
+      - name: Run agent eval regression sweep
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          bash scripts/run-agent-evals.sh --no-judge
+        # --no-judge skips the Haiku rubric pass in CI to control cost (~$2.05 vs $2.10).
+        # Remove --no-judge to enable full rubric grading in CI if desired.
+        # Set repository variable AGENT_EVAL_ENABLED=true to opt in.
+        # Set repository secret ANTHROPIC_API_KEY to authenticate.
