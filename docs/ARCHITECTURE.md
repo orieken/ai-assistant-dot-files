@@ -205,4 +205,5 @@ docs/
   pipeline-retrospectives/        cross-delivery timing/iteration trend reports
   lessons-learned/                cross-delivery pattern extraction
   runbooks/                       operational guides
+                                    parallel-delivery.md — running multiple features concurrently
 ```

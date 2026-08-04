@@ -176,3 +176,4 @@ Additional gates from `approval-gates.md` fire only when their trigger condition
 - `docs/aos/prompts/phase-2-governance.md` — handoff for building the counter agents
 - `docs/aos/prompts/phase-3-runtime.md` § Op 3.13 — handoff for making audit-after-producer the default composition
 - `docs/prompts/automate-deliver-feature.md` — design handoff for policy-driven gate automation
+- `docs/runbooks/parallel-delivery.md` — how to run multiple features concurrently (workspace-per-feature model, constraints, legacy migration)
