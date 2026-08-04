@@ -28,20 +28,29 @@ This is judgment-based semantic search, not a grep — you're an LLM reading the
 Tag/domain matching below is a *pre-filter* to keep the read-through cheap as the corpus grows, never the
 final relevance decision. A KI can be the right match even when it uses none of the query's words.
 
-1. **Parse the query** into candidate tags/domain/keywords. If the caller gave explicit tags (e.g. from
-   context-engineer's bounded-context mapping), use those directly; otherwise extract likely tags from the
-   free-text question.
-2. **Pre-filter cheaply**: scan KI frontmatter in `shared/knowledge/` and `.claude/knowledge/` for `tags:`/
-   `domain:` overlap with the candidates from step 1. If the corpus is small (roughly under ~30 KIs total),
+1. **Domain-dictionary query expansion**: before searching, load `shared/DOMAIN_DICTIONARY.md` (and the
+   installed project's `DOMAIN_DICTIONARY.md` if one exists at the repo root). For each term in the query:
+   - If it matches a **"Synonyms to AVOID"** entry → also search using the canonical **Term** (catches
+     vocabulary drift where the user queried with a colloquial name instead of the Ubiquitous Language term).
+   - If it matches a canonical **Term** → also include its synonyms in the search (catches older content
+     that may have been written before the vocabulary was enforced).
+   This step catches drift like "checkout" vs "purchase flow" or "ticket" vs "Feature Spec". It does NOT add
+   deep semantic expansion — that stays with ADR-002's vector tier. If `DOMAIN_DICTIONARY.md` is absent or
+   unreadable, skip this step silently and proceed with the original query.
+2. **Parse the expanded query** into candidate tags/domain/keywords. If the caller gave explicit tags (e.g.
+   from context-engineer's bounded-context mapping), use those directly; otherwise extract likely tags from
+   the free-text question and the expansion terms added in step 1.
+3. **Pre-filter cheaply**: scan KI frontmatter in `shared/knowledge/` and `.claude/knowledge/` for `tags:`/
+   `domain:` overlap with the candidates from step 2. If the corpus is small (roughly under ~30 KIs total),
    skip this step and just read everything — the pre-filter exists to avoid reading a large corpus in full,
    not to replace judgment on a small one.
-3. **Read the candidate KIs' full bodies** (not just frontmatter) and judge relevance by actual meaning —
+4. **Read the candidate KIs' full bodies** (not just frontmatter) and judge relevance by actual meaning —
    a KI titled `subagent-isolation-is-a-hard-boundary` is the right answer to "why can't my agent see what
    the last one did" even though neither phrase appears in the query. This is the step a plain grep can't
    do; don't skip straight from tag-matching to "no match."
-4. **Read `docs/adrs/` the same way** — ADRs aren't KIs but often answer "why did we choose X" questions a
+5. **Read `docs/adrs/` the same way** — ADRs aren't KIs but often answer "why did we choose X" questions a
    KI search is really asking.
-5. **Rank by actual relevance to the question**, not by tag-match count — a KI with one matching tag but
+6. **Rank by actual relevance to the question**, not by tag-match count — a KI with one matching tag but
    directly on-point beats one with three matching tags that's tangential. Cap at the 5 most relevant.
 
 ## Output Format

@@ -25,7 +25,8 @@ decision — use `promote-memory`. Do NOT use to audit the corpus for duplicates
 
 ## Context To Load First
 1. `shared/memory-registry.json` — which sources exist and their retrieval backend
-2. Per-source files, only after step 1 tells you which ones are relevant to the query (see Process)
+2. `shared/DOMAIN_DICTIONARY.md` (and the project's `DOMAIN_DICTIONARY.md` if one exists) — for query expansion before searching any source
+3. Per-source files, only after step 1 tells you which ones are relevant to the query (see Process)
 
 ## Process
 
@@ -34,6 +35,16 @@ Load `shared/memory-registry.json`. This tells you which sources exist and wheth
 than `lexical` — currently none do (`lightrag` is `"status": "disabled"`), so every search in practice is a
 markdown read, but check the registry rather than hardcoding that assumption, since it's meant to change
 without this skill needing a rewrite.
+
+### 1a. Domain-dictionary query expansion
+Load `shared/DOMAIN_DICTIONARY.md` (and the installed project's own `DOMAIN_DICTIONARY.md` if present).
+Expand the query before passing it to any search step:
+- If a query term matches a **"Synonyms to AVOID"** entry → also include the canonical **Term** (corrects
+  vocabulary drift, e.g. "ticket" → "Feature Spec").
+- If a query term matches a canonical **Term** → also include its synonyms (catches older content written
+  before the vocabulary was enforced).
+This expansion is applied uniformly to the KI/ADR delegate call AND to the direct feature-archive and
+domain-dictionary searches in step 3. If `DOMAIN_DICTIONARY.md` is absent, skip silently.
 
 ### 2. Delegate the KI/ADR Portion
 If `--semantic` flag is set: invoke `search-ki-semantic`. Otherwise: invoke `search-ki` (default).
