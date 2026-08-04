@@ -21,6 +21,44 @@ Hooks trigger on specific pipeline events (aligned with `shared/telemetry/event-
 
 ---
 
+## Index-Freshness Story (ADR-002 rebuild hook — pending saturday-mcp M2)
+
+[ADR-002](../../docs/adrs/ADR-002-corpus-aware-retrieval-strategy.md) names index staleness as a
+known consequence and proposes an event-driven rebuild story: "cache invalidation on doc edits is a
+real concern for the vector tier" — the hooks layer is the correct place to wire this without
+requiring manual `/reindex` runs after every delivery.
+
+The planned hook pair (awaiting saturday-mcp M2 delivery of a `reindex` MCP tool):
+
+| Hook file | Event | Action |
+|---|---|---|
+| `examples/on-artifact-written-reindex.yaml` | `on-artifact-write` (filtering to `docs/features/`, `docs/adrs/`) | `skill: reindex` — upsert the written path into the BM25/vector index |
+| `examples/on-ki-created-reindex.yaml` | `on-ki-created` (targeting `shared/knowledge/`, `.claude/knowledge/`) | `skill: reindex` — upsert the new KI into the index |
+
+**Why deferred**: saturday-mcp M1 ships `search_docs` and `search_ki` but no `reindex` entry point.
+Creating hook example files targeting a non-existent tool would produce silent failures when enabled.
+These examples ship alongside the M2 `reindex` tool, not before it.
+
+**Manual fallback until M2**: `/reindex` (run after any bulk write to docs/ or shared/knowledge/).
+This is the "install-time build + rebuild story" already documented in `docs/runbooks/lightrag-integration.md`.
+
+**Proposed M2 tool interface** (for saturday-mcp implementors):
+```yaml
+# shared/hooks/examples/on-artifact-written-reindex.yaml (M2 placeholder — not yet active)
+version: "1.0"
+hooks:
+  - id: "bm25-reindex-on-artifact-write"
+    event: "on-artifact-write"
+    enabled: false   # Enable after saturday-mcp M2 ships reindex tool
+    filter:
+      pathPrefixes: ["docs/features/", "docs/adrs/", "docs/patterns/"]
+    action:
+      type: "skill"
+      target: "reindex"
+      args:
+        scope: "docs"
+```
+
 ---
 
 ## Security Constraints
