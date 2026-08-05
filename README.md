@@ -45,7 +45,7 @@ for how the Context/Memory/Learning loop actually works, and the pipeline diagra
 ```
 shared/                              <- single source of truth, edit here only
 ├── agents/        (39 agents)       <- .md with YAML frontmatter, versioned (CHANGELOG.md)
-├── skills/        (68 skills)       <- .md with trigger keywords/patterns
+├── skills/        (69 skills)       <- .md with trigger keywords/patterns
 ├── rules/                           <- architecture-guardrails.md, design-principles.md, approval-gates.md
 ├── contracts/                       <- required-section contracts for pipeline agent handoffs
 ├── knowledge/                       <- portable Knowledge Items (KIs)
@@ -233,7 +233,7 @@ documented gap), see [docs/AGENT_REFERENCE.md](docs/AGENT_REFERENCE.md).
 
 ---
 
-## Skill Catalog (68)
+## Skill Catalog (69)
 
 Full definitions in `shared/skills/<name>/SKILL.md`, including exact trigger keywords/intent patterns.
 Grouped by what they're for:
@@ -242,6 +242,7 @@ Grouped by what they're for:
 | Skill | Trigger on |
 |---|---|
 | `deliver-feature` | "Deliver \*", "Implement \*", `/deliver-feature *` — runs the full agent sequence |
+| `deliver-bugfix` | "Fix bug \*", `/deliver-bugfix *` — lightweight 5-phase pipeline: reproduce-first (characterization test), developer fix, code-reviewer, QA verify. Escalates to `deliver-feature` when scope expands. |
 | `deliver-atdd` | Acceptance-test-first delivery loop with scenario review gates and autonomous red-green implementation. |
 | `resume-pipeline` | Resuming an interrupted run, `--from-phase N`, rolling back an agent's artifact |
 | `validate-artifact` | Auto-invoked between every contract-bound agent handoff — checks required sections |

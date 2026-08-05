@@ -8,9 +8,11 @@ standalone: true
 ---
 
 ## When To Use
-When the user wants to start a new feature from scratch. This skill creates the spec file, sets up the documentation directory, and bridges into the delivery pipeline.
+When the user wants to start a new work item — a feature, bug, spike, or chore — from scratch. This skill
+creates the spec file, sets up the documentation directory, and routes to the correct delivery pipeline.
 
-Do NOT use when the user already has a feature spec written and wants to deliver it — use `/deliver-feature` instead.
+Do NOT use when the user already has a spec written and wants to deliver it — use `/deliver-feature`
+(feature/spike/chore) or `/deliver-bugfix` (bug) directly instead.
 Do NOT use when the user wants to review an existing spec — use `/spec-writer [path]` in review mode.
 
 ## Context To Load First
@@ -21,7 +23,17 @@ Do NOT use when the user wants to review an existing spec — use `/spec-writer 
 
 ## Process
 
-1. **Ask for a working title** — one short phrase that describes the feature. Derive the kebab-case name from this (e.g., "User Authentication" becomes `user-auth`).
+1. **Ask for a working title and work item type** — one short phrase that describes the work item, and
+   whether it is a **feature**, **bug**, **spike**, or **chore**. Derive the kebab-case name from the
+   title (e.g., "User Authentication" becomes `user-auth`). If the user describes a known, reproducible
+   regression with an approximate location, classify as bug and route to Step 1b.
+
+   **1b. Bug fast-path**: if the work item type is **bug**, collect the symptom, reproduction steps,
+   and approximate file location, then offer: "Route to `/deliver-bugfix` for the lightweight pipeline
+   (reproduce-first, developer fix, code-reviewer, QA verify)?" If the user confirms, invoke
+   `/deliver-bugfix` with the collected context and stop here — do NOT continue to steps 2-6.
+   Bugfixes escalate to `/deliver-feature` themselves when scope expands; `new-feature` does not need
+   to manage that.
 
 2. **Create the feature docs directory** — `docs/features/<kebab-name>/`. This is where pipeline artifacts will be persisted after delivery.
 
