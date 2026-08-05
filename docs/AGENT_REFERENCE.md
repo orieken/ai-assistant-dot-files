@@ -302,22 +302,166 @@ is large — the complexity tool output is a mechanical check, not a substitute 
 
 ---
 
+## Late-Addition Pipeline Agent
+
+`visual-qa-engineer` was added as part of Epic 46 (Saturday visual-testing expansion) after the Pipeline
+Agents section above was finalized. It runs after `qa-engineer` in the `deliver-feature` pipeline on
+UI-touching features with heatmap or screenshot baseline data, and is documented here to preserve the
+existing numbering of agents 1–27.
+
+### 28. `visual-qa-engineer`
+**Role**: Extends `qa-engineer`'s functional coverage into visual and interaction dimensions. Analyzes
+Saturday heatmaps (via `@orieken/saturday-ml-analyzer` on `heatmap-data/`) for cold spots on primary
+journey elements and Playwright screenshot baselines for pixel-level regressions. Produces
+`visual-qa-report.md`. Conditionally invoked — only when `heatmap-data/` or Playwright baselines exist;
+outputs `UNCONFIGURED` and exits without blocking the pipeline when neither is present.
+**Counterbalance**: **Structural contract** (`visual-qa-contract.md`) via `validate-artifact`. The
+conditional-exit rule ("UNCONFIGURED if no heatmap data AND no baselines") prevents false-green reports on
+projects that haven't adopted the Saturday heatmap fixture. `qa-engineer`'s report is the upstream signal
+this agent extends, so gaps in functional coverage propagate into (and are sometimes surfaced by) the
+visual layer.
+**Gap**: Heatmap analysis requires the project to have adopted `@orieken/saturday-playwright-heatmap`. On
+projects that haven't — the majority — `visual-qa-engineer` produces only UNCONFIGURED with no actionable
+signal. No aggregate metric currently tracks whether its coverage scores are actually catching real visual
+regressions over time.
+
+---
+
 ## AOS Counter-Auditor Agents (v3.0 - v3.1)
 
-The following 11 read-only counter-auditor agents implement the opposing-force checks defined in `docs/aos/governance-pairs.md`:
+The following 11 read-only counter-auditor agents implement the opposing-force checks in
+`docs/aos/governance-pairs.md`. All 11 are `light` model tier, read-only (`Read`, `Glob`, `Grep`), and
+never mutate files — each produces an audit findings report for a human or upstream agent to act on.
+(`memory-auditor`, the counter to `memory-engineer`, is documented at §22 under Standalone Agents above.)
 
-28. `memory-auditor` — Counter to `memory-engineer` (audits KI corpus for schema validity, exact/semantic duplicates, and stale metadata).
-29. `context-auditor` — Counter to `context-engineer` (audits `context-manifest.md` for pruning discipline, broken file paths, and token pressure accuracy).
-30. `knowledge-auditor` — Counter to `create-ki` (audits newly authored KIs against `ki-frontmatter.schema.json` and corpus overlap).
-31. `prompt-evaluator` — Counter to prompt authors (audits agent/skill prompts for secret leaks, fabricated URLs, and template decoupling).
-32. `agent-evaluator` — Counter to agent persona authors (promotes `agent-eval` logic to run golden-file evals against frontmatter contracts).
-33. `rule-auditor` — Counter to rule authors (audits `shared/rules/*.md` for cross-rule contradictions and dead references).
-34. `pattern-reviewer` — Counter to pattern doc authors (audits `docs/patterns/*.md` for accuracy against live codebase implementation).
-35. `tool-validator` — Counter to skill authors (audits `shared/skills/*/SKILL.md` for standalone mode declarations and script dependencies).
-36. `documentation-auditor` — Counter to `tech-writer` (audits `README.md`, `docs/AGENT_REFERENCE.md`, and prose docs for accurate agent/skill counts). Findings: `docs/audits/doc-audit-YYYY-MM-DD.md`. Automation paths: (a) hook — copy `shared/hooks/examples/on-inventory-change-doc-audit.yaml` to `.claude/hooks/` to trigger on `shared/agents/` or `shared/skills/` changes; (b) scheduled — see `shared/skills/scheduler/SKILL.md` for a weekly cron example; (c) freshness nudge — `scripts/health-check.sh` WARNs when the newest findings file is older than 14 days.
-37. `retrieval-evaluator` — Counter to RAG search skills (audits KI + ADR retrievability per ADR-002 telemetry, flagging unmatched zero-hit queries).
-38. `privacy-auditor` — Counter to `security-reviewer` & developers (audits feature workspace artifacts for PII, secrets, and credential leaks).
-39. `model-tier-auditor` — Counter to agent authors (audits `shared/agents/*.md` for portable `model_tier` declarations).
+### 29. `context-auditor`
+**Role**: Counter to `context-engineer`. Audits `.claude/feature-workspace/<feature-name>/context-manifest.md`
+after a delivery — checks for pinned files never read by downstream agents (context bloat), broken
+KI/ADR/source-file paths, and budget calculation inaccuracies.
+**Counterbalance**: Read-only tool boundary (`Read`, `Glob`, `Grep`) prevents acting on findings directly;
+fixes route through a human or `context-engineer`. `context-manifest-contract.md` via `validate-artifact`
+gates the manifest's *structure* at creation time; `context-auditor` checks the *semantic quality* of what
+was actually pinned — whether it helped or bloated downstream context windows.
+**Gap**: Can only audit post-delivery. Findings arrive too late to affect the current feature's context
+window — they are improvement data for the next delivery, not a live correction.
+
+### 30. `knowledge-auditor`
+**Role**: Counter to the `create-ki` skill. Audits newly authored Knowledge Items for frontmatter schema
+compliance (against `ki-frontmatter.schema.json`), semantic duplication against the existing KI corpus, and
+domain dictionary alignment.
+**Counterbalance**: Read-only tool boundary + `ki-frontmatter.schema.json` as a deterministic structural
+reference. Schema compliance is a mechanical check; semantic duplicate detection is judgment-heavy — the
+agent flags candidates, humans decide.
+**Gap**: Two KIs encoding the same reusable pattern in different words can slip through. The agent catches
+structural overlap and keyword matches; purely conceptual duplicates require human review to confirm.
+
+### 31. `prompt-evaluator`
+**Role**: Counter to prompt authors (anyone editing `shared/agents/*.md` or `shared/skills/*/SKILL.md`).
+Audits for prompt-engineering hygiene — fabricated URLs in examples, hardcoded secrets, un-decoupled
+template examples that embed project-specific paths, and inconsistent voice across the agent's sections.
+**Counterbalance**: Read-only tool boundary. `shared/rules/memory-trust-boundary.md` independently
+constrains what agents can act on from KI/ADR content downstream — `prompt-evaluator` audits authoring
+quality up-front so those downstream constraints don't need to rescue a poorly written prompt.
+**Gap**: Prompt evaluation is judgment-heavy. No automated fitness function proves a prompt's examples are
+fully decoupled or free of fabricated URLs — detection requires reading comprehension, not grep. A
+`prompt-evaluator` finding is only as trustworthy as the run that produced it, which is not independently
+checked.
+
+### 32. `agent-evaluator`
+**Role**: Promotes the `agent-eval` skill's golden-file evaluation logic into a dedicated agent persona.
+Runs evaluations against `shared/agents/` frontmatter contracts and prompt behavior expectations using
+fixture inputs from `tests/agents/<agent>/`, logging regression metrics to `shared/evaluation/`. Counter to
+the entire agent authoring process — not a single upstream agent.
+**Counterbalance**: Read-only tool boundary + shared fixture format with `tests/agents/` (the same inputs and
+contract checks used by `scripts/test-agents.sh` and `scripts/run-agent-evals.sh`). The interactive skill
+and the headless harness form a coherent regression safety net: `agent-evaluator` for spot-checks, the
+harness for batch sweeps.
+**Gap**: `agent-evaluator`'s grading quality is not independently verified — no meta-evaluator audits its
+verdicts. Golden-file evals also only cover what fixture inputs exist; novel failure modes not covered by
+any current fixture will be missed.
+
+### 33. `rule-auditor`
+**Role**: Counter to rule authors (anyone editing `shared/rules/*.md`). Audits for internal consistency —
+contradictory constraints across files, dead path references (a rule cites a file that no longer exists on
+disk), and un-indexed rule files that would be invisible to agents loading only the indexed set.
+**Counterbalance**: Read-only tool boundary. `shared/rules/architecture-guardrails.md` documents which
+constraints are HARD and cannot be overridden — `rule-auditor` can flag when a later rule *appears* to
+contradict a hard constraint, surfacing the conflict for human resolution.
+**Gap**: Cross-rule contradiction detection requires understanding intent. Two rules can appear contradictory
+in wording but resolve clearly in practice (e.g., "NEVER use X" and "use X only at the adapter layer").
+The agent flags apparent contradictions; humans resolve them.
+
+### 34. `pattern-reviewer`
+**Role**: Counter to pattern document authors (`docs/patterns/*.md`). Audits pattern docs for accuracy against
+the current codebase — stale code snippets (class or function names that were renamed or removed), broken
+file paths, and obsolete architectural references.
+**Counterbalance**: Read-only tool boundary. Stale-snippet detection is partly deterministic: `Grep` checks
+whether a named class or function still exists; `Read` verifies the signature hasn't changed. Path
+existence checks are fully deterministic.
+**Gap**: Catches renamed or removed artifacts better than semantically drifted ones. A method whose behavior
+changed but kept its name won't be flagged by grep — the pattern doc could describe a no-longer-valid
+behavior using a still-valid class name.
+
+### 35. `tool-validator`
+**Role**: Counter to skill authors (anyone editing `shared/skills/*/SKILL.md`). Audits skills for
+standalone-mode declaration, hidden MCP dependencies (a skill claims `Read`/`Glob`/`Grep` but its body
+pipes through an MCP tool not listed in `tools:`), frontmatter schema compliance, and valid parameter
+declarations.
+**Counterbalance**: Read-only tool boundary. Frontmatter schema (if defined in `shared/schemas/`) provides a
+deterministic reference for structural checks; dependency detection is judgment-based, requiring a read of
+the skill body compared against the declared `tools:` list.
+**Gap**: A skill that hides an MCP dependency behind an example rather than a direct invocation can slip
+through pattern matching. No automated fitness function enforces that the declared `tools:` list is
+exhaustive.
+
+### 36. `documentation-auditor`
+**Role**: Counter to `tech-writer` and prose documentation authors. Audits `README.md`,
+`docs/AGENT_REFERENCE.md`, and `docs/prompts/README.md` for staleness — stale counts, un-indexed agents,
+and deprecated skill references. Writes findings to `docs/audits/doc-audit-YYYY-MM-DD.md`.
+**Counterbalance**: Read-only tool boundary + `scripts/check-inventory-drift.sh` (CI script detecting
+numeric count mismatches — the mechanical layer). `documentation-auditor` adds the semantic layer: un-indexed
+agents and deprecated references that aren't just count mismatches. `health-check.sh` warns when the newest
+doc-audit file is older than 14 days. Three automation paths: (a) on-change hook in `shared/hooks/examples/`;
+(b) weekly cron via the `scheduler` skill; (c) freshness nudge from `health-check.sh`.
+**Gap**: Catches presence vs. absence in reference docs, but not quality. An AGENT_REFERENCE entry that exists
+but is factually wrong about the agent's current behavior won't be caught by count or index checks alone.
+
+### 37. `retrieval-evaluator`
+**Role**: Counter to retrieval skills and the RAG engine. Audits KI and ADR corpus retrievability using
+ADR-002 telemetry and `memory-registry.json` — flags zero-match queries as missing-KI or bad-metadata
+candidates, runs the approved regression set in `shared/evaluation/retrieval-regression.md`, and proposes
+new regression cases from telemetry patterns.
+**Counterbalance**: Read-only tool boundary + `shared/evaluation/retrieval-regression.md` as a structured,
+versioned regression set (the retrieval equivalent of `tests/agents/` golden files — same philosophy applied
+to retrieval quality). ADR-002 telemetry provides external signal, not just self-referential checks.
+**Gap**: Only as good as the telemetry. On a new install with sparse query history, the evaluator has nothing
+to evaluate beyond the static regression set. It catches known past failure modes; novel retrieval gaps
+require real query volume to surface.
+
+### 38. `privacy-auditor`
+**Role**: Counter to `security-reviewer` and developers. Audits pipeline artifacts in
+`.claude/feature-workspace/<feature-name>/` — *not source code* — for accidental PII in prompt examples,
+hardcoded tokens or passwords in implementation notes, and data boundary leaks (real data referenced in
+what should be synthetic context).
+**Counterbalance**: Read-only tool boundary. Deliberate scope distinction from `security-reviewer`: that
+agent audits *source code* for STRIDE threats; `privacy-auditor` audits *workspace artifacts* for PII and
+credential contamination introduced during the delivery process — a different layer, different threat surface.
+**Gap**: PII detection in free-text artifacts is pattern-matching plus judgment. Redacted, encoded, or hashed
+PII can slip through. The agent detects obvious, un-obscured PII more reliably than deliberately or
+accidentally obfuscated forms.
+
+### 39. `model-tier-auditor`
+**Role**: Counter to agent authors. Scans `shared/agents/*.md` for missing `model_tier` frontmatter fields,
+invalid enum values (anything other than `light` / `default` / `heavy`), and tier assignments that mismatch
+the agent's operational profile — e.g., a read-only counter agent claiming `heavy` when `light` is clearly
+sufficient.
+**Counterbalance**: Read-only tool boundary. `model_tier` is the portable tier declaration consumed by
+`scripts/run-agent-evals.sh` and model-resolution logic. A missing field causes the harness to silently
+fall back to `inherit`, using whichever model the user has configured rather than the author's intended
+tier — `model-tier-auditor` catches that drift before a harness run encounters it silently.
+**Gap**: Heuristic mismatch detection is judgment-heavy. The auditor can flag obvious mismatches (a Grep-only
+counter agent claiming `heavy` tier), but boundary cases — when is `default` better served as `light`? —
+require understanding the agent's actual inference needs, not just its tool list.
 
 ---
 
