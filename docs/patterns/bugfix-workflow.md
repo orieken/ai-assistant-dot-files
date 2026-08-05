@@ -32,11 +32,11 @@ then a permanent improvement to the framework's rule and knowledge base.
 4. Bug filed and fixed
    /new-feature → type=bug → /deliver-bugfix
    docs/features/<bug-slug>/
-   - characterization test (Phase 1)
-   - implementation-notes.md (Phase 2)
-   - code-review-report.md (Phase 3)
-   - qa-report.md (Phase 4)
-   docs/incidents/<slug>.md  ← "Fixed by" link added
+   - characterization test (Phase 1 — Reproduce)
+   - implementation-notes.md (Phase 2 — Fix)
+   - code-review-report.md (Phase 3 — Review)
+   - qa-report.md (Phase 4 — Verify)
+   docs/incidents/<slug>.md  ← "Fixed by" link added (Phase 5 — Record)
            ↓
 5. Learning extraction (periodic)
    /extract-lessons

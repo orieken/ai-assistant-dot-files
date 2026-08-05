@@ -27,6 +27,10 @@ docs/
   blog-posts/             -- Draft blog content about the framework (see blog-content-brief.md).
   audits/                 -- Ad-hoc external audit reports -- scratch inputs, not permanent
                              documentation; act on findings, then delete once resolved.
+  incidents/              -- Production incident records in <YYYY-MM-DD>-<slug>.md format.
+                             Cross-referenced by the bugfix pipeline (deliver-bugfix "Fixed by" link)
+                             and by extract-lessons (Step 6 incident-feature pair mining). Permanent —
+                             Status field updated to Resolved; records are never deleted.
 ```
 
 `docs/aos/` contains opt-in v3/AOS migration and governance material. It is tracked on `main`, but the
