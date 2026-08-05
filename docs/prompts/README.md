@@ -50,7 +50,7 @@ Recommended execution order matches the 07-31 audit's priority ranking (47 first
 | ~~**47**~~ | ~~[epic-47-ship-feature.md](done/epic-47-ship-feature.md)~~ — shipped `58a429c`→`f94e5c0` (incl. tool-validator fix) | ✓ Done |
 | ~~**58**~~ | ~~[epic-58-documentation-auditor-automation.md](done/epic-58-documentation-auditor-automation.md)~~ — shipped `98159fe`→`ba34794` | ✓ Done |
 | **45** | [epic-45-refactor-engineer.md](epic-45-refactor-engineer.md) — `refactor-engineer` agent + refactoring contract + fixture + full 38→39 roster ripple | Large — Phase A design pause, then ~7 commits |
-| **43** | [epic-43-mcp-exporter.md](epic-43-mcp-exporter.md) — `shared/mcp/` exporter; Phase A must first rule generator-vs-manifest-vs-superseded (audit flagged scope-clarification needed) | Unknown until Phase A ruling — possibly closes as superseded |
+| ~~**43**~~ | ~~[epic-43-mcp-exporter.md](done/epic-43-mcp-exporter.md)~~ — shipped `85c2c8f`→`7b739c7` | ✓ Done |
 
 ### Project-as-RAG optimization pair (drafted 2026-07-31, from retrieval-optimization discussion)
 
@@ -84,6 +84,7 @@ framework missing"). Table order IS the priority order.
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-43-mcp-exporter.md](done/epic-43-mcp-exporter.md) | `shared/mcp/` Go module: scope ruling (Phase A), module skeleton + cmd/mcp-server, 4 analyzers + BM25 adapter, 6 M1 tools, server wiring, `install.sh --with-mcp` flag, `shared/mcp/README.md` usage guide | Shipped 2026-08-02 (`v3.3.12`) |
 | [done/epic-61-prompt-regression-harness.md](done/epic-61-prompt-regression-harness.md) | `scripts/run-agent-evals.sh` (428 lines): pattern checks + LLM generation via `claude -p` + Haiku rubric judge + regression diffing; `shared/evaluation/agent-eval-harness-design.md` design doc (4 rulings: runner/judge/cadence/record); `shared/evaluation/agent-evals/README.md` schema + delta logic; opt-in CI job behind `secrets.ANTHROPIC_API_KEY`; `tests/agents/README.md` headless-path section | Shipped 2026-08-04 (`v3.3.11`) |
 | [done/epic-63-parallel-delivery-isolation.md](done/epic-63-parallel-delivery-isolation.md) | Break the feature-workspace singleton: named workspace paths (`<feature-name>/` slug) in `deliver-feature`, `resume-pipeline`, `validate-artifact`, `context-engineer`, `deliver-atdd`, `orchestrate`; workspace path resolution + legacy detection; `docs/runbooks/parallel-delivery.md`; `docs/aos/parallel-delivery-isolation-design.md` status banner corrected | Shipped 2026-08-02 (`v3.3.8`) |
 | [done/epic-60-retrieval-index-freshness-eval.md](done/epic-60-retrieval-index-freshness-eval.md) | Index-freshness hook pair documented in `shared/hooks/README.md` (escalation: reindex tool deferred to saturday-mcp M2); `retrievalBackend` enum FAIL check in `health-check.sh`; `scripts/generate-codemap.sh` + `CODEMAP.md`; `shared/evaluation/retrieval-regression.md` + `retrieval-evaluator.md` version bump | Shipped 2026-08-03 (`v3.3.10`) |
