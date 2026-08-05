@@ -64,6 +64,17 @@
       "notes": "Written by deliver-feature step 37a after all pipeline artifacts are persisted. These are the files that future BM25/vector retrieval tiers should index first — they contain a ~200-word distillation of the feature's scope and outcome. The HTML comment at the top carries machine-readable metadata (retrieval-surrogate: true, feature, source-artifact, generated, index-first). Lexical search over these surrogates is faster than grepping full artifact sets; vector tiers that land later should build their initial index from these files rather than raw analysis.md files."
     },
     {
+      "name": "incident-records",
+      "type": "Incident Record",
+      "paths": ["docs/incidents/"],
+      "owner": "on-call (response + timeline), five-whys (root cause chain) — both write here; human closes each record",
+      "portable": false,
+      "indexable": true,
+      "retrievalBackend": "lexical",
+      "format": "markdown",
+      "notes": "Permanent production incident records. Key fields: 'Affected Feature' links to docs/features/<name>/ for incident-feature pair mining by extract-lessons; 'Candidate Records' uses promote-memory's exact format so the gated promotion machinery can consume incident-sourced lessons unchanged. Established by Epic 67. Never deleted — Status field updated to Resolved when incident closes."
+    },
+    {
       "name": "lessons-learned",
       "type": "Lesson",
       "paths": ["docs/lessons-learned/"],

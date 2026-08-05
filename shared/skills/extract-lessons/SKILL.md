@@ -17,7 +17,8 @@ Do NOT use this to make a single delivery's observations — that's `/retrospect
 in terms of things that recur *across* deliveries.
 
 ## Context To Load First
-1. `docs/features/*/security-report.md` — all past deliveries
+1. `docs/incidents/*.md` — all incident records (Epic 67: new first-class input)
+2. `docs/features/*/security-report.md` — all past deliveries
 2. `docs/features/*/code-review-report.md` — all past deliveries
 3. `docs/features/*/architecture-notes.md` — all past deliveries
 4. `docs/features/*/context-manifest.md` — for the KI usage tally
@@ -80,8 +81,25 @@ with 3+ occurrences across distinct features (identified via `metadata.feature`)
 Never read or process this step when `.claude/telemetry/events.jsonl` does not exist — the opt-in
 guarantee is absolute (see `shared/telemetry/README.md`).
 
-### 6. Write the record
-Write `docs/lessons-learned/lessons-[YYYY-MM-DD].md` with every finding from steps 1-5, **regardless of
+### 6. Incident-feature pair analysis -> candidate pipeline improvement
+Scan every `docs/incidents/*.md` record. For each incident whose **Affected Feature** field links to a
+`docs/features/<name>/` delivery:
+- Load the linked feature's pipeline artifacts (`analysis.md`, `implementation-notes.md`,
+  `security-report.md`, `code-review-report.md`) alongside the incident record.
+- Ask: **"Which pipeline stage should have caught the bug or architectural gap that caused this incident?"**
+  Frame answers as "the `[agent]` stage should have flagged X" rather than "the developer made a mistake."
+- If the answer points to a consistent gap (a stage that was skipped, a check that wasn't thorough enough,
+  or an edge case not covered by the QA contract), draft it as a proposed rule/prompt change — same gating
+  as Step 2: present the draft and require explicit confirmation before applying anything.
+- If the incident's **Candidate Records** section already contains `promote-memory`-format candidates,
+  those flow directly into the output's "Incident Candidates" table — no re-analysis needed, just
+  consolidate and update status.
+- A single incident is not a pattern — only draft a rule/prompt change if the same pipeline gap surfaces
+  in 2+ incident-feature pairs (lower bar than the 3-occurrence rule in Steps 1-2 because production
+  incidents carry stronger signal than code-review findings alone).
+
+### 7. Write the record
+Write `docs/lessons-learned/lessons-[YYYY-MM-DD].md` with every finding from steps 1-6, **regardless of
 whether the user approves any promotion** — the lessons file is the permanent record that a pattern was
 noticed; promotion to a rule/prompt/KI is a separate, gated action tracked in the same file's status column.
 
@@ -92,6 +110,8 @@ Write `docs/lessons-learned/lessons-[YYYY-MM-DD].md`:
 
 ## Scope
 - Deliveries scanned: [N] — [docs/features/ subdirectories included]
+- Incidents scanned: [N] — [docs/incidents/ records included]
+- Incident-feature pairs matched: [N]
 
 ## Recurring Security Findings
 | Pattern | Occurrences | Features | Proposed Guardrail | Status |
@@ -123,6 +143,18 @@ Recurring patterns (3+ events for same gate + agent):
 | Gate + Agent | Count | Features | Hypothesis | Proposed Action | Status |
 |---|---|---|---|---|---|
 | Gate #[N] / [agent] | [N] | [feature list] | [draft hypothesis] | [prompt edit / rule change / none] | Proposed / Approved / Declined |
+
+## Incident-Feature Pairs (Step 6)
+| Incident | Feature | Pipeline Gap Identified | Proposed Change | Status |
+|---|---|---|---|---|
+| [docs/incidents/slug.md] | [docs/features/name/] | [agent stage / check] | [draft rule or prompt change] | Proposed / Approved / Declined |
+— or "No matched incident-feature pairs in docs/incidents/"
+
+## Incident Candidates (promote-memory format from incident Candidate Records)
+| Incident | Candidate Title | Type | Status |
+|---|---|---|---|
+| [slug] | [short title] | KI / ADR-worthy / Rule-change-worthy / Lesson | Proposed / Approved / Declined |
+— or "None"
 
 ## Declined / Deferred
 [Anything the user explicitly declined to promote, and why — so it isn't silently re-proposed identically next run]
