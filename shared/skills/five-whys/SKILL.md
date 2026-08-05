@@ -19,9 +19,16 @@ Any relevant files mentioned (error logs, test failures, workspace artifacts, gi
 3. Reflect: "So [X] happened because [their answer]. Why did [their answer] happen?"
 4. Repeat until stop condition
 5. Produce Root Cause Report
+6. **Persist incident record** (production incidents and outages only — skip for non-incident analyses
+   such as failing tests or design post-mortems): write `docs/incidents/<YYYY-MM-DD>-<kebab-slug>.md`
+   using the Incident Record Schema below. Populate the **Candidate Records** section with any
+   recurrence-prevention lessons (rule change, fitness function, prompt improvement) that emerged from
+   the why chain — use `promote-memory`'s exact Candidate Record format so the same gated promotion
+   machinery can consume them unchanged. Create `docs/incidents/` if it does not yet exist.
 
 ## Output Format
-`.claude/feature-workspace/five-whys-[kebab-topic].md`
+
+**Workspace output** (always): `.claude/feature-workspace/five-whys-[kebab-topic].md`
 
 ```markdown
 # Five Whys: [Problem Statement]
@@ -46,6 +53,54 @@ Date: [today]
 - Immediate: [what to do right now]
 - Preventive: [fitness function, test, or process change that prevents recurrence]
 - Owner: [who should act]
+```
+
+**Incident record** (production incidents only): `docs/incidents/<YYYY-MM-DD>-<kebab-slug>.md`
+See Incident Record Schema below.
+
+## Incident Record Schema
+
+```markdown
+# Incident: [kebab-slug]
+
+**Date**: YYYY-MM-DD
+**Severity**: P0-Critical | P1-High | P2-Medium | P3-Low
+**Status**: Resolved | Ongoing
+**Affected Feature**: [link to docs/features/<name>/ if the incident traces to a delivered feature — or "No matching feature delivery"]
+
+## Summary
+[One sentence: what broke and what the user-visible impact was]
+
+## Timeline
+| Time | Event |
+|---|---|
+| HH:MM | Alert fired / symptom reported |
+| HH:MM | Root cause identified |
+| HH:MM | Fix applied |
+| HH:MM | Incident resolved |
+
+## Five Whys Chain
+1. Why did [symptom] happen? → [answer]
+2. Why did [answer] happen? → [answer]
+3. ...
+
+## Root Cause
+[The actionable thing at the bottom of the chain]
+
+## Fix Applied
+[Rollback to commit X / Hotfix: description / Pending]
+
+## Candidate Records
+
+### Candidate: [short title]
+- **Source**: docs/incidents/YYYY-MM-DD-[slug].md, "[section name]"
+- **Type**: KI | ADR-worthy | Rule-change-worthy | Lesson
+- **Evidence**: [exact quote or close paraphrase supporting this candidate]
+- **Tags**: [proposed frontmatter tags, if Type is KI]
+- **Expiration condition**: [what would make this stop being true]
+- **Existing overlap checked**: [KI or rule checked, result]
+
+— or "None — no promotable lessons identified in this incident"
 ```
 
 ## Guardrails

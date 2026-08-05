@@ -29,6 +29,13 @@ Incident logs, alerts, deployment info.
    - Hotfix: only if rollback is not safe (migration already ran) or fix is trivially small
 4. Communicate: draft the incident message (who, what, ETA)
 5. Once stable: capture timeline for the Five Whys session
+6. **Persist incident record**: after resolution (or after the five-whys session completes), write
+   `docs/incidents/<YYYY-MM-DD>-<slug>.md`. Populate with the timeline, blast radius, and fix applied
+   from this report, plus the five-whys chain and root cause if `/five-whys` has already run. If the
+   five-whys session runs later, link back to this file from it. Add a **Candidate Records** section
+   for any recurrence-prevention lessons immediately apparent — use `promote-memory`'s exact format so
+   they flow through the same gated promotion machinery. Check `docs/features/` for a matching feature
+   delivery to link under "Affected Feature." Create `docs/incidents/` if it does not yet exist.
 
 ## Output Format
 `.claude/feature-workspace/incident-[description].md`
@@ -65,7 +72,19 @@ Safe ✅ / Unsafe ⚠️ [reason — DB migration state]
 ## Follow-Up Required
 - [ ] Five Whys session scheduled: [date]
 - [ ] Fitness function added to prevent recurrence: [yes / not yet identified]
-- [ ] Postmortem doc: [link / pending]
+- [ ] Incident record persisted: docs/incidents/[YYYY-MM-DD]-[slug].md [pending / done]
+
+## Candidate Records
+
+### Candidate: [short title]
+- **Source**: docs/incidents/[slug].md, "[section]"
+- **Type**: KI | ADR-worthy | Rule-change-worthy | Lesson
+- **Evidence**: [quote or paraphrase]
+- **Tags**: [proposed tags if KI]
+- **Expiration condition**: [what would make this stop being true]
+- **Existing overlap checked**: [result]
+
+— or "None — no promotable lessons immediately apparent"
 ```
 
 ## Guardrails
