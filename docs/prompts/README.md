@@ -71,9 +71,9 @@ framework missing"). Table order IS the priority order.
 
 | Epic | File | Estimated size |
 |---|---|---|
-| **61** | [epic-61-prompt-regression-harness.md](epic-61-prompt-regression-harness.md) — headless eval runner over the golden-file fixtures; catches model-change behavior drift across all 38 agents. Assembly, not invention | Medium-large — Phase A design pause (runner/judge/cost rulings), then 4 commits |
+| ~~**61**~~ | ~~[epic-61-prompt-regression-harness.md](done/epic-61-prompt-regression-harness.md)~~ — shipped `8d07c99`→`3cd67b8` | ✓ Done |
 | ~~**62**~~ | ~~[epic-62-gate-decision-cost-telemetry.md](done/epic-62-gate-decision-cost-telemetry.md)~~ — shipped `2b7ed81`→`e5218c8` | ✓ Done |
-| **63** | [epic-63-parallel-delivery-isolation.md](epic-63-parallel-delivery-isolation.md) — break the feature-workspace singleton; workspace-per-feature vs git-worktree ruling; legacy resume must survive | Large — Phase A design pause, blast-radius inventory, then per-subsystem commits |
+| ~~**63**~~ | ~~[epic-63-parallel-delivery-isolation.md](done/epic-63-parallel-delivery-isolation.md)~~ — shipped `18b9fd1`→`77ad560` | ✓ Done |
 | ~~**64**~~ | ~~[epic-64-shipped-linter-configs.md](done/epic-64-shipped-linter-configs.md)~~ — shipped `2eb31cc`→`c245bcb` | ✓ Done |
 | ~~**65**~~ | ~~[epic-65-framework-threat-model.md](done/epic-65-framework-threat-model.md)~~ — shipped `839b610`→`2699b03` | ✓ Done |
 | ~~**66**~~ | ~~[epic-66-capability-inventory-lifecycle.md](done/epic-66-capability-inventory-lifecycle.md)~~ — shipped `b95df04`→`2168505` | ✓ Done |
@@ -84,6 +84,8 @@ framework missing"). Table order IS the priority order.
 
 | File | Scope | Shipped |
 |---|---|---|
+| [done/epic-61-prompt-regression-harness.md](done/epic-61-prompt-regression-harness.md) | `scripts/run-agent-evals.sh` (428 lines): pattern checks + LLM generation via `claude -p` + Haiku rubric judge + regression diffing; `shared/evaluation/agent-eval-harness-design.md` design doc (4 rulings: runner/judge/cadence/record); `shared/evaluation/agent-evals/README.md` schema + delta logic; opt-in CI job behind `secrets.ANTHROPIC_API_KEY`; `tests/agents/README.md` headless-path section | Shipped 2026-08-04 (`v3.3.11`) |
+| [done/epic-63-parallel-delivery-isolation.md](done/epic-63-parallel-delivery-isolation.md) | Break the feature-workspace singleton: named workspace paths (`<feature-name>/` slug) in `deliver-feature`, `resume-pipeline`, `validate-artifact`, `context-engineer`, `deliver-atdd`, `orchestrate`; workspace path resolution + legacy detection; `docs/runbooks/parallel-delivery.md`; `docs/aos/parallel-delivery-isolation-design.md` status banner corrected | Shipped 2026-08-02 (`v3.3.8`) |
 | [done/epic-60-retrieval-index-freshness-eval.md](done/epic-60-retrieval-index-freshness-eval.md) | Index-freshness hook pair documented in `shared/hooks/README.md` (escalation: reindex tool deferred to saturday-mcp M2); `retrievalBackend` enum FAIL check in `health-check.sh`; `scripts/generate-codemap.sh` + `CODEMAP.md`; `shared/evaluation/retrieval-regression.md` + `retrieval-evaluator.md` version bump | Shipped 2026-08-03 (`v3.3.10`) |
 | [done/epic-59-retrieval-write-time-enrichment.md](done/epic-59-retrieval-write-time-enrichment.md) | 15 pipeline-artifact contracts + 15 templates with 7-field retrieval frontmatter (WARN-level in validate-artifact); domain-dictionary query expansion in search-ki + query-memory; `summarize-artifact --persist` writes `docs/features/<name>/summary.md` as a retrieval surrogate registered in memory-registry.json; `docs/patterns/artifact-citation-links.md` (141 lines) | Shipped 2026-08-03 (`v3.3.9`) |
 | [done/epic-66-capability-inventory-lifecycle.md](done/epic-66-capability-inventory-lifecycle.md) | Deprecation convention (`status`/`superseded_by`) in agent + skill frontmatter contracts + JSON schemas; `health-check.sh` enforces broken pointer as FAIL; `forgetting-engine` extended with CI.1–CI.6 capability inventory audit mode; `complexity-check` deprecated → `analyze-complexity`; `docs/patterns/agent-skill-pair-convention.md` ruling (Delegation Wrapper vs. Composition Facade) | Shipped 2026-08-02 (`v3.3.7`) |
