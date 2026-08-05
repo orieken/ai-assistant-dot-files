@@ -42,6 +42,9 @@ agents by tool" sections.
 - **`list-agents`** — query the repo for all available custom AI personas.
 - **`scaffold-docs`** — bootstrap a markdown implementation guide before building a large feature.
 - **`deliver-feature`** — the main pipeline orchestrator.
+- **`deliver-bugfix`** — lightweight 5-phase pipeline for known, reproducible bugs (reproduce-first discipline); escalates to `deliver-feature` if scope expands.
+- **`on-call`** — incident response playbook; persists a permanent incident record to `docs/incidents/`.
+- **`five-whys`** — root cause analysis; produces the why-chain and recommended action for an incident record.
 
 Full catalog: see README.md's "Skill Catalog" section, grouped by purpose.
 
