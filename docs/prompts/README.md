@@ -80,6 +80,20 @@ framework missing"). Table order IS the priority order.
 | ~~**67**~~ | ~~[epic-67-production-feedback-bugfix-path.md](done/epic-67-production-feedback-bugfix-path.md)~~ — shipped `d9b802c` | ✓ Done |
 | ~~**68**~~ | ~~[epic-68-install-version-marker.md](done/epic-68-install-version-marker.md)~~ — shipped `6ddb307`→`d64cc2f` | ✓ Done |
 
+### 2026-08-07 Roadmap Epics (from `docs/audits/framework-audit-2026-08-07.md`)
+
+Five forward-looking epics from the August 2026 audit §3 High-Value Recommended Features.
+All §5 action plan items were already shipped as of v3.3.14 — these are new work.
+See `docs/roadmap-2026-08-07.md` for the full roadmap with priority rationale.
+
+| Epic | File | Estimated size |
+|---|---|---|
+| **69** | [epic-69-mcp-skill-bundler.md](epic-69-mcp-skill-bundler.md) — auto-generate MCP tool wrappers from `SKILL.md` frontmatter; `check-mcp-drift.sh` fitness function | M |
+| **70** | [epic-70-health-check-autofix.md](epic-70-health-check-autofix.md) — `health-check --fix` + `install.sh --auto-sync` non-interactive remediation for deterministic failures | M |
+| **71** | [epic-71-pipeline-tui.md](epic-71-pipeline-tui.md) — Terminal UI (Go bubbletea or Python rich) visualizing stage progress, active agent, duration, token spend | L |
+| **72** | [epic-72-multi-model-fallback.md](epic-72-multi-model-fallback.md) — provider fallback chains in `shared/model-defaults.yaml`; `resolve-model-tier.py` chain output | M |
+| **73** | [epic-73-policy-engine-completion.md](epic-73-policy-engine-completion.md) — operationalize AOS Policy Engine: `evaluate-policy.sh` + `.claude/policies/` + deliver-feature gate wiring | M |
+
 ## Completed Prompts (`docs/prompts/done/`)
 
 | File | Scope | Shipped |
