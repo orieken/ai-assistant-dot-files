@@ -671,14 +671,21 @@ CODEMAP_FILE="$REPO_DIR/CODEMAP.md"
 if [[ ! -f "$CODEMAP_FILE" ]]; then
   warn "CODEMAP.md not found — run 'bash scripts/generate-codemap.sh' to create it (source-tier retrieval entry point)"
 else
-  # Warn if CODEMAP.md is older than the newest top-level directory mtime.
-  # Uses stat -f %m (macOS) with a fallback to stat -c %Y (Linux).
-  codemap_mtime=$(stat -f %m "$CODEMAP_FILE" 2>/dev/null || stat -c %Y "$CODEMAP_FILE" 2>/dev/null || echo "0")
+  # Uses stat -f %m (macOS) or stat -c %Y (Linux).
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    codemap_mtime=$(stat -f %m "$CODEMAP_FILE" 2>/dev/null || echo "0")
+  else
+    codemap_mtime=$(stat -c %Y "$CODEMAP_FILE" 2>/dev/null || echo "0")
+  fi
   newest_dir_mtime=0
   while IFS= read -r dir; do
     dname="$(basename "$dir")"
     [[ "$dname" == .* ]] && continue
-    mtime=$(stat -f %m "$dir" 2>/dev/null || stat -c %Y "$dir" 2>/dev/null || echo "0")
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+      mtime=$(stat -f %m "$dir" 2>/dev/null || echo "0")
+    else
+      mtime=$(stat -c %Y "$dir" 2>/dev/null || echo "0")
+    fi
     [[ "$mtime" -gt "$newest_dir_mtime" ]] && newest_dir_mtime="$mtime"
   done < <(find "$REPO_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
   if [[ "$codemap_mtime" -lt "$newest_dir_mtime" ]]; then
