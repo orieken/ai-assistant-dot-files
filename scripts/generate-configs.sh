@@ -7,6 +7,7 @@ SHARED_DIR="$REPO_DIR/shared"
 OUTPUT_DIR=""
 DRY_RUN=false
 PLATFORM_FILTER=""
+STACK_FILTER=""
 
 usage() {
   cat <<'EOF'
@@ -17,10 +18,16 @@ Generate platform-specific config files from the canonical shared/ layer.
 Options:
   --output <dir>    Write generated files to <dir> (default: repo root)
   --platform <name> Only generate for a specific platform
+  --stack <list>    Comma-separated stacks to include language rules for
+                    (e.g. go,typescript). Core rules — approval-gates,
+                    architecture-guardrails, design-principles, testing-conventions,
+                    and memory-trust-boundary — are always included. Omitting this
+                    flag includes all language convention rules (original behavior).
   --dry-run         Show what would be generated without writing
   -h, --help        Show this help
 
 Platforms: claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline
+Stacks:    go, typescript, python, csharp, java, kotlin, swift, rust, iac
 EOF
   exit 0
 }
@@ -29,6 +36,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --output)    OUTPUT_DIR="$2"; shift 2 ;;
     --platform)  PLATFORM_FILTER="$2"; shift 2 ;;
+    --stack)     STACK_FILTER="$2"; shift 2 ;;
     --dry-run)   DRY_RUN=true; shift ;;
     -h|--help)   usage ;;
     *)           echo "Unknown option: $1"; usage ;;
@@ -37,12 +45,34 @@ done
 
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO_DIR}"
 
+# Stack auto-detection: --stack flag > $FRAMEWORK_STACK env var > framework-install.json
+if [[ -z "$STACK_FILTER" ]]; then
+  if [[ -n "${FRAMEWORK_STACK:-}" ]]; then
+    STACK_FILTER="$FRAMEWORK_STACK"
+  else
+    _marker="$OUTPUT_DIR/.claude/framework-install.json"
+    if [[ -f "$_marker" ]]; then
+      _stack=$(grep '"stack"' "$_marker" | head -1 | sed 's/.*"stack": *"//; s/".*//' || true)
+      [[ -n "$_stack" ]] && STACK_FILTER="$_stack"
+    fi
+    unset _marker _stack
+  fi
+fi
+
 ok()   { echo "  [ok] $1"; }
 dry()  { echo "  [dry-run] would generate $1"; }
 skip() { echo "  [skip] $1"; }
 
 should_generate() {
   [[ -z "$PLATFORM_FILTER" || "$1" == "$PLATFORM_FILTER" ]]
+}
+
+# Returns 0 (true) if the given language stack should have its convention rules
+# included. When STACK_FILTER is empty every stack passes (original behavior).
+stack_includes() {
+  local lang="$1"
+  [[ -z "$STACK_FILTER" ]] && return 0
+  echo "$STACK_FILTER" | tr ',' '\n' | grep -qxF "$lang"
 }
 
 write_file() {
@@ -61,11 +91,42 @@ write_file() {
 
 collect_rules() {
   local result=""
-  for rule_file in "$SHARED_DIR/rules/"*.md; do
-    result+=$'\n'
-    result+="$(cat "$rule_file")"
-    result+=$'\n'
-  done
+
+  if [[ -z "$STACK_FILTER" ]]; then
+    # No filter — include every rule file (original behavior)
+    for rule_file in "$SHARED_DIR/rules/"*.md; do
+      result+=$'\n'"$(cat "$rule_file")"$'\n'
+    done
+  else
+    # Stack-scoped: core rules always, language conventions only when matched
+    for rule_file in \
+      "$SHARED_DIR/rules/approval-gates.md" \
+      "$SHARED_DIR/rules/architecture-guardrails.md" \
+      "$SHARED_DIR/rules/design-principles.md" \
+      "$SHARED_DIR/rules/memory-trust-boundary.md" \
+      "$SHARED_DIR/rules/testing-conventions.md"; do
+      [[ -f "$rule_file" ]] || continue
+      result+=$'\n'"$(cat "$rule_file")"$'\n'
+    done
+    # Language-specific rules — one entry per stack token
+    for entry in \
+      "go:go-conventions.md" \
+      "typescript:typescript-conventions.md" \
+      "python:python-conventions.md" \
+      "csharp:csharp-conventions.md" \
+      "java:java-conventions.md" \
+      "kotlin:kotlin-conventions.md" \
+      "swift:swift-conventions.md" \
+      "rust:rust-conventions.md" \
+      "iac:iac-conventions.md"; do
+      local lang="${entry%%:*}"
+      local rule_file="$SHARED_DIR/rules/${entry##*:}"
+      if stack_includes "$lang" && [[ -f "$rule_file" ]]; then
+        result+=$'\n'"$(cat "$rule_file")"$'\n'
+      fi
+    done
+  fi
+
   echo "$result"
 }
 
@@ -565,6 +626,9 @@ echo "Output:  $OUTPUT_DIR"
 echo "Dry run: $DRY_RUN"
 if [[ -n "$PLATFORM_FILTER" ]]; then
   echo "Platform: $PLATFORM_FILTER"
+fi
+if [[ -n "$STACK_FILTER" ]]; then
+  echo "Stack:   $STACK_FILTER (language rules filtered — core rules always included)"
 fi
 echo ""
 

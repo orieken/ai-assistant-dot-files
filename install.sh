@@ -16,6 +16,7 @@ SYNC_ARGS=()
 FRAMEWORK_LEVEL="base"   # "base" = current framework only; "full" = AOS layers included
 WITH_CONFIGS=false       # --with-configs: copy shared/configs/ into the target project
 WITH_MCP=false           # --with-mcp: copy shared/mcp/ scaffold into the target project
+STACK_FILTER=""          # --stack: language stacks to include in generated configs (e.g. go,typescript)
 
 usage() {
   cat <<'EOF'
@@ -57,6 +58,10 @@ Options:
                          and run go mod tidy to produce a ready-to-build MCP server. Only
                          meaningful with --project mode — silently skipped in --global mode.
   --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline)
+  --stack <list>        Comma-separated language stacks for this project (e.g. go or go,typescript).
+                        Stored in .claude/framework-install.json and auto-applied by
+                        scripts/generate-configs.sh on every subsequent regeneration.
+                        Stacks: go, typescript, python, csharp, java, kotlin, swift, rust, iac
   --dry-run             Show what would be installed without doing it
   --tour                Run the onboarding skill after install
   --confirm             For --sync-memory: apply changes (default is diff-only dry run)
@@ -99,6 +104,7 @@ while [[ $# -gt 0 ]]; do
     --confirm)   SYNC_ARGS+=("--confirm"); shift ;;
     --copy)      USE_COPY=true; shift ;;
     --platform)  PLATFORM_FILTER="$2"; shift 2 ;;
+    --stack)     STACK_FILTER="$2"; shift 2 ;;
     --dry-run)   DRY_RUN=true; shift ;;
     --tour)      SHOW_TOUR=true; shift ;;
     --base)           FRAMEWORK_LEVEL="base"; shift ;;
@@ -129,6 +135,87 @@ log()  { echo "  $1"; }
 ok()   { echo "  [ok] $1"; }
 skip() { echo "  [skip] $1"; }
 dry()  { echo "  [dry-run] $1"; }
+
+# Returns 0 (true) if the given stack token should be included.
+# When STACK_FILTER is empty every stack passes (unfiltered behavior).
+stack_includes() {
+  local lang="$1"
+  [[ -z "$STACK_FILTER" ]] && return 0
+  echo "$STACK_FILTER" | tr ',' '\n' | grep -qxF "$lang"
+}
+
+# Install a single rule file via symlink or copy.
+_install_rule_file() {
+  local src="$1"
+  local dest="$2"
+  [[ -f "$src" ]] || return 0
+  if [[ -L "$dest" ]] && [[ "$(readlink "$dest")" == "$src" ]]; then
+    skip "$(basename "$dest") (already linked)"
+    return
+  fi
+  if $USE_COPY; then
+    cp "$src" "$dest"
+    ok "copied $(basename "$dest")"
+  else
+    ln -sf "$src" "$dest"
+    ok "linked $(basename "$dest")"
+  fi
+}
+
+# Create .claude/rules/ as a directory with selective per-file symlinks when
+# --stack is set. Core rules are always included; language conventions only when
+# their stack token matches STACK_FILTER. Falls back to a full directory
+# symlink when STACK_FILTER is empty (original behavior, handled by the caller).
+link_stack_rules() {
+  local claude_dir="$1"
+  local rules_dir="$claude_dir/rules"
+
+  if $DRY_RUN; then
+    dry "would create $rules_dir/ with stack-scoped rule symlinks (stack: $STACK_FILTER)"
+    return
+  fi
+
+  # Convert a pre-existing full directory symlink to a real directory
+  if [[ -L "$rules_dir" ]]; then
+    local backup="${rules_dir}.bak.$(date +%s)"
+    mv "$rules_dir" "$backup"
+    log "backed up $rules_dir -> $backup (converting to selective symlinks)"
+  fi
+
+  mkdir -p "$rules_dir"
+
+  # Core rules — always present regardless of stack
+  for rule_name in \
+    "approval-gates.md" \
+    "architecture-guardrails.md" \
+    "design-principles.md" \
+    "memory-trust-boundary.md" \
+    "testing-conventions.md"; do
+    _install_rule_file "$SHARED_DIR/rules/$rule_name" "$rules_dir/$rule_name"
+  done
+
+  # Language-specific rules — only when their stack token is in STACK_FILTER
+  for entry in \
+    "go:go-conventions.md" \
+    "typescript:typescript-conventions.md" \
+    "python:python-conventions.md" \
+    "csharp:csharp-conventions.md" \
+    "java:java-conventions.md" \
+    "kotlin:kotlin-conventions.md" \
+    "swift:swift-conventions.md" \
+    "rust:rust-conventions.md" \
+    "iac:iac-conventions.md"; do
+    local lang="${entry%%:*}"
+    local rule_name="${entry##*:}"
+    if stack_includes "$lang"; then
+      _install_rule_file "$SHARED_DIR/rules/$rule_name" "$rules_dir/$rule_name"
+    fi
+  done
+
+  local linked_count
+  linked_count=$(find "$rules_dir" -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')
+  ok "$rules_dir/ — $linked_count of $(find "$SHARED_DIR/rules" -name "*.md" | wc -l | tr -d ' ') rule files linked (stack: $STACK_FILTER)"
+}
 
 link_or_copy() {
   local src="$1"
@@ -334,13 +421,21 @@ install_claude_code() {
     if ! $DRY_RUN; then mkdir -p "$claude_dir" 2>/dev/null || true; fi
     link_or_copy "$SHARED_DIR/agents" "$claude_dir/agents"
     link_or_copy "$SHARED_DIR/skills" "$claude_dir/skills"
-    link_or_copy "$SHARED_DIR/rules" "$claude_dir/rules"
+    if [[ -n "$STACK_FILTER" ]]; then
+      link_stack_rules "$claude_dir"
+    else
+      link_or_copy "$SHARED_DIR/rules" "$claude_dir/rules"
+    fi
   else
     local claude_dir="$TARGET_DIR/.claude"
     if ! $DRY_RUN; then mkdir -p "$claude_dir" 2>/dev/null || true; fi
     link_or_copy "$SHARED_DIR/agents" "$claude_dir/agents"
     link_or_copy "$SHARED_DIR/skills" "$claude_dir/skills"
-    link_or_copy "$SHARED_DIR/rules" "$claude_dir/rules"
+    if [[ -n "$STACK_FILTER" ]]; then
+      link_stack_rules "$claude_dir"
+    else
+      link_or_copy "$SHARED_DIR/rules" "$claude_dir/rules"
+    fi
 
     link_or_copy "$SHARED_DIR/ARCHITECTURE_RULES.md" "$TARGET_DIR/ARCHITECTURE_RULES.md"
     link_or_copy "$SHARED_DIR/DOMAIN_DICTIONARY.md" "$TARGET_DIR/DOMAIN_DICTIONARY.md"
@@ -503,7 +598,8 @@ write_install_marker() {
   "installed_at": "$installed_at",
   "mode": "$install_mode",
   "framework_level": "$FRAMEWORK_LEVEL",
-  "platforms": $platforms_json
+  "platforms": $platforms_json,
+  "stack": "$STACK_FILTER"
 }
 EOF
   ok "wrote $target_claude_dir/framework-install.json (version $git_tag @ ${commit_sha:0:8})"

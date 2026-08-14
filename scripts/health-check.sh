@@ -207,6 +207,36 @@ fi
 rm -f /tmp/health-check-parity.$$
 echo ""
 
+# --- 4a. Token Footprint Budget ---------------------------------------------
+# Monolithic platform configs (AGENTS.md, .cursorrules, etc.) inject static
+# prompt overhead on every request. Warn when a file exceeds ~5,000 tokens
+# (20 KB at 4 chars/token). Fix: scripts/generate-configs.sh --stack <stacks>
+echo "--- Token Footprint Budget (static baseline overhead) ---"
+TOKEN_BUDGET_BYTES=20480  # 20 KB ≈ 5,000 tokens
+token_files_checked=0
+for config_file in \
+  "$REPO_DIR/AGENTS.md" \
+  "$REPO_DIR/.cursorrules" \
+  "$REPO_DIR/.windsurfrules" \
+  "$REPO_DIR/.openai.md" \
+  "$REPO_DIR/.junie/guidelines.md" \
+  "$REPO_DIR/.roomodes"; do
+  [[ -f "$config_file" ]] || continue
+  rel="${config_file#"$REPO_DIR/"}"
+  file_bytes=$(wc -c < "$config_file" | tr -d ' ')
+  approx_tokens=$((file_bytes / 4))
+  ((token_files_checked++)) || true
+  if [[ "$file_bytes" -gt "$TOKEN_BUDGET_BYTES" ]]; then
+    warn "$rel — ~${approx_tokens} tokens (${file_bytes} bytes) exceeds 5k budget; run: scripts/generate-configs.sh --stack <stacks>"
+  else
+    pass "$rel — ~${approx_tokens} tokens (${file_bytes} bytes)"
+  fi
+done
+if [[ "$token_files_checked" -eq 0 ]]; then
+  pass "no generated platform configs present — token budget check skipped"
+fi
+echo ""
+
 # --- 5. Domain dictionary orphaned terms (best-effort) ----------------------
 echo "--- Domain Dictionary Orphaned Terms (best-effort) ---"
 DICT="$REPO_DIR/DOMAIN_DICTIONARY.md"
