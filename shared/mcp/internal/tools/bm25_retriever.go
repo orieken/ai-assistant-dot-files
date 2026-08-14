@@ -76,23 +76,26 @@ func (r *BM25Retriever) EnsureIndex(corpusPaths []string) error {
 		if err != nil || !info.IsDir() {
 			continue
 		}
-		walkErr := filepath.Walk(root, func(p string, entry os.FileInfo, walkErr error) error {
-			if walkErr != nil || entry == nil {
-				return nil
-			}
-			if entry.IsDir() {
-				return analyzers.SkipUninterestingDir(root, p, entry.Name())
-			}
-			if !isMarkdownExtension(p) {
-				return nil
-			}
-			return r.indexFile(p)
-		})
-		if walkErr != nil {
+		if walkErr := r.walkAndIndex(root); walkErr != nil {
 			return fmt.Errorf("bm25 retriever: walk %q: %w", root, walkErr)
 		}
 	}
 	return nil
+}
+
+func (r *BM25Retriever) walkAndIndex(root string) error {
+	return filepath.Walk(root, func(p string, entry os.FileInfo, walkErr error) error {
+		if walkErr != nil || entry == nil {
+			return nil
+		}
+		if entry.IsDir() {
+			return analyzers.SkipUninterestingDir(root, p, entry.Name())
+		}
+		if !isMarkdownExtension(p) {
+			return nil
+		}
+		return r.indexFile(p)
+	})
 }
 
 func isMarkdownExtension(path string) bool {

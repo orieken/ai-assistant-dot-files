@@ -37,7 +37,7 @@ func (t *VerifyDependenciesTool) OutputSchema() *jsonschema.Schema {
 	return reflectSchema(&analyzers.DependencyVerificationResult{})
 }
 
-func (t *VerifyDependenciesTool) Execute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *VerifyDependenciesTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	t.logger.Info("Handling verify_dependencies request")
 
 	args := request.GetArguments()

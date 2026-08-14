@@ -49,7 +49,7 @@ func (t *CheckAccessibilityTool) OutputSchema() *jsonschema.Schema {
 	return reflectSchema(&analyzers.AccessibilityReportResult{})
 }
 
-func (t *CheckAccessibilityTool) Execute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *CheckAccessibilityTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	t.logger.Info("Handling check_accessibility request")
 
 	args := request.GetArguments()

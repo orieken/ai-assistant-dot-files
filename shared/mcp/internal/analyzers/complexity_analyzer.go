@@ -40,37 +40,54 @@ func (a *ComplexityAnalyzer) Analyze(projectPath string, maxComplexity, maxLines
 	if maxLines <= 0 {
 		maxLines = 30
 	}
-
 	result := &ComplexityAnalysisResult{
 		Success:     true,
 		ProjectPath: projectPath,
 		Violations:  []FunctionComplexity{},
 	}
+	files, err := collectSourceFiles(projectPath)
+	if err != nil {
+		return nil, err
+	}
+	result.TotalFiles = len(files)
+	a.analyzeAll(files, maxComplexity, maxLines, result)
+	result.Summary = complexitySummary(result.ViolationsCount)
+	return result, nil
+}
 
+func collectSourceFiles(projectPath string) ([]string, error) {
 	info, err := os.Stat(projectPath)
 	if err != nil {
 		return nil, err
 	}
-
-	var files []string
 	if !info.IsDir() {
-		files = append(files, projectPath)
-	} else {
-		err = filepath.Walk(projectPath, func(path string, fi os.FileInfo, err error) error {
-			if err != nil || fi.IsDir() {
-				return nil
-			}
-			if strings.HasSuffix(path, ".go") || strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".ts") {
-				files = append(files, path)
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
+		return []string{projectPath}, nil
 	}
+	var files []string
+	err = filepath.Walk(projectPath, func(path string, fi os.FileInfo, walkErr error) error {
+		if walkErr != nil || fi.IsDir() {
+			return nil
+		}
+		if isAnalyzableExtension(path) {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, err
+}
 
-	result.TotalFiles = len(files)
+func isAnalyzableExtension(path string) bool {
+	return strings.HasSuffix(path, ".go") || strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".ts")
+}
+
+func complexitySummary(violationCount int) string {
+	if violationCount > 0 {
+		return "Complexity threshold violations found"
+	}
+	return "All functions pass complexity and LOC checks"
+}
+
+func (a *ComplexityAnalyzer) analyzeAll(files []string, maxComplexity, maxLines int, result *ComplexityAnalysisResult) {
 	for _, file := range files {
 		if strings.HasSuffix(file, ".go") {
 			a.analyzeGoFile(file, maxComplexity, maxLines, result)
@@ -78,13 +95,6 @@ func (a *ComplexityAnalyzer) Analyze(projectPath string, maxComplexity, maxLines
 			a.analyzeGenericFile(file, maxComplexity, maxLines, result)
 		}
 	}
-
-	if result.ViolationsCount > 0 {
-		result.Summary = "Complexity threshold violations found"
-	} else {
-		result.Summary = "All functions pass complexity and LOC checks"
-	}
-	return result, nil
 }
 
 func (a *ComplexityAnalyzer) analyzeGoFile(file string, maxComplexity, maxLines int, result *ComplexityAnalysisResult) {
@@ -94,47 +104,44 @@ func (a *ComplexityAnalyzer) analyzeGoFile(file string, maxComplexity, maxLines 
 		a.analyzeGenericFile(file, maxComplexity, maxLines, result)
 		return
 	}
-
 	for _, decl := range node.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
 		if !ok || fn.Body == nil {
 			continue
 		}
 		result.TotalFunctions++
-
 		startPos := fset.Position(fn.Pos())
-		endPos := fset.Position(fn.End())
-		lineCount := endPos.Line - startPos.Line + 1
-
-		complexity := 1
-		ast.Inspect(fn.Body, func(n ast.Node) bool {
-			switch v := n.(type) {
-			case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.CaseClause, *ast.CommClause:
-				_ = v
-				complexity++
-			case *ast.BinaryExpr:
-				if v.Op == token.LAND || v.Op == token.LOR {
-					complexity++
-				}
-			}
-			return true
-		})
-
+		lineCount := fset.Position(fn.End()).Line - startPos.Line + 1
+		complexity := calcCyclomaticComplexity(fn)
 		if complexity > maxComplexity || lineCount > maxLines {
 			result.ViolationsCount++
 			result.Violations = append(result.Violations, FunctionComplexity{
-				File:         file,
-				FunctionName: fn.Name.Name,
-				LineNumber:   startPos.Line,
-				Complexity:   complexity,
-				LineCount:    lineCount,
-				Status:       "VIOLATION",
+				File: file, FunctionName: fn.Name.Name,
+				LineNumber: startPos.Line, Complexity: complexity,
+				LineCount: lineCount, Status: "VIOLATION",
 			})
 		}
 	}
 }
 
-func (a *ComplexityAnalyzer) analyzeGenericFile(file string, maxComplexity, maxLines int, result *ComplexityAnalysisResult) {
+func calcCyclomaticComplexity(fn *ast.FuncDecl) int {
+	complexity := 1
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		switch v := n.(type) {
+		case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.CaseClause, *ast.CommClause:
+			_ = v
+			complexity++
+		case *ast.BinaryExpr:
+			if v.Op == token.LAND || v.Op == token.LOR {
+				complexity++
+			}
+		}
+		return true
+	})
+	return complexity
+}
+
+func (a *ComplexityAnalyzer) analyzeGenericFile(file string, _ int, maxLines int, result *ComplexityAnalysisResult) {
 	f, err := os.Open(file)
 	if err != nil {
 		return

@@ -59,23 +59,7 @@ func (r *KICorpusRetriever) Retrieve(query string, tags []string, domain string)
 	queryTokens := tokenize(query)
 	var hits []Reference
 	for _, root := range r.corpusPaths {
-		entries, err := os.ReadDir(root)
-		if err != nil {
-			continue
-		}
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") || entry.Name() == "README.md" {
-				continue
-			}
-			ref, ok := parseCorpusFile(filepath.Join(root, entry.Name()))
-			if !ok {
-				continue
-			}
-			ref.Relevance = scoreRelevance(ref, queryTokens, tags, domain)
-			if ref.Relevance > 0 {
-				hits = append(hits, ref)
-			}
-		}
+		hits = append(hits, hitsFromRoot(root, queryTokens, tags, domain)...)
 	}
 	sort.SliceStable(hits, func(i, j int) bool { return hits[i].Relevance > hits[j].Relevance })
 	if len(hits) > maxResults {
@@ -84,21 +68,53 @@ func (r *KICorpusRetriever) Retrieve(query string, tags []string, domain string)
 	return hits, nil
 }
 
+func shouldSkipEntry(entry os.DirEntry) bool {
+	return entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") || entry.Name() == "README.md"
+}
+
+func hitsFromRoot(root string, queryTokens, tags []string, domain string) []Reference {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return nil
+	}
+	var hits []Reference
+	for _, entry := range entries {
+		if shouldSkipEntry(entry) {
+			continue
+		}
+		ref, ok := parseCorpusFile(filepath.Join(root, entry.Name()))
+		if !ok {
+			continue
+		}
+		ref.Relevance = scoreRelevance(ref, queryTokens, tags, domain)
+		if ref.Relevance > 0 {
+			hits = append(hits, ref)
+		}
+	}
+	return hits
+}
+
 func parseCorpusFile(path string) (Reference, bool) {
 	file, err := os.Open(path)
 	if err != nil {
 		return Reference{}, false
 	}
 	defer file.Close()
-
 	scanner := bufio.NewScanner(file)
 	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
-
 	if !scanner.Scan() || scanner.Text() != "---" {
 		return Reference{}, false
 	}
-
 	ref := Reference{Path: path}
+	summaryLines := scanFrontmatterAndBody(scanner, &ref)
+	if ref.Title == "" {
+		ref.Title = titleFromFilename(path)
+	}
+	ref.Summary = strings.Join(summaryLines, " ")
+	return ref, true
+}
+
+func scanFrontmatterAndBody(scanner *bufio.Scanner, ref *Reference) []string {
 	inFrontmatter := true
 	var summaryLines []string
 	for scanner.Scan() {
@@ -108,19 +124,23 @@ func parseCorpusFile(path string) (Reference, bool) {
 				inFrontmatter = false
 				continue
 			}
-			assignFrontmatterField(&ref, line)
+			assignFrontmatterField(ref, line)
 			continue
 		}
-		if len(summaryLines) < 5 && strings.TrimSpace(line) != "" && !strings.HasPrefix(strings.TrimSpace(line), "#") {
-			summaryLines = append(summaryLines, strings.TrimSpace(line))
-		}
+		summaryLines = appendSummaryLine(summaryLines, line)
 	}
+	return summaryLines
+}
 
-	if ref.Title == "" {
-		ref.Title = titleFromFilename(path)
+func appendSummaryLine(lines []string, line string) []string {
+	if len(lines) >= 5 {
+		return lines
 	}
-	ref.Summary = strings.Join(summaryLines, " ")
-	return ref, true
+	trimmed := strings.TrimSpace(line)
+	if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+		return lines
+	}
+	return append(lines, trimmed)
 }
 
 func assignFrontmatterField(ref *Reference, line string) {
@@ -164,28 +184,39 @@ func titleFromFilename(path string) string {
 }
 
 func scoreRelevance(ref Reference, queryTokens, requestedTags []string, requestedDomain string) float64 {
-	var score float64
 	tagSet := make(map[string]struct{}, len(ref.Tags))
 	for _, t := range ref.Tags {
 		tagSet[strings.ToLower(t)] = struct{}{}
 	}
-	for _, wanted := range requestedTags {
-		if _, ok := tagSet[strings.ToLower(wanted)]; ok {
-			score += 2.0
-		}
-	}
+	score := scoreTagMatch(tagSet, requestedTags)
 	if requestedDomain != "" && strings.EqualFold(requestedDomain, ref.Domain) {
 		score += 1.5
 	}
 	titleLower := strings.ToLower(ref.Title)
 	summaryLower := strings.ToLower(ref.Summary)
 	for _, tok := range queryTokens {
-		if strings.Contains(titleLower, tok) {
-			score += 1.0
+		score += scoreTokenMatch(titleLower, summaryLower, tok)
+	}
+	return score
+}
+
+func scoreTagMatch(tagSet map[string]struct{}, requestedTags []string) float64 {
+	var score float64
+	for _, wanted := range requestedTags {
+		if _, ok := tagSet[strings.ToLower(wanted)]; ok {
+			score += 2.0
 		}
-		if strings.Contains(summaryLower, tok) {
-			score += 0.3
-		}
+	}
+	return score
+}
+
+func scoreTokenMatch(titleLower, summaryLower, tok string) float64 {
+	var score float64
+	if strings.Contains(titleLower, tok) {
+		score += 1.0
+	}
+	if strings.Contains(summaryLower, tok) {
+		score += 0.3
 	}
 	return score
 }

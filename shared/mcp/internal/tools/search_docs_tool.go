@@ -61,7 +61,7 @@ func (t *SearchDocsTool) OutputSchema() *jsonschema.Schema {
 	return reflectSchema(&DocSearchResult{})
 }
 
-func (t *SearchDocsTool) Execute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *SearchDocsTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	t.logger.Info("Handling search_docs request")
 
 	args := request.GetArguments()

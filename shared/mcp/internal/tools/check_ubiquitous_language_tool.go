@@ -47,7 +47,7 @@ func (t *CheckUbiquitousLanguageTool) OutputSchema() *jsonschema.Schema {
 	return reflectSchema(&analyzers.UbiquitousLanguageResult{})
 }
 
-func (t *CheckUbiquitousLanguageTool) Execute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *CheckUbiquitousLanguageTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	t.logger.Info("Handling check_ubiquitous_language request")
 
 	args := request.GetArguments()

@@ -53,7 +53,7 @@ func (t *SearchKITool) OutputSchema() *jsonschema.Schema {
 	return reflectSchema(&KISearchResult{})
 }
 
-func (t *SearchKITool) Execute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *SearchKITool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	t.logger.Info("Handling search_ki request")
 
 	args := request.GetArguments()

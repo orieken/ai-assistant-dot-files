@@ -170,13 +170,7 @@ func readGoImports(file string) ([]importRef, error) {
 		lineNum++
 		line := scanner.Text()
 		if inBlock {
-			if strings.TrimSpace(line) == ")" {
-				inBlock = false
-				continue
-			}
-			if m := goImportBlockLineRe.FindStringSubmatch(line); m != nil {
-				imports = append(imports, importRef{Path: m[1], Line: lineNum})
-			}
+			inBlock, imports = parseGoBlockLine(line, lineNum, imports)
 			continue
 		}
 		if goImportBlockOpenRe.MatchString(line) {
@@ -188,6 +182,16 @@ func readGoImports(file string) ([]importRef, error) {
 		}
 	}
 	return imports, nil
+}
+
+func parseGoBlockLine(line string, lineNum int, imports []importRef) (stillInBlock bool, out []importRef) {
+	if strings.TrimSpace(line) == ")" {
+		return false, imports
+	}
+	if m := goImportBlockLineRe.FindStringSubmatch(line); m != nil {
+		return true, append(imports, importRef{Path: m[1], Line: lineNum})
+	}
+	return true, imports
 }
 
 func readTSImports(file string) ([]importRef, error) {

@@ -51,38 +51,35 @@ func (t *AnalyzeComplexityTool) OutputSchema() *jsonschema.Schema {
 	return reflectSchema(&analyzers.ComplexityAnalysisResult{})
 }
 
-func (t *AnalyzeComplexityTool) Execute(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *AnalyzeComplexityTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	t.logger.Info("Handling analyze_complexity request")
-
-	args := request.GetArguments()
-	projectPath, _ := args["projectPath"].(string)
-
+	projectPath, maxComplexity, maxLines := parseComplexityArgs(request.GetArguments())
 	if projectPath == "" {
 		return mcp.NewToolResultError("projectPath is required"), nil
 	}
-
-	maxComplexity := 7
-	if mc, ok := args["maxComplexity"].(float64); ok && mc > 0 {
-		maxComplexity = int(mc)
-	}
-
-	maxLines := 30
-	if ml, ok := args["maxLines"].(float64); ok && ml > 0 {
-		maxLines = int(ml)
-	}
-
 	result, err := t.analyzer.Analyze(projectPath, maxComplexity, maxLines)
 	if err != nil {
 		t.logger.Error("Complexity analysis failed", "error", err)
 		return mcp.NewToolResultError(fmt.Sprintf("Complexity analysis failed: %v", err)), nil
 	}
-
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
 		t.logger.Error("Failed to marshal complexity result", "error", err)
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to format result: %v", err)), nil
 	}
-
 	t.logger.Info("Complexity analysis completed", "path", projectPath, "violations", result.ViolationsCount)
 	return mcp.NewToolResultText(string(resultJSON)), nil
+}
+
+func parseComplexityArgs(args map[string]any) (projectPath string, maxComplexity, maxLines int) {
+	projectPath, _ = args["projectPath"].(string)
+	maxComplexity = 7
+	if mc, ok := args["maxComplexity"].(float64); ok && mc > 0 {
+		maxComplexity = int(mc)
+	}
+	maxLines = 30
+	if ml, ok := args["maxLines"].(float64); ok && ml > 0 {
+		maxLines = int(ml)
+	}
+	return
 }
