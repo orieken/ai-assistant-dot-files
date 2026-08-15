@@ -32,7 +32,7 @@ until its consumers have been checked and the proposed action has been approved.
   It currently summarizes only `debug-environment` and `debug-tests`, while the runbooks directory has
   become the real operational index. Update references in `docs/README.md`,
   `shared/agents/documentation-manager.md`, and queued epic prompts if the file is removed.
-- [ ] Fix the five broken links in `docs/roadmap-2026-08-07.md`; each Epic 69-73 table link needs the
+- [x] Fix the five broken links in `docs/roadmap-2026-08-07.md`; each Epic 69-73 table link needs the
   `prompts/` prefix.
 - [ ] Refresh `docs/ARCHITECTURE.md` against canonical inventory and `shared/platform-registry.json`.
   It claims 25 agents and 56 skills instead of 39 and 69, describes six platform outputs despite the
