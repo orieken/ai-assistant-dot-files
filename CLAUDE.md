@@ -98,52 +98,6 @@ Follow **Arrange / Act / Assert** in every test. One concept per test.
 
 ---
 
-## TypeScript — Quick Reference
-
-```typescript
-// Complexity: use lookup tables over if/else chains
-// Interfaces: explicit, in interfaces/ directory
-// Models: class with readonly fields and computed getters
-// Factories: static methods on a dedicated Factory class
-// Tests: jest / vitest with jest.Mocked<T> fixtures
-// Complexity tool: eslint complexity rule, max 6 (max = highest passing value, so 6 enforces the "< 7" rule above)
-```
-
-## Go — Quick Reference
-
-```go
-// Complexity: guard clauses, early returns, extract helpers
-// Interfaces: defined in the consumer package, kept small
-// Models: plain structs with value/pointer receiver methods
-// Factories: package-level constructor functions NewX()
-// Tests: table-driven with t.Run(), testify/assert
-// Complexity tool: gocyclo, revive
-```
-
-## Python — Quick Reference
-
-```python
-# Complexity: dispatch dicts, extract helpers, ABCs for interfaces
-# Interfaces: ABC with @abstractmethod
-# Models: @dataclass(frozen=True) with cached_property
-# Factories: @staticmethod methods on a Factory class
-# Tests: pytest + create_autospec, fixtures via @pytest.fixture
-# Complexity tool: radon, flake8-cognitive-complexity
-```
-
-## Java — Quick Reference
-
-```java
-// Complexity: guard clauses, Stream pipelines, sealed classes + pattern matching
-// Interfaces: plain interface, Impl suffix for implementations
-// Models: record for immutable value objects, class when mutation needed
-// Factories: final class with private constructor, static factory methods
-// Tests: JUnit 5 + Mockito, @Nested for grouping, Fixture helpers
-// Complexity tool: Checkstyle, SonarQube
-```
-
----
-
 ## What Claude Must Flag
 
 Flag these immediately with explanation and a suggested fix:
