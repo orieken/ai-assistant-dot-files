@@ -14,6 +14,27 @@ For tasks that require a human (not a fireable agent prompt), see [../human-task
 
 ## Active Prompts
 
+### Documentation cleanup (from docs/TODO.md audit — 2026-08-15)
+
+Run in order where dependencies exist: `docs-cleanup-legacy-install-decision.md` before
+`docs-cleanup-move-blueprints.md`. All others are independent and can run in any order or in
+parallel.
+
+| File | Scope | Estimated size |
+|---|---|---|
+| ~~[docs-cleanup-fix-roadmap-links.md](done/docs-cleanup-fix-roadmap-links.md)~~ — shipped `dd78f1d` | ~~Fix 5 broken Epic 69–73 table links in `docs/roadmap-2026-08-07.md` (missing `prompts/` prefix)~~ | ✓ Done |
+| ~~[docs-cleanup-architecture-counts.md](done/docs-cleanup-architecture-counts.md)~~ — shipped `0c0a6c2` | ~~Refresh agent/skill/platform counts in `docs/ARCHITECTURE.md` (currently says 25/56, live is 39/69)~~ | ✓ Done |
+| ~~[docs-cleanup-onboarding-counts.md](done/docs-cleanup-onboarding-counts.md)~~ — shipped `fbd67ce` | ~~Verify and fix stale counts in `docs/ONBOARDING.md`; replace hardcoded numbers with inventory pointers~~ | ✓ Done |
+| ~~[docs-cleanup-expand-readme-tree.md](done/docs-cleanup-expand-readme-tree.md)~~ — shipped `ae40762` | ~~Add missing entries to the `docs/README.md` directory tree (THREAT_MODEL, human-tasks, roadmap, TODO, aos/, prompts/, runbooks/)~~ | ✓ Done |
+| ~~[docs-cleanup-reconcile-human-tasks.md](done/docs-cleanup-reconcile-human-tasks.md)~~ — shipped `ae40762` | ~~Remove resolved decisions from `docs/human-tasks.md`; isolate saturday-mcp external entries~~ | ✓ Done |
+| ~~[docs-cleanup-contributing-gate-language.md](done/docs-cleanup-contributing-gate-language.md)~~ — shipped `ae40762` | ~~Fix Gate #7 misapplication in `docs/CONTRIBUTING.md` "Adding a new rule" section~~ | ✓ Done |
+| [docs-cleanup-consolidate-docs-claude.md](docs-cleanup-consolidate-docs-claude.md) | Merge unique content from `docs/CLAUDE.md` into root `CLAUDE.md`, then delete the divergent copy | S |
+| [docs-cleanup-consolidate-runbooks.md](docs-cleanup-consolidate-runbooks.md) | Consolidate `docs/RUNBOOKS.md` into `docs/runbooks/README.md`; update consumers | S |
+| [docs-cleanup-threat-model-status.md](docs-cleanup-threat-model-status.md) | Annotate `docs/THREAT_MODEL.md` with Op 2 implementation status; update "Op 1 of 2" banner and candidate labels | M |
+| [docs-cleanup-legacy-install-decision.md](docs-cleanup-legacy-install-decision.md) | Determine if extensionless `install`/`uninstall` scripts are still supported; document or retire the path; write ADR | S |
+| [docs-cleanup-move-blueprints.md](docs-cleanup-move-blueprints.md) | Move 3 root blueprint `.md` files to `docs/blueprints/`; update all consumers (run after legacy-install-decision) | M |
+| [docs-cleanup-extend-drift-check.md](docs-cleanup-extend-drift-check.md) | Extend `scripts/check-inventory-drift.sh` to detect stale counts in ARCHITECTURE.md and ONBOARDING.md; **Gate #7 required before CI wiring** | M |
+
 ### Cross-project setup + maintenance patterns
 
 | File | Scope | Estimated size |
