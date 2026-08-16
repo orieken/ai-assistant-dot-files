@@ -38,7 +38,7 @@ until its consumers have been checked and the proposed action has been approved.
   It claims 25 agents and 56 skills instead of 39 and 69, describes six platform outputs despite the
   current nine-entry registry (covering ten named tools), and contains tier/generation details that should
   be revalidated rather than patched as isolated counts.
-- [ ] Refresh `docs/ONBOARDING.md`. Its opening claims 24 agents and 53 skills instead of 39 and 69.
+- [x] Refresh `docs/ONBOARDING.md`. Its opening claims 24 agents and 53 skills instead of 39 and 69.
   Prefer linking to generated/current inventory rather than embedding counts that drift.
 - [ ] Expand `docs/README.md` so its directory tree includes the current root documents and collections:
   `THREAT_MODEL.md`, `human-tasks.md`, `roadmap-2026-08-07.md`, this cleanup ledger, `aos/`, `prompts/`,

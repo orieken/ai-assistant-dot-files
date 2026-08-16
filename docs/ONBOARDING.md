@@ -2,8 +2,10 @@
 
 Welcome! This repository defines one canonical set of AI agents, skills, and rules — written once in
 `shared/`, then generated or symlinked into whatever AI coding tool you actually use (Claude Code, Cursor,
-Windsurf, GitHub Copilot, Gemini/Antigravity, OpenAI/Codex). See [README.md](../README.md) for the full
-architecture, agent roster (24), and skill catalog (53).
+Windsurf, GitHub Copilot, Gemini/Antigravity, OpenAI/Codex). See
+[AGENT_REFERENCE.md](AGENT_REFERENCE.md) for the full agent list,
+[ARCHITECTURE.md](ARCHITECTURE.md) for the canonical skill and platform inventory, and
+[README.md](../README.md) for the framework overview.
 
 ## Install this first
 If you haven't already, run `./install.sh --global --dry-run` from the repo root to see what it would do,
