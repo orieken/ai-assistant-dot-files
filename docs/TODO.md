@@ -40,17 +40,17 @@ until its consumers have been checked and the proposed action has been approved.
   be revalidated rather than patched as isolated counts.
 - [x] Refresh `docs/ONBOARDING.md`. Its opening claims 24 agents and 53 skills instead of 39 and 69.
   Prefer linking to generated/current inventory rather than embedding counts that drift.
-- [ ] Expand `docs/README.md` so its directory tree includes the current root documents and collections:
+- [x] Expand `docs/README.md` so its directory tree includes the current root documents and collections:
   `THREAT_MODEL.md`, `human-tasks.md`, `roadmap-2026-08-07.md`, this cleanup ledger, `aos/`, `prompts/`,
   and any other directory retained after its own audit.
-- [ ] Reconcile `docs/human-tasks.md`. Three listed prompt paths now live under `docs/prompts/done/`, the
+- [x] Reconcile `docs/human-tasks.md`. Three listed prompt paths now live under `docs/prompts/done/`, the
   Phase 2 handoff is complete, and the roadmap says Phase 4 is complete. Remove resolved decisions from
   the queued table or move them into a clearly historical section; verify the external `saturday-mcp`
   entries separately.
 - [ ] Update `docs/THREAT_MODEL.md` with an implementation-status annotation. It still presents itself as
   “Op 1 of 2” and labels mitigations as candidates even though multiple Epic 65 Op 2 controls are present
   (`memory-trust-boundary`, spec-ingestion checks, sync provenance, and disabled hook examples).
-- [ ] Correct or clarify the approval language in `docs/CONTRIBUTING.md` under “Adding a new rule.” It
+- [x] Correct or clarify the approval language in `docs/CONTRIBUTING.md` under “Adding a new rule.” It
   currently says every `shared/rules/` change is Gate #7, while Gate #7 specifically governs wiring a new
   fitness function into CI/CD.
 - [ ] Extend `scripts/check-inventory-drift.sh` to inspect living count claims in at least

@@ -63,10 +63,10 @@ by the next `scripts/generate-configs.sh` run.
 
 1. Add or edit a file in `shared/rules/` (`architecture-guardrails.md`, `design-principles.md`,
    `approval-gates.md`, or a new one).
-2. **This requires human sign-off** — `.claude/rules/approval-gates.md` Gate #7 ("Wiring a New Fitness
-   Function") applies to any change here, since every agent treats these as session-long law. Don't land a
-   rule change without the explicit "approve fitness function" or "add to CI" confirmation that gate
-   describes.
+2. Treat rule changes as high-impact because agents load them as session-long law:
+   - Without CI wiring, Gate #7 does not apply; obtain normal human or PR review.
+   - If the change also modifies CI/CD to enforce a new architectural property, Gate #7 applies. Before
+     committing that wiring, the user must say "approve fitness function" or "add to CI."
 3. If you added a new rule *file* (not just edited an existing one), update `generate-configs.sh`'s
    `collect_rules()` and, for Cursor, add a new `generate_mdc()` call in `generate_cursor()` so it gets its
    own `.mdc` file (Cursor needs focused, small rule files, not one giant one).

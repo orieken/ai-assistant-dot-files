@@ -16,13 +16,19 @@ docs/
   MIGRATION.md            -- Breaking changes from pre-shared/ structure.
   ONBOARDING.md           -- New contributor onboarding guide.
   RUNBOOKS.md             -- Operational runbook summaries.
+  THREAT_MODEL.md         -- STRIDE threat model; implementation-status annotations (Epic 65).
+  TODO.md                 -- Folder-by-folder documentation audit ledger.
+  human-tasks.md          -- Decisions and tasks that require human action, not agent execution.
+  roadmap-2026-08-07.md   -- 2026-08-07 framework roadmap with Epics 69–73.
   clean-code-guidelines.docx -- Full language-example reference, cited from CLAUDE.md.
   adrs/                  -- Architecture Decision Records.
   agent-metrics/          -- Monthly agent-scorecard output, evals subdirectory.
+  aos/                    -- AOS (Agent Orchestration System) design docs and phase prompts.
   features/              -- Pipeline artifacts for delivered features (permanent archive).
   lessons-learned/        -- Persisted output from extract-lessons.
   patterns/               -- Reusable design and framework pattern docs (Saturday/Sunday/GoF/Clean Architecture).
   pipeline-retrospectives/ -- Cross-delivery trend analysis output.
+  prompts/                -- Self-contained agent handoff prompts for framework improvements.
   runbooks/               -- Operational runbooks and guides (see runbooks/README.md for the index).
   blog-posts/             -- Draft blog content about the framework (see blog-content-brief.md).
   audits/                 -- Ad-hoc external audit reports -- scratch inputs, not permanent
