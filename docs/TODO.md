@@ -34,10 +34,10 @@ until its consumers have been checked and the proposed action has been approved.
   `shared/agents/documentation-manager.md`, and queued epic prompts if the file is removed.
 - [x] Fix the five broken links in `docs/roadmap-2026-08-07.md`; each Epic 69-73 table link needs the
   `prompts/` prefix.
-- [ ] Refresh `docs/ARCHITECTURE.md` against canonical inventory and `shared/platform-registry.json`.
+- [x] Refresh `docs/ARCHITECTURE.md` against canonical inventory and `shared/platform-registry.json`.
   It claims 25 agents and 56 skills instead of 39 and 69, describes six platform outputs despite the
-  current ten-platform registry, and contains tier/generation details that should be revalidated rather
-  than patched as isolated counts.
+  current nine-entry registry (covering ten named tools), and contains tier/generation details that should
+  be revalidated rather than patched as isolated counts.
 - [ ] Refresh `docs/ONBOARDING.md`. Its opening claims 24 agents and 53 skills instead of 39 and 69.
   Prefer linking to generated/current inventory rather than embedding counts that drift.
 - [ ] Expand `docs/README.md` so its directory tree includes the current root documents and collections:

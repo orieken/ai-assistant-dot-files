@@ -1,6 +1,7 @@
 # Architecture
 
-This document explains how `shared/` becomes six different platform configs, and how context flows through
+This document explains how `shared/` becomes nine registered platform targets (covering ten named tools,
+because the `jetbrains` entry covers both JetBrains AI Assistant and Junie), and how context flows through
 the agent pipeline once a feature is being delivered. For "how do I add X," see
 [CONTRIBUTING.md](CONTRIBUTING.md). For a narrative walkthrough, see the [README](../README.md). For what
 each individual agent does and what checks its work, see [AGENT_REFERENCE.md](AGENT_REFERENCE.md).
@@ -13,8 +14,8 @@ Every agent, skill, and rule is authored exactly once, in `shared/`:
 
 ```
 shared/
-├── agents/          25 agents — .md, YAML frontmatter (name, description, tools, model, version)
-├── skills/          56 skills — .md, YAML frontmatter (name, description, triggers)
+├── agents/          39 agents — .md, YAML frontmatter (name, description, tools, model, version)
+├── skills/          69 skills — .md, YAML frontmatter (name, description, triggers)
 ├── rules/           architecture-guardrails.md, design-principles.md, approval-gates.md
 ├── contracts/       required-section contracts for pipeline agent handoffs (Epic 5)
 ├── knowledge/       portable Knowledge Items (KIs) — searchable via search-ki / query-memory
@@ -187,7 +188,7 @@ See [docs/runbooks/editing-agent-prompts.md](runbooks/editing-agent-prompts.md) 
 ```
 shared/                          canonical source — see section 1
 scripts/
-  generate-configs.sh            shared/ -> six platform configs
+  generate-configs.sh            shared/ -> nine registered platform targets
   check-parity.sh                fitness function: configs match shared/
   test-agents.sh                 golden-file structural tests for agent prompts
   check-context-budget.sh        fitness function: no WARNING manifest without cut recommendations
