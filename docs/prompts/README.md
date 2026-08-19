@@ -115,6 +115,11 @@ See `docs/roadmap-2026-08-07.md` for the full roadmap with priority rationale.
 | **72** | [epic-72-multi-model-fallback.md](epic-72-multi-model-fallback.md) — provider fallback chains in `shared/model-defaults.yaml`; `resolve-model-tier.py` chain output | M |
 | **73** | [epic-73-policy-engine-completion.md](epic-73-policy-engine-completion.md) — operationalize AOS Policy Engine: `evaluate-policy.sh` + `.claude/policies/` + deliver-feature gate wiring | M |
 | **74** | [epic-74-loom-cli.md](epic-74-loom-cli.md) — `loom` Go CLI: embed `shared/` into a standalone binary distributed via Homebrew tap + Winget; replaces `install.sh` as primary user-facing install path | L |
+| **74-A** | [epic-74-loom-phase-a-scaffold.md](epic-74-loom-phase-a-scaffold.md) — Phase A: Go module scaffold, `//go:embed`, Cobra CLI with stub subcommands | S |
+| **74-B** | [epic-74-loom-phase-b-install.md](epic-74-loom-phase-b-install.md) — Phase B: `loom install` with platform detection, stack filtering, manifest, dry-run | M |
+| **74-C** | [epic-74-loom-phase-c-subcommands.md](epic-74-loom-phase-c-subcommands.md) — Phase C: `loom uninstall`, `loom version` (ldflags), `loom health` | M |
+| **74-D** | [epic-74-loom-phase-d-release.md](epic-74-loom-phase-d-release.md) — Phase D: goreleaser config, GitHub Actions release workflow, Homebrew tap formula | M |
+| **74-E** | [epic-74-loom-phase-e-docs.md](epic-74-loom-phase-e-docs.md) — Phase E: README + ONBOARDING updated for loom install path; cmd/loom/README.md subcommand reference | S |
 
 ## Completed Prompts (`docs/prompts/done/`)
 
