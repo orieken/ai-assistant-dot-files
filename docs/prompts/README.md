@@ -28,7 +28,7 @@ parallel.
 | ~~[docs-cleanup-expand-readme-tree.md](done/docs-cleanup-expand-readme-tree.md)~~ — shipped `ae40762` | ~~Add missing entries to the `docs/README.md` directory tree (THREAT_MODEL, human-tasks, roadmap, TODO, aos/, prompts/, runbooks/)~~ | ✓ Done |
 | ~~[docs-cleanup-reconcile-human-tasks.md](done/docs-cleanup-reconcile-human-tasks.md)~~ — shipped `ae40762` | ~~Remove resolved decisions from `docs/human-tasks.md`; isolate saturday-mcp external entries~~ | ✓ Done |
 | ~~[docs-cleanup-contributing-gate-language.md](done/docs-cleanup-contributing-gate-language.md)~~ — shipped `ae40762` | ~~Fix Gate #7 misapplication in `docs/CONTRIBUTING.md` "Adding a new rule" section~~ | ✓ Done |
-| [docs-cleanup-consolidate-docs-claude.md](docs-cleanup-consolidate-docs-claude.md) | Merge unique content from `docs/CLAUDE.md` into root `CLAUDE.md`, then delete the divergent copy | S |
+| [docs-cleanup-consolidate-docs-claude.md](docs-cleanup-consolidate-docs-claude.md) | Merge unique content into root `CLAUDE.md`, then remove the divergent docs copy | S |
 | [docs-cleanup-consolidate-runbooks.md](docs-cleanup-consolidate-runbooks.md) | Consolidate `docs/RUNBOOKS.md` into `docs/runbooks/README.md`; update consumers | S |
 | [docs-cleanup-threat-model-status.md](docs-cleanup-threat-model-status.md) | Annotate `docs/THREAT_MODEL.md` with Op 2 implementation status; update "Op 1 of 2" banner and candidate labels | M |
 | [docs-cleanup-legacy-install-decision.md](docs-cleanup-legacy-install-decision.md) | Determine if extensionless `install`/`uninstall` scripts are still supported; document or retire the path; write ADR | S |
@@ -114,6 +114,7 @@ See `docs/roadmap-2026-08-07.md` for the full roadmap with priority rationale.
 | **71** | [epic-71-pipeline-tui.md](epic-71-pipeline-tui.md) — Terminal UI (Go bubbletea or Python rich) visualizing stage progress, active agent, duration, token spend | L |
 | **72** | [epic-72-multi-model-fallback.md](epic-72-multi-model-fallback.md) — provider fallback chains in `shared/model-defaults.yaml`; `resolve-model-tier.py` chain output | M |
 | **73** | [epic-73-policy-engine-completion.md](epic-73-policy-engine-completion.md) — operationalize AOS Policy Engine: `evaluate-policy.sh` + `.claude/policies/` + deliver-feature gate wiring | M |
+| **74** | [epic-74-loom-cli.md](epic-74-loom-cli.md) — `loom` Go CLI: embed `shared/` into a standalone binary distributed via Homebrew tap + Winget; replaces `install.sh` as primary user-facing install path | L |
 
 ## Completed Prompts (`docs/prompts/done/`)
 
@@ -165,4 +166,3 @@ Every prompt in this directory:
 - Requests a specific report format
 
 When a prompt is executed and shipped, move it to `docs/prompts/done/` and update the table above.
-
