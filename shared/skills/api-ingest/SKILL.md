@@ -13,7 +13,7 @@ When you want to bootstrap or update documentation and API clients based on an e
 ## Context To Load First
 1. `DOMAIN_DICTIONARY.md`
 2. `ARCHITECTURE_RULES.md`
-3. `API_FRAMEWORK_BLUEPRINT_PROMPT.md`
+3. `docs/blueprints/API_FRAMEWORK_BLUEPRINT_PROMPT.md`
 
 ## Process
 1. **Fetch**: Obtain the OpenAPI spec (JSON or YAML) from the provided URL.

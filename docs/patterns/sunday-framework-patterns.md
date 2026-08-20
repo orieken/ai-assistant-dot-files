@@ -34,8 +34,8 @@ The rest of this file is one entry per concept, in the order above.
 
 **Context**: The overarching pattern every component below implements a piece of — Sunday's answer to
 "how do you write API tests that read like specifications instead of HTTP plumbing." The name comes
-directly from this file's own opening line and from `API_FRAMEWORK_BLUEPRINT_PROMPT.md`'s "Declarative
-Testing Style."
+directly from this file's own opening line and from
+`docs/blueprints/API_FRAMEWORK_BLUEPRINT_PROMPT.md`'s "Declarative Testing Style."
 
 **Structure**: Three layers, each hiding the one below it from the test author. A domain-specific
 `BaseApiClient` exposes only named business operations (`getUser(id)`, never `get(path)`) and hides an
