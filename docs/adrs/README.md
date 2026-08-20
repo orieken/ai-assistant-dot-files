@@ -51,6 +51,9 @@ File names follow the pattern: `ADR-NNN-short-description.md` in kebab-case.
 |---------|-------------------------------------------------|----------|------------|
 | ADR-001 | Adopt RAG-friendly documentation structure      | Accepted | 2026-04-08 |
 | ADR-002 | Corpus-aware retrieval strategy (graduated RAG) | Accepted | 2026-07-22 |
+| ADR-003 | Enterprise memory sync protocol                 | Proposed | 2026-07-31 |
+| ADR-004 | Bugfix artifacts use the features namespace     | Accepted | 2026-08-05 |
+| ADR-005 | Use explicit `.sh` install script paths          | Accepted | 2026-08-15 |
 
 ---
 

@@ -5,17 +5,14 @@ until its consumers have been checked and the proposed action has been approved.
 
 ## Repository Root
 
-- [ ] Move `API_FRAMEWORK_BLUEPRINT_PROMPT.md`, `E2E_FRAMEWORK_BLUEPRINT_PROMPT.md`, and
-  `BLUEPRINT_GENERATOR_PROMPT.md` into a dedicated location such as `docs/blueprints/`.
-  Preserve their installed root filenames if legacy installation remains supported. Update `install`,
-  `uninstall`, `shared/skills/api-ingest/SKILL.md`,
-  `docs/patterns/sunday-framework-patterns.md`, and the root-Markdown scan in
-  `scripts/health-check.sh` as part of the same change.
-- [ ] Decide whether the legacy extensionless `install`/`uninstall` path is still supported. If it is
-  retired, review `.claude.md`, `E2E_FRAMEWORK_BLUEPRINT_PROMPT.md`, and
-  `BLUEPRINT_GENERATOR_PROMPT.md` for deletion; those Markdown artifacts currently have no identified
-  consumer outside that legacy path. `API_FRAMEWORK_BLUEPRINT_PROMPT.md` remains a live dependency of
-  the `api-ingest` skill.
+- [x] Consolidate the root blueprint prompts. Move the live `API_FRAMEWORK_BLUEPRINT_PROMPT.md` into
+  `docs/blueprints/`; remove `E2E_FRAMEWORK_BLUEPRINT_PROMPT.md` and
+  `BLUEPRINT_GENERATOR_PROMPT.md` after retiring their only consumer. Update the `api-ingest` skill,
+  `docs/patterns/sunday-framework-patterns.md`, and the root-Markdown scan commentary in
+  `scripts/health-check.sh`.
+- [x] Retire the legacy extensionless `install`/`uninstall` path in favor of `install.sh` and
+  `uninstall.sh`. Remove its unconsumed `.claude.md` compatibility source and record the convention in
+  ADR-005.
 - [ ] Keep `README.md`, `LICENSE-CONTENT.md`, `AGENTS.md`, `CLAUDE.md`, `.openai.md`, and
   `CODEMAP.md` at the repository root. Their locations are conventional or explicitly consumed by
   platform tooling and validation scripts.
@@ -25,10 +22,10 @@ until its consumers have been checked and the proposed action has been approved.
 
 ## `docs/` Root
 
-- [ ] Delete or consolidate `docs/CLAUDE.md`. It is a divergent copy of root `CLAUDE.md`, has not been
+- [x] Delete or consolidate `docs/CLAUDE.md`. It is a divergent copy of root `CLAUDE.md`, has not been
   updated since 2026-03-01, and is only indexed as a reference document. Before deletion, review its
   unique legacy/refactoring guidance and merge anything still authoritative into the canonical source.
-- [ ] Consolidate `docs/RUNBOOKS.md` into `docs/runbooks/README.md`, or turn it into a short redirect.
+- [x] Consolidate `docs/RUNBOOKS.md` into `docs/runbooks/README.md`, or turn it into a short redirect.
   It currently summarizes only `debug-environment` and `debug-tests`, while the runbooks directory has
   become the real operational index. Update references in `docs/README.md`,
   `shared/agents/documentation-manager.md`, and queued epic prompts if the file is removed.
@@ -47,13 +44,13 @@ until its consumers have been checked and the proposed action has been approved.
   Phase 2 handoff is complete, and the roadmap says Phase 4 is complete. Remove resolved decisions from
   the queued table or move them into a clearly historical section; verify the external `saturday-mcp`
   entries separately.
-- [ ] Update `docs/THREAT_MODEL.md` with an implementation-status annotation. It still presents itself as
+- [x] Update `docs/THREAT_MODEL.md` with an implementation-status annotation. It still presents itself as
   “Op 1 of 2” and labels mitigations as candidates even though multiple Epic 65 Op 2 controls are present
   (`memory-trust-boundary`, spec-ingestion checks, sync provenance, and disabled hook examples).
 - [x] Correct or clarify the approval language in `docs/CONTRIBUTING.md` under “Adding a new rule.” It
   currently says every `shared/rules/` change is Gate #7, while Gate #7 specifically governs wiring a new
   fitness function into CI/CD.
-- [ ] Extend `scripts/check-inventory-drift.sh` to inspect living count claims in at least
+- [x] Extend `scripts/check-inventory-drift.sh` to inspect living count claims in at least
   `docs/ARCHITECTURE.md` and `docs/ONBOARDING.md`. The current check reported zero drift while both files
   contained stale counts. Wiring this new fitness-function coverage requires the repository's approval
   gate before implementation.
