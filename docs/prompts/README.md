@@ -28,12 +28,12 @@ parallel.
 | ~~[docs-cleanup-expand-readme-tree.md](done/docs-cleanup-expand-readme-tree.md)~~ — shipped `ae40762` | ~~Add missing entries to the `docs/README.md` directory tree (THREAT_MODEL, human-tasks, roadmap, TODO, aos/, prompts/, runbooks/)~~ | ✓ Done |
 | ~~[docs-cleanup-reconcile-human-tasks.md](done/docs-cleanup-reconcile-human-tasks.md)~~ — shipped `ae40762` | ~~Remove resolved decisions from `docs/human-tasks.md`; isolate saturday-mcp external entries~~ | ✓ Done |
 | ~~[docs-cleanup-contributing-gate-language.md](done/docs-cleanup-contributing-gate-language.md)~~ — shipped `ae40762` | ~~Fix Gate #7 misapplication in `docs/CONTRIBUTING.md` "Adding a new rule" section~~ | ✓ Done |
-| [docs-cleanup-consolidate-docs-claude.md](docs-cleanup-consolidate-docs-claude.md) | Merge unique content into root `CLAUDE.md`, then remove the divergent docs copy | S |
-| [docs-cleanup-consolidate-runbooks.md](docs-cleanup-consolidate-runbooks.md) | Consolidate `docs/RUNBOOKS.md` into `docs/runbooks/README.md`; update consumers | S |
-| [docs-cleanup-threat-model-status.md](docs-cleanup-threat-model-status.md) | Annotate `docs/THREAT_MODEL.md` with Op 2 implementation status; update "Op 1 of 2" banner and candidate labels | M |
-| [docs-cleanup-legacy-install-decision.md](docs-cleanup-legacy-install-decision.md) | Determine if extensionless `install`/`uninstall` scripts are still supported; document or retire the path; write ADR | S |
-| [docs-cleanup-move-blueprints.md](docs-cleanup-move-blueprints.md) | Move 3 root blueprint `.md` files to `docs/blueprints/`; update all consumers (run after legacy-install-decision) | M |
-| [docs-cleanup-extend-drift-check.md](docs-cleanup-extend-drift-check.md) | Extend `scripts/check-inventory-drift.sh` to detect stale counts in ARCHITECTURE.md and ONBOARDING.md; **Gate #7 required before CI wiring** | M |
+| ~~[docs-cleanup-consolidate-docs-claude.md](done/docs-cleanup-consolidate-docs-claude.md)~~ — shipped `6fa621f` | ~~Merge unique content into root `CLAUDE.md`, then remove the divergent docs copy~~ | ✓ Done |
+| ~~[docs-cleanup-consolidate-runbooks.md](done/docs-cleanup-consolidate-runbooks.md)~~ — shipped `c18e37f` | ~~Consolidate `docs/RUNBOOKS.md` into `docs/runbooks/README.md`; update consumers~~ | ✓ Done |
+| ~~[docs-cleanup-threat-model-status.md](done/docs-cleanup-threat-model-status.md)~~ — shipped `3e8b76d` | ~~Annotate `docs/THREAT_MODEL.md` with Op 2 implementation status; update "Op 1 of 2" banner and candidate labels~~ | ✓ Done |
+| ~~[docs-cleanup-legacy-install-decision.md](done/docs-cleanup-legacy-install-decision.md)~~ — shipped `ab6f0be` | ~~Determine if extensionless `install`/`uninstall` scripts are still supported; document or retire the path; write ADR~~ | ✓ Done |
+| ~~[docs-cleanup-move-blueprints.md](done/docs-cleanup-move-blueprints.md)~~ — shipped `05e345b` | ~~Move 3 root blueprint `.md` files to `docs/blueprints/`; update all consumers (run after legacy-install-decision)~~ | ✓ Done |
+| ~~[docs-cleanup-extend-drift-check.md](done/docs-cleanup-extend-drift-check.md)~~ — shipped `cceabe2` | ~~Extend `scripts/check-inventory-drift.sh` to detect stale counts in ARCHITECTURE.md and ONBOARDING.md~~ | ✓ Done |
 
 ### Cross-project setup + maintenance patterns
 
@@ -115,9 +115,9 @@ See `docs/roadmap-2026-08-07.md` for the full roadmap with priority rationale.
 | **72** | [epic-72-multi-model-fallback.md](epic-72-multi-model-fallback.md) — provider fallback chains in `shared/model-defaults.yaml`; `resolve-model-tier.py` chain output | M |
 | **73** | [epic-73-policy-engine-completion.md](epic-73-policy-engine-completion.md) — operationalize AOS Policy Engine: `evaluate-policy.sh` + `.claude/policies/` + deliver-feature gate wiring | M |
 | **74** | [epic-74-loom-cli.md](epic-74-loom-cli.md) — `loom` Go CLI: embed `shared/` into a standalone binary distributed via Homebrew tap + Winget; replaces `install.sh` as primary user-facing install path | L |
-| **74-A** | [epic-74-loom-phase-a-scaffold.md](epic-74-loom-phase-a-scaffold.md) — Phase A: Go module scaffold, `//go:embed`, Cobra CLI with stub subcommands | S |
-| **74-B** | [epic-74-loom-phase-b-install.md](epic-74-loom-phase-b-install.md) — Phase B: `loom install` with platform detection, stack filtering, manifest, dry-run | M |
-| **74-C** | [epic-74-loom-phase-c-subcommands.md](epic-74-loom-phase-c-subcommands.md) — Phase C: `loom uninstall`, `loom version` (ldflags), `loom health` | M |
+| ~~**74-A**~~ | ~~[epic-74-loom-phase-a-scaffold.md](done/epic-74-loom-phase-a-scaffold.md)~~ — shipped `a112795` — Phase A: Go module scaffold, `//go:embed`, Cobra CLI with stub subcommands | ✓ Done |
+| ~~**74-B**~~ | ~~[epic-74-loom-phase-b-install.md](done/epic-74-loom-phase-b-install.md)~~ — shipped `b671079` — Phase B: `loom install` with platform detection, stack filtering, manifest, dry-run | ✓ Done |
+| ~~**74-C**~~ | ~~[epic-74-loom-phase-c-subcommands.md](done/epic-74-loom-phase-c-subcommands.md)~~ — shipped `0bf4b5f`→`3a0c7f9` — Phase C: `loom uninstall`, `loom version` (ldflags), `loom health` | ✓ Done |
 | **74-D** | [epic-74-loom-phase-d-release.md](epic-74-loom-phase-d-release.md) — Phase D: goreleaser config, GitHub Actions release workflow, Homebrew tap formula | M |
 | **74-E** | [epic-74-loom-phase-e-docs.md](epic-74-loom-phase-e-docs.md) — Phase E: README + ONBOARDING updated for loom install path; cmd/loom/README.md subcommand reference | S |
 
