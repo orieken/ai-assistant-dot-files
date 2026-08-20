@@ -7,8 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "0.1.0-dev"
-
 var rootCmd = &cobra.Command{
 	Use:           "loom",
 	Short:         "AI assistant framework installer",
