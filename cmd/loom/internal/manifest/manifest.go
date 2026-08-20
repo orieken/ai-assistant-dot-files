@@ -12,12 +12,17 @@ import (
 
 const Filename = ".loom-manifest.json"
 
+// PlatformRecord describes the paths owned by one installed platform.
+type PlatformRecord struct {
+	Name  string   `json:"name"`
+	Paths []string `json:"paths"`
+}
+
 // Manifest describes one completed loom installation.
 type Manifest struct {
-	Version     string    `json:"version"`
-	InstalledAt time.Time `json:"installedAt"`
-	Platforms   []string  `json:"platforms"`
-	Paths       []string  `json:"paths"`
+	Version     string           `json:"version"`
+	InstalledAt time.Time        `json:"installedAt"`
+	Platforms   []PlatformRecord `json:"platforms"`
 }
 
 // Read loads the loom manifest from a target directory.

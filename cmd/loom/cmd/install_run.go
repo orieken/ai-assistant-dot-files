@@ -31,8 +31,7 @@ func executeInstall(request installRequest, content, mcpContent platform.Content
 	if err != nil {
 		return err
 	}
-	paths := uniquePaths(results, extras)
-	if err := writeManifest(request, paths); err != nil {
+	if err := writeManifest(request, results, extras); err != nil {
 		return err
 	}
 	return reportInstall(request, results, content, output)

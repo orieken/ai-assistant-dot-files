@@ -3,8 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/orieken/loom/cmd/loom/internal/platform"
@@ -72,22 +70,4 @@ func countDirectories(content platform.Content, directory string) (int, error) {
 		}
 	}
 	return count, nil
-}
-
-func uniquePaths(results []platform.Result, extras []string) []string {
-	seen := make(map[string]bool)
-	for _, result := range results {
-		for _, path := range result.Paths {
-			seen[filepath.ToSlash(path)] = true
-		}
-	}
-	for _, path := range extras {
-		seen[filepath.ToSlash(path)] = true
-	}
-	paths := make([]string, 0, len(seen))
-	for path := range seen {
-		paths = append(paths, path)
-	}
-	sort.Strings(paths)
-	return paths
 }

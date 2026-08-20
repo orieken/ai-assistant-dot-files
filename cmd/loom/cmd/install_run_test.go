@@ -65,8 +65,8 @@ func TestExecuteInstallRetainsPreviouslyOwnedSkippedPaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read manifest: %v", err)
 	}
-	assertOwnedPath(t, installed.Paths, ".golangci.yml")
-	assertOwnedPath(t, installed.Paths, sanitizeProjectName(filepath.Base(target))+"-mcp")
+	assertOwnedPath(t, installed.Platforms, sharedOwnership, ".golangci.yml")
+	assertOwnedPath(t, installed.Platforms, sharedOwnership, sanitizeProjectName(filepath.Base(target))+"-mcp")
 }
 
 func assertInstallArtifact(t *testing.T, path string) {
@@ -76,12 +76,16 @@ func assertInstallArtifact(t *testing.T, path string) {
 	}
 }
 
-func assertOwnedPath(t *testing.T, paths []string, expected string) {
+func assertOwnedPath(t *testing.T, records []manifest.PlatformRecord, owner, expected string) {
 	t.Helper()
-	for _, path := range paths {
-		if path == expected {
-			return
+	for _, record := range records {
+		if record.Name == owner {
+			for _, path := range record.Paths {
+				if path == expected {
+					return
+				}
+			}
 		}
 	}
-	t.Fatalf("owned paths %v do not contain %s", paths, expected)
+	t.Fatalf("owner %s in records %v does not contain %s", owner, records, expected)
 }

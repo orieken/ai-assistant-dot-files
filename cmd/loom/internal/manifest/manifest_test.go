@@ -11,7 +11,7 @@ import (
 func TestWriteCreatesExpectedJSON(t *testing.T) {
 	target := t.TempDir()
 	installedAt := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
-	installed := Manifest{Version: "0.1.0", InstalledAt: installedAt, Platforms: []string{"claude-code"}, Paths: []string{".claude/agents"}}
+	installed := Manifest{Version: "0.1.0", InstalledAt: installedAt, Platforms: []PlatformRecord{{Name: "claude-code", Paths: []string{".claude/agents"}}}}
 	if err := Write(target, installed); err != nil {
 		t.Fatalf("write manifest: %v", err)
 	}
@@ -38,7 +38,7 @@ func TestReadIfExistsDistinguishesMissingManifest(t *testing.T) {
 
 func TestReadReturnsWrittenManifest(t *testing.T) {
 	target := t.TempDir()
-	want := Manifest{Version: "0.1.0", Platforms: []string{"cursor"}}
+	want := Manifest{Version: "0.1.0", Platforms: []PlatformRecord{{Name: "cursor"}}}
 	if err := Write(target, want); err != nil {
 		t.Fatalf("write manifest: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestReadReturnsWrittenManifest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read manifest: %v", err)
 	}
-	if got.Version != want.Version || len(got.Platforms) != 1 || got.Platforms[0] != "cursor" {
+	if got.Version != want.Version || len(got.Platforms) != 1 || got.Platforms[0].Name != "cursor" {
 		t.Fatalf("manifest = %+v, want %+v", got, want)
 	}
 }

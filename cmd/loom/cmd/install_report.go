@@ -9,7 +9,9 @@ import (
 	"github.com/orieken/loom/cmd/loom/internal/platform"
 )
 
-func writeManifest(request installRequest, paths []string) error {
+const sharedOwnership = "loom"
+
+func writeManifest(request installRequest, results []platform.Result, extras []string) error {
 	if request.isDryRun {
 		return nil
 	}
@@ -17,15 +19,36 @@ func writeManifest(request installRequest, paths []string) error {
 	if err != nil {
 		return err
 	}
+	records := platformRecords(results, extras)
 	if exists {
-		paths = mergeStrings(previous.Paths, paths)
+		records = mergePlatformRecords(previous.Platforms, records)
 	}
-	platforms := request.platforms
-	if exists {
-		platforms = mergeStrings(previous.Platforms, platforms)
-	}
-	installed := manifest.Manifest{Version: frameworkVersion, InstalledAt: time.Now().UTC(), Platforms: platforms, Paths: paths}
+	installed := manifest.Manifest{Version: frameworkVersion, InstalledAt: time.Now().UTC(), Platforms: records}
 	return manifest.Write(request.target, installed)
+}
+
+func platformRecords(results []platform.Result, extras []string) []manifest.PlatformRecord {
+	records := make([]manifest.PlatformRecord, 0, len(results)+1)
+	for _, result := range results {
+		records = append(records, manifest.PlatformRecord{Name: result.Name, Paths: mergeStrings(nil, result.Paths)})
+	}
+	if len(extras) > 0 {
+		records = append(records, manifest.PlatformRecord{Name: sharedOwnership, Paths: mergeStrings(nil, extras)})
+	}
+	return records
+}
+
+func mergePlatformRecords(existing, added []manifest.PlatformRecord) []manifest.PlatformRecord {
+	pathsByPlatform := make(map[string][]string, len(existing)+len(added))
+	for _, record := range append(append([]manifest.PlatformRecord{}, existing...), added...) {
+		pathsByPlatform[record.Name] = mergeStrings(pathsByPlatform[record.Name], record.Paths)
+	}
+	records := make([]manifest.PlatformRecord, 0, len(pathsByPlatform))
+	for name, paths := range pathsByPlatform {
+		records = append(records, manifest.PlatformRecord{Name: name, Paths: paths})
+	}
+	sort.Slice(records, func(left, right int) bool { return records[left].Name < records[right].Name })
+	return records
 }
 
 func mergeStrings(existing, added []string) []string {
