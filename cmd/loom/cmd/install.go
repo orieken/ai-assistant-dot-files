@@ -1,9 +1,49 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/orieken/loom/cmd/loom/internal/platform"
+	"github.com/spf13/cobra"
+)
+
+type installFlags struct {
+	platform   string
+	stack      string
+	target     string
+	isCopy     bool
+	withConfig bool
+	withMCP    bool
+	isDryRun   bool
+}
+
+var (
+	frameworkFS platform.Content
+	mcpFS       platform.Content
+	installArgs installFlags
+)
 
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install the framework to detected AI platforms",
-	RunE:  runStub,
+	Args:  cobra.NoArgs,
+	RunE:  runInstall,
+}
+
+func init() {
+	rootCmd.AddCommand(installCmd)
+	registerInstallFlags()
+}
+
+func configureInstall(frameworkContent, mcpContent platform.Content) {
+	frameworkFS = frameworkContent
+	mcpFS = mcpContent
+}
+
+func registerInstallFlags() {
+	installCmd.Flags().StringVar(&installArgs.platform, "platform", "", "install for one AI platform")
+	installCmd.Flags().StringVar(&installArgs.stack, "stack", "", "comma-separated language stacks")
+	installCmd.Flags().BoolVar(&installArgs.isCopy, "copy", false, "copy files instead of creating symlinks")
+	installCmd.Flags().BoolVar(&installArgs.withConfig, "with-configs", false, "write linter configs to the target")
+	installCmd.Flags().BoolVar(&installArgs.withMCP, "with-mcp", false, "scaffold the MCP server in the target")
+	installCmd.Flags().BoolVar(&installArgs.isDryRun, "dry-run", false, "print actions without writing files")
+	installCmd.Flags().StringVar(&installArgs.target, "target", ".", "project root to install into")
 }

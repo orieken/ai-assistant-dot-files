@@ -6,6 +6,5 @@ import (
 )
 
 func main() {
-	_ = loom.FrameworkFS
-	cmd.Execute()
+	cmd.Execute(loom.FrameworkFS, loom.MCPFS)
 }

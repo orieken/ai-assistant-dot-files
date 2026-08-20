@@ -7,3 +7,5 @@ var updateCmd = &cobra.Command{
 	Short: "Update the installed framework",
 	RunE:  runStub,
 }
+
+func init() { rootCmd.AddCommand(updateCmd) }

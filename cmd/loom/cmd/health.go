@@ -7,3 +7,5 @@ var healthCmd = &cobra.Command{
 	Short: "Check the installed framework health",
 	RunE:  runStub,
 }
+
+func init() { rootCmd.AddCommand(healthCmd) }

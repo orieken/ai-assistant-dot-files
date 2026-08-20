@@ -7,3 +7,5 @@ var uninstallCmd = &cobra.Command{
 	Short: "Uninstall the framework from AI platforms",
 	RunE:  runStub,
 }
+
+func init() { rootCmd.AddCommand(uninstallCmd) }
