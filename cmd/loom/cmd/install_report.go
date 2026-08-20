@@ -23,7 +23,7 @@ func writeManifest(request installRequest, results []platform.Result, extras []s
 	if exists {
 		records = mergePlatformRecords(previous.Platforms, records)
 	}
-	installed := manifest.Manifest{Version: frameworkVersion, InstalledAt: time.Now().UTC(), Platforms: records}
+	installed := manifest.Manifest{Version: request.frameworkVersion, InstalledAt: time.Now().UTC(), Platforms: records}
 	return manifest.Write(request.target, installed)
 }
 

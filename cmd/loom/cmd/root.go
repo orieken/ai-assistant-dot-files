@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/orieken/loom/cmd/loom/internal/platform"
 	"github.com/spf13/cobra"
@@ -23,7 +25,11 @@ func init() {
 // Execute runs the loom command-line interface.
 func Execute(frameworkFS, mcpFS platform.Content) {
 	configureInstall(frameworkFS, mcpFS)
-	cobra.CheckErr(rootCmd.Execute())
+	err := rootCmd.Execute()
+	if errors.Is(err, errHealthFailed) {
+		os.Exit(1)
+	}
+	cobra.CheckErr(err)
 }
 
 func runStub(_ *cobra.Command, _ []string) error {

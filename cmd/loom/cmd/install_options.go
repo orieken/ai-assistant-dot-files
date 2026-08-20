@@ -10,20 +10,19 @@ import (
 	"github.com/orieken/loom/cmd/loom/internal/platform"
 )
 
-const frameworkVersion = "0.1.0"
-
 type installRequest struct {
-	target     string
-	cache      string
-	platforms  []string
-	rules      platform.RuleSet
-	isCopy     bool
-	isDryRun   bool
-	withConfig bool
-	withMCP    bool
+	target           string
+	cache            string
+	frameworkVersion string
+	platforms        []string
+	rules            platform.RuleSet
+	isCopy           bool
+	isDryRun         bool
+	withConfig       bool
+	withMCP          bool
 }
 
-func prepareInstall(flags installFlags) (installRequest, error) {
+func prepareInstall(flags installFlags, embeddedVersion string) (installRequest, error) {
 	target, err := frameworkfs.ResolveTarget(flags.target)
 	if err != nil {
 		return installRequest{}, err
@@ -36,8 +35,8 @@ func prepareInstall(flags installFlags) (installRequest, error) {
 	if err != nil {
 		return installRequest{}, err
 	}
-	cache, err := frameworkCache()
-	return installRequest{target, cache, platforms, rules, flags.isCopy, flags.isDryRun, flags.withConfig, flags.withMCP}, err
+	cache, err := frameworkCache(embeddedVersion)
+	return installRequest{target, cache, embeddedVersion, platforms, rules, flags.isCopy, flags.isDryRun, flags.withConfig, flags.withMCP}, err
 }
 
 func selectPlatforms(target, selected string) ([]string, error) {
@@ -50,10 +49,10 @@ func selectPlatforms(target, selected string) ([]string, error) {
 	return []string{selected}, nil
 }
 
-func frameworkCache() (string, error) {
+func frameworkCache(embeddedVersion string) (string, error) {
 	cache, err := os.UserCacheDir()
 	if err != nil {
 		return "", fmt.Errorf("resolve user cache: %w", err)
 	}
-	return filepath.Join(cache, "loom", frameworkVersion), nil
+	return filepath.Join(cache, "loom", embeddedVersion), nil
 }

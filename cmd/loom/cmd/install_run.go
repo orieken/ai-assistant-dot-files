@@ -12,7 +12,11 @@ func runInstall(command *cobra.Command, _ []string) error {
 	if frameworkFS == nil {
 		return fmt.Errorf("embedded framework content is not configured")
 	}
-	request, err := prepareInstall(installArgs)
+	embeddedVersion, err := readFrameworkVersion(frameworkFS)
+	if err != nil {
+		return err
+	}
+	request, err := prepareInstall(installArgs, embeddedVersion)
 	if err != nil {
 		return err
 	}
@@ -22,7 +26,7 @@ func runInstall(command *cobra.Command, _ []string) error {
 }
 
 func executeInstall(request installRequest, content, mcpContent platform.Content, files *frameworkfs.Writer, output installOutput) error {
-	output.line(fmt.Sprintf("loom: installing framework v%s", frameworkVersion))
+	output.line(fmt.Sprintf("loom: installing framework %s", request.frameworkVersion))
 	results, err := installPlatforms(request, content, files, output)
 	if err != nil {
 		return err

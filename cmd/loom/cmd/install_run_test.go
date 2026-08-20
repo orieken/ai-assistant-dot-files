@@ -19,7 +19,7 @@ func TestExecuteInstallWritesManifestAndFilteredRules(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse rules: %v", err)
 	}
-	request := installRequest{target: target, cache: cache, platforms: []string{"claude-code"}, rules: rules, isCopy: true}
+	request := installRequest{target: target, cache: cache, frameworkVersion: "v3.3.14", platforms: []string{"claude-code"}, rules: rules, isCopy: true}
 	var output bytes.Buffer
 	reporter := installOutput{writer: &output}
 	files := frameworkfs.NewWriter(loom.FrameworkFS, target, cache, true, false, reporter.action)
@@ -38,7 +38,7 @@ func TestExecuteInstallWritesManifestAndFilteredRules(t *testing.T) {
 
 func TestExecuteInstallDryRunWritesNothing(t *testing.T) {
 	target, cache := t.TempDir(), t.TempDir()
-	request := installRequest{target: target, cache: cache, isCopy: true, isDryRun: true}
+	request := installRequest{target: target, cache: cache, frameworkVersion: "v3.3.14", isCopy: true, isDryRun: true}
 	var output bytes.Buffer
 	reporter := installOutput{writer: &output, isDryRun: true}
 	files := frameworkfs.NewWriter(loom.FrameworkFS, target, cache, true, true, reporter.action)
@@ -52,7 +52,7 @@ func TestExecuteInstallDryRunWritesNothing(t *testing.T) {
 
 func TestExecuteInstallRetainsPreviouslyOwnedSkippedPaths(t *testing.T) {
 	target, cache := t.TempDir(), t.TempDir()
-	request := installRequest{target: target, cache: cache, isCopy: true, withConfig: true, withMCP: true}
+	request := installRequest{target: target, cache: cache, frameworkVersion: "v3.3.14", isCopy: true, withConfig: true, withMCP: true}
 	for iteration := 0; iteration < 2; iteration++ {
 		var output bytes.Buffer
 		reporter := installOutput{writer: &output}

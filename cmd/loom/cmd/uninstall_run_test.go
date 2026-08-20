@@ -80,7 +80,7 @@ func writeUninstallFixture(t *testing.T, target string) {
 			t.Fatalf("create %s: %v", record.Paths[0], err)
 		}
 	}
-	if err := manifest.Write(target, manifest.Manifest{Version: frameworkVersion, Platforms: records}); err != nil {
+	if err := manifest.Write(target, manifest.Manifest{Version: "v3.3.14", Platforms: records}); err != nil {
 		t.Fatalf("write manifest: %v", err)
 	}
 }
