@@ -48,6 +48,34 @@ check_claim() {
   fi
 }
 
+# --- Helper: check living docs for hardcoded agent and skill counts ----------
+# check_doc_counts ABSOLUTE_FILE REPO_RELATIVE_FILE
+check_doc_counts() {
+  local file="$1" rel="$2" matches label actual_val claim n lineno text
+  if [[ ! -f "$file" ]]; then
+    drift "$rel — file not found"
+    return
+  fi
+  matches=$(grep -nE '[0-9]+ agents|[0-9]+ skills' "$file" 2>/dev/null || true)
+  if [[ -z "$matches" ]]; then
+    echo "  OK     $rel — no hardcoded counts found"
+    return
+  fi
+
+  while IFS= read -r match; do
+    lineno=$(echo "$match" | cut -d: -f1)
+    text=$(echo "$match" | cut -d: -f2-)
+    for label in agents skills; do
+      [[ "$label" == "agents" ]] && actual_val="$actual_agents" || actual_val="$actual_skills"
+      while IFS= read -r claim; do
+        [[ -z "$claim" ]] && continue
+        n=${claim%% *}
+        check_claim "$rel" "$lineno" "$label" "$n" "$actual_val"
+      done < <(echo "$text" | grep -oE "[0-9]+ ${label}" || true)
+    done
+  done <<< "$matches"
+}
+
 # --- README.md ---------------------------------------------------------------
 readme="$REPO_DIR/README.md"
 
@@ -91,6 +119,11 @@ if [[ -f "$agent_ref" ]]; then
     fi
   done < <(grep -nE '[0-9]+ agents' "$agent_ref" 2>/dev/null || true)
 fi
+
+# --- Living architecture and onboarding docs -------------------------------
+for living_doc in docs/ARCHITECTURE.md docs/ONBOARDING.md; do
+  check_doc_counts "$REPO_DIR/$living_doc" "$living_doc"
+done
 
 # --- docs/audits/ — informational only (snapshots, not authoritative) --------
 for audit_file in "$REPO_DIR/docs/audits/"*.md; do

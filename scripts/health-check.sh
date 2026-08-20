@@ -246,8 +246,8 @@ if [[ -f "$DICT" ]]; then
     [[ -z "$term" ]] && continue
     # Case-insensitive, and also tries the kebab-case form: several dictionary terms are defined
     # Title Case but only ever appear as a path/slug in prose (e.g. "Pipeline Trace" -> only shows up
-    # as pipeline-trace.json / the pipeline-trace skill). Also checks root-level *.md files, not just
-    # shared/ and docs/ -- the three BLUEPRINT_PROMPT.md files live at repo root. Still best-effort:
+    # as pipeline-trace.json / the pipeline-trace skill). Also checks root-level *.md files in addition
+    # to shared/ and docs/; retained blueprint prompts now live under docs/blueprints/. Still best-effort:
     # a term embedded inside markdown code-formatting broken across words (like `` `api` fixture ``,
     # where a backtick sits between "api" and "fixture") won't match either variant.
     hyphenated=$(echo "$term" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
@@ -644,7 +644,7 @@ else
 fi
 echo ""
 
-# --- Inventory drift ---------------------------------------------------------
+# --- Inventory drift (Gate #7 approved 2026-08-16; includes living docs) -----
 echo "--- Inventory drift ---"
 drift_output=$("$REPO_DIR/scripts/check-inventory-drift.sh" 2>&1 || true)
 drift_count=$(echo "$drift_output" | grep -cE '^\s+DRIFT' || true)
