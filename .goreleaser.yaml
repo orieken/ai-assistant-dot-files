@@ -1,0 +1,54 @@
+version: 2
+project_name: loom
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: loom
+    main: ./cmd/loom
+    binary: loom
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X github.com/orieken/loom/cmd/loom/cmd.version={{.Version}}
+      - -X github.com/orieken/loom/cmd/loom/cmd.commit={{.Commit}}
+      - -X github.com/orieken/loom/cmd/loom/cmd.date={{.Date}}
+
+archives:
+  - id: loom
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+homebrew_casks:
+  - name: loom
+    repository:
+      owner: orieken
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_author:
+      name: loom-release-bot
+      email: noreply@github.com
+    homepage: https://github.com/orieken/ai-assistant-dot-files
+    description: "AI assistant framework installer — agents, skills, and rules for Claude, Cursor, and more"
+    license: MIT
+
+release:
+  github:
+    owner: orieken
+    name: ai-assistant-dot-files
+  draft: false
+  prerelease: auto
