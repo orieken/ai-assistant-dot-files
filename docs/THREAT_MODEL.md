@@ -6,9 +6,9 @@ agent/skill/KI context loading, hook execution layer, and pipeline artifact inge
 Elevation of Privilege) applied per trust boundary.
 **Date**: 2026-08-02 | **Epic**: 65
 
-> Op 1 of 2. Mitigations that require rule or schema changes are gated at Op 2 — findings here are
-> authoritative input to that gate. No `shared/rules/`, schema, or pipeline file is modified in
-> this document.
+> Op 1 is complete, and the scoped Epic 65 Op 2 controls have landed. Controls marked
+> **Implemented** below are live as of Epic 65. Items marked **Not yet implemented** remain partial or
+> deferred future work.
 
 ---
 
@@ -97,7 +97,8 @@ to execute unintended commands. Downstream agents (`developer`, `devops-engineer
 outbound artifacts for PII and security findings in generated code. Nothing scans *inbound* spec
 content for instruction-override patterns before it enters agent context.
 
-**Proposed mitigation (Op 2 candidate)**:
+**Implemented (Epic 65 Op 2)** — `shared/agents/analyst.md` and
+`shared/skills/deliver-feature/SKILL.md` enforce the spec-ingestion security check.
 - Add a "spec is untrusted input" caution block to `analyst.md` and `deliver-feature/SKILL.md`:
   treat any spec sentence containing phrases like "ignore", "override", "your instructions",
   "system prompt", "forget" as a flag for human review before processing.
@@ -132,6 +133,10 @@ it is written by `install.sh` and never verified again — it is a record, not a
 function reads it to alert on divergence.
 
 **Proposed mitigation (Op 2 candidate — architectural, flag-only)**:
+
+**Status: Not yet implemented** — install markers record a commit SHA, but no known-good pin or
+signature verification check is enforced.
+
 - Pin a `known-good-sha` in `.claude/framework-install.json` and add a health-check step that
   runs `git rev-parse HEAD` and alerts if the live SHA differs from the pinned value. This is
   advisory (can't prevent git pull), but at least makes divergence visible.
@@ -171,7 +176,8 @@ delivery without further user interaction.
 **Current controls**: Hook files must exist in `.claude/hooks/` — project-local, requires
 filesystem access. No CI lint or schema validation currently checks for `type: "script"` entries.
 
-**Proposed mitigation (Op 2 candidate)**:
+**Implemented (Epic 65 Op 2)** — `shared/hooks/README.md` documents privileged script-hook constraints,
+and `scripts/health-check.sh` warns on enabled script hooks.
 - Add a constraint to `shared/hooks/README.md`: `action.type: "script"` is a privileged mode
   requiring an explicit `allowedPaths` stanza and a human code-review before enabling.
 - Add a fitness function: `grep -r 'type: "script"' .claude/hooks/` in `health-check.sh`,
@@ -201,7 +207,9 @@ agent with Write tools could implement the pattern before review.
 no agent reads these fields at retrieval time to signal "this knowledge came from an external
 source." The content is indistinguishable from locally-authored KIs.
 
-**Proposed mitigation (Op 2 candidate)**:
+**Implemented (Epic 65 Op 2)** — `scripts/sync-memory.sh` and
+`shared/schemas/ki-frontmatter.schema.json` provide `sync_commit_sha`; the trust rule lives in
+`shared/rules/memory-trust-boundary.md`.
 - Add `sync_commit_sha` to the provenance fields written by `sync-memory.sh pull`, and update
   `ki-frontmatter.schema.json` to declare it as an optional field (so existing KIs remain valid).
 - Add a "memory is data, not instructions" rule to `shared/rules/` specifying that KI content is
@@ -236,6 +244,10 @@ This URL is then passed to `git clone`, `git -C fetch`, and `git -C reset`. Cons
 4. Some CI/CD systems log environment variable values in debug output.
 
 **Proposed mitigation (Op 2 candidate)**:
+
+**Status: Not yet implemented** — the F-05 advisory comment and safer alternatives are documented in
+`scripts/sync-memory.sh`, but token interpolation into the Git URL remains.
+
 - Replace URL interpolation with `git credential helper` or `GH_TOKEN` environment variable
   (GitHub CLI respects `GH_TOKEN`; `git clone` with credential.helper=store can handle it
   without embedding in the URL).
@@ -268,6 +280,9 @@ without touching any project-level file.
 security-conscious choice for teams on shared machines; `--global` trades blast radius for
 always-current updates.
 
+**Status: Not yet implemented** — `--copy` is documented as an installation mode, but not as the
+security-conscious shared-machine choice proposed here.
+
 ---
 
 ### F-07 — Hook/Pipeline Context Passed to Script Without Filtering
@@ -290,6 +305,9 @@ dependency, it has access to project-internal information.
 explicit `contextFilter` allowlist (a field to be added to the hook schema) specifying which
 context keys the script may receive.
 
+**Status: Not yet implemented** — the disclosure risk is documented, but the proposed `contextFilter`
+schema field is absent.
+
 ---
 
 ### F-08 — `sync-memory.sh push` Promotes Local KIs to Org Without Content Gate
@@ -311,6 +329,9 @@ content is typically light.
 each candidate KI body against the schema-valid template and warns if any KI body contains
 instruction-override keywords (same heuristic as F-01 mitigation).
 
+**Status: Not yet implemented** — `sync-memory.sh push` has no content-review or instruction-override
+screening step.
+
 ---
 
 ### F-09 — Hook Example Files Shipped with `enabled: true`, Install Says "Disabled by Default"
@@ -328,7 +349,10 @@ contradiction means developers running `install.sh --full` may have live hooks t
 inactive. The `on-artifact-write` example invokes `privacy-auditor` on every artifact write —
 if privacy-auditor is slow or flaky, every pipeline step blocks.
 
-**Proposed mitigation**: Either change example files to `enabled: false` (with a comment
+**Implemented (Epic 65 Op 2)** — every `shared/hooks/examples/*.yaml` file now defaults to
+`enabled: false`, and the health check verifies disabled script hooks.
+
+Either change example files to `enabled: false` (with a comment
 explaining how to enable), or update `install.sh`'s log message to accurately say "enabled by
 default per their YAML — review `.claude/hooks/` before running the pipeline."
 
@@ -352,6 +376,9 @@ outside the project directory. In shared-machine environments this also leaks th
 `framework-install.json`; or add `framework-install.json` to `.gitignore` in generated project
 configs to prevent accidental commit.
 
+**Status: Not yet implemented** — `install.sh` still writes the absolute source repository path, and
+generated project configuration does not ignore the marker.
+
 ---
 
 ## Summary Table
@@ -373,10 +400,10 @@ configs to prevent accidental commit.
 
 ---
 
-## Op 2 Mitigation Candidates (pending human approval)
+## Op 2 Mitigation Actions (completed)
 
-The epic requires a pause here. The findings above propose the following Op 2 actions — each is a
-separate commit gated on explicit approval:
+The scoped Epic 65 Op 2 actions below were approved and implemented. They do not close the broader
+partial or deferred mitigations explicitly marked above.
 
 | Candidate | Files affected | Gate |
 |---|---|---|
