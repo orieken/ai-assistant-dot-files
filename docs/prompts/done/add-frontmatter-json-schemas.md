@@ -24,7 +24,7 @@ JSON Schema (draft-07 or newer) for the agent frontmatter shape. Constraints:
 - `name` — string, kebab-case pattern (`^[a-z][a-z0-9-]*$`)
 - `description` — string, min length ~30 chars (avoids empty descriptions)
 - `tools` — string, comma-separated enum of valid Claude Code tools (Read, Write, Edit, MultiEdit, Bash, Glob, Grep, Task, Skill, WebFetch, WebSearch — see the current tool set)
-- `model` — enum: `inherit`, `claude-opus-4-8`, `claude-sonnet-5`, `claude-haiku-4-5-20251001`, `claude-opus-4-7` (verify against `docs/CLAUDE.md`'s "most recent Claude models" line before hardcoding — model list may need updating)
+- `model` — enum: `inherit`, `claude-opus-4-8`, `claude-sonnet-5`, `claude-haiku-4-5-20251001`, `claude-opus-4-7` (verify against root `CLAUDE.md` before hardcoding — model list may need updating)
 - `version` — string, semver pattern (`^\d+\.\d+\.\d+$`)
 - `isolation` — optional enum: `worktree`
 

@@ -50,6 +50,15 @@ If complexity is approaching 7, apply in order:
 
 ---
 
+## Legacy Code & Refactoring
+
+- When modifying untested or legacy code, identify a seam and write characterization tests that capture
+  the current behavior before changing it, even when that behavior is flawed.
+- Keep refactoring and behavior changes in separate commits. Complete the Red → Green → Refactor cycle
+  before moving to the next change.
+
+---
+
 ## Design Patterns
 
 Apply Gang of Four patterns when they solve a real problem. Never apply them to look clever.
@@ -152,4 +161,4 @@ Body: explain *why*, not *what*.
 
 ---
 
-*Full reference with language examples: `clean-code-guidelines.docx`*
+*Full reference with language examples: `docs/clean-code-guidelines.docx`*

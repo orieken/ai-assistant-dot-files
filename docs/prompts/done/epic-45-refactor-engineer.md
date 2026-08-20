@@ -18,7 +18,7 @@ Partial cover exists but nothing owns large-scale structural refactoring:
 - `refactor-to-pattern` skill — surgical, single-target GoF/EIP pattern transitions.
 - `shared/rules/design-principles.md` § 2 — the named Fowler refactoring-operation vocabulary the
   agent must speak.
-- Michael Feathers discipline in root `CLAUDE.md` (docs copy): characterization tests first,
+- Michael Feathers discipline in root `CLAUDE.md`: characterization tests first,
   NEVER refactor and add behavior in the same commit.
 - `unit-tester` agent — already builds characterization-test safety nets; the natural upstream
   partner.
