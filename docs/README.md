@@ -11,19 +11,19 @@ docs/
   README.md              -- This file. Index and navigation guide.
   ARCHITECTURE.md         -- The shared/ canonical layer, the Capability Tier system.
   AGENT_REFERENCE.md      -- Every agent's role and counterbalance (contract, reviewer, gate, metric).
-  CLAUDE.md               -- Claude Code agent configuration reference.
   CONTRIBUTING.md         -- How to add a new agent, skill, rule, or platform.
   MIGRATION.md            -- Breaking changes from pre-shared/ structure.
   ONBOARDING.md           -- New contributor onboarding guide.
-  RUNBOOKS.md             -- Operational runbook summaries.
+  RUNBOOKS.md             -- Compatibility redirect to the canonical runbook index.
   THREAT_MODEL.md         -- STRIDE threat model; implementation-status annotations (Epic 65).
   TODO.md                 -- Folder-by-folder documentation audit ledger.
   human-tasks.md          -- Decisions and tasks that require human action, not agent execution.
   roadmap-2026-08-07.md   -- 2026-08-07 framework roadmap with Epics 69–73.
-  clean-code-guidelines.docx -- Full language-example reference, cited from CLAUDE.md.
+  clean-code-guidelines.docx -- Full language-example reference, cited from root CLAUDE.md.
   adrs/                  -- Architecture Decision Records.
   agent-metrics/          -- Monthly agent-scorecard output, evals subdirectory.
   aos/                    -- AOS (Agent Orchestration System) design docs and phase prompts.
+  blueprints/             -- Focused framework blueprint prompts consumed by skills and agents.
   features/              -- Pipeline artifacts for delivered features (permanent archive).
   lessons-learned/        -- Persisted output from extract-lessons.
   patterns/               -- Reusable design and framework pattern docs (Saturday/Sunday/GoF/Clean Architecture).
@@ -60,7 +60,8 @@ Each subdirectory is self-contained. Agents can load a single directory without 
 
 ## How Humans Use These Docs
 
-- **New contributors** start with `ONBOARDING.md` for setup instructions and `RUNBOOKS.md` for operational context.
+- **New contributors** start with `ONBOARDING.md` for setup instructions and
+  [`runbooks/README.md`](runbooks/README.md) for operational context.
 - **Anyone extending the framework** reads `CONTRIBUTING.md` and `ARCHITECTURE.md` before adding an agent, skill, or rule.
 - **Architects and leads** review `/docs/adrs/` for decision history.
 - **Feature reviewers** check `/docs/features/<feature-name>/` for the full artifact trail of any delivered feature.

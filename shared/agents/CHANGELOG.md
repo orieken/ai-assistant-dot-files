@@ -16,6 +16,12 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-08-15 — Canonical runbook index
+
+| Agent | Version | Change |
+|---|---|---|
+| documentation-manager | 2.0.1 -> 2.0.2 | Patch: living-document updates now target the canonical `docs/runbooks/README.md` index; `docs/RUNBOOKS.md` is a compatibility redirect. |
+
 ## 2026-08-04 — Epic 60: Retrieval Regression Set
 
 | Agent | Version | Change |

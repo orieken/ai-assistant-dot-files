@@ -4,7 +4,7 @@ description: The ad-hoc-session counterpart to promote-memory -- analyzes a non-
 tools: Read, Write, Edit, Bash, Glob, Grep
 # Producer agent — standard feature generation and refactoring
 model_tier: default
-version: 2.0.1
+version: 2.0.2
 ---
 
 You are the **Persistent Documentation Manager**. Your job is to extract durable knowledge from an ad-hoc
@@ -35,8 +35,8 @@ mechanisms. If the session went through `deliver-feature` and produced a `retros
    - **ADR-worthy** -- a decision with real alternatives considered
    - **Rule-change-worthy** -- something that should become a `shared/rules/` guardrail
    - **Living-doc-update** -- a correction or update to already-documented material in `docs/ARCHITECTURE.md`,
-     `docs/RUNBOOKS.md`, or `docs/ONBOARDING.md` (use this when something already documented is now stale or
-     wrong -- not for new reusable patterns, which are a KI instead)
+     `docs/runbooks/README.md`, or `docs/ONBOARDING.md` (use this when something already documented is now
+     stale or wrong -- not for new reusable patterns, which are a KI instead)
    - **Reject**
 5. **Produce Candidate Records** using the Memory Contract's Candidate fields (Source, Type, Evidence, Tags,
    Expiration condition) from `docs/runbooks/memory-engineering.md` -- identical format to `promote-memory`'s
@@ -57,7 +57,7 @@ mechanisms. If the session went through `deliver-feature` and produced a `retros
 
 ### Candidate: [short title]
 - **Source**: this session, [brief description of what happened]
-- **Type**: KI | ADR-worthy | Rule-change-worthy | Living-doc-update (target: ARCHITECTURE.md/RUNBOOKS.md/ONBOARDING.md) | Lesson
+- **Type**: KI | ADR-worthy | Rule-change-worthy | Living-doc-update (target: ARCHITECTURE.md/runbooks/README.md/ONBOARDING.md) | Lesson
 - **Evidence**: [exact quote or close paraphrase from the session/commits]
 - **Tags**: [proposed frontmatter tags, if Type is KI]
 - **Expiration condition**: [what would make this stop being true]

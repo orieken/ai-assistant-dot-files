@@ -23,6 +23,15 @@ Diagnostic procedures for common issues encountered during development and pipel
 - Pipeline stage errors and recovery steps.
 - Dependency conflicts and version mismatches.
 
+### Skill-driven remediation
+
+- **Environment remediation (`debug-environment`)** — use when commands, PATH, or shell configuration
+  breaks. It inspects the relevant configuration, diagnoses before editing, and verifies the result. Do
+  not commit global environment-profile changes without reviewing their consequences with the user.
+- **Test suite remediation (`debug-tests`)** — use for cascading or widespread failures that may come
+  from runner, dependency, database, or environment state. Diagnose the shared cause before individual
+  assertions; never disable tests or comment out assertions to manufacture a passing suite.
+
 ### Agent and Skill Reference
 
 Operational guides for the agent ecosystem.
@@ -68,4 +77,4 @@ Each runbook follows this structure:
 - [blog-content-brief.md](blog-content-brief.md) — a reusable prompt for handing off blog-post drafting (context engineering, memory engineering, and other framework highlights) to a fresh agent once an epic cycle wraps, with candidate topics and grounding-source pointers so drafts stay evidence-based
 - [mcp-server-integration.md](mcp-server-integration.md) — a reusable prompt for adding this framework's agents (as MCP Resources) and skills (as MCP Prompts, plus Tools where a `check.sh`/`run.sh` exists) to a team's *existing* MCP server, without asking them to adopt this repo or run `install.sh`
 
-General runbook summaries are also available in `/docs/RUNBOOKS.md`. As new individual runbooks are created, add them to this directory and link them here.
+As new individual runbooks are created, add them to this directory and link them here.

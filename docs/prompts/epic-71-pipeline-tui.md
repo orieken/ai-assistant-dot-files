@@ -78,7 +78,7 @@ Op 4 — `docs(runbooks): pipeline TUI usage guide (Epic 71 Op 4)`:
 - Add `docs/runbooks/pipeline-tui.md`: how to launch the TUI alongside a pipeline run,
   what each screen means, how to interpret token estimates, and known limitations
   (e.g., token spend is an estimate, not a live API metric).
-- Update `docs/RUNBOOKS.md` index.
+- Update `docs/runbooks/README.md` index.
 
 After every commit: `bash scripts/health-check.sh` green.
 

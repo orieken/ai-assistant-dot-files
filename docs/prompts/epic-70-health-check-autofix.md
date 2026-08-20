@@ -70,7 +70,7 @@ Op 3 — `feat(health-check): --fix integration test (Epic 70 Op 3)`:
 - Wire as an optional check: skip if the environment flag `SKIP_AUTOFIX_TEST=1` is set.
 
 Op 4 — `docs(runbooks): document --fix and --auto-sync (Epic 70 Op 4)`:
-- Update `docs/RUNBOOKS.md` with: when to use `--fix`, what it can and cannot fix, and
+- Update `docs/runbooks/README.md` with: when to use `--fix`, what it can and cannot fix, and
   the `--auto-sync` install workflow.
 - Cross-reference `docs/runbooks/health-check-autofix-classification.md`.
 
