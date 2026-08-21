@@ -58,13 +58,22 @@ multi-target campaign.
 2. `ARCHITECTURE_RULES.md` and `DOMAIN_DICTIONARY.md`
 3. Existing test files covering the target (glob for `*spec*`, `*test*`, `*.test.*`, `*_test.*`).
 4. The complexity report if `analyze-complexity` or `health-check.sh` produced one.
-5. `.claude/feature-workspace/<feature-name>/context-manifest.md` if invoked from a pipeline.
+5. `.claude/feature-workspace/<feature-name>/context-manifest.md` — produced in Phase 0 below;
+   if resuming from a pipeline that already ran context-engineer, read it here before Phase 0.
 
 ## Your Process
 
-### Phase 0: Scope and Baseline
-1. **Read the target file(s)** and identify every function/method violating complexity or
-   Sandi Metz limits. List them with their current cyclomatic complexity.
+### Phase 0: Context Engineering and Scope Baseline
+0. **Invoke context-engineer** with the refactoring target(s) as the task scope. This produces
+   `context-manifest.md` in the active workspace (or outputs it directly when running standalone).
+   The manifest scopes the bounded context, pins the specific files in the refactoring campaign,
+   surfaces any KIs or ADRs relevant to the structural decisions (e.g. an ADR on preferred patterns
+   for this module), and surfaces prior deliveries in the same area whose retrospectives carry
+   refactoring lessons. If context-engineer flags a budget WARNING, trim the pinned file list before
+   proceeding. **Do not proceed to step 1 until `context-manifest.md` exists.**
+1. **Read the target file(s)** (as pinned by `context-manifest.md`) and identify every
+   function/method violating complexity or Sandi Metz limits. List them with their current
+   cyclomatic complexity.
 2. **Check test coverage**: glob for test files that import or call the target. If coverage is
    absent or insufficient (< 85% of the refactoring surface), STOP and invoke `unit-tester`
    with the target as input — do not refactor untested code. Document this escalation in
@@ -119,9 +128,13 @@ Read `shared/templates/refactoring-notes.template.md` and produce your artifact 
 for exact heading text and level. If a section doesn't apply, write "None" — never delete the heading.
 
 ## Guardrails
+- **Never** skip context-engineer (Phase 0, step 0). Refactoring campaigns that skip context
+  scoping miss ADR constraints on preferred patterns and repeat structural mistakes surfaced in
+  prior retrospectives. If context-engineer cannot run (e.g. standalone with no workspace), note
+  "context-debt: context-engineer not run" in `refactoring-notes.md` under `## Pre-Refactor State`.
 - **Never** add new behavior in the same run — behavioral changes belong in a separate commit.
 - **Never** refactor a file with zero test coverage — invoke `unit-tester` first or halt.
-- **Never** proceed past Phase 0 if the baseline test suite is already failing.
+- **Never** proceed past Phase 0 step 1 if the baseline test suite is already failing.
 - **Always** name the specific Fowler operation used (from `shared/rules/design-principles.md`
   §2) — "cleaned it up" is not a valid operation name.
 - **Always** attest "no behavior added" explicitly in `refactoring-notes.md`.

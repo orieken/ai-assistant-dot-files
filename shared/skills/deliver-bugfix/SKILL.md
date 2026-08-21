@@ -34,6 +34,20 @@ feature silently.
 
 ## Phases
 
+### Phase 0 — Context Engineering
+
+**Invoke context-engineer** → produces `context-manifest.md` in
+`docs/features/<bug-slug>/`. Scopes the bounded context of the buggy code, pins the specific files
+in the affected module, surfaces any relevant KIs or ADRs (e.g. a prior migration decision that
+constrains the fix), and lists prior deliveries in the same bounded context whose retrospectives
+carry lessons about this area.
+
+If context-engineer flags a budget WARNING: trim the pinned file list before proceeding. If it
+surfaces a prior delivery that introduced the bug, link `context-manifest.md`'s "Prior Deliveries"
+entry to `docs/features/<related-feature>/` in the Phase 5 record.
+
+**Checkpoint**: note `context-engineer` completion in the bug workspace before moving to Phase 1.
+
 ### Phase 1 — Reproduce
 
 **Characterization test (Michael Feathers rule, already in `CLAUDE.md`)**: Write a test that
@@ -114,7 +128,7 @@ so production feedback loops see both.
 |---|---|---|
 | spec-writer | Required | **Skipped** — the bug report IS the spec |
 | product-owner | Required | **Skipped** — bugs don't need ROI review |
-| context-engineer | Optional | **Skipped** — fix is targeted; context is loaded manually |
+| context-engineer | Optional | Required — scopes bounded context before Phase 1 reproduce |
 | analyst | Required | **Skipped** — replaced by characterization test |
 | architect | Optional | **Skipped** — escalate to deliver-feature if needed |
 | performance-engineer | Optional | **Skipped** |
@@ -132,6 +146,7 @@ so production feedback loops see both.
 
 ```
 docs/features/<bug-slug>/
+  context-manifest.md  (phase 0 — bounded context scope, pinned files, KIs/ADRs)
   implementation-notes.md
   code-review-report.md
   qa-report.md
@@ -140,6 +155,10 @@ docs/incidents/<date>-<slug>.md  (updated "Fixed by" link, if applicable)
 ```
 
 ## Guardrails
+- NEVER skip context-engineer (Phase 0). Even for a targeted bugfix, bounded-context scoping
+  catches ADR constraints and prior-delivery lessons that manual context loading misses. If
+  context-engineer is skipped, the developer must note "context-debt: context-engineer not run"
+  in `implementation-notes.md`.
 - NEVER add new behavior in the same run. If the fix accidentally adds a feature, split the commit.
 - NEVER skip the characterization test. A fix without a red test first is not reproduce-first.
 - NEVER proceed to Phase 2 if the Phase 1 test passes on the unfixed code — the bug is not

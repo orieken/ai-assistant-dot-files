@@ -47,6 +47,13 @@ Do NOT use when:
 1. Read the workflow file. Confirm it has required frontmatter: `workflow`, `version`, `entry`, `stages`.
 2. If `--legacy` is set: invoke `legacyFallback` skill directly and exit. This is the behavior-preservation escape hatch.
 3. If `--dry-run`: print the stage execution plan (ordered stages, parallel groups, audit assignments) and exit.
+4. **Context-engineer gate**: for any workflow whose `type` is `feature-delivery` or `refactoring`,
+   verify that the first non-setup stage (i.e. the first stage with `checkpoint: true` or `role` set)
+   has `role: context-engineer`. If not, halt with:
+   > "Workflow '<id>' is missing context-engineer as its first stage. Add a `context-engineer` stage
+   > before '<first-stage-id>' and re-run. Context scoping is mandatory for feature-delivery and
+   > refactoring workflows."
+   Workflows of other types (e.g. `maintenance`, `report`) are exempt from this check.
 
 ### 1. Resume Check
 
@@ -94,6 +101,7 @@ On completion:
 ## Guardrails
 
 - Never bypass a non-negotiable human gate (Gate #1 Friday ship, Gate #3 DB migrations, Gate #4 Contracting, Gate #5 External APIs, Gate #8 Deploy) — even in policy-driven mode. These are defined in `shared/rules/approval-gates.md`.
+- Never execute a `feature-delivery` or `refactoring` workflow whose first executable stage is not `context-engineer`. The validation in step 4 enforces this at load time — do not bypass it via `--legacy` to skip context scoping.
 - `--legacy` always works and routes to the skill named in `legacyFallback`. Never remove this escape hatch.
 - On any unhandled error in a stage: checkpoint current state, surface the error, and stop. Never silently skip.
 - Parallel execution never shares in-progress state between concurrent stages.

@@ -89,11 +89,16 @@ a git commit, same as any other rule change in this repo.
    `pipeline-state.json` and `pipeline-trace.json` shapes documented in
    `shared/skills/deliver-feature/SKILL.md`, with `"pipeline": "deliver-atdd"` as an added top-level
    field so a resumer can tell the two apart.
+6. **Invoke context-engineer** → produces `context-manifest.md` in
+   `.claude/feature-workspace/<feature-name>/`. Scopes the bounded context, pins specific files,
+   lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the
+   user which files it recommends cutting before continuing. **Checkpoint**: record in
+   `pipeline-state.json`. qa-engineer reads `context-manifest.md` before writing scenarios.
 
 ### Phase 1: Scenario writing
-6. **Invoke qa-engineer** with narrow scope: write the acceptance scenarios (Gherkin `Given/When/Then`)
+7. **Invoke qa-engineer** with narrow scope: write the acceptance scenarios (Gherkin `Given/When/Then`)
    for this feature only. No step definitions yet, no run. Output: `.claude/feature-workspace/<feature-name>/scenarios.feature`.
-7. **Gate: scenario-review.** If `gates.scenario-review == "active"`: PAUSE. Show the user the scenario
+8. **Gate: scenario-review.** If `gates.scenario-review == "active"`: PAUSE. Show the user the scenario
    file and ask "do these scenarios match the intent? (yes to proceed / edit to revise)." If edits are
    requested, back up the current scenarios to `.claude/feature-workspace/<feature-name>/.history/scenarios.feature.<timestamp>`,
    send back to qa-engineer with the specific corrections, re-present. Repeat until approved. If
@@ -101,32 +106,32 @@ a git commit, same as any other rule change in this repo.
    `pipeline-trace.json`.
 
 ### Phase 2: Step definition writing
-8. **Invoke qa-engineer** with narrow scope: write the step definitions that automate `scenarios.feature`
+9. **Invoke qa-engineer** with narrow scope: write the step definitions that automate `scenarios.feature`
    using the project's existing test framework and conventions (per `CLAUDE.md` and any framework rules
    in `shared/rules/testing-conventions.md`). The step definitions are **expected to fail at this
    phase** — implementation doesn't exist yet. That's the point of ATDD, not a bug. Output: step
    definitions written to the project's normal test location + summary in
    `.claude/feature-workspace/<feature-name>/test-code-report.md`.
-9. **Gate: test-code-review.** If `gates.test-code-review == "active"`: PAUSE. Show the user the
-   `test-code-report.md` and the diff of new test files. Ask "does the step definition code correctly
-   automate the scenarios?" (Not "does it pass" — it won't yet.) Same edit/re-present loop as Phase 1.
-   If `phased-out`: continue directly to Phase 3.
+10. **Gate: test-code-review.** If `gates.test-code-review == "active"`: PAUSE. Show the user the
+    `test-code-report.md` and the diff of new test files. Ask "does the step definition code correctly
+    automate the scenarios?" (Not "does it pass" — it won't yet.) Same edit/re-present loop as Phase 1.
+    If `phased-out`: continue directly to Phase 3.
 
 ### Phase 3: Implementation loop (always autonomous)
-10. **Invoke test-driven-developer** with the feature spec + `scenarios.feature` as its acceptance
+11. **Invoke test-driven-developer** with the feature spec + `scenarios.feature` as its acceptance
     criteria. It runs its own inner red-green loop autonomously per its existing contract
     (`shared/agents/test-driven-developer.md`, step 2 already includes the `search-ki` lookup added
     in v1.1.0). Output: `.claude/feature-workspace/<feature-name>/tdd-report.md`.
-11. **No gate here.** The inner unit-test/dev loop is autonomous by design (see
+12. **No gate here.** The inner unit-test/dev loop is autonomous by design (see
     `docs/AGENT_REFERENCE.md` entry #24) — reintroducing a gate here would defeat the whole reason to
     use this workflow over `deliver-feature`, which already has an in-loop `code-reviewer`.
 
 ### Phase 4: Acceptance run
-12. **Invoke qa-engineer** to run the full scenario suite against the finished implementation. Output:
+13. **Invoke qa-engineer** to run the full scenario suite against the finished implementation. Output:
     `.claude/feature-workspace/<feature-name>/acceptance-report.md` — which scenarios passed, which failed, coverage
     if available. Uses the `run-tests` skill (`shared/skills/run-tests/SKILL.md`) under the hood, same
     as qa-engineer already does inside `deliver-feature`.
-13. **If any scenario fails**: this is a real problem, not a gate. Either the implementation is
+14. **If any scenario fails**: this is a real problem, not a gate. Either the implementation is
     incomplete (send back to Phase 3 with the specific failing scenarios), the scenarios themselves
     were wrong (send back to Phase 1, requiring a human review even if `scenario-review` is
     phased-out — a phased-out gate doesn't mean "never look at scenarios again," it means "don't
@@ -135,13 +140,13 @@ a git commit, same as any other rule change in this repo.
     guess.
 
 ### Phase 5: Ship (always gated)
-14. **Write delivery summary** to `.claude/feature-workspace/<feature-name>/delivery-summary.md` — see "Delivery
+15. **Write delivery summary** to `.claude/feature-workspace/<feature-name>/delivery-summary.md` — see "Delivery
     Summary Format" below.
-15. **Ship-readiness gate.** PAUSE. Show the summary + acceptance report + all scenarios green.
+16. **Ship-readiness gate.** PAUSE. Show the summary + acceptance report + all scenarios green.
     Ask "ready to ship?" This gate is NOT in the config — it always runs, matching
     `approval-gates.md`'s general principle that irreversible/external-facing actions never delegate
     the final "yes."
-16. **On confirmation**: persist all artifacts from `.claude/feature-workspace/<feature-name>/` to
+17. **On confirmation**: persist all artifacts from `.claude/feature-workspace/<feature-name>/` to
     `docs/features/<feature-name>/`, write the feature archive README, add an entry to
     `docs/features/README.md` — same persistence steps as `deliver-feature`, Phase 4.
 
@@ -194,6 +199,7 @@ regression.
 ## Pipeline
 | Phase | Agent | Status | Gate |
 |---|---|---|---|
+| 0. Context Engineering | context-engineer | PASS | n/a (mandatory, non-skippable) |
 | 1. Scenario writing | qa-engineer | PASS | scenario-review: [active/phased-out] |
 | 2. Step definitions | qa-engineer | PASS | test-code-review: [active/phased-out] |
 | 3. Implementation | test-driven-developer | PASS | n/a (autonomous by design) |
@@ -232,7 +238,11 @@ just makes it easy to make. Threshold defaults to 5 consecutive no-edit runs, ma
 `deliver-feature`'s "every 5th delivery" retrospective cadence.
 
 ## Guardrails
-- Never skip the ship-readiness gate (Phase 5, step 15). It's not in the config for a reason —
+- Never skip context-engineer (Phase 0, step 6). qa-engineer reads `context-manifest.md` before
+  writing scenarios — without it, scenario writing may miss bounded-context constraints surfaced by
+  prior deliveries or ADRs. If context-engineer fails, halt and surface the error; do not proceed
+  with scenario writing against an unscoped codebase.
+- Never skip the ship-readiness gate (Phase 5, step 16). It's not in the config for a reason —
   irreversible/external-facing actions always require the explicit "yes," matching
   `approval-gates.md`'s general principle.
 - Never phase a gate out automatically based on run history. Surfacing a suggestion is fine and
