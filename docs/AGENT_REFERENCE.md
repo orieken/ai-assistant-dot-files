@@ -289,10 +289,11 @@ held rather than performed.
 ### 27. `refactor-engineer`
 **Role**: Large-scale or multi-target structural refactoring — complexity violations flagged by
 `health-check.sh`, framework migrations, Boy Scout Rule debt from code-review, or an explicit modernization
-sprint. Builds a characterization-test safety net via `unit-tester` before any code changes, applies
-named Fowler operations (Extract Function, Replace Conditional with Polymorphism, etc.) to lower cyclomatic
-complexity and eliminate duplication, verifies behavior preservation with a passing test suite, and
-produces `refactoring-notes.md` validated by `refactoring-contract.md`.
+sprint. Invokes `context-engineer` as Step 0 to scope the bounded context and surface ADR constraints
+and prior retrospective lessons before touching code. Then builds a characterization-test safety net via
+`unit-tester`, applies named Fowler operations (Extract Function, Replace Conditional with Polymorphism,
+etc.) to lower cyclomatic complexity and eliminate duplication, verifies behavior preservation with a
+passing test suite, and produces `refactoring-notes.md` validated by `refactoring-contract.md`.
 **Counterbalance**: **Structural contract** (`refactoring-contract.md` + `validate-artifact`) guards
 the output; `unit-tester` provides the behavioral safety net that makes the refactor safe. The "no
 behavior added in the same run" rule is an attestation in the contract itself, not just convention.

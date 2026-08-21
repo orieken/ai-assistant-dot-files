@@ -32,6 +32,7 @@ then a permanent improvement to the framework's rule and knowledge base.
 4. Bug filed and fixed
    /new-feature → type=bug → /deliver-bugfix
    docs/features/<bug-slug>/
+   - context-manifest.md (Phase 0 — Context Engineering)
    - characterization test (Phase 1 — Reproduce)
    - implementation-notes.md (Phase 2 — Fix)
    - code-review-report.md (Phase 3 — Review)

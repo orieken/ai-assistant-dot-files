@@ -16,6 +16,15 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-08-20 — context-engineer wired as mandatory Step 0 in all delivery and refactoring pipelines
+
+| Agent / Skill | Version | Change |
+|---|---|---|
+| refactor-engineer | 1.0.0 → 1.1.0 | Minor: context-engineer is now Step 0 of Phase 0. Invoked before scope baseline, produces `context-manifest.md` that pins the refactoring target files and surfaces ADR constraints and prior retrospective lessons. Guardrail added: never proceed to step 1 without `context-manifest.md`. Standalone escape hatch: note "context-debt" in `refactoring-notes.md` if context-engineer cannot run. |
+| deliver-atdd | — | Step 6 added in Phase 0: invoke context-engineer → `context-manifest.md`; all subsequent steps renumbered 6–16 → 7–17. Phase 0 row added to delivery-summary table. Guardrail added: never skip context-engineer before qa-engineer writes scenarios. |
+| deliver-bugfix | — | Phase 0 section added before Phase 1: invoke context-engineer → `context-manifest.md`. Comparison table row updated from Skipped → Required. `context-manifest.md` added to output artifacts. Guardrail added with context-debt fallback. |
+| orchestrate | — | Validate-and-Load step 4 added: halts any `feature-delivery` or `refactoring` workflow whose first executable stage is not `context-engineer`. Guardrail added: cannot bypass via `--legacy`. |
+
 ## 2026-08-15 — Canonical runbook index
 
 | Agent | Version | Change |

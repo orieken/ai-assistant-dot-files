@@ -4,7 +4,7 @@ description: Use when large-scale or multi-target structural refactoring is need
 tools: Read, Write, Edit, Bash, Glob, Grep
 # Producer agent — mutates source files; not a counter agent
 model_tier: default
-version: 1.0.0
+version: 1.1.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md` §2 (Fowler refactoring
