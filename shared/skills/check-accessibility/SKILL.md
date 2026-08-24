@@ -48,4 +48,4 @@ Do NOT use when reviewing backend services, database migrations, or purely logic
 If `check.sh` is unavailable, manually inspect the file contents using `grep` or `Read` to search for `onClick` on `div`/`span` tags, missing `alt` attributes on `img` tags, and missing `aria-` labels on custom interactive components.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

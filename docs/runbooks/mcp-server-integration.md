@@ -57,7 +57,7 @@ Paste everything below into an AI coding session with access to the target MCP s
 ```markdown
 You're adding this framework's content (agents, skills, rules) as MCP primitives to an existing MCP
 server in this repository. You do NOT have access to the framework's source repo
-(github.com/orieken/ai-assistant-dot-files) directly in this session — I'll paste in the specific
+(github.com/orieken/loom) directly in this session — I'll paste in the specific
 files you need as we go, or you can fetch them if you have network/git access to that repo. Don't
 invent agent/skill content; ask me for the specific file if you need one you don't have.
 

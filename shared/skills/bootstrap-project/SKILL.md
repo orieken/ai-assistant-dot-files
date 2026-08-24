@@ -223,4 +223,4 @@ Exactly as shown in Phase 4 above.
 Works entirely offline. All pattern recipes live in `shared/project-patterns.json` and `shared/blueprints/*.md`. No external services required. The one hard dependency is the `/adr` skill (for writing ADR-000 consistently) — if unavailable, fall back to writing ADR-000 inline following the format in `shared/skills/adr/SKILL.md`.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

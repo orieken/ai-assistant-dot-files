@@ -1,6 +1,6 @@
 # Loom — Context Engineering Framework
 
-[![Framework CI](https://github.com/orieken/ai-assistant-dot-files/actions/workflows/framework-ci.yml/badge.svg)](https://github.com/orieken/ai-assistant-dot-files/actions/workflows/framework-ci.yml)
+[![Framework CI](https://github.com/orieken/loom/actions/workflows/framework-ci.yml/badge.svg)](https://github.com/orieken/loom/actions/workflows/framework-ci.yml)
 
 ```bash
 brew install orieken/tap/loom
@@ -120,8 +120,8 @@ loom health
 **No Homebrew? Clone and run directly:**
 
 ```bash
-git clone https://github.com/orieken/loom ai-assistant-dot-files
-cd ai-assistant-dot-files
+git clone https://github.com/orieken/loom
+cd loom
 
 # Preview without touching anything
 go run ./cmd/loom install --dry-run

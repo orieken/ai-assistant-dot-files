@@ -177,4 +177,4 @@ and set `enabled: true` under `forgetting-engine-monthly` to activate automatic 
 Operates purely using local file editing tools (Read, Write, Edit, Glob, Bash for grep).
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) AOS Phase 3 Runtime layer. CC BY 4.0.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) AOS Phase 3 Runtime layer. CC BY 4.0.*

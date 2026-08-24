@@ -73,4 +73,4 @@ If a section doesn't apply, write "None" as the body — never delete the headin
 - **Never** fabricate a lesson from a retrospective that doesn't actually say it — quote or closely paraphrase the real "What Went Poorly"/"What To Improve" content, don't infer one that sounds plausible.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

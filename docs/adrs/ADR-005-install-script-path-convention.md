@@ -45,7 +45,7 @@ Existing `scripts/test-install.sh`, `scripts/check-parity.sh`, and the Make targ
 the supported `.sh` paths.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context
 Engineering Framework by Oscar Rieken — licensed under
-[CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy
+[CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy
 or adapt this file, please keep this attribution.*

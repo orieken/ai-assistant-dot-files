@@ -24,7 +24,7 @@ If you copy, adapt, or build on an agent, skill, or rule from this repository â€
 file or rewrite it substantially â€” include a credit along these lines wherever the result is shared or
 distributed:
 
-> Adapted from the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context
+> Adapted from the [ai-assistant-dot-files](https://github.com/orieken/loom) Context
 > Engineering Framework by Oscar Rieken, licensed under CC BY 4.0.
 
 Each individual agent, skill, and rule file also carries this attribution line at the bottom, so it travels

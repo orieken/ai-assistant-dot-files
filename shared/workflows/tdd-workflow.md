@@ -155,4 +155,4 @@ No step is removed or reordered. The workflow adds loop termination tracking, co
 enforcement, and audit invocations — all additive, none breaking.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) AOS Phase 3 Runtime layer. CC BY 4.0.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) AOS Phase 3 Runtime layer. CC BY 4.0.*

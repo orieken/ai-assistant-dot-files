@@ -158,7 +158,7 @@ brews:
     repository:
       owner: orieken
       name: homebrew-tap       # adjust to match the actual tap repo name
-    homepage: https://github.com/orieken/ai-assistant-dot-files
+    homepage: https://github.com/orieken/loom
     description: "AI assistant framework installer — agents, skills, and rules for Claude, Cursor, and more"
     license: MIT
 archives:

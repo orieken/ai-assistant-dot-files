@@ -299,4 +299,4 @@ Saturday/Cucumber | Saturday/Playwright | Sunday/API | Auto-detect
 - **Planning File Hygiene**: Remind the user that pending stories can contain code snippets/specs as guidance, but once completed, they must be stripped down to just the description and checklist (the codebase is the source of truth).
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

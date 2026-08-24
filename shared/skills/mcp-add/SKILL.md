@@ -207,4 +207,4 @@ Works entirely offline. The only external dependency is the target MCP server's 
 If the target MCP uses an SDK version significantly newer than what's documented in `shared/blueprints/mcp-server.md`, flag it in Phase 2a as an `[ASSUMPTION]` — the plan is still valid but a human should double-check the SDK's current transport/tool API surface.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

@@ -77,4 +77,4 @@ Consider: (a) the concept may not be documented yet — run /create-ki to docume
 Operates purely using local file reading tools (Read, Glob). No network calls, no external index.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) AOS Phase 3 Runtime layer. CC BY 4.0.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) AOS Phase 3 Runtime layer. CC BY 4.0.*

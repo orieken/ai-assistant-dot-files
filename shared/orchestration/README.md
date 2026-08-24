@@ -62,4 +62,4 @@ Workflows (added by Ops 3.11-3.12):
 - `shared/workflows/tdd-workflow.md`
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) AOS Phase 3 Runtime layer. CC BY 4.0.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) AOS Phase 3 Runtime layer. CC BY 4.0.*

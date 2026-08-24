@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/orieken/ai-assistant-dot-files/shared/schemas/skill-frontmatter.schema.json",
+  "$id": "https://github.com/orieken/loom/shared/schemas/skill-frontmatter.schema.json",
   "title": "Skill Frontmatter",
   "description": "Schema for the YAML frontmatter block of shared/skills/*/SKILL.md files. Source of truth: shared/contracts/skill-frontmatter-contract.md.",
   "type": "object",

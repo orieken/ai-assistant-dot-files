@@ -195,4 +195,4 @@ Policy hook evaluation is deferred to Phase 4 (v3.3). The stage boundaries are d
 Phase 4 hooks don't require structural changes to this workflow.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) AOS Phase 3 Runtime layer. CC BY 4.0.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) AOS Phase 3 Runtime layer. CC BY 4.0.*

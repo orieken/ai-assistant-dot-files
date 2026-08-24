@@ -93,4 +93,4 @@ Threshold: Cyclomatic complexity < 7 (ARCHITECTURE_RULES.md)
 If `check.sh` is unavailable, manually count `if`, `else`, `for`, `while`, `switch` statements for cyclomatic complexity and count LOC manually. Use per-language tool list above for on-demand mode; fall back to heuristic reading if tools are not installed.
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*

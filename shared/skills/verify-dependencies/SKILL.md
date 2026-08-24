@@ -50,4 +50,4 @@ Do NOT use when modifying UI code or end-to-end testing frameworks.
 If `check.sh` is unavailable (e.g., `dependency-cruiser` is not installed), manually read the `import` statements at the top of all modified files. Flag any imports in `src/domain/` that reference `src/infrastructure/`, `src/adapters/`, or specific vendor libraries (like React, TypeORM, Axios).
 
 ---
-*Part of the [ai-assistant-dot-files](https://github.com/orieken/ai-assistant-dot-files) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/ai-assistant-dot-files/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
+*Part of the [ai-assistant-dot-files](https://github.com/orieken/loom) Context Engineering Framework by Oscar Rieken — licensed under [CC BY 4.0](https://github.com/orieken/loom/blob/main/LICENSE-CONTENT.md). If you copy or adapt this file, please keep this attribution.*
