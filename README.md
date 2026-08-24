@@ -1,10 +1,15 @@
-# AI Assistant Dot Files — Context Engineering Framework
+# Loom — Context Engineering Framework
 
 [![Framework CI](https://github.com/orieken/ai-assistant-dot-files/actions/workflows/framework-ci.yml/badge.svg)](https://github.com/orieken/ai-assistant-dot-files/actions/workflows/framework-ci.yml)
 
-One canonical set of agents, skills, and rules — written once in `shared/`, generated or symlinked into
-whatever AI coding tool you actually use (Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini Antigravity,
-OpenAI/Codex, JetBrains AI Assistant + Junie, Roo Code, Cline). Edit `shared/`, run one script, every tool stays in sync — no more hand-copying the same
+```bash
+brew install orieken/tap/loom
+loom install
+```
+
+One canonical set of agents, skills, and rules — written once in `shared/`, installed via the **loom** CLI
+into whatever AI coding tool you actually use (Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini Antigravity,
+OpenAI/Codex, JetBrains AI Assistant + Junie, Roo Code, Cline). Edit `shared/`, run `loom install`, every tool stays in sync — no more hand-copying the same
 instructions into five different config formats.
 
 This also ships a full multi-agent **feature delivery pipeline** (spec → analysis → architecture →
@@ -26,7 +31,7 @@ For deeper detail beyond this README:
 flowchart LR
     You(["You"]) -- "edit once" --> Shared["shared/\nagents + skills + rules"]
 
-    Shared -- generate-configs.sh --> Tools["Claude Code, Cursor, Windsurf,\nGitHub Copilot, Gemini/Antigravity,\nOpenAI/Codex, JetBrains+Junie, Roo Code, Cline"]
+    Shared -- "loom install" --> Tools["Claude Code, Cursor, Windsurf,\nGitHub Copilot, Gemini/Antigravity,\nOpenAI/Codex, JetBrains+Junie, Roo Code, Cline"]
 
     Tools --> Pipeline[["deliver-feature\n14-agent delivery pipeline"]]
     Pipeline --> CML[["Context + Memory + Learning\n(gets smarter every delivery)"]]
@@ -61,7 +66,7 @@ shared/                              <- single source of truth, edit here only
         │  scripts/generate-configs.sh (reads shared/ + platform-registry.json)
         ▼
 
-Generated / symlinked platform configs (this repo, or any target project via install.sh)
+Generated / symlinked platform configs (this repo, or any target project via loom install)
 ├── .claude/{agents,rules,skills}/    -> symlinks to shared/ (Tier 1: Full)
 ├── .cursor/rules/*.mdc               <- generated, rules inlined (Tier 2: Personas + Rules)
 ├── .windsurfrules                    <- generated, flat (Tier 2)
@@ -70,42 +75,65 @@ Generated / symlinked platform configs (this repo, or any target project via ins
 ├── .agents/{skills,rules}/            <- symlinks to shared/ (project installs; ~/.gemini/config/skills/ for --global)
 └── .openai.md                        <- generated (Tier 3)
 
-        │  install.sh --global | --project <path>
+        │  loom install --global | --target <path>
         ▼
 
 Your machine (~/) or a target project — agents/skills/rules active in every AI tool you use
 ```
 
-`scripts/check-parity.sh` verifies every generated config actually matches the canonical `shared/` source —
-run it after any edit to `shared/` before trusting the generated files are current.
+`loom health` verifies every installed config matches the canonical `shared/` source and checks for symlink
+drift, frontmatter schema errors, and missing entries. `scripts/check-parity.sh` does the same check as a
+raw shell script — useful during framework development or on CI where loom isn't installed.
 
 ---
 
 ## Quick Start
 
+**The fastest path is via Homebrew:**
+
 ```bash
-git clone <this-repo> ai-assistant-dot-files
-cd ai-assistant-dot-files
-
-# See what would happen first, without touching anything
-./install.sh --global --dry-run
-
-# Install globally (symlinks shared/ into ~/.claude, ~/.cursor, etc. — always current after a git pull)
-./install.sh --global
-
-# Or install into one specific project (also symlinked by default -- see note below)
-./install.sh --project /path/to/your-project
-
-# Verify everything is wired correctly
-scripts/check-parity.sh
+brew install orieken/tap/loom
 ```
 
-Both `--global` and `--project` auto-detect which of the six platforms you actually have installed and only
-generate configs for those (`--platform <name>` to force a single one), and both **symlink by default** —
-a `--project` install still depends on this repo's checkout staying where it is, exactly like `--global`
-does. Pass `--copy` if you want a project install that's a real, independent copy instead (also required on
-Windows without WSL, where symlinks need elevated permissions). Add `--tour` to either mode to run the
-`onboard` skill walkthrough right after install.
+Then install into a project or globally:
+
+```bash
+# Preview what would happen without writing anything
+loom install --dry-run
+
+# Install into the current project (auto-detects which AI platforms you have)
+loom install
+
+# Install into a specific project
+loom install --target /path/to/your-project
+
+# Force a single platform
+loom install --platform claude
+
+# Copy files instead of symlinks (required on Windows without WSL)
+loom install --copy
+
+# Verify everything is healthy
+loom health
+```
+
+**No Homebrew? Clone and run directly:**
+
+```bash
+git clone https://github.com/orieken/loom ai-assistant-dot-files
+cd ai-assistant-dot-files
+
+# Preview without touching anything
+go run ./cmd/loom install --dry-run
+
+# Or use the legacy shell script (still works)
+./install.sh --global
+```
+
+`loom install` auto-detects which AI platforms you have installed and only writes configs for those.
+Pass `--platform <name>` to target one specifically. Files are **symlinked by default** so a `git pull`
+on the source repo is all you need to stay current. Pass `--copy` for a self-contained install that
+doesn't depend on the repo checkout remaining in place.
 
 Once installed:
 ```bash
@@ -119,13 +147,13 @@ claude
 ```
 
 **Version marker** — every non-dry-run install writes `.claude/framework-install.json` into the
-target (or `~/.claude/` for `--global`). It records the installed git tag, commit SHA, install
-date, mode (symlink/copy), and framework level. `health-check.sh` reads this marker when invoked
-from within an installed project and reports a WARN if the source repo has moved ahead — making
-drift from `--copy` installs visible without manual archaeology. Pre-v3.3 installs have no marker;
-the legacy forensic detection in `docs/prompts/update-installed-framework.md` remains the fallback.
+target. It records the installed git tag, commit SHA, install date, mode (symlink/copy), and
+framework level. `loom health` reads this marker and reports a WARN if the source repo has moved
+ahead — making drift from `--copy` installs visible without manual archaeology. Pre-v3.3 installs
+have no marker; the legacy forensic detection in `docs/prompts/update-installed-framework.md`
+remains the fallback.
 
-To remove: `./uninstall.sh --global` (or `--project <path>`) restores whatever was backed up during install (and removes the version marker).
+To remove: `loom uninstall` (or `loom uninstall --target <path>`) restores whatever was backed up during install and removes the version marker.
 
 ---
 
@@ -145,6 +173,7 @@ memory_sync:
 **Pull** — diff org KIs into your local `shared/knowledge/` (dry run first, then apply):
 
 ```bash
+# Memory sync runs via the shell script (not yet in loom install)
 ./install.sh --sync-memory               # preview changes
 ./install.sh --sync-memory pull --confirm  # apply
 ```
@@ -170,9 +199,9 @@ memory_sync:
 | **Cursor** | 2 for rules; agents/skills now Tier-1-equivalent (confirmed 2026-07-06) | Real subagent + skill loading via `.cursor/agents/`/`.cursor/skills/` (symlinked to `shared/`, zero-drift, same mechanism as Claude Code) — no `tools:` allowlist though, subagents inherit all parent tools with only a coarse `readonly` flag. Rules still fully inlined, no orchestration at that layer | `.cursor/agents/`, `.cursor/skills/` — direct symlinks to `shared/`. Rules: `.mdc` per concern (11: `architecture`, `design-principles`, `approval-gates`, `agent-roster`, `testing`, `go-backend`, `vue-frontend`, `typescript-conventions`, `python-conventions`, `csharp-conventions`, `java-conventions`), YAML frontmatter, content inlined (Cursor Rules still can't follow file references). Only `approval-gates.mdc`/`agent-roster.mdc` are `alwaysApply`; the rest Auto Attach on relevant file globs to stay near Cursor's own ~2,000-token always-apply budget | Agent (`.cursor/agents/`) / Persona (`.cursor/rules/`) |
 | **Windsurf** | 2 — Personas + Rules | Same as Cursor | Single flat `.windsurfrules`, inlined | Persona |
 | **GitHub Copilot** | 2 — Personas + Rules | Repo-wide instructions + path-scoped rule files (confirmed via [GitHub's docs](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions-in-your-ide/add-repository-instructions-in-your-ide), 2026-07) | `.github/copilot-instructions.md` (roster + rules inlined) **plus** 7 scoped `.github/instructions/*.instructions.md` files (`testing`, `go-backend`, `vue-frontend`, `typescript-conventions`, `python-conventions`, `csharp-conventions`, `java-conventions`) with `applyTo` globs — all combine | Persona |
-| **JetBrains AI Assistant + Junie** | 2 — Personas + Rules | Project-rules with IDE-configurable scoping (Always / By file patterns / By model decision / Manually). Junie (agentic mode) reads `.junie/guidelines.md` first, then falls back to root `AGENTS.md` (already generated). No custom modes or skill invocation. Files travel with the project — works in IntelliJ IDEA, WebStorm, Rider, etc. Confirmed via jetbrains.com/help/ai-assistant and junie.jetbrains.com/docs (2026-07-30) | `.aiassistant/rules/` (10 files: 4 always-active, 6 with IDE mode hint for file-pattern scoping) + `.junie/guidelines.md` — generated by `scripts/generate-configs.sh --platform jetbrains` | Persona |
-| **Roo Code** | 2 — Personas + Modes | All 39 shared agents map to Roo Code custom modes with per-mode tool access scoping (`read`, `edit`, `command`, `mcp`, `browser` groups derived from agent `tools:` field). Global framework rules in `.roo/rules/` apply to all modes. No skill invocation, no pipeline orchestration. Confirmed format via docs.roocode.com (2026-07-30) | `.roomodes` (YAML, 39 custom modes) + `.roo/rules/*.md` — generated by `scripts/generate-configs.sh --platform roo-code` | Mode (agent-like persona with tool scoping) |
-| **Cline** | 2 — Personas + Rules | Plain markdown rules directory; optional `paths:` frontmatter for file-scoped activation. No custom modes or agent equivalent. Also reads `~/.agents/AGENTS.md` (cross-tool convention) | `.clinerules/` (10 files: 4 always-active, 6 path-scoped by language/test) — generated by `scripts/generate-configs.sh --platform cline` | Persona |
+| **JetBrains AI Assistant + Junie** | 2 — Personas + Rules | Project-rules with IDE-configurable scoping (Always / By file patterns / By model decision / Manually). Junie (agentic mode) reads `.junie/guidelines.md` first, then falls back to root `AGENTS.md` (already generated). No custom modes or skill invocation. Files travel with the project — works in IntelliJ IDEA, WebStorm, Rider, etc. Confirmed via jetbrains.com/help/ai-assistant and junie.jetbrains.com/docs (2026-07-30) | `.aiassistant/rules/` (10 files: 4 always-active, 6 with IDE mode hint for file-pattern scoping) + `.junie/guidelines.md` — generated by `loom install --platform jetbrains` | Persona |
+| **Roo Code** | 2 — Personas + Modes | All 39 shared agents map to Roo Code custom modes with per-mode tool access scoping (`read`, `edit`, `command`, `mcp`, `browser` groups derived from agent `tools:` field). Global framework rules in `.roo/rules/` apply to all modes. No skill invocation, no pipeline orchestration. Confirmed format via docs.roocode.com (2026-07-30) | `.roomodes` (YAML, 39 custom modes) + `.roo/rules/*.md` — generated by `loom install --platform roo-code` | Mode (agent-like persona with tool scoping) |
+| **Cline** | 2 — Personas + Rules | Plain markdown rules directory; optional `paths:` frontmatter for file-scoped activation. No custom modes or agent equivalent. Also reads `~/.agents/AGENTS.md` (cross-tool convention) | `.clinerules/` (10 files: 4 always-active, 6 path-scoped by language/test) — generated by `loom install --platform cline` | Persona |
 | **Gemini (Antigravity)** | 3 (rules) + confirmed real skill invocation | **Confirmed 2026-07-02** ([results](tests/platform-verification/results/)): reads `AGENTS.md` for rules, genuinely invokes (not just describes) skills from `.gemini/config/skills/` (global) or `.agents/skills/` (project). The old `.gemini/antigravity/instructions.md` guess was confirmed unread and removed | `AGENTS.md`, `~/.gemini/config/skills/` (global) or `.agents/skills/`/`.agents/rules/` (project), symlinked to `shared/` | Persona |
 | **OpenAI / Codex** | 3 — System Prompt | Single instruction file only | `.openai.md`, inlined | Persona |
 
@@ -332,7 +361,7 @@ Grouped by what they're for:
 | `on-call` | Active incident response |
 | `five-whys` | Structured root cause analysis |
 | `chaos-experiment` | Game Day fault injection design |
-| `health-check` | Validates this installation — symlinks, frontmatter, config drift |
+| `health-check` | Validates this installation — symlinks, frontmatter, config drift (also: `loom health`) |
 | `debug-environment` | Systematic environment/config debugging |
 | `performance-profile` | Diagnosing *why* something is slow |
 | `dependency-update` | Safe, structured monorepo dependency updates |
@@ -446,11 +475,35 @@ Full rules: `shared/rules/architecture-guardrails.md`, `shared/rules/design-prin
 
 ---
 
+## Training Series
+
+A structured training curriculum for Loom lives in the companion
+[Rieken Training repository](https://github.com/orieken/Training/tree/main/loom-training) (local path:
+`/Training/loom-training/`):
+
+| Level | What It Covers | Time |
+|-------|---------------|------|
+| Orientation | The config fragmentation problem, platform tiers, which level is right for you | ~30 min |
+| Level 1 | Install, run `deliver-feature`, read pipeline artifacts | ~2 hours |
+| Level 2 | Write custom skills and agents, add to `shared/`, regenerate configs | ~3 hours |
+| Level 3 | Write Knowledge Items, run `promote-memory`, manage the context manifest | ~3 hours |
+| Level 4 | Platform installation, CI fitness functions, org rollout | ~4 hours |
+| Manager Track | What Loom does, what it costs, what healthy adoption looks like | ~2 hours |
+
+**For teams building AI-powered products:** Loom Level 3 (context engineering) pairs with the
+[Zero to Agent SDET Level 3B training](https://github.com/orieken/Training/tree/main/testing-ai-powered-apps)
+— testing AI-powered apps. If your team delivers features backed by LLMs or ML models, Level 3B
+teaches how to write evaluations and acceptance tests for non-deterministic outputs. The combination
+of Loom's delivery pipeline and Level 3B's evaluation patterns is the foundation for AI-native
+engineering practice.
+
+---
+
 ## IDE Setup (optional) — schema-backed frontmatter autocomplete
 
 Agent, skill, and Knowledge Item frontmatter blocks have JSON Schemas under `shared/schemas/`. Opting
 in gets you autocomplete and inline validation while authoring — for example, `tools: WhatEverRandomName`
-gets flagged in-editor instead of only at `scripts/health-check.sh` time (which today validates field
+gets flagged in-editor instead of only at `loom health` time (which today validates field
 presence only, not values).
 
 **VS Code** — install the [Red Hat YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml)
