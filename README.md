@@ -89,13 +89,28 @@ raw shell script — useful during framework development or on CI where loom isn
 
 ## Quick Start
 
-**The fastest path is via Homebrew:**
+**Recommended — builds from source, no macOS Gatekeeper warning:**
+
+```bash
+go install github.com/orieken/loom/cmd/loom@latest
+```
+
+Requires Go 1.21+. The binary lands in `~/go/bin/` — make sure that's on your `PATH`.
+
+**Homebrew (installs a pre-built binary):**
 
 ```bash
 brew install orieken/tap/loom
 ```
 
-Then install into a project or globally:
+> **macOS note:** pre-built binaries trigger Gatekeeper on first run. Clear it once with:
+> `xattr -d com.apple.quarantine $(which loom)`
+
+**Or download a release archive directly** from [github.com/orieken/loom/releases](https://github.com/orieken/loom/releases) — binary archives and a source tarball are published for every release.
+
+---
+
+Once `loom` is installed:
 
 ```bash
 # Preview what would happen without writing anything
@@ -117,23 +132,18 @@ loom install --copy
 loom health
 ```
 
-**No Homebrew? Clone and run directly:**
-
-```bash
-git clone https://github.com/orieken/loom
-cd loom
-
-# Preview without touching anything
-go run ./cmd/loom install --dry-run
-
-# Or use the legacy shell script (still works)
-./install.sh --global
-```
-
 `loom install` auto-detects which AI platforms you have installed and only writes configs for those.
 Pass `--platform <name>` to target one specifically. Files are **symlinked by default** so a `git pull`
 on the source repo is all you need to stay current. Pass `--copy` for a self-contained install that
 doesn't depend on the repo checkout remaining in place.
+
+**No Go? Clone and run with the legacy shell script (still works):**
+
+```bash
+git clone https://github.com/orieken/loom
+cd loom
+./install.sh --global
+```
 
 Once installed:
 ```bash

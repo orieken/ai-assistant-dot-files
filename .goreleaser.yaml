@@ -33,18 +33,12 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
-homebrew_casks:
-  - name: loom
-    repository:
-      owner: orieken
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    commit_author:
-      name: loom-release-bot
-      email: noreply@github.com
-    homepage: https://github.com/orieken/loom
-    description: "AI assistant framework installer — agents, skills, and rules for Claude, Cursor, and more"
-    license: MIT
+# Source archive published alongside binary archives so users can download
+# and build locally (go install or homebrew formula build from source).
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}_{{ .Version }}_source"
+  format: tar.gz
 
 release:
   github:
