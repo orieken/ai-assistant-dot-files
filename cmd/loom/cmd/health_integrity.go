@@ -30,24 +30,35 @@ func (check *healthCheck) verifyAgentCounts() {
 	checked := 0
 	mismatches := 0
 	for _, path := range manifestPaths(check.manifest.Platforms) {
-		status := check.paths[path]
-		if filepath.Base(path) != "agents" || !status.Exists || status.IsBroken {
-			continue
-		}
-		found, countErr := countInstalledAgents(status.Absolute)
-		if countErr != nil {
-			check.fail(fmt.Sprintf("count installed agents at %s: %v", path, countErr))
+		wasChecked, matched := check.checkAgentDirectory(path, expected)
+		if !wasChecked {
 			continue
 		}
 		checked++
-		if found != expected {
-			check.warn(fmt.Sprintf("agent count mismatch at %s: embedded has %d, found %d", path, expected, found))
+		if !matched {
 			mismatches++
 		}
 	}
 	if checked > 0 && mismatches == 0 {
 		check.output.success(fmt.Sprintf("agent count matches embedded framework (%d)", expected))
 	}
+}
+
+func (check *healthCheck) checkAgentDirectory(path string, expected int) (wasChecked, matched bool) {
+	status := check.paths[path]
+	if filepath.Base(path) != "agents" || !status.Exists || status.IsBroken {
+		return false, false
+	}
+	found, err := countInstalledAgents(status.Absolute)
+	if err != nil {
+		check.fail(fmt.Sprintf("count installed agents at %s: %v", path, err))
+		return false, false
+	}
+	if found != expected {
+		check.warn(fmt.Sprintf("agent count mismatch at %s: embedded has %d, found %d", path, expected, found))
+		return true, false
+	}
+	return true, true
 }
 
 func countInstalledAgents(directory string) (int, error) {

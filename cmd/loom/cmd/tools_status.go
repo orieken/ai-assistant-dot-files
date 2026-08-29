@@ -44,32 +44,42 @@ func executeToolsStatus(flags toolsStatusFlags, tools []contextTool, lookPath fu
 		if tier != "" && tool.tier != tier {
 			continue
 		}
-		if tool.tier != lastTier {
-			if lastTier != "" {
-				out.separator()
-			}
-			out.sectionHeading(tool.tier)
-			lastTier = tool.tier
-		}
-
-		installed, installNote := toolInstallStatus(tool, lookPath)
-		status := "✓"
-		if !installed {
-			status = "✗"
+		lastTier = reportTierHeading(out, tool.tier, lastTier)
+		if !reportToolRow(out, tool, lookPath) {
 			missing++
-		}
-		out.toolRow(tool.name, status, tool.description)
-		if !installed && installNote != "" {
-			out.installNote(installNote)
-		}
-		if !installed && tool.postNote != "" {
-			out.postNote(tool.postNote)
 		}
 	}
 
 	out.separator()
 	out.statusSummary(missing)
 	return nil
+}
+
+func reportTierHeading(out toolsOutput, current, last toolTier) toolTier {
+	if current == last {
+		return last
+	}
+	if last != "" {
+		out.separator()
+	}
+	out.sectionHeading(current)
+	return current
+}
+
+func reportToolRow(out toolsOutput, tool contextTool, lookPath func(string) (string, error)) bool {
+	installed, installNote := toolInstallStatus(tool, lookPath)
+	status := "✓"
+	if !installed {
+		status = "✗"
+	}
+	out.toolRow(tool.name, status, tool.description)
+	if !installed && installNote != "" {
+		out.installNote(installNote)
+	}
+	if !installed && tool.postNote != "" {
+		out.postNote(tool.postNote)
+	}
+	return installed
 }
 
 // toolInstallStatus returns (installed bool, installHint string).

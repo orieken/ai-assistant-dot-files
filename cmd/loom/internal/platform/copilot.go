@@ -24,21 +24,25 @@ func installCopilotScopedRules(environment Environment, paths []string) ([]strin
 		if rule.stack != "" && !isStackEnabled(environment.Rules, rule.stack) {
 			continue
 		}
-		body, err := readRule(environment, rule.rule)
-		if err != nil {
-			return nil, err
-		}
-		globs := rule.globs
-		if rule.stack != "" {
-			globs = compactGlobs(rule.globs)
-		}
-		path, err := writeGenerated(environment, ".github/instructions/"+rule.filename+".instructions.md", scopedRule(globs, body))
+		path, err := writeCopilotScopedRule(environment, rule)
 		if err != nil {
 			return nil, err
 		}
 		paths = appendPath(paths, path)
 	}
 	return paths, nil
+}
+
+func writeCopilotScopedRule(environment Environment, rule generatedRule) (string, error) {
+	body, err := readRule(environment, rule.rule)
+	if err != nil {
+		return "", err
+	}
+	globs := rule.globs
+	if rule.stack != "" {
+		globs = compactGlobs(rule.globs)
+	}
+	return writeGenerated(environment, ".github/instructions/"+rule.filename+".instructions.md", scopedRule(globs, body))
 }
 
 func installCopilotVueRule(environment Environment, paths []string) ([]string, error) {

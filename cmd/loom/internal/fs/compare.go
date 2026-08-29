@@ -18,18 +18,22 @@ func (writer *Writer) matches(source, destination string) (bool, error) {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return false, nil
 	}
+	return writer.matchesEmbedded(source, destination, info)
+}
+
+func (writer *Writer) matchesEmbedded(source, destination string, info os.FileInfo) (bool, error) {
 	embeddedInfo, err := iofs.Stat(writer.content, source)
 	if err != nil || info.IsDir() != embeddedInfo.IsDir() {
 		return false, err
 	}
-	if !info.IsDir() {
-		data, readErr := iofs.ReadFile(writer.content, source)
-		if readErr != nil {
-			return false, readErr
-		}
-		return isSameFile(destination, data)
+	if info.IsDir() {
+		return writer.matchesDirectory(source, destination)
 	}
-	return writer.matchesDirectory(source, destination)
+	data, err := iofs.ReadFile(writer.content, source)
+	if err != nil {
+		return false, err
+	}
+	return isSameFile(destination, data)
 }
 
 func (writer *Writer) matchesDirectory(source, destination string) (bool, error) {

@@ -62,49 +62,58 @@ func executeToolsInstall(
 
 	out.installHeading(len(candidates))
 
-	installed, skipped, failed, manual := 0, 0, 0, 0
-
+	counts := map[installOutcome]int{}
 	for _, tool := range candidates {
-		if tool.binary == "" {
-			out.installBuiltIn(tool.name)
-			skipped++
-			continue
-		}
-		if _, err := lookPath(tool.binary); err == nil {
-			out.installSkip(tool.name)
-			skipped++
-			continue
-		}
-		if tool.manualNote != "" {
-			out.installManual(tool.name, tool.manualNote)
-			if tool.postNote != "" {
-				out.installPost(tool.postNote)
-			}
-			manual++
-			continue
-		}
-		if len(tool.installCmds) == 0 {
-			out.installManual(tool.name, "no automated install available — see shared/knowledge/"+tool.kiName+".md")
-			manual++
-			continue
-		}
-		if err := runCmd(tool.installCmds[0]); err != nil {
-			out.installFailed(tool.name, err)
-			failed++
-			continue
-		}
-		out.installSuccess(tool.name)
-		if tool.postNote != "" {
-			out.installPost(tool.postNote)
-		}
-		installed++
+		counts[installOneTool(tool, lookPath, runCmd, out)]++
 	}
 
-	out.installSummary(installed, skipped, failed, manual)
-	if failed > 0 {
-		return fmt.Errorf("%d tool install(s) failed", failed)
+	out.installSummary(counts[outcomeInstalled], counts[outcomeSkipped], counts[outcomeFailed], counts[outcomeManual])
+	if counts[outcomeFailed] > 0 {
+		return fmt.Errorf("%d tool install(s) failed", counts[outcomeFailed])
 	}
 	return nil
+}
+
+type installOutcome int
+
+const (
+	outcomeInstalled installOutcome = iota
+	outcomeSkipped
+	outcomeManual
+	outcomeFailed
+)
+
+func installOneTool(tool contextTool, lookPath lookPathFn, runCmd runCmdFn, out toolsOutput) installOutcome {
+	if tool.binary == "" {
+		out.installBuiltIn(tool.name)
+		return outcomeSkipped
+	}
+	if _, err := lookPath(tool.binary); err == nil {
+		out.installSkip(tool.name)
+		return outcomeSkipped
+	}
+	if tool.manualNote != "" {
+		out.installManual(tool.name, tool.manualNote)
+		reportPostNote(out, tool)
+		return outcomeManual
+	}
+	if len(tool.installCmds) == 0 {
+		out.installManual(tool.name, "no automated install available — see shared/knowledge/"+tool.kiName+".md")
+		return outcomeManual
+	}
+	if err := runCmd(tool.installCmds[0]); err != nil {
+		out.installFailed(tool.name, err)
+		return outcomeFailed
+	}
+	out.installSuccess(tool.name)
+	reportPostNote(out, tool)
+	return outcomeInstalled
+}
+
+func reportPostNote(out toolsOutput, tool contextTool) {
+	if tool.postNote != "" {
+		out.installPost(tool.postNote)
+	}
 }
 
 func selectTools(flags toolsInstallFlags, args []string, tools []contextTool) ([]contextTool, error) {
