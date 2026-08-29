@@ -1,6 +1,10 @@
 // Package register exposes the framework's MCP tools for embedding in external
-// MCP servers. Callers import this package and call FrameworkTools —
-// the internal implementation packages stay encapsulated.
+// MCP servers.
+//
+// The supported embedding path is Frameworks, which returns loom's built-in
+// tool registrations as a transport-free tools.Registry — merge it into your
+// own registry (tools.Registry.Merge) and adapt it to your server's MCP
+// library and version. See examples/embedding/ for a complete server.
 package register
 
 import (
@@ -8,11 +12,13 @@ import (
 	"os"
 
 	"github.com/mark3labs/mcp-go/server"
+
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 	mcpserver "github.com/orieken/loom/shared/mcp/internal/server"
+	"github.com/orieken/loom/tools"
 )
 
-// FrameworkTools registers all framework tools on s:
+// Frameworks returns the framework's built-in tool registrations:
 //
 //   - search_ki           — BM25 full-text search over Knowledge Items
 //   - check_ubiquitous_language — validates domain term usage
@@ -21,16 +27,31 @@ import (
 //   - verify_dependencies — dependency boundary validation
 //   - search_docs         — documentation search
 //
-// logWriter receives structured JSON log output; pass nil to use os.Stderr.
+// Each registration carries the tool plus its timeout budget, retry class,
+// and permission scope. Nothing in the returned types references mcp-go or
+// loom internals, so callers adapt them to their own MCP library version.
 //
-// Internally the tools live in a name-keyed registry with per-tool metadata
-// (timeout budget, retry class, permission scope). A transport-free public
-// embedding API over that registry ships with roadmap D.2 — until then this
-// function remains the supported integration path.
+// logWriter receives the tools' structured JSON log output; pass nil to use
+// os.Stderr.
+func Frameworks(logWriter io.Writer) *tools.Registry {
+	return mcpserver.FrameworkRegistry(logging.NewLogger(resolveLogWriter(logWriter)))
+}
+
+// FrameworkTools registers all framework tools on s, an mcp-go server pinned
+// to loom's own mcp-go version.
+//
+// Deprecated: use Frameworks and adapt the registry to your server's own MCP
+// library (see examples/embedding/), or run the standalone `loom mcp serve`.
+// FrameworkTools couples callers to loom's mcp-go version pin and will be
+// removed after the D.2 embedding API's first tagged release.
 func FrameworkTools(s *server.MCPServer, logWriter io.Writer) error {
-	if logWriter == nil {
-		logWriter = os.Stderr
-	}
-	handler := mcpserver.New(logging.NewLogger(logWriter))
+	handler := mcpserver.New(logging.NewLogger(resolveLogWriter(logWriter)))
 	return handler.RegisterTools(s)
+}
+
+func resolveLogWriter(logWriter io.Writer) io.Writer {
+	if logWriter == nil {
+		return os.Stderr
+	}
+	return logWriter
 }

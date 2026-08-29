@@ -1,4 +1,4 @@
-package domain_test
+package tools_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/orieken/loom/shared/mcp/internal/domain"
+	"github.com/orieken/loom/tools"
 )
 
 type namedTool struct{ name string }
@@ -17,31 +17,31 @@ func (n namedTool) Description() string           { return "test tool" }
 func (n namedTool) InputSchema() json.RawMessage  { return json.RawMessage(`{"type":"object"}`) }
 func (n namedTool) OutputSchema() json.RawMessage { return nil }
 
-func (n namedTool) Execute(_ context.Context, _ domain.ToolRequest) (*domain.ToolResult, error) {
-	return domain.NewTextResult("ok"), nil
+func (n namedTool) Execute(_ context.Context, _ tools.ToolRequest) (*tools.ToolResult, error) {
+	return tools.NewTextResult("ok"), nil
 }
 
-func registrationFor(name string) domain.ToolRegistration {
-	return domain.ToolRegistration{
+func registrationFor(name string) tools.ToolRegistration {
+	return tools.ToolRegistration{
 		Tool:       namedTool{name: name},
 		Timeout:    30 * time.Second,
-		Retry:      domain.RetryIdempotent,
-		Permission: domain.ScopeReadOnly,
+		Retry:      tools.RetryIdempotent,
+		Permission: tools.ScopeReadOnly,
 	}
 }
 
 func TestRegistryRegisterRejectsInvalidRegistrations(t *testing.T) {
 	tests := []struct {
 		name         string
-		registration domain.ToolRegistration
+		registration tools.ToolRegistration
 		wantErr      string
 	}{
-		{"nil tool", domain.ToolRegistration{}, "nil Tool"},
+		{"nil tool", tools.ToolRegistration{}, "nil Tool"},
 		{"empty name", registrationFor(""), "empty tool name"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := domain.NewRegistry().Register(tt.registration)
+			err := tools.NewRegistry().Register(tt.registration)
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("Register() error = %v, want containing %q", err, tt.wantErr)
 			}
@@ -50,7 +50,7 @@ func TestRegistryRegisterRejectsInvalidRegistrations(t *testing.T) {
 }
 
 func TestRegistryRegisterRejectsDuplicateNames(t *testing.T) {
-	registry := domain.NewRegistry()
+	registry := tools.NewRegistry()
 	if err := registry.Register(registrationFor("search_ki")); err != nil {
 		t.Fatalf("first Register() failed: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestRegistryRegisterRejectsDuplicateNames(t *testing.T) {
 }
 
 func TestRegistryGetReturnsRegistration(t *testing.T) {
-	registry := domain.NewRegistry()
+	registry := tools.NewRegistry()
 	if err := registry.Register(registrationFor("search_ki")); err != nil {
 		t.Fatalf("Register() failed: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestRegistryGetReturnsRegistration(t *testing.T) {
 }
 
 func TestRegistryAllIsSortedByName(t *testing.T) {
-	registry := domain.NewRegistry()
+	registry := tools.NewRegistry()
 	for _, name := range []string{"zeta", "alpha", "mid"} {
 		if err := registry.Register(registrationFor(name)); err != nil {
 			t.Fatalf("Register(%s) failed: %v", name, err)
@@ -96,8 +96,8 @@ func TestRegistryAllIsSortedByName(t *testing.T) {
 }
 
 func TestRegistryMergeCombinesAndDetectsCollisions(t *testing.T) {
-	base := domain.NewRegistry()
-	extra := domain.NewRegistry()
+	base := tools.NewRegistry()
+	extra := tools.NewRegistry()
 	if err := base.Register(registrationFor("search_ki")); err != nil {
 		t.Fatalf("Register() failed: %v", err)
 	}

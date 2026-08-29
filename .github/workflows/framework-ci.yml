@@ -89,3 +89,27 @@ jobs:
         # Remove --no-judge to enable full rubric grading in CI if desired.
         # Set repository variable AGENT_EVAL_ENABLED=true to opt in.
         # Set repository secret ANTHROPIC_API_KEY to authenticate.
+
+  go-build:
+    name: Go build + tests (loom module and embedding example)
+    runs-on: ubuntu-latest
+    # Read-only job; broader workflow-wide hardening (SHA pinning, permissions
+    # on every job) is roadmap M0.2's scope.
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build and test the loom module
+        run: |
+          go build ./...
+          go test ./...
+      - name: Build the out-of-repo embedding example (D.2)
+        # Own go.mod + replace — proves a consumer can register a custom tool
+        # against the public tools package without loom internals or mcp-go
+        # types leaking into its signatures.
+        run: |
+          cd examples/embedding
+          go build ./...

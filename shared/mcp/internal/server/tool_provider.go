@@ -19,6 +19,13 @@ const analysisTimeout = 60 * time.Second
 // searchTimeout is the declared budget for corpus-search tools.
 const searchTimeout = 15 * time.Second
 
+// FrameworkRegistry returns the framework's built-in tool registrations as a
+// transport-free registry. It backs the public embedding API
+// (register.Frameworks, roadmap D.2).
+func FrameworkRegistry(logger *logging.Logger) *domain.Registry {
+	return buildFrameworkRegistry(logger)
+}
+
 // buildFrameworkRegistry constructs and registers the framework-generic tools.
 // Adding a capability is one registerFrameworkTool call here — no edits to
 // handler.go or registration.go (roadmap L2.4).

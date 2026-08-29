@@ -44,7 +44,10 @@ func runMCPServe(_ *cobra.Command, _ []string) error {
 
 func serveMCP(logWriter io.Writer) error {
 	mcpServer := server.NewMCPServer("loom", version, server.WithToolCapabilities(true))
-	if err := register.FrameworkTools(mcpServer, logWriter); err != nil {
+	// `loom mcp serve` IS the deprecation notice's recommended replacement, so
+	// it legitimately keeps using the compat wrapper until D.2's embedding API
+	// grows an in-binary adapter.
+	if err := register.FrameworkTools(mcpServer, logWriter); err != nil { //nolint:staticcheck
 		return fmt.Errorf("register framework tools: %w", err)
 	}
 	if err := server.ServeStdio(mcpServer); err != nil {

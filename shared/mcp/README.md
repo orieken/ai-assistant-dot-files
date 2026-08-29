@@ -80,6 +80,46 @@ produces reference source only: since the module merge it has no `go.mod` of
 its own and is not standalone-buildable. It is deprecated alongside
 `cmd/mcp-server`.
 
+## Embedding loom's tools
+
+If you write your own Go MCP server, embed loom's tools through the public
+API instead of the deprecated `register.FrameworkTools`:
+
+- **`github.com/orieken/loom/tools`** — the transport-free `Tool` interface,
+  `ToolRegistration` (timeout budget, retry class, permission scope), and a
+  name-keyed `Registry` with `Register` and `Merge`. This package imports the
+  standard library only (enforced by a fitness test), so nothing in its
+  signatures ties you to loom's `mcp-go` or `jsonschema` version pins.
+- **`github.com/orieken/loom/shared/mcp/register`** — `Frameworks(logWriter)`
+  returns the six built-in framework tools as a `*tools.Registry`.
+
+Merge, add your own tools, and adapt the result to *your* MCP library and
+version:
+
+```go
+registry := tools.NewRegistry()
+if err := registry.Register(mytool.Registration()); err != nil { ... }
+if err := registry.Merge(register.Frameworks(nil)); err != nil { ... }
+
+for _, registration := range registry.All() {
+    s.AddTool(wireDefinition(registration.Tool), wireHandler(registration.Tool))
+}
+```
+
+`wireDefinition` / `wireHandler` are ~30 lines you own, written against your
+own `mcp-go` (or any other MCP library): map `Name`/`Description`/schemas onto
+your wire type and convert `tools.ToolResult` content blocks back. A complete,
+buildable server — custom `echo` tool included, with its own `go.mod` — lives
+in [`examples/embedding/`](../../examples/embedding/). Note the custom tool's
+package imports **only the stdlib and `github.com/orieken/loom/tools`** — no
+loom internals, no MCP library.
+
+**Compatibility promise**: the `tools` package (and `register.Frameworks`)
+follow semantic versioning from their first tagged release onward — no
+breaking changes to exported signatures within a major version. Until that
+first tag lands, treat the API as v0: stable in intent, but the import path
+and signatures may still shift.
+
 ## Layout
 
 ```

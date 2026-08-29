@@ -1,4 +1,4 @@
-package domain_test
+package tools_test
 
 import (
 	"go/parser"
@@ -8,28 +8,26 @@ import (
 	"testing"
 )
 
-// publicAPIPath is the one non-stdlib import the shim may use: the canonical
-// home of the transport-free types, itself stdlib-only by its own fitness test.
-const publicAPIPath = "github.com/orieken/loom/tools"
-
-// TestDomainImportsOnlyPublicAPI carries the M0.3 boundary forward: domain
-// must stay free of third-party and framework packages
-// (architecture-guardrails.md #1). Since D.2 it is an alias shim over the
-// public tools package, so exactly that import — and stdlib — is allowed.
-func TestDomainImportsOnlyPublicAPI(t *testing.T) {
-	for _, path := range domainImports(t) {
-		if path == publicAPIPath || isStdlibPath(path) {
+// TestPublicAPIImportsOnlyStdlib is the D.2 fitness function (and carries
+// forward M0.3's): the public embedding package must never import internal
+// packages, mcp-go, jsonschema, or any other non-stdlib package — consumers
+// must not inherit loom's dependency pins, and exported signatures cannot
+// reference what is never imported. Standard-library import paths never
+// contain a dot in their first segment; anything else fails.
+func TestPublicAPIImportsOnlyStdlib(t *testing.T) {
+	for _, path := range packageImports(t) {
+		if isStdlibPath(path) {
 			continue
 		}
-		t.Errorf("internal/domain imports %q — only stdlib and %s are allowed", path, publicAPIPath)
+		t.Errorf("public tools package imports non-stdlib package %q — keep the embedding API dependency-free", path)
 	}
 }
 
-func domainImports(t *testing.T) []string {
+func packageImports(t *testing.T) []string {
 	t.Helper()
 	entries, err := os.ReadDir(".")
 	if err != nil {
-		t.Fatalf("read domain package dir: %v", err)
+		t.Fatalf("read package dir: %v", err)
 	}
 	var imports []string
 	for _, entry := range entries {

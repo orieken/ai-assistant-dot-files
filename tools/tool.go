@@ -1,8 +1,13 @@
-// Package domain defines the framework's transport-free tool abstraction.
-// It depends on the standard library only — every MCP wire type lives in the
-// server adapter layer (see architecture-guardrails.md #1 and roadmap M0.3).
-// TestDomainImportsOnlyStdlib enforces this boundary.
-package domain
+// Package tools is loom's public, transport-free embedding API (roadmap D.2).
+// It defines the Tool abstraction and the Registry an external MCP server
+// merges loom's framework tools into — with no mcp-go, jsonschema, or
+// internal types in any exported signature, so consumers never inherit
+// loom's dependency pins. TestPublicAPIImportsOnlyStdlib enforces that.
+//
+// Obtain the built-in framework registrations from
+// shared/mcp/register.Frameworks and combine them with your own tools via
+// Registry.Merge.
+package tools
 
 import (
 	"context"
@@ -47,10 +52,9 @@ func NewErrorResult(message string) *ToolResult {
 }
 
 // Tool is the framework's first-class abstraction for every capability exposed
-// over MCP. Every framework tool implements this interface so it can be
-// registered uniformly without the server knowing any tool's concrete type.
-// Schemas are raw JSON Schema documents; OutputSchema may return nil when the
-// tool declares none.
+// over MCP. Implement it to contribute a capability; register it via
+// Registry.Register. Schemas are raw JSON Schema documents; OutputSchema may
+// return nil when the tool declares none.
 type Tool interface {
 	Name() string
 	Description() string
