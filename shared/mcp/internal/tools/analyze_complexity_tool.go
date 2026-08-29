@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/invopop/jsonschema"
-	"github.com/mark3labs/mcp-go/mcp"
-
 	"github.com/orieken/loom/shared/mcp/internal/analyzers"
+	"github.com/orieken/loom/shared/mcp/internal/domain"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
@@ -29,46 +27,42 @@ func (t *AnalyzeComplexityTool) Description() string {
 	return "Analyze cyclomatic complexity and function length against framework thresholds (complexity < 7, LOC < 30)"
 }
 
-func (t *AnalyzeComplexityTool) InputSchema() mcp.ToolInputSchema {
-	return mcp.ToolInputSchema{
-		Type:     "object",
-		Required: []string{"projectPath"},
-		Properties: map[string]interface{}{
-			"projectPath": projectPathProperty(),
-			"maxComplexity": map[string]interface{}{
-				"type":        "integer",
-				"description": "Maximum allowed cyclomatic complexity (default 7)",
-			},
-			"maxLines": map[string]interface{}{
-				"type":        "integer",
-				"description": "Maximum allowed lines of code per function (default 30)",
-			},
+func (t *AnalyzeComplexityTool) InputSchema() json.RawMessage {
+	return objectSchema([]string{"projectPath"}, map[string]any{
+		"projectPath": projectPathProperty(),
+		"maxComplexity": map[string]any{
+			"type":        "integer",
+			"description": "Maximum allowed cyclomatic complexity (default 7)",
 		},
-	}
+		"maxLines": map[string]any{
+			"type":        "integer",
+			"description": "Maximum allowed lines of code per function (default 30)",
+		},
+	})
 }
 
-func (t *AnalyzeComplexityTool) OutputSchema() *jsonschema.Schema {
+func (t *AnalyzeComplexityTool) OutputSchema() json.RawMessage {
 	return reflectSchema(&analyzers.ComplexityAnalysisResult{})
 }
 
-func (t *AnalyzeComplexityTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *AnalyzeComplexityTool) Execute(_ context.Context, request domain.ToolRequest) (*domain.ToolResult, error) {
 	t.logger.Info("Handling analyze_complexity request")
-	projectPath, maxComplexity, maxLines := parseComplexityArgs(request.GetArguments())
+	projectPath, maxComplexity, maxLines := parseComplexityArgs(request.Args)
 	if projectPath == "" {
-		return mcp.NewToolResultError("projectPath is required"), nil
+		return domain.NewErrorResult("projectPath is required"), nil
 	}
 	result, err := t.analyzer.Analyze(projectPath, maxComplexity, maxLines)
 	if err != nil {
 		t.logger.Error("Complexity analysis failed", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Complexity analysis failed: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Complexity analysis failed: %v", err)), nil
 	}
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
 		t.logger.Error("Failed to marshal complexity result", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to format result: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Failed to format result: %v", err)), nil
 	}
 	t.logger.Info("Complexity analysis completed", "path", projectPath, "violations", result.ViolationsCount)
-	return mcp.NewToolResultText(string(resultJSON)), nil
+	return domain.NewTextResult(string(resultJSON)), nil
 }
 
 func parseComplexityArgs(args map[string]any) (projectPath string, maxComplexity, maxLines int) {

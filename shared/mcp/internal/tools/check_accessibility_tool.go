@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/invopop/jsonschema"
-	"github.com/mark3labs/mcp-go/mcp"
-
 	"github.com/orieken/loom/shared/mcp/internal/analyzers"
+	"github.com/orieken/loom/shared/mcp/internal/domain"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
@@ -29,57 +27,50 @@ func (t *CheckAccessibilityTool) Description() string {
 	return "Scan UI template files (HTML, Vue, JSX, TSX, Svelte) for semantic-HTML and ARIA accessibility violations"
 }
 
-func (t *CheckAccessibilityTool) InputSchema() mcp.ToolInputSchema {
-	return mcp.ToolInputSchema{
-		Type: "object",
-		Properties: map[string]interface{}{
-			"filePath": map[string]interface{}{
-				"type":        "string",
-				"description": "Absolute path to a single UI template file to scan",
-			},
-			"projectPath": map[string]interface{}{
-				"type":        "string",
-				"description": "Absolute path to a project root; the walker scans every .html/.htm/.vue/.jsx/.tsx/.svelte file underneath",
-			},
+func (t *CheckAccessibilityTool) InputSchema() json.RawMessage {
+	return objectSchema(nil, map[string]any{
+		"filePath": map[string]any{
+			"type":        "string",
+			"description": "Absolute path to a single UI template file to scan",
 		},
-	}
+		"projectPath": map[string]any{
+			"type":        "string",
+			"description": "Absolute path to a project root; the walker scans every .html/.htm/.vue/.jsx/.tsx/.svelte file underneath",
+		},
+	})
 }
 
-func (t *CheckAccessibilityTool) OutputSchema() *jsonschema.Schema {
+func (t *CheckAccessibilityTool) OutputSchema() json.RawMessage {
 	return reflectSchema(&analyzers.AccessibilityReportResult{})
 }
 
-func (t *CheckAccessibilityTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *CheckAccessibilityTool) Execute(_ context.Context, request domain.ToolRequest) (*domain.ToolResult, error) {
 	t.logger.Info("Handling check_accessibility request")
 
-	args := request.GetArguments()
-	target := resolveAccessibilityTarget(args)
+	target := resolveAccessibilityTarget(request)
 	if target == "" {
-		return mcp.NewToolResultError("either filePath or projectPath is required"), nil
+		return domain.NewErrorResult("either filePath or projectPath is required"), nil
 	}
 
 	result, err := t.analyzer.Analyze(target)
 	if err != nil {
 		t.logger.Error("Accessibility analysis failed", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Accessibility analysis failed: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Accessibility analysis failed: %v", err)), nil
 	}
 
 	body, err := json.Marshal(result)
 	if err != nil {
 		t.logger.Error("Failed to marshal accessibility result", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to format result: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Failed to format result: %v", err)), nil
 	}
 
 	t.logger.Info("Accessibility analysis completed", "path", target, "violations", result.ViolationsCount)
-	return mcp.NewToolResultText(string(body)), nil
+	return domain.NewTextResult(string(body)), nil
 }
 
-func resolveAccessibilityTarget(args map[string]any) string {
-	if fp, ok := args["filePath"].(string); ok && fp != "" {
-		return fp
+func resolveAccessibilityTarget(request domain.ToolRequest) string {
+	if filePath := request.StringArg("filePath"); filePath != "" {
+		return filePath
 	}
-	if pp, ok := args["projectPath"].(string); ok && pp != "" {
-		return pp
-	}
-	return ""
+	return request.StringArg("projectPath")
 }

@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/invopop/jsonschema"
-	"github.com/mark3labs/mcp-go/mcp"
-
 	"github.com/orieken/loom/shared/mcp/internal/analyzers"
+	"github.com/orieken/loom/shared/mcp/internal/domain"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
@@ -29,36 +27,34 @@ func (t *VerifyDependenciesTool) Description() string {
 	return "Verify Clean Architecture layer boundaries by scanning Go and TypeScript imports, flagging any inner-to-outer layer dependency"
 }
 
-func (t *VerifyDependenciesTool) InputSchema() mcp.ToolInputSchema {
+func (t *VerifyDependenciesTool) InputSchema() json.RawMessage {
 	return projectPathOnlySchema()
 }
 
-func (t *VerifyDependenciesTool) OutputSchema() *jsonschema.Schema {
+func (t *VerifyDependenciesTool) OutputSchema() json.RawMessage {
 	return reflectSchema(&analyzers.DependencyVerificationResult{})
 }
 
-func (t *VerifyDependenciesTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *VerifyDependenciesTool) Execute(_ context.Context, request domain.ToolRequest) (*domain.ToolResult, error) {
 	t.logger.Info("Handling verify_dependencies request")
 
-	args := request.GetArguments()
-	projectPath, _ := args["projectPath"].(string)
-
+	projectPath := request.StringArg("projectPath")
 	if projectPath == "" {
-		return mcp.NewToolResultError("projectPath is required"), nil
+		return domain.NewErrorResult("projectPath is required"), nil
 	}
 
 	result, err := t.analyzer.Analyze(projectPath)
 	if err != nil {
 		t.logger.Error("Dependency verification failed", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Dependency verification failed: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Dependency verification failed: %v", err)), nil
 	}
 
 	body, err := json.Marshal(result)
 	if err != nil {
 		t.logger.Error("Failed to marshal dependency verification result", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to format result: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Failed to format result: %v", err)), nil
 	}
 
 	t.logger.Info("Dependency verification completed", "path", projectPath, "violations", result.ViolationsCount)
-	return mcp.NewToolResultText(string(body)), nil
+	return domain.NewTextResult(string(body)), nil
 }

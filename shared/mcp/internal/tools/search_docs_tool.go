@@ -9,9 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/invopop/jsonschema"
-	"github.com/mark3labs/mcp-go/mcp"
-
+	"github.com/orieken/loom/shared/mcp/internal/domain"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
@@ -40,37 +38,32 @@ func (t *SearchDocsTool) Description() string {
 	return "Search the installed project's markdown docs (docs/features/, docs/adrs/, docs/patterns/, docs/runbooks/) via BM25. Returns lexically-ranked references (paths + snippets, never content copies) for the calling LLM to filter semantically."
 }
 
-func (t *SearchDocsTool) InputSchema() mcp.ToolInputSchema {
-	return mcp.ToolInputSchema{
-		Type:     "object",
-		Required: []string{"query"},
-		Properties: map[string]interface{}{
-			"query": map[string]interface{}{
-				"type":        "string",
-				"description": "Free-text query. Whitespace-split into tokens; each token is matched via fts5 against doc titles (10x weight) and bodies (1x weight).",
-			},
-			"docsPath": map[string]interface{}{
-				"type":        "string",
-				"description": "Corpus root to index and search. Defaults to \"docs/\" (relative to the server's working directory).",
-			},
+func (t *SearchDocsTool) InputSchema() json.RawMessage {
+	return objectSchema([]string{"query"}, map[string]any{
+		"query": map[string]any{
+			"type":        "string",
+			"description": "Free-text query. Whitespace-split into tokens; each token is matched via fts5 against doc titles (10x weight) and bodies (1x weight).",
 		},
-	}
+		"docsPath": map[string]any{
+			"type":        "string",
+			"description": "Corpus root to index and search. Defaults to \"docs/\" (relative to the server's working directory).",
+		},
+	})
 }
 
-func (t *SearchDocsTool) OutputSchema() *jsonschema.Schema {
+func (t *SearchDocsTool) OutputSchema() json.RawMessage {
 	return reflectSchema(&DocSearchResult{})
 }
 
-func (t *SearchDocsTool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *SearchDocsTool) Execute(_ context.Context, request domain.ToolRequest) (*domain.ToolResult, error) {
 	t.logger.Info("Handling search_docs request")
 
-	args := request.GetArguments()
-	query, _ := args["query"].(string)
+	query := request.StringArg("query")
 	if query == "" {
-		return mcp.NewToolResultError("query is required"), nil
+		return domain.NewErrorResult("query is required"), nil
 	}
 
-	docsPath, _ := args["docsPath"].(string)
+	docsPath := request.StringArg("docsPath")
 	if docsPath == "" {
 		docsPath = defaultDocsPath
 	}
@@ -81,13 +74,13 @@ func (t *SearchDocsTool) Execute(_ context.Context, request mcp.CallToolRequest)
 
 	if err := t.indexer.EnsureIndex([]string{docsPath}); err != nil {
 		t.logger.Error("Docs index refresh failed", "error", err, "docsPath", docsPath)
-		return mcp.NewToolResultError(fmt.Sprintf("Index refresh failed: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Index refresh failed: %v", err)), nil
 	}
 
 	refs, err := t.retriever.Retrieve(query, nil, "")
 	if err != nil {
 		t.logger.Error("Docs retrieval failed", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Retrieval failed: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Retrieval failed: %v", err)), nil
 	}
 
 	result := DocSearchResult{
@@ -99,7 +92,7 @@ func (t *SearchDocsTool) Execute(_ context.Context, request mcp.CallToolRequest)
 	return marshalToolResult(t.logger, result, "search_docs")
 }
 
-func (t *SearchDocsTool) emptyResult(query, note string) (*mcp.CallToolResult, error) {
+func (t *SearchDocsTool) emptyResult(query, note string) (*domain.ToolResult, error) {
 	result := DocSearchResult{
 		Success:   true,
 		Query:     fmt.Sprintf("%s (%s)", query, note),
@@ -121,6 +114,6 @@ func convertReferencesToDocMatches(refs []Reference) []DocMatch {
 	return matches
 }
 
-func marshalJSON(v interface{}) ([]byte, error) {
+func marshalJSON(v any) ([]byte, error) {
 	return json.Marshal(v)
 }

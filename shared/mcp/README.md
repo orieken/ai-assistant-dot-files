@@ -88,10 +88,11 @@ shared/mcp/
 ├── register/register.go         # FrameworkTools — embedding entry point
 ├── internal/
 │   ├── analyzers/               # complexity, accessibility, language, deps analyzers
-│   ├── domain/tool.go           # Tool interface
+│   ├── domain/tool.go           # transport-free Tool interface (stdlib-only, enforced by test)
 │   ├── logging/logger.go        # slog-backed Logger
 │   ├── server/
 │   │   ├── handler.go           # Handler struct
+│   │   ├── mcp_adapter.go       # domain ↔ mcp-go wire-type conversion (only place mcp types touch tools)
 │   │   ├── registration.go      # AddTool loop
 │   │   └── tool_provider.go     # buildFrameworkTools wiring
 │   └── tools/                   # 6 MCP tool implementations + retriever

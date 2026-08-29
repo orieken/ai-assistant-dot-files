@@ -2,11 +2,10 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
-	"github.com/invopop/jsonschema"
-	"github.com/mark3labs/mcp-go/mcp"
-
+	"github.com/orieken/loom/shared/mcp/internal/domain"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
@@ -27,52 +26,47 @@ func (t *SearchKITool) Description() string {
 	return "Search the framework's Knowledge Items and ADRs by query, tags, and domain. Returns lexically-ranked references (paths + summaries, never content copies) for the calling LLM to filter semantically."
 }
 
-func (t *SearchKITool) InputSchema() mcp.ToolInputSchema {
-	return mcp.ToolInputSchema{
-		Type:     "object",
-		Required: []string{"query"},
-		Properties: map[string]interface{}{
-			"query": map[string]interface{}{
-				"type":        "string",
-				"description": "Free-text query. Whitespace-split into tokens; matches against KI/ADR titles and summaries.",
-			},
-			"tags": map[string]interface{}{
-				"type":        "array",
-				"description": "Optional tag filter. Exact tag matches boost relevance strongly.",
-				"items":       map[string]interface{}{"type": "string"},
-			},
-			"domain": map[string]interface{}{
-				"type":        "string",
-				"description": "Optional domain / bounded-context filter. Exact domain match boosts relevance.",
-			},
+func (t *SearchKITool) InputSchema() json.RawMessage {
+	return objectSchema([]string{"query"}, map[string]any{
+		"query": map[string]any{
+			"type":        "string",
+			"description": "Free-text query. Whitespace-split into tokens; matches against KI/ADR titles and summaries.",
 		},
-	}
+		"tags": map[string]any{
+			"type":        "array",
+			"description": "Optional tag filter. Exact tag matches boost relevance strongly.",
+			"items":       map[string]any{"type": "string"},
+		},
+		"domain": map[string]any{
+			"type":        "string",
+			"description": "Optional domain / bounded-context filter. Exact domain match boosts relevance.",
+		},
+	})
 }
 
-func (t *SearchKITool) OutputSchema() *jsonschema.Schema {
+func (t *SearchKITool) OutputSchema() json.RawMessage {
 	return reflectSchema(&KISearchResult{})
 }
 
-func (t *SearchKITool) Execute(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *SearchKITool) Execute(_ context.Context, request domain.ToolRequest) (*domain.ToolResult, error) {
 	t.logger.Info("Handling search_ki request")
 
-	args := request.GetArguments()
-	query, _ := args["query"].(string)
+	query := request.StringArg("query")
 	if query == "" {
-		return mcp.NewToolResultError("query is required"), nil
+		return domain.NewErrorResult("query is required"), nil
 	}
 
-	tags := extractStringArray(args["tags"])
-	domain, _ := args["domain"].(string)
+	tags := extractStringArray(request.Args["tags"])
+	boundedContext := request.StringArg("domain")
 
 	if t.retriever == nil {
 		return t.emptyResult(query, "no retriever configured")
 	}
 
-	refs, err := t.retriever.Retrieve(query, tags, domain)
+	refs, err := t.retriever.Retrieve(query, tags, boundedContext)
 	if err != nil {
 		t.logger.Error("KI retrieval failed", "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Retrieval failed: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Retrieval failed: %v", err)), nil
 	}
 
 	result := KISearchResult{
@@ -84,7 +78,7 @@ func (t *SearchKITool) Execute(_ context.Context, request mcp.CallToolRequest) (
 	return marshalToolResult(t.logger, result, "search_ki")
 }
 
-func (t *SearchKITool) emptyResult(query, note string) (*mcp.CallToolResult, error) {
+func (t *SearchKITool) emptyResult(query, note string) (*domain.ToolResult, error) {
 	result := KISearchResult{
 		Success:   true,
 		Query:     fmt.Sprintf("%s (%s)", query, note),
@@ -93,8 +87,8 @@ func (t *SearchKITool) emptyResult(query, note string) (*mcp.CallToolResult, err
 	return marshalToolResult(t.logger, result, "search_ki")
 }
 
-func extractStringArray(v interface{}) []string {
-	raw, ok := v.([]interface{})
+func extractStringArray(v any) []string {
+	raw, ok := v.([]any)
 	if !ok {
 		return nil
 	}
@@ -121,11 +115,11 @@ func convertReferencesToMatches(refs []Reference) []KIMatch {
 	return matches
 }
 
-func marshalToolResult(logger *logging.Logger, v interface{}, toolName string) (*mcp.CallToolResult, error) {
+func marshalToolResult(logger *logging.Logger, v any, toolName string) (*domain.ToolResult, error) {
 	resultJSON, err := marshalJSON(v)
 	if err != nil {
 		logger.Error("Failed to marshal result", "tool", toolName, "error", err)
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to format result: %v", err)), nil
+		return domain.NewErrorResult(fmt.Sprintf("Failed to format result: %v", err)), nil
 	}
-	return mcp.NewToolResultText(string(resultJSON)), nil
+	return domain.NewTextResult(string(resultJSON)), nil
 }

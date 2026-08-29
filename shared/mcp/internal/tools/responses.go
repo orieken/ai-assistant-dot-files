@@ -1,6 +1,10 @@
 package tools
 
-import "github.com/invopop/jsonschema"
+import (
+	"encoding/json"
+
+	"github.com/invopop/jsonschema"
+)
 
 // KIMatch represents a Knowledge Item search hit.
 type KIMatch struct {
@@ -35,7 +39,15 @@ type DocSearchResult struct {
 	Matches   []DocMatch `json:"matches,omitempty"`
 }
 
-// reflectSchema wraps jsonschema.Reflect so every OutputSchema() reads the same one-liner.
-func reflectSchema(v interface{}) *jsonschema.Schema {
-	return jsonschema.Reflect(v)
+// reflectSchema derives a raw JSON Schema from a response struct.
+// invopop/jsonschema stays an implementation detail of this package — the
+// domain.Tool interface only ever sees stdlib json.RawMessage bytes. A marshal
+// failure is a programmer error in the response struct, surfaced at
+// registration via panic.
+func reflectSchema(v any) json.RawMessage {
+	body, err := json.Marshal(jsonschema.Reflect(v))
+	if err != nil {
+		panic("tools: reflected output schema failed to marshal: " + err.Error())
+	}
+	return body
 }

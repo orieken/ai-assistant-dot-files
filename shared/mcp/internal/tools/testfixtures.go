@@ -6,20 +6,17 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mark3labs/mcp-go/mcp"
-
+	"github.com/orieken/loom/shared/mcp/internal/domain"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
-// BuildRequest turns an argument map into an mcp.CallToolRequest.
-func BuildRequest(args map[string]any) mcp.CallToolRequest {
-	req := mcp.CallToolRequest{}
-	req.Params.Arguments = args
-	return req
+// BuildRequest turns an argument map into a domain.ToolRequest.
+func BuildRequest(args map[string]any) domain.ToolRequest {
+	return domain.ToolRequest{Args: args}
 }
 
 // ExtractText pulls the text off the first Content entry of a tool result.
-func ExtractText(t *testing.T, r *mcp.CallToolResult) string {
+func ExtractText(t *testing.T, r *domain.ToolResult) string {
 	t.Helper()
 	if r == nil {
 		t.Fatal("nil result")
@@ -27,11 +24,7 @@ func ExtractText(t *testing.T, r *mcp.CallToolResult) string {
 	if len(r.Content) == 0 {
 		t.Fatal("result has no content")
 	}
-	tc, ok := r.Content[0].(mcp.TextContent)
-	if !ok {
-		t.Fatalf("expected TextContent, got %T", r.Content[0])
-	}
-	return tc.Text
+	return r.Content[0].Text
 }
 
 // SilentLogger returns a logger that discards its output.
