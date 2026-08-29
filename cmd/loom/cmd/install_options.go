@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	frameworkfs "github.com/orieken/loom/cmd/loom/internal/fs"
+	"github.com/orieken/loom/cmd/loom/internal/levels"
 	"github.com/orieken/loom/cmd/loom/internal/platform"
 )
 
@@ -16,18 +17,20 @@ type installRequest struct {
 	frameworkVersion string
 	platforms        []string
 	rules            platform.RuleSet
+	level            int
+	profile          levels.Profile
 	isCopy           bool
 	isDryRun         bool
 	withConfig       bool
 	withMCP          bool
 }
 
-func prepareInstall(flags installFlags, embeddedVersion string) (installRequest, error) {
+func prepareInstall(flags installFlags, embeddedVersion string, content platform.Content) (installRequest, error) {
 	target, err := frameworkfs.ResolveTarget(flags.target)
 	if err != nil {
 		return installRequest{}, err
 	}
-	rules, err := platform.ParseRuleSet(flags.stack)
+	level, profile, rules, err := selectLevelAndRules(flags, content)
 	if err != nil {
 		return installRequest{}, err
 	}
@@ -36,7 +39,27 @@ func prepareInstall(flags installFlags, embeddedVersion string) (installRequest,
 		return installRequest{}, err
 	}
 	cache, err := frameworkCache(embeddedVersion)
-	return installRequest{target, cache, embeddedVersion, platforms, rules, flags.isCopy, flags.isDryRun, flags.withConfig, flags.withMCP}, err
+	return installRequest{target, cache, embeddedVersion, platforms, rules, level, profile, flags.isCopy, flags.isDryRun, flags.withConfig, flags.withMCP}, err
+}
+
+// selectLevelAndRules resolves the rule selection. Without --level the
+// historic behavior is unchanged: all rules, or --stack filtering. With
+// --level N, shared/levels.yaml decides the bundle: core rules plus any
+// --stack opt-in modules.
+func selectLevelAndRules(flags installFlags, content platform.Content) (int, levels.Profile, platform.RuleSet, error) {
+	if flags.level == 0 {
+		rules, err := platform.ParseRuleSet(flags.stack)
+		return 0, levels.Profile{}, rules, err
+	}
+	profile, err := levels.Load(content)
+	if err != nil {
+		return 0, levels.Profile{}, platform.RuleSet{}, err
+	}
+	if _, err := profile.Select(flags.level); err != nil {
+		return 0, levels.Profile{}, platform.RuleSet{}, err
+	}
+	rules, err := levelRuleSet(profile, flags.stack)
+	return flags.level, profile, rules, err
 }
 
 func selectPlatforms(target, selected string) ([]string, error) {

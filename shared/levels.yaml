@@ -1,0 +1,115 @@
+# Agentic maturity level profiles (roadmap D.3, epic 75 Phase C).
+#
+# Data consumed by `loom install --level N` (bundle selection) and by
+# `loom health` (D.4, level inference). Levels are cumulative: level N
+# installs every bundle from levels 1..N whose `requires` entries have all
+# landed. An entry whose requirement has NOT landed is skipped with a warning
+# — that is expected and honest for L3/L4 today.
+#
+# `landed` is the authoritative list of shipped roadmap items this file's
+# gates may reference. Update it in the same commit that ships an item.
+version: 1
+
+landed:
+  - D.1 # loom mcp serve (commit 248a742)
+  - D.2 # public embedding API (commit f597c8d)
+  - M0.3 # transport-free domain layer (commit c67262e)
+  - L2.4 # tool registry (commit a68a23e)
+
+# Context budget for the level 1 core rules bundle. The ceiling is asserted
+# by a Go test (cmd/loom/internal/levels); measured size 2026-08-29 was
+# 22,258 bytes (~5.6k tokens at 4 bytes/token). Raise deliberately, not by
+# drift.
+contextBudget:
+  coreRulesCeilingBytes: 28000
+
+levels:
+  - level: 1
+    name: Foundational prompts
+    summary: >
+      Core rules, agents, and skills as prompt content. The host platform
+      executes everything; loom contributes curated context only.
+    bundles:
+      - id: core-rules
+        paths:
+          - shared/rules/approval-gates.md
+          - shared/rules/architecture-guardrails.md
+          - shared/rules/design-principles.md
+          - shared/rules/memory-trust-boundary.md
+          - shared/rules/testing-conventions.md
+      - id: agents
+        paths: [shared/agents]
+      - id: skills
+        paths: [shared/skills]
+      - id: project-base
+        paths:
+          - shared/ARCHITECTURE_RULES.md
+          - shared/DOMAIN_DICTIONARY.md
+    # On-demand rule modules are NOT installed by a level bundle. Opt in per
+    # project via `loom install --stack <name>[,<name>...]`.
+    onDemandModules:
+      - stack: go
+        path: shared/rules/go-conventions.md
+      - stack: typescript
+        path: shared/rules/typescript-conventions.md
+      - stack: python
+        path: shared/rules/python-conventions.md
+      - stack: csharp
+        path: shared/rules/csharp-conventions.md
+      - stack: java
+        path: shared/rules/java-conventions.md
+      - stack: kotlin
+        path: shared/rules/kotlin-conventions.md
+      - stack: swift
+        path: shared/rules/swift-conventions.md
+      - stack: rust
+        path: shared/rules/rust-conventions.md
+      - stack: iac
+        path: shared/rules/iac-conventions.md
+
+  - level: 2
+    name: Coordinated multi-agent
+    summary: >
+      Deterministic tool execution and workflow definitions on top of level 1:
+      the MCP server is registered with the host platform, and workflow /
+      orchestration definitions are installed.
+    bundles:
+      - id: mcp-registration
+        requires: D.1
+        action: mcp-config
+      - id: workflows
+        paths: [shared/workflows]
+      - id: orchestration
+        paths: [shared/orchestration]
+      - id: executor
+        requires: M0.4
+        action: executor
+
+  - level: 3
+    name: Observed and governed
+    summary: >
+      Telemetry, hooks, and policy evaluation on top of level 2. Most
+      entries are gated on unlanded roadmap items today.
+    bundles:
+      - id: telemetry-docs
+        paths: [shared/telemetry]
+      - id: hooks
+        paths: [shared/hooks]
+      - id: telemetry-stream
+        requires: L3.9
+        action: telemetry
+      - id: policy-engine
+        requires: L2.16
+        action: policies
+
+  - level: 4
+    name: Self-improving
+    summary: >
+      Evaluation loops and memory curation running against live delivery
+      telemetry. Fully gated on unlanded roadmap items today.
+    bundles:
+      - id: evaluation
+        paths: [shared/evaluation]
+      - id: eval-loop
+        requires: L4.1
+        action: evaluation-loop

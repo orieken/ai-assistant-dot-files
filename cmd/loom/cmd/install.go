@@ -9,6 +9,7 @@ type installFlags struct {
 	platform   string
 	stack      string
 	target     string
+	level      int
 	isCopy     bool
 	withConfig bool
 	withMCP    bool
@@ -22,10 +23,11 @@ var (
 )
 
 var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install the framework to detected AI platforms",
-	Args:  cobra.NoArgs,
-	RunE:  runInstall,
+	Use:     "install",
+	Aliases: []string{"init"},
+	Short:   "Install the framework to detected AI platforms",
+	Args:    cobra.NoArgs,
+	RunE:    runInstall,
 }
 
 func init() {
@@ -41,6 +43,7 @@ func configureInstall(frameworkContent, mcpContent platform.Content) {
 func registerInstallFlags() {
 	installCmd.Flags().StringVar(&installArgs.platform, "platform", "", "install for one AI platform")
 	installCmd.Flags().StringVar(&installArgs.stack, "stack", "", "comma-separated language stacks")
+	installCmd.Flags().IntVar(&installArgs.level, "level", 0, "agentic maturity level profile 1-4 (see shared/levels.yaml); omit for the full install")
 	installCmd.Flags().BoolVar(&installArgs.isCopy, "copy", false, "copy files instead of creating symlinks")
 	installCmd.Flags().BoolVar(&installArgs.withConfig, "with-configs", false, "write linter configs to the target")
 	installCmd.Flags().BoolVar(&installArgs.withMCP, "with-mcp", false, "copy the MCP reference source into the target (deprecated — use 'loom mcp serve')")

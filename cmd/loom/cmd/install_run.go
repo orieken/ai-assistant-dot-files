@@ -16,7 +16,7 @@ func runInstall(command *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	request, err := prepareInstall(installArgs, embeddedVersion)
+	request, err := prepareInstall(installArgs, embeddedVersion, frameworkFS)
 	if err != nil {
 		return err
 	}
@@ -34,6 +34,13 @@ func executeInstall(request installRequest, content, mcpContent platform.Content
 	extras, err := installExtras(request, content, mcpContent, files)
 	if err != nil {
 		return err
+	}
+	if request.level > 0 {
+		levelPaths, levelErr := installLevelBundles(request, files, output)
+		if levelErr != nil {
+			return levelErr
+		}
+		extras = append(extras, levelPaths...)
 	}
 	if err := writeManifest(request, results, extras); err != nil {
 		return err

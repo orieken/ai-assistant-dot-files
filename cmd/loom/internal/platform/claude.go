@@ -27,7 +27,7 @@ func installRuleDirectory(environment Environment, destination string) ([]string
 	if err != nil {
 		return nil, err
 	}
-	if len(environment.Rules.stacks) == 0 {
+	if !environment.Rules.isFiltered() {
 		return installSources(environment, []sourceDestination{{"shared/rules", destination}})
 	}
 	if err := environment.Files.PrepareDirectory(destination); err != nil {

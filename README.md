@@ -140,6 +140,29 @@ Pass `--platform <name>` to target one specifically. Files are **symlinked by de
 on the source repo is all you need to stay current. Pass `--copy` for a self-contained install that
 doesn't depend on the repo checkout remaining in place.
 
+### Maturity-level install profiles (`--level`)
+
+`loom install --level N` (alias: `loom init --level N`) installs a curated bundle for an agentic
+maturity level instead of everything. Levels are cumulative and data-driven from
+[`shared/levels.yaml`](shared/levels.yaml); a bundle whose implementation hasn't landed yet is
+skipped with a warning naming the roadmap item it waits on. **Omitting `--level` keeps the historic
+full install unchanged.**
+
+| Level | Name | What it installs |
+|---|---|---|
+| **1** | Foundational prompts | The 5 core rules (guardrails, approval gates, design principles, memory trust boundary, testing), all agents + skills, project base files. Core rules stay under the context ceiling recorded in `levels.yaml` (~5.6k tokens, test-enforced) |
+| **2** | Coordinated multi-agent | Level 1 + `.mcp.json` registering `loom mcp serve` (written only if absent) + workflow and orchestration definitions under `.claude/` |
+| **3** | Observed and governed | Level 2 + telemetry/hooks docs; telemetry stream and policy engine are gated on unlanded roadmap items today |
+| **4** | Self-improving | Level 3 + evaluation corpus; the live evaluation loop is gated on unlanded roadmap items today |
+
+Language and IaC conventions are **on-demand modules**, not part of any level bundle — opt in per
+project with `--stack`:
+
+```bash
+# Level 1 core plus the Go and IaC rule modules
+loom install --level 1 --stack go,iac
+```
+
 **No Go? Clone and run with the legacy shell script (still works):**
 
 ```bash

@@ -52,6 +52,21 @@ func (writer *Writer) Write(destination string, content []byte) (bool, error) {
 	return writer.writeGenerated(path, destination, content)
 }
 
+// WriteIfMissing installs generated content only when the destination is absent.
+func (writer *Writer) WriteIfMissing(destination string, content []byte) (bool, error) {
+	path, err := safeDestination(writer.target, destination)
+	if err != nil {
+		return false, err
+	}
+	if _, err := os.Lstat(path); err == nil {
+		writer.report("skipped " + destination + " (already exists)")
+		return false, nil
+	} else if !os.IsNotExist(err) {
+		return false, fmt.Errorf("inspect %s: %w", destination, err)
+	}
+	return writer.writeGenerated(path, destination, content)
+}
+
 // CopyIfMissing copies embedded content only when the destination is absent.
 func (writer *Writer) CopyIfMissing(source, destination string) (bool, error) {
 	path, err := safeDestination(writer.target, destination)

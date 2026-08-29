@@ -9,7 +9,7 @@ coding platforms and serves the framework's MCP tools. Install it via
 
 | Command | Purpose |
 |---|---|
-| `loom install` | Install framework content for detected platforms (`--target`, `--platform`, `--copy`, `--dry-run`) |
+| `loom install` (alias `loom init`) | Install framework content for detected platforms (`--target`, `--platform`, `--copy`, `--dry-run`, `--stack`, `--level` — see the maturity-level table in the root README; profiles are defined in `shared/levels.yaml`) |
 | `loom health` | Verify installed configs match the canonical `shared/` source |
 | `loom tools status` / `loom tools install` | Report / install opt-in context tools |
 | `loom mcp serve` | Serve the framework MCP tools over stdio |

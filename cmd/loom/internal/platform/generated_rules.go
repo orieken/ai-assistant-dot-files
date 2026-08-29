@@ -43,11 +43,18 @@ func readRule(environment Environment, name string) ([]byte, error) {
 }
 
 func isStackEnabled(rules RuleSet, stack string) bool {
-	if len(rules.stacks) == 0 {
+	if !rules.isFiltered() {
 		return true
 	}
-	for _, enabled := range rules.stacks {
-		if enabled == stack {
+	if len(rules.names) > 0 {
+		return containsString(rules.names, stackRules[stack])
+	}
+	return containsString(rules.stacks, stack)
+}
+
+func containsString(values []string, wanted string) bool {
+	for _, value := range values {
+		if value == wanted {
 			return true
 		}
 	}
