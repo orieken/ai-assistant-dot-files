@@ -54,7 +54,7 @@ Options:
                          project root. Files are always copied (never symlinked) so teams can edit
                          them. Existing files are left untouched (idempotent). Only meaningful with
                          --project mode — silently skipped in --global mode.
-  --with-mcp            Copy the shared/mcp/ reference scaffold into <target>/<project-name>-mcp/
+  --with-mcp            (deprecated — use 'loom mcp serve') Copy shared/mcp/ reference source into <target>/<project-name>-mcp/
                          and run go mod tidy to produce a ready-to-build MCP server. Only
                          meaningful with --project mode — silently skipped in --global mode.
   --platform <name>     Only install for a specific platform (claude-code, cursor, windsurf, github-copilot, gemini, openai-codex, jetbrains, roo-code, cline)
@@ -625,23 +625,14 @@ install_mcp() {
   fi
 
   if $DRY_RUN; then
-    dry "would copy $mcp_src -> $dest"
-    dry "would run: go mod tidy in $dest"
+    dry "would copy $mcp_src -> $dest (reference source only)"
     return
   fi
 
   cp -r "$mcp_src" "$dest"
-  ok "copied MCP scaffold to $dest"
-
-  if command -v go &>/dev/null; then
-    if (cd "$dest" && go mod tidy 2>&1); then
-      ok "go mod tidy succeeded in $dest"
-    else
-      log "  [warn] go mod tidy failed — run it manually in $dest"
-    fi
-  else
-    log "  [warn] 'go' not found — run 'go mod tidy' manually in $dest before building"
-  fi
+  ok "copied MCP reference source to $dest"
+  log "  [note] --with-mcp is deprecated: the copied tree is reference source only"
+  log "         (no standalone go.mod since the module merge). Use 'loom mcp serve' instead."
 }
 
 install_generated_configs() {

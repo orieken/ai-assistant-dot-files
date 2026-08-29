@@ -18,13 +18,19 @@ All six tools are deterministic and stateless — no LLM is required.
 
 ## Quick start
 
-```bash
-# Build the server
-go build -o mcp-server ./cmd/mcp-server
+The supported way to run this server is the `loom` binary itself:
 
-# Run — communicates over stdin/stdout per MCP stdio transport
-./mcp-server
+```bash
+brew install orieken/tap/loom   # or: go install github.com/orieken/loom/cmd/loom@latest
+loom mcp serve                  # stdio transport; logs to stderr or --log-file
 ```
+
+> **Deprecated**: the standalone `cmd/mcp-server` entrypoint is retained for
+> one release cycle only. It still builds from the repo root
+> (`go build ./shared/mcp/cmd/mcp-server`), but new setups should use
+> `loom mcp serve`. Since the module merge into `github.com/orieken/loom`,
+> this directory is part of the root Go module and no longer carries its own
+> `go.mod`.
 
 ## Configuration
 
@@ -43,20 +49,21 @@ Add to `.claude/mcp.json` (or `~/.claude/mcp.json` for global):
 ```json
 {
   "mcpServers": {
-    "ai-assistant-dotfiles": {
-      "command": "/absolute/path/to/mcp-server",
+    "loom": {
+      "command": "loom",
+      "args": ["mcp", "serve"],
       "env": {
-        "AI_ASSISTANT_DOTFILES_PATH": "/absolute/path/to/ai-assistant-dot-files"
+        "AI_ASSISTANT_DOTFILES_PATH": "/absolute/path/to/loom-checkout"
       }
     }
   }
 }
 ```
 
-Or use the install helper (copies the scaffold into your project and runs `go mod tidy`):
+Or register it with the Claude Code CLI:
 
 ```bash
-./install.sh --project /path/to/my-project --with-mcp
+claude mcp add loom -- loom mcp serve
 ```
 
 ## Installing into a downstream project
@@ -66,15 +73,19 @@ If you already have an MCP server, see
 for the bridge-prompt approach (no Go required — drop a
 `shared/mcp-patterns/go/` tool call into your existing server).
 
-If you do not have an MCP server, `./install.sh --project <path> --with-mcp`
-copies this scaffold to `<path>/<project-name>-mcp/`, runs `go mod tidy`,
-and leaves a ready-to-build Go module.
+If you do not have an MCP server, you don't need a scaffold anymore — install
+the `loom` binary and point your MCP host at `loom mcp serve`. The
+`--with-mcp` scaffold copy (`install.sh` / `loom install`) still works but now
+produces reference source only: since the module merge it has no `go.mod` of
+its own and is not standalone-buildable. It is deprecated alongside
+`cmd/mcp-server`.
 
 ## Layout
 
 ```
 shared/mcp/
-├── cmd/mcp-server/main.go       # stdio entrypoint
+├── cmd/mcp-server/main.go       # standalone stdio entrypoint (deprecated — use `loom mcp serve`)
+├── register/register.go         # FrameworkTools — embedding entry point
 ├── internal/
 │   ├── analyzers/               # complexity, accessibility, language, deps analyzers
 │   ├── domain/tool.go           # Tool interface
@@ -84,10 +95,12 @@ shared/mcp/
 │   │   ├── registration.go      # AddTool loop
 │   │   └── tool_provider.go     # buildFrameworkTools wiring
 │   └── tools/                   # 6 MCP tool implementations + retriever
-├── go.mod                       # module github.com/orieken/ai-assistant-dotfiles/mcp
-├── .golangci.yml                # gocyclo cap at 7
 └── .env.example
 ```
+
+These packages live in the root Go module (`github.com/orieken/loom`) under
+`shared/mcp/`; lint config (`.golangci.yml`, gocyclo cap at 7) sits at the
+repo root.
 
 ## Dependencies
 

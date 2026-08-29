@@ -7,7 +7,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/domain"
+	"github.com/orieken/loom/shared/mcp/internal/domain"
 )
 
 // Tools returns every domain.Tool the handler exposes to MCP clients.

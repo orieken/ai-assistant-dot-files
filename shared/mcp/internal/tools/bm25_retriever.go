@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/analyzers"
+	"github.com/orieken/loom/shared/mcp/internal/analyzers"
 
 	// Register the pure-Go sqlite driver under the name "sqlite".
 	_ "modernc.org/sqlite"

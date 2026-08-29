@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/domain"
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/logging"
+	"github.com/orieken/loom/shared/mcp/internal/domain"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
 // Handler owns the tool registry and orchestrates MCP registration.

@@ -8,7 +8,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/logging"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
 // BuildRequest turns an argument map into an mcp.CallToolRequest.

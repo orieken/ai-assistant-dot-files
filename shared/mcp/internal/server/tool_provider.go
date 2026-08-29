@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/analyzers"
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/domain"
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/logging"
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/tools"
+	"github.com/orieken/loom/shared/mcp/internal/analyzers"
+	"github.com/orieken/loom/shared/mcp/internal/domain"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
+	"github.com/orieken/loom/shared/mcp/internal/tools"
 )
 
 // buildFrameworkTools constructs and wires up the framework-generic tools.

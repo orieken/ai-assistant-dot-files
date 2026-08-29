@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/logging"
-	mcpserver "github.com/orieken/ai-assistant-dotfiles/mcp/internal/server"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
+	mcpserver "github.com/orieken/loom/shared/mcp/internal/server"
 )
 
 // FrameworkTools registers all framework tools on s:

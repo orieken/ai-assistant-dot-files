@@ -8,8 +8,8 @@ import (
 	"github.com/invopop/jsonschema"
 	"github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/analyzers"
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/logging"
+	"github.com/orieken/loom/shared/mcp/internal/analyzers"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
 // CheckUbiquitousLanguageTool exposes UbiquitousLanguageAnalyzer as an MCP tool.

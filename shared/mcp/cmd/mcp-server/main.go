@@ -1,3 +1,6 @@
+// Deprecated: this standalone entrypoint is retained for one release cycle
+// only. Use `loom mcp serve` instead — the brew-installed loom binary serves
+// the same six framework tools over stdio. See shared/mcp/README.md.
 package main
 
 import (
@@ -5,8 +8,8 @@ import (
 
 	"github.com/mark3labs/mcp-go/server"
 
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/logging"
-	mcpserver "github.com/orieken/ai-assistant-dotfiles/mcp/internal/server"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
+	mcpserver "github.com/orieken/loom/shared/mcp/internal/server"
 )
 
 func main() {

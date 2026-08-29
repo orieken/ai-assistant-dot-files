@@ -17,9 +17,9 @@ func TestFrameworkContentIsEmbedded(t *testing.T) {
 }
 
 func TestMCPSourceIsEmbedded(t *testing.T) {
-	content, err := loom.MCPFS.ReadFile("go.mod")
+	content, err := loom.MCPFS.ReadFile("register/register.go")
 	if err != nil {
-		t.Fatalf("read embedded MCP module: %v", err)
+		t.Fatalf("read embedded MCP source: %v", err)
 	}
 	if len(content) == 0 {
 		t.Fatal("embedded MCP module is empty")

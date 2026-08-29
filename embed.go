@@ -4,7 +4,7 @@ package loom
 import (
 	"embed"
 
-	mcpassets "github.com/orieken/ai-assistant-dotfiles/mcp"
+	mcpassets "github.com/orieken/loom/shared/mcp"
 )
 
 // FrameworkFS holds all shared framework content baked in at compile time.
@@ -13,5 +13,5 @@ import (
 //go:embed all:shared/agents all:shared/skills all:shared/rules all:shared/configs all:shared/contracts all:shared/schemas shared/ARCHITECTURE_RULES.md shared/DOMAIN_DICTIONARY.md shared/VERSION all:templates/claude-feature-team
 var FrameworkFS embed.FS
 
-// MCPFS holds the MCP reference module embedded by its own nested Go module.
+// MCPFS holds the MCP reference source embedded from shared/mcp.
 var MCPFS = mcpassets.SourceFS

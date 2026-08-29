@@ -130,6 +130,9 @@ loom install --copy
 
 # Verify everything is healthy
 loom health
+
+# Serve the six framework MCP tools over stdio (register with: claude mcp add loom -- loom mcp serve)
+loom mcp serve
 ```
 
 `loom install` auto-detects which AI platforms you have installed and only writes configs for those.

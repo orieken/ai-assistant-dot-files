@@ -12,7 +12,7 @@ import (
 	"github.com/invopop/jsonschema"
 	"github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/orieken/ai-assistant-dotfiles/mcp/internal/logging"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
 // DocIndexer refreshes a docs index for the given corpus roots.
