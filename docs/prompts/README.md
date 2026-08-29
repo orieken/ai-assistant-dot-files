@@ -121,6 +121,17 @@ See `docs/roadmap-2026-08-07.md` for the full roadmap with priority rationale.
 | **74-D** | [epic-74-loom-phase-d-release.md](epic-74-loom-phase-d-release.md) — Phase D: goreleaser config, GitHub Actions release workflow, Homebrew tap formula | M |
 | **74-E** | [epic-74-loom-phase-e-docs.md](epic-74-loom-phase-e-docs.md) — Phase E: README + ONBOARDING updated for loom install path; cmd/loom/README.md subcommand reference | S |
 
+### Distribution & Adoption (from `docs/roadmaps/BUILD-ROADMAP.md` D.1–D.5, drafted 2026-08-29)
+
+One phased epic prompt operationalizing the PLATFORM — Distribution & Adoption workstream: MCP as
+the portable capability surface, maturity levels (L1–L4) as a first-class install concept. Phase A
+is unblocked today; Phases B–E carry hard roadmap blockers the prompt instructs the agent to verify
+before starting.
+
+| Epic | File | Estimated size |
+|---|---|---|
+| **75** | [epic-75-distribution-adoption.md](epic-75-distribution-adoption.md) — Phase A: `loom mcp serve` (D.1, unblocked) · Phase B: public embedding package (D.2, needs M0.3+L2.4) · Phase C: `loom init --level N` profiles + rules-corpus split (D.3) · Phase D: `loom health` maturity report (D.4) · Phase E: capability tools on the MCP surface (D.5, per-tool blockers) | XL total; Phase A alone is M |
+
 ## Completed Prompts (`docs/prompts/done/`)
 
 | File | Scope | Shipped |
