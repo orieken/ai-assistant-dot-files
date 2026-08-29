@@ -88,13 +88,15 @@ shared/mcp/
 ├── register/register.go         # FrameworkTools — embedding entry point
 ├── internal/
 │   ├── analyzers/               # complexity, accessibility, language, deps analyzers
-│   ├── domain/tool.go           # transport-free Tool interface (stdlib-only, enforced by test)
+│   ├── domain/
+│   │   ├── tool.go              # transport-free Tool interface (stdlib-only, enforced by test)
+│   │   └── registration.go      # ToolRegistration metadata + name-keyed Registry (Register/Merge)
 │   ├── logging/logger.go        # slog-backed Logger
 │   ├── server/
-│   │   ├── handler.go           # Handler struct
+│   │   ├── handler.go           # Handler struct owning the registry
 │   │   ├── mcp_adapter.go       # domain ↔ mcp-go wire-type conversion (only place mcp types touch tools)
-│   │   ├── registration.go      # AddTool loop
-│   │   └── tool_provider.go     # buildFrameworkTools wiring
+│   │   ├── registration.go      # registry → AddTool loop
+│   │   └── tool_provider.go     # buildFrameworkRegistry wiring (add a tool = one Register entry)
 │   └── tools/                   # 6 MCP tool implementations + retriever
 └── .env.example
 ```

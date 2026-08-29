@@ -22,6 +22,11 @@ import (
 //   - search_docs         — documentation search
 //
 // logWriter receives structured JSON log output; pass nil to use os.Stderr.
+//
+// Internally the tools live in a name-keyed registry with per-tool metadata
+// (timeout budget, retry class, permission scope). A transport-free public
+// embedding API over that registry ships with roadmap D.2 — until then this
+// function remains the supported integration path.
 func FrameworkTools(s *server.MCPServer, logWriter io.Writer) error {
 	if logWriter == nil {
 		logWriter = os.Stderr
