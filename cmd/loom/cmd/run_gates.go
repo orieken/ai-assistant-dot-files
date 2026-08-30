@@ -1,0 +1,97 @@
+package cmd
+
+import (
+	"bufio"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+
+	"github.com/orieken/loom/internal/orchestrator"
+	"github.com/spf13/cobra"
+)
+
+// ExitCodeWaitingApproval is the process exit code for a run halted at an
+// approval gate. It is distinct from the generic failure code so CI and
+// scripts can tell "waiting on a human" apart from "the pipeline broke".
+const ExitCodeWaitingApproval = 3
+
+// applyApproveFlag records the approval requested by --approve before the
+// run starts. The flag is only meaningful while resuming a run that is
+// actually halted on that gate — the executor enforces the second half, and
+// requiring --resume stops a caller from pre-approving every gate on one
+// command line and hollowing out the interrupt.
+func applyApproveFlag(executor *orchestrator.Executor, gate string, resume bool) error {
+	if gate == "" {
+		return nil
+	}
+	if !resume {
+		return fmt.Errorf("--approve %q is only valid with --resume — gates are approved as a run reaches them", gate)
+	}
+	return executor.Approve(gate, orchestrator.ApprovalMethodFlag)
+}
+
+// runWithGates drives the executor across gate halts: on a TTY it asks the
+// human at the barrier and continues on yes; otherwise it halts so the
+// approval arrives through --resume --approve. No other path writes an
+// approval — provider output never does (roadmap L2.13).
+func runWithGates(ctx context.Context, cmd *cobra.Command, executor *orchestrator.Executor, plan orchestrator.Plan, input orchestrator.StageInput) error {
+	for {
+		err := executor.Run(ctx, plan, input)
+		var waiting *orchestrator.WaitingApprovalError
+		if !errors.As(err, &waiting) {
+			return err
+		}
+		approved, askErr := askAtBarrier(cmd, waiting)
+		if askErr != nil {
+			return askErr
+		}
+		if !approved {
+			return haltForApproval(cmd, waiting, err)
+		}
+		if approveErr := executor.Approve(waiting.Gate, orchestrator.ApprovalMethodTTY); approveErr != nil {
+			return approveErr
+		}
+	}
+}
+
+func askAtBarrier(cmd *cobra.Command, waiting *orchestrator.WaitingApprovalError) (bool, error) {
+	if !stdinIsInteractive() {
+		return false, nil
+	}
+	return askApproval(cmd.ErrOrStderr(), cmd.InOrStdin(), waiting)
+}
+
+// askApproval prompts for one gate and reports whether the human said yes.
+// Anything other than y/yes is a no — the gate stays shut.
+func askApproval(out io.Writer, in io.Reader, waiting *orchestrator.WaitingApprovalError) (bool, error) {
+	if _, err := fmt.Fprintf(out, "approve gate %q for stage %q? [y/N] ", waiting.Gate, waiting.Stage); err != nil {
+		return false, fmt.Errorf("write approval prompt: %w", err)
+	}
+	answer, err := bufio.NewReader(in).ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return false, fmt.Errorf("read approval answer: %w", err)
+	}
+	answer = strings.ToLower(strings.TrimSpace(answer))
+	return answer == "y" || answer == "yes", nil
+}
+
+// haltForApproval prints the exact command that resumes the run and returns
+// the gate error, which Execute turns into exit code 3.
+func haltForApproval(cmd *cobra.Command, waiting *orchestrator.WaitingApprovalError, err error) error {
+	cmd.PrintErrf("Halted at gate %q before stage %q — approval required.\n", waiting.Gate, waiting.Stage)
+	cmd.PrintErrf("Approve and continue with: loom run --spec %s --resume --approve %s\n", runArgs.spec, waiting.Gate)
+	return err
+}
+
+// stdinIsInteractive reports whether stdin is a terminal, which is what
+// separates "ask the human now" from "halt and print the resume command".
+func stdinIsInteractive() bool {
+	info, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeCharDevice != 0
+}

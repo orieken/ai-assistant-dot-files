@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/orieken/loom/cmd/loom/internal/platform"
+	"github.com/orieken/loom/internal/orchestrator"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +29,9 @@ func Execute(frameworkFS, mcpFS platform.Content) {
 	err := rootCmd.Execute()
 	if errors.Is(err, errHealthFailed) {
 		os.Exit(1)
+	}
+	if errors.Is(err, orchestrator.ErrWaitingApproval) {
+		os.Exit(ExitCodeWaitingApproval)
 	}
 	cobra.CheckErr(err)
 }

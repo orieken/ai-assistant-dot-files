@@ -19,6 +19,7 @@ type runFlags struct {
 	resume        bool
 	provider      string
 	plan          string
+	approve       string
 	mockHangStage string
 }
 
@@ -34,8 +35,14 @@ deliver-feature plan stage by stage via the claude CLI, persisting
 run-state.json after every transition. First Ctrl-C checkpoints and exits
 cleanly (resume with --resume); a second Ctrl-C kills immediately.
 
-Not yet implemented (see BUILD-ROADMAP.md): approval gates (L2.13),
-retries/backoff, parallelism (L3.3), policy evaluation (L2.16),
+Approval gates (roadmap L2.13) are process interrupts: the executor refuses
+to start a gated stage until a human approves its gate. On a terminal you
+are asked at the barrier; otherwise the run halts with exit code 3 and
+prints the resume command (loom run --spec X --resume --approve <gate>).
+Nothing an agent returns can approve a gate.
+
+Not yet implemented (see BUILD-ROADMAP.md): reset-on-edit for approvals
+(L2.14), retries/backoff, parallelism (L3.3), policy evaluation (L2.16),
 conditional stage routing (L3.1), telemetry (L3.8).`,
 	Args: cobra.NoArgs,
 	RunE: runRun,
@@ -45,6 +52,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().StringVar(&runArgs.spec, "spec", "", "feature spec markdown file (required)")
 	runCmd.Flags().BoolVar(&runArgs.resume, "resume", false, "continue an interrupted run from its checkpoint")
+	runCmd.Flags().StringVar(&runArgs.approve, "approve", "", "approve the gate the run is waiting on (requires --resume)")
 	runCmd.Flags().StringVar(&runArgs.provider, "provider", "claude", "stage provider: claude or mock")
 	runCmd.Flags().StringVar(&runArgs.plan, "plan", orchestrator.DefaultDeliverFeaturePlanName, "pipeline plan to execute")
 	runCmd.Flags().StringVar(&runArgs.mockHangStage, "mock-hang-stage", "", "mock provider only: stage ID that hangs until interrupted (testing)")
@@ -73,10 +81,14 @@ func runRun(cmd *cobra.Command, _ []string) error {
 }
 
 func executeRun(cmd *cobra.Command, plan orchestrator.Plan, provider orchestrator.Provider, store *orchestrator.StateStore, input orchestrator.StageInput) error {
+	executor := orchestrator.NewExecutor(provider, store)
+	if err := applyApproveFlag(executor, runArgs.approve, runArgs.resume); err != nil {
+		return err
+	}
 	ctx, stopSignals := interruptibleContext(cmd)
 	defer stopSignals()
 	cmd.Printf("Running plan %q (%d stages) — state: %s\n", plan.Name, len(plan.Stages), store.Path())
-	err := orchestrator.NewExecutor(provider, store).Run(ctx, plan, input)
+	err := runWithGates(ctx, cmd, executor, plan, input)
 	if errors.Is(err, context.Canceled) {
 		cmd.Printf("Interrupted — checkpoint saved. Continue with: loom run --spec %s --resume\n", runArgs.spec)
 		return err
