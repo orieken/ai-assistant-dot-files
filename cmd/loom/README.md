@@ -13,8 +13,46 @@ coding platforms and serves the framework's MCP tools. Install it via
 | `loom health` | Verify installed configs match the canonical `shared/` source, and report the project's agentic maturity level (see below) |
 | `loom tools status` / `loom tools install` | Report / install opt-in context tools |
 | `loom mcp serve` | Serve the framework MCP tools over stdio |
+| `loom run` | Execute the delivery pipeline for a feature spec (experimental — see below) |
 | `loom uninstall` | Remove installed framework content |
 | `loom update` | Update installed framework content |
+
+## Running pipelines (experimental)
+
+`loom run` is the executor skeleton decided by ADR-006 (loom executes
+pipelines) and built by roadmap item M0.4. It runs the built-in linear
+`deliver-feature` plan — the same 14-agent sequence as the markdown
+pipeline — stage by stage, persisting durable state after every transition.
+
+```bash
+# Execute the pipeline for a spec (spawns `claude -p` per stage)
+loom run --spec docs/features/user-auth/spec.md
+
+# Continue an interrupted run from its checkpoint
+loom run --spec docs/features/user-auth/spec.md --resume
+
+# Deterministic dry run with canned artifacts (no LLM calls)
+loom run --spec docs/features/user-auth/spec.md --provider mock
+```
+
+- **State**: `.claude/feature-workspace/<feature>/run-state.json` — schema-versioned,
+  written atomically (temp file + rename), with per-stage status, timestamps, and
+  the SHA-256 of each stage's artifact. A fresh run refuses to start over existing
+  state (pass `--resume` or delete the file); `--resume` requires existing state.
+- **Interruption**: the first Ctrl-C cancels the in-flight stage and persists a
+  clean `INTERRUPTED` checkpoint; a second Ctrl-C kills immediately. `--resume`
+  skips completed stages and re-runs the interrupted one.
+- **Providers**: `claude` (default) spawns the `claude` CLI headless per stage,
+  building the prompt from the agent's `shared/agents/<agent>.md` definition; if
+  the binary is missing the stage fails with a remediation message — there is no
+  silent fallback. `mock` is for tests and dry runs.
+
+**What it does NOT do yet** (skeleton by design — see `docs/roadmaps/BUILD-ROADMAP.md`):
+no approval gates (L2.13) or gate-reset enforcement (L2.14), no retries or
+backoff, no parallelism (L3.3), no policy evaluation (L2.16), no conditional
+stage routing (L3.1) — every stage of the linear plan runs, including ones the
+markdown pipeline would skip — and no telemetry emission (L3.8). Gates in
+particular mean: do not point it at anything requiring human approval yet.
 
 ## Maturity level report
 
