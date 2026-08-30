@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-func noopRunCmd(_ string) error          { return nil }
-func failRunCmd(_ string) error          { return errors.New("install failed") }
+func noopRunCmd(_ string) error { return nil }
+func failRunCmd(_ string) error { return errors.New("install failed") }
 
 func TestToolsInstallAllHighByDefault(t *testing.T) {
 	var buf bytes.Buffer

@@ -81,6 +81,7 @@ func runRun(cmd *cobra.Command, _ []string) error {
 
 func executeRun(cmd *cobra.Command, plan orchestrator.Plan, provider orchestrator.Provider, store *orchestrator.StateStore, input orchestrator.StageInput) error {
 	executor := orchestrator.NewExecutor(provider, store)
+	executor.OnStale(func(stale []orchestrator.StaleStage) { reportStaleStages(cmd, stale) })
 	if err := applyApproveFlag(executor, runArgs.approve, runArgs.resume); err != nil {
 		return err
 	}

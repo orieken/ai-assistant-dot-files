@@ -58,6 +58,7 @@ func TestRunMockProviderHaltsAtFirstGate(t *testing.T) {
 
 	assertStagesCompleted(t, projectDir, stagesBeforeFirstGate, true)
 	assertWaitingOnGate(t, projectDir, "developer", "confirm-design")
+	assertNoApprovals(t, projectDir)
 	assertFreshRunOverStateRefused(t, binary, projectDir, spec)
 }
 
@@ -86,8 +87,14 @@ func assertWaitingOnGate(t *testing.T, projectDir, stageID, gate string) {
 	if got := state.WaitingGate(); got != gate {
 		t.Errorf("run waiting on gate %q, want %q", got, gate)
 	}
-	if len(state.Approvals) != 0 {
-		t.Errorf("run recorded approvals %v without any human approving", state.Approvals)
+}
+
+// assertNoApprovals is the L2.13 check at the CLI boundary: reaching a gate
+// must never record an approval on its own.
+func assertNoApprovals(t *testing.T, projectDir string) {
+	t.Helper()
+	if approvals := loadRunState(t, projectDir).Approvals; len(approvals) != 0 {
+		t.Errorf("run recorded approvals %v without any human approving", approvals)
 	}
 }
 
@@ -238,6 +245,10 @@ func TestRunHaltExitCodeAndResumeCommand(t *testing.T) {
 		}
 	}
 	assertWaitingOnGate(t, projectDir, "developer", "confirm-design")
+	assertNoApprovals(t, projectDir)
+	if strings.Contains(output, "approve gate") {
+		t.Errorf("non-interactive run printed an interactive prompt:\n%s", output)
+	}
 }
 
 // TestRunApproveEachGateToCompletion is the end-to-end L2.13 demonstration:
@@ -383,5 +394,88 @@ func TestAskApprovalReadsTheHumanAnswer(t *testing.T) {
 				t.Errorf("prompt did not name the gate and stage: %q", prompt.String())
 			}
 		})
+	}
+}
+
+func workspaceArtifact(projectDir, stageID string) string {
+	return filepath.Join(projectDir, ".claude", "feature-workspace", "user-auth", stageID+".md")
+}
+
+// TestRunDetectsOutOfBandArtifactEdit is the L2.12 done-when through the
+// real binary: a workspace file edited between runs invalidates that stage
+// and everything recorded after it, the run says so, and it re-runs them.
+func TestRunDetectsOutOfBandArtifactEdit(t *testing.T) {
+	binary := buildLoomBinary(t)
+	projectDir := t.TempDir()
+	spec := writeSpec(t, projectDir)
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock"); code != ExitCodeWaitingApproval {
+		t.Fatal("setup run did not halt at the first gate")
+	}
+
+	if err := os.WriteFile(workspaceArtifact(projectDir, "analyst"), []byte("# analysis, hand-edited\n"), 0o644); err != nil {
+		t.Fatalf("edit analyst artifact: %v", err)
+	}
+	output, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume", "--approve", "confirm-design")
+	if code != ExitCodeWaitingApproval {
+		t.Fatalf("resume exit code = %d, want %d (halt at the next gate)\n%s", code, ExitCodeWaitingApproval, output)
+	}
+	for _, want := range []string{`stage "analyst" was COMPLETED but its artifact changed on disk`, `stage "architect"`} {
+		if !strings.Contains(output, want) {
+			t.Errorf("resume output missing %q:\n%s", want, output)
+		}
+	}
+
+	// Re-running the analyst rewrites the canned artifact, so the edit is
+	// gone and every stage up to the next gate is COMPLETED again.
+	assertStagesCompleted(t, projectDir, stagesBeforeFirstGate, true)
+	assertWaitingOnGate(t, projectDir, "qa-engineer", "confirm-security")
+}
+
+func TestRunStaleStageDoesNotRevokeAnApproval(t *testing.T) {
+	binary := buildLoomBinary(t)
+	projectDir := t.TempDir()
+	spec := writeSpec(t, projectDir)
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock"); code != ExitCodeWaitingApproval {
+		t.Fatal("setup run did not halt at the first gate")
+	}
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume", "--approve", "confirm-design"); code != ExitCodeWaitingApproval {
+		t.Fatal("approved run did not reach the second gate")
+	}
+
+	if err := os.WriteFile(workspaceArtifact(projectDir, "developer"), []byte("# implementation, hand-edited\n"), 0o644); err != nil {
+		t.Fatalf("edit developer artifact: %v", err)
+	}
+	output, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume")
+	if code != ExitCodeWaitingApproval {
+		t.Fatalf("resume exit code = %d, want %d\n%s", code, ExitCodeWaitingApproval, output)
+	}
+	if !loadRunState(t, projectDir).IsGateApproved("confirm-design") {
+		t.Error("editing an artifact behind an approved gate revoked the approval; reset-on-edit is L2.14")
+	}
+	if strings.Contains(output, "approve gate") {
+		t.Errorf("stale stage re-prompted for an already-approved gate:\n%s", output)
+	}
+}
+
+func TestRunRecordsRunIdentityAndRefusesAnotherSpec(t *testing.T) {
+	binary := buildLoomBinary(t)
+	projectDir := t.TempDir()
+	spec := writeSpec(t, projectDir)
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock"); code != ExitCodeWaitingApproval {
+		t.Fatal("setup run did not halt at the first gate")
+	}
+
+	state := loadRunState(t, projectDir)
+	if state.FeatureName != "user-auth" || state.SpecPath != spec || state.StartedAt.IsZero() {
+		t.Errorf("run identity not recorded: feature %q, spec %q, startedAt %v", state.FeatureName, state.SpecPath, state.StartedAt)
+	}
+
+	otherSpec := filepath.Join(projectDir, "user-auth.md.copy.md")
+	if err := os.WriteFile(otherSpec, []byte("# Feature: something else\n"), 0o644); err != nil {
+		t.Fatalf("write second spec: %v", err)
+	}
+	output, code := runLoom(t, binary, projectDir, "run", "--spec", otherSpec, "--provider", "mock", "--resume")
+	if code == 0 {
+		t.Errorf("resuming against a different spec succeeded:\n%s", output)
 	}
 }

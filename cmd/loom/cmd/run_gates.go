@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mattn/go-isatty"
 	"github.com/orieken/loom/internal/orchestrator"
 	"github.com/spf13/cobra"
 )
@@ -86,12 +87,21 @@ func haltForApproval(cmd *cobra.Command, waiting *orchestrator.WaitingApprovalEr
 	return err
 }
 
+// reportStaleStages tells the human which completed work is being redone
+// and why, before any of it re-runs. Verification is not optional and has
+// no flag to skip it — a way to opt out would reopen the hole it closes.
+func reportStaleStages(cmd *cobra.Command, stale []orchestrator.StaleStage) {
+	for _, stage := range stale {
+		cmd.PrintErrln(stage.Description())
+	}
+}
+
 // stdinIsInteractive reports whether stdin is a terminal, which is what
 // separates "ask the human now" from "halt and print the resume command".
+// A ModeCharDevice check is not enough: /dev/null is a character device, so
+// it would make every CI run and every `exec.Command` child look like a
+// human sitting at a keyboard.
 func stdinIsInteractive() bool {
-	info, err := os.Stdin.Stat()
-	if err != nil {
-		return false
-	}
-	return info.Mode()&os.ModeCharDevice != 0
+	fd := os.Stdin.Fd()
+	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
 }

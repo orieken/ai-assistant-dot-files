@@ -42,8 +42,8 @@ var testTools = []contextTool{
 	},
 }
 
-func lookPathFound(_ string) (string, error)            { return "/usr/bin/found", nil }
-func lookPathMissing(_ string) (string, error)          { return "", errors.New("not found") }
+func lookPathFound(_ string) (string, error)   { return "/usr/bin/found", nil }
+func lookPathMissing(_ string) (string, error) { return "", errors.New("not found") }
 func lookPathOnlyTokei(name string) (string, error) {
 	if name == "tokei" {
 		return "/usr/bin/tokei", nil

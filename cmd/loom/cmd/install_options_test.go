@@ -38,12 +38,12 @@ func TestPrepareInstallLevelSelectsCoreRulesPlusStack(t *testing.T) {
 		t.Fatalf("Names failed: %v", err)
 	}
 	want := map[string]bool{
-		"approval-gates.md":            true,
-		"architecture-guardrails.md":   true,
-		"design-principles.md":         true,
-		"memory-trust-boundary.md":     true,
-		"testing-conventions.md":       true,
-		"go-conventions.md":            true,
+		"approval-gates.md":          true,
+		"architecture-guardrails.md": true,
+		"design-principles.md":       true,
+		"memory-trust-boundary.md":   true,
+		"testing-conventions.md":     true,
+		"go-conventions.md":          true,
 	}
 	if len(names) != len(want) {
 		t.Fatalf("level 1 + go selected %d rules (%v), want %d", len(names), names, len(want))
