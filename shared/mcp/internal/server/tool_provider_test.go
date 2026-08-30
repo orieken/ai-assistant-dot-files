@@ -8,7 +8,7 @@ import (
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
-func TestBuildFrameworkRegistryRegistersAllSixTools(t *testing.T) {
+func TestBuildFrameworkRegistryRegistersAllFrameworkTools(t *testing.T) {
 	registry := buildFrameworkRegistry(logging.NewLogger(&bytes.Buffer{}))
 
 	want := []string{
@@ -17,6 +17,7 @@ func TestBuildFrameworkRegistryRegistersAllSixTools(t *testing.T) {
 		"check_ubiquitous_language",
 		"search_docs",
 		"search_ki",
+		"validate_artifact",
 		"verify_dependencies",
 	}
 	registrations := registry.All()

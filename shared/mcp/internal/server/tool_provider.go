@@ -45,6 +45,7 @@ func frameworkRegistrations(logger *logging.Logger) []domain.ToolRegistration {
 		readOnlyTool(tools.NewVerifyDependenciesTool(logger, analyzers.NewDependencyBoundaryAnalyzer()), analysisTimeout),
 		readOnlyTool(tools.NewSearchKITool(logger, tools.NewKICorpusRetriever(frameworkCorpusPaths())), searchTimeout),
 		readOnlyTool(newSearchDocsTool(logger), searchTimeout),
+		readOnlyTool(tools.NewValidateArtifactTool(logger, analyzers.NewArtifactContractAnalyzer(), frameworkContractsDir()), searchTimeout),
 	}
 }
 
@@ -94,6 +95,17 @@ func docsFTSDBPath() (string, bool) {
 		return "", false
 	}
 	return filepath.Join(cwd, ".claude", "rag", "docs-fts5.sqlite"), true
+}
+
+// frameworkContractsDir resolves shared/contracts/ from the install root, or
+// "" when the root is unknown — validate_artifact then requires an explicit
+// contractPath argument.
+func frameworkContractsDir() string {
+	root := os.Getenv("AI_ASSISTANT_DOTFILES_PATH")
+	if root == "" {
+		return ""
+	}
+	return filepath.Join(root, "shared", "contracts")
 }
 
 func frameworkCorpusPaths() []string {

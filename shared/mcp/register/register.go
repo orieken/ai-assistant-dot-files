@@ -26,6 +26,7 @@ import (
 //   - check_accessibility — accessibility rule checks
 //   - verify_dependencies — dependency boundary validation
 //   - search_docs         — documentation search
+//   - validate_artifact   — structural contract validation of pipeline artifacts
 //
 // Each registration carries the tool plus its timeout budget, retry class,
 // and permission scope. Nothing in the returned types references mcp-go or

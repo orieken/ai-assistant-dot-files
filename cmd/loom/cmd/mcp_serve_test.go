@@ -16,11 +16,12 @@ var expectedMCPToolNames = []string{
 	"check_ubiquitous_language",
 	"search_docs",
 	"search_ki",
+	"validate_artifact",
 	"verify_dependencies",
 }
 
 // TestMCPServeAnswersToolsList spawns the built loom binary, performs an MCP
-// initialize + tools/list handshake over stdio, and asserts all six framework
+// initialize + tools/list handshake over stdio, and asserts all framework
 // tool names are present. Doubles as live coverage of the mcpprobe package
 // that `loom health` uses for its maturity assessment.
 func TestMCPServeAnswersToolsList(t *testing.T) {

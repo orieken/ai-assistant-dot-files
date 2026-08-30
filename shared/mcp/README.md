@@ -1,6 +1,6 @@
 # ai-assistant-dotfiles MCP Server
 
-A reference scaffold exposing the six M1 framework-analysis tools as an
+A reference scaffold exposing the framework's deterministic tools as an
 [MCP](https://modelcontextprotocol.io/) server over stdio transport.
 
 ## Tools
@@ -13,8 +13,16 @@ A reference scaffold exposing the six M1 framework-analysis tools as an
 | `verify_dependencies` | Clean Architecture layer-boundary violations in Go and TypeScript imports |
 | `search_ki` | Lexical-ranked search of the framework's Knowledge Items and ADRs |
 | `search_docs` | BM25 search (sqlite-fts5) of the installed project's `docs/` corpus |
+| `validate_artifact` | Structural contract validation of a pipeline artifact against `shared/contracts/` — required-heading presence plus WARN-level retrieval frontmatter checks; returns typed violations |
 
-All six tools are deterministic and stateless — no LLM is required.
+All tools are deterministic and stateless — no LLM is required.
+
+`validate_artifact` infers the contract from the artifact's filename (e.g.
+`analysis.md` → `shared/contracts/analysis-contract.md`) using
+`AI_ASSISTANT_DOTFILES_PATH` as the install root; pass `contractPath`
+explicitly to override or when the env var isn't set. It is structural only —
+the contract-specific prose content rules and any qualitative judgment remain
+with the `validate-artifact` skill until L2.11 lands semantic validation.
 
 ## Quick start
 
@@ -91,7 +99,7 @@ API instead of the deprecated `register.FrameworkTools`:
   standard library only (enforced by a fitness test), so nothing in its
   signatures ties you to loom's `mcp-go` or `jsonschema` version pins.
 - **`github.com/orieken/loom/shared/mcp/register`** — `Frameworks(logWriter)`
-  returns the six built-in framework tools as a `*tools.Registry`.
+  returns the built-in framework tools as a `*tools.Registry`.
 
 Merge, add your own tools, and adapt the result to *your* MCP library and
 version:

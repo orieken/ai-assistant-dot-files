@@ -1,6 +1,6 @@
 // Deprecated: this standalone entrypoint is retained for one release cycle
 // only. Use `loom mcp serve` instead — the brew-installed loom binary serves
-// the same six framework tools over stdio. See shared/mcp/README.md.
+// the same framework tools over stdio. See shared/mcp/README.md.
 package main
 
 import (

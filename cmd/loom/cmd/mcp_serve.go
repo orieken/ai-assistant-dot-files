@@ -19,7 +19,7 @@ var mcpServeArgs mcpServeFlags
 var mcpServeCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve the framework MCP tools over stdio",
-	Long: `Serve the six framework MCP tools over stdio transport.
+	Long: `Serve the framework MCP tools over stdio transport.
 
 Structured JSON logs go to stderr (or --log-file) — never stdout,
 which carries the MCP wire protocol. The server blocks until the
