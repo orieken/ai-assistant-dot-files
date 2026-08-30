@@ -8,6 +8,10 @@
 #
 # `landed` is the authoritative list of shipped roadmap items this file's
 # gates may reference. Update it in the same commit that ships an item.
+#
+# `docsOnly: true` marks a bundle as documentation content: it installs like
+# any other bundle, but `loom health` never counts it as level evidence —
+# documentation presence alone does not confer a maturity level (D.4).
 version: 1
 
 landed:
@@ -92,8 +96,10 @@ levels:
       entries are gated on unlanded roadmap items today.
     bundles:
       - id: telemetry-docs
+        docsOnly: true
         paths: [shared/telemetry]
       - id: hooks
+        docsOnly: true
         paths: [shared/hooks]
       - id: telemetry-stream
         requires: L3.9
@@ -109,6 +115,7 @@ levels:
       telemetry. Fully gated on unlanded roadmap items today.
     bundles:
       - id: evaluation
+        docsOnly: true
         paths: [shared/evaluation]
       - id: eval-loop
         requires: L4.1

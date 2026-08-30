@@ -43,5 +43,6 @@ func executeHealth(request healthRequest, content platform.Content, writer io.Wr
 	check.verifyPaths()
 	check.verifySymlinks()
 	check.verifyAgentCounts()
+	check.verifyMaturity()
 	return check.finish()
 }

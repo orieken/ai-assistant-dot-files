@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path"
 
 	frameworkfs "github.com/orieken/loom/cmd/loom/internal/fs"
 	"github.com/orieken/loom/cmd/loom/internal/levels"
@@ -80,7 +79,7 @@ func installBundle(bundle levels.Bundle, files *frameworkfs.Writer, output insta
 	}
 	var paths []string
 	for _, source := range bundle.Paths {
-		destination := ".claude/" + path.Base(source)
+		destination := levels.InstallDestination(source)
 		if _, err := files.Install(source, destination); err != nil {
 			return nil, err
 		}

@@ -66,6 +66,29 @@ func TestExecuteHealthWarnsForAgentCountMismatch(t *testing.T) {
 	}
 }
 
+// TestExecuteHealthReportsLevelOneWithGaps covers the D.4 done-when
+// criterion: a fresh level 1 install reports Level 1 plus a concrete
+// checklist of level 2 gaps.
+func TestExecuteHealthReportsLevelOneWithGaps(t *testing.T) {
+	target := t.TempDir()
+	writeHealthFixture(t, target, []string{"alpha.md", "beta.md"})
+	var output bytes.Buffer
+	if err := executeHealth(healthRequest{target: target, display: target}, healthContent(), &output); err != nil {
+		t.Fatalf("execute health: %v", err)
+	}
+	wants := []string{
+		"Level 1 — Foundational prompts",
+		"gaps to Level 2",
+		"MCP server not configured",
+		`bundle "workflows" not fully installed`,
+	}
+	for _, want := range wants {
+		if !strings.Contains(output.String(), want) {
+			t.Errorf("output missing %q:\n%s", want, output.String())
+		}
+	}
+}
+
 func TestExecuteHealthFailsForMissingManifest(t *testing.T) {
 	target := t.TempDir()
 	var output bytes.Buffer
@@ -75,11 +98,44 @@ func TestExecuteHealthFailsForMissingManifest(t *testing.T) {
 	}
 }
 
+// healthLevelsFixture is a minimal but valid shared/levels.yaml so the
+// maturity assessment can run against test targets.
+const healthLevelsFixture = `version: 1
+landed: [D.1]
+levels:
+  - level: 1
+    name: Foundational prompts
+    bundles:
+      - id: agents
+        paths: [shared/agents]
+  - level: 2
+    name: Coordinated multi-agent
+    bundles:
+      - id: mcp-registration
+        requires: D.1
+        action: mcp-config
+      - id: workflows
+        paths: [shared/workflows]
+  - level: 3
+    name: Observed and governed
+    bundles:
+      - id: telemetry-stream
+        requires: L3.9
+        action: telemetry
+  - level: 4
+    name: Self-improving
+    bundles:
+      - id: eval-loop
+        requires: L4.1
+        action: evaluation-loop
+`
+
 func healthContent() fstest.MapFS {
 	return fstest.MapFS{
 		"shared/VERSION":         {Data: []byte("v3.3.14\n")},
 		"shared/agents/alpha.md": {Data: []byte("alpha")},
 		"shared/agents/beta.md":  {Data: []byte("beta")},
+		"shared/levels.yaml":     {Data: []byte(healthLevelsFixture)},
 	}
 }
 

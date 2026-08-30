@@ -7,6 +7,7 @@ import (
 	"fmt"
 	iofs "io/fs"
 	"path"
+	"strings"
 
 	yaml "go.yaml.in/yaml/v4"
 )
@@ -32,6 +33,9 @@ type Bundle struct {
 	Paths    []string `yaml:"paths"`
 	Requires string   `yaml:"requires"`
 	Action   string   `yaml:"action"`
+	// DocsOnly marks documentation content that installs normally but never
+	// counts as maturity-level evidence for `loom health` (roadmap D.4).
+	DocsOnly bool `yaml:"docsOnly"`
 }
 
 // Level is one maturity level profile.
@@ -121,6 +125,19 @@ func (p Profile) OnDemandRuleName(stack string) string {
 		}
 	}
 	return ""
+}
+
+// InstallDestination maps a bundle source path to its install destination
+// inside a target project. The installer writes there and `loom health`
+// checks there — one mapping so the two can never diverge.
+func InstallDestination(source string) string {
+	if strings.HasPrefix(source, "shared/rules/") {
+		return ".claude/rules/" + path.Base(source)
+	}
+	if path.Ext(source) == ".md" {
+		return path.Base(source)
+	}
+	return ".claude/" + path.Base(source)
 }
 
 func (p Profile) findLevelOneBundle(id string) (Bundle, bool) {

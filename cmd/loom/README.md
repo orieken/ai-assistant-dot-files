@@ -10,11 +10,34 @@ coding platforms and serves the framework's MCP tools. Install it via
 | Command | Purpose |
 |---|---|
 | `loom install` (alias `loom init`) | Install framework content for detected platforms (`--target`, `--platform`, `--copy`, `--dry-run`, `--stack`, `--level` — see the maturity-level table in the root README; profiles are defined in `shared/levels.yaml`) |
-| `loom health` | Verify installed configs match the canonical `shared/` source |
+| `loom health` | Verify installed configs match the canonical `shared/` source, and report the project's agentic maturity level (see below) |
 | `loom tools status` / `loom tools install` | Report / install opt-in context tools |
 | `loom mcp serve` | Serve the framework MCP tools over stdio |
 | `loom uninstall` | Remove installed framework content |
 | `loom update` | Update installed framework content |
+
+## Maturity level report
+
+`loom health` ends with an agentic-maturity assessment driven by
+`shared/levels.yaml`: it reports the highest level whose *entire* mechanical
+evidence set passes, the passing evidence, and a concrete gap checklist for
+the next level. Evidence is strictly mechanical — installed bundles on disk,
+an MCP server that is configured in `.mcp.json` **and** actually answers
+`tools/list` when spawned, a non-empty telemetry stream, policy files present.
+Documentation-only bundles (`docsOnly` in `levels.yaml`) never count as
+evidence, and a level whose enforcement bundles are all gated on unlanded
+roadmap items is reported as not attainable yet rather than pretended into
+reach.
+
+```
+Agentic maturity (shared/levels.yaml):
+  Level 1 — Foundational prompts
+  ✓ bundle "core-rules" installed
+  ✓ bundle "agents" installed
+  gaps to Level 2:
+    ✗ MCP server not configured: read .mcp.json: no such file
+    ✗ bundle "workflows" not fully installed (missing workflows)
+```
 
 ## MCP server
 

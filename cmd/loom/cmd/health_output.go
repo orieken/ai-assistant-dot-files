@@ -23,6 +23,37 @@ func (output healthOutput) failure(message string) {
 	fmt.Fprintln(output.writer, "  ✗ "+message)
 }
 
+func (output healthOutput) maturity(report maturityReport) {
+	fmt.Fprintln(output.writer, "\nAgentic maturity (shared/levels.yaml):")
+	output.maturityLevel(report)
+	for _, detail := range report.passing {
+		fmt.Fprintln(output.writer, "  ✓ "+detail)
+	}
+	output.maturityGaps(report)
+}
+
+func (output healthOutput) maturityLevel(report maturityReport) {
+	if report.level == 0 {
+		fmt.Fprintln(output.writer, "  below Level 1 — level 1 evidence incomplete")
+		return
+	}
+	fmt.Fprintf(output.writer, "  Level %d — %s\n", report.level, report.name)
+}
+
+func (output healthOutput) maturityGaps(report maturityReport) {
+	if report.nextLevel == 0 {
+		return
+	}
+	if report.nextIsUnreachable {
+		fmt.Fprintf(output.writer, "  Level %d is not attainable yet — every enforcement bundle is gated on unlanded roadmap items:\n", report.nextLevel)
+	} else {
+		fmt.Fprintf(output.writer, "  gaps to Level %d:\n", report.nextLevel)
+	}
+	for _, gap := range report.gaps {
+		fmt.Fprintln(output.writer, "    ✗ "+gap)
+	}
+}
+
 func (output healthOutput) note() {
 	fmt.Fprintln(output.writer, "\nnote: for full framework health checks, run scripts/health-check.sh in the framework repo")
 }

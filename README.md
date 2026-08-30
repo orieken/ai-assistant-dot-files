@@ -163,6 +163,12 @@ project with `--stack`:
 loom install --level 1 --stack go,iac
 ```
 
+To find out where a project sits on the ladder, run `loom health`: it reports the highest level
+whose mechanical evidence fully passes (installed bundles, an MCP server that actually answers
+`tools/list`, a live telemetry stream) plus a concrete gap checklist for the next level.
+Documentation presence never confers a level — see the "Maturity level report" section in
+[`cmd/loom/README.md`](cmd/loom/README.md).
+
 **No Go? Clone and run with the legacy shell script (still works):**
 
 ```bash
