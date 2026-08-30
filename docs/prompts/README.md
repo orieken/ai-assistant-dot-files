@@ -130,7 +130,8 @@ before starting.
 
 | Epic | File | Estimated size |
 |---|---|---|
-| **75** | [epic-75-distribution-adoption.md](epic-75-distribution-adoption.md) — Phase A: `loom mcp serve` (D.1, unblocked) · Phase B: public embedding package (D.2, needs M0.3+L2.4) · Phase C: `loom init --level N` profiles + rules-corpus split (D.3) · Phase D: `loom health` maturity report (D.4) · Phase E: capability tools on the MCP surface (D.5, per-tool blockers) | XL total; Phase A alone is M |
+| **75** | [epic-75-distribution-adoption.md](epic-75-distribution-adoption.md) — Phase A: `loom mcp serve` (D.1, unblocked) · Phase B: public embedding package (D.2, needs M0.3+L2.4) · Phase C: `loom init --level N` profiles + rules-corpus split (D.3) · Phase D: `loom health` maturity report (D.4) · Phase E: capability tools on the MCP surface (D.5, per-tool blockers — `validate_artifact` shipped structural-only `c0e8441`; the other three tools await L2.12/L3.9/L2.16) | XL total; Phase A alone is M |
+| **76** | [epic-76-m04-executor-skeleton.md](epic-76-m04-executor-skeleton.md) — Phase A: ADR-006 "loom executes pipelines" (M0.1, human gate) · Phase B: close the M0.2 CI remainder (lint job, SHA pinning, coverage ratchet, fixture-fail) · Phase C: executor core in `internal/orchestrator/` + mock provider · Phase D: `loom run` + claude subprocess provider (M0.4). Unblocks L2.12/L2.13/L3.8 and the remaining epic-75 Phase E tools | L |
 
 ## Completed Prompts (`docs/prompts/done/`)
 
