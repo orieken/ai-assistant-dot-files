@@ -59,3 +59,7 @@ agent-evaluator/actual-output.md
 context-auditor/actual-output.md
 documentation-auditor/actual-output.md
 documentation-manager/actual-output.md
+knowledge-auditor/actual-output.md
+memory-auditor/actual-output.md
+model-tier-auditor/actual-output.md
+pattern-reviewer/actual-output.md
