@@ -32,37 +32,60 @@ func loadRunState(t *testing.T, projectDir string) *orchestrator.RunState {
 	return state
 }
 
-// TestRunMockProviderEndToEnd runs the real built binary against the mock
-// provider: full run, refusal to restart over existing state, and state
-// contents afterward. Same build-the-binary pattern as mcp_serve_test.go.
-func TestRunMockProviderEndToEnd(t *testing.T) {
+// stagesBeforeFirstGate are the built-in plan's stages ahead of the
+// confirm-design gate on the developer stage.
+var stagesBeforeFirstGate = []string{
+	"context-engineer", "analyst", "architect", "performance-engineer", "data-engineer",
+}
+
+// TestRunMockProviderHaltsAtFirstGate runs the real built binary against the
+// mock provider: the run executes every ungated stage, halts at the
+// confirm-design gate, and refuses to restart over the resulting state.
+// Same build-the-binary pattern as mcp_serve_test.go.
+func TestRunMockProviderHaltsAtFirstGate(t *testing.T) {
 	binary := buildLoomBinary(t)
 	projectDir := t.TempDir()
 	spec := writeSpec(t, projectDir)
 
 	run := exec.Command(binary, "run", "--spec", spec, "--provider", "mock")
 	run.Dir = projectDir
-	if output, err := run.CombinedOutput(); err != nil {
-		t.Fatalf("loom run: %v\n%s", err, output)
+	output, err := run.CombinedOutput()
+	if err == nil {
+		t.Fatalf("run completed without approval; it must halt at confirm-design\n%s", output)
 	}
 
-	assertAllStagesCompleted(t, projectDir, true)
+	assertStagesCompleted(t, projectDir, stagesBeforeFirstGate, true)
+	assertWaitingOnGate(t, projectDir, "developer", "confirm-design")
 	assertFreshRunOverStateRefused(t, binary, projectDir, spec)
 }
 
-func assertAllStagesCompleted(t *testing.T, projectDir string, wantArtifacts bool) {
+func assertStagesCompleted(t *testing.T, projectDir string, stageIDs []string, wantArtifacts bool) {
 	t.Helper()
 	state := loadRunState(t, projectDir)
 	if state == nil {
 		t.Fatal("no run state persisted")
 	}
-	for _, stage := range orchestrator.DefaultDeliverFeaturePlan().Stages {
-		if !state.IsStageCompleted(stage.ID) {
-			t.Errorf("stage %q not COMPLETED", stage.ID)
+	for _, stageID := range stageIDs {
+		if !state.IsStageCompleted(stageID) {
+			t.Errorf("stage %q not COMPLETED", stageID)
 		}
 		if wantArtifacts {
-			assertArtifactExists(t, projectDir, stage.ID)
+			assertArtifactExists(t, projectDir, stageID)
 		}
+	}
+}
+
+func assertWaitingOnGate(t *testing.T, projectDir, stageID, gate string) {
+	t.Helper()
+	state := loadRunState(t, projectDir)
+	if got := state.Stages[stageID].Status; got != orchestrator.StageStatusWaitingApproval {
+		t.Fatalf("stage %q status = %q, want WAITING_APPROVAL", stageID, got)
+	}
+	if got := state.WaitingGate(); got != gate {
+		t.Errorf("run waiting on gate %q, want %q", got, gate)
+	}
+	if len(state.Approvals) != 0 {
+		t.Errorf("run recorded approvals %v without any human approving", state.Approvals)
 	}
 }
 
@@ -103,19 +126,20 @@ func TestRunInterruptCheckpointAndResume(t *testing.T) {
 
 	resume := exec.Command(binary, "run", "--spec", spec, "--provider", "mock", "--resume")
 	resume.Dir = projectDir
-	if output, err := resume.CombinedOutput(); err != nil {
-		t.Fatalf("resume run: %v\n%s", err, output)
+	if output, err := resume.CombinedOutput(); err == nil {
+		t.Fatalf("resumed run completed without approval; it must halt at confirm-design\n%s", output)
 	}
-	assertAllStagesCompleted(t, projectDir, false)
+	assertStagesCompleted(t, projectDir, stagesBeforeFirstGate, false)
+	assertWaitingOnGate(t, projectDir, "developer", "confirm-design")
 }
 
 func assertInterruptCheckpoint(t *testing.T, projectDir string) {
 	t.Helper()
 	state := loadRunState(t, projectDir)
-	if got := state.Stages["developer"].Status; got != orchestrator.StageStatusInterrupted {
+	if got := state.Stages["architect"].Status; got != orchestrator.StageStatusInterrupted {
 		t.Fatalf("hung stage status = %q, want INTERRUPTED", got)
 	}
-	for _, done := range []string{"context-engineer", "analyst", "architect", "performance-engineer", "data-engineer"} {
+	for _, done := range []string{"context-engineer", "analyst"} {
 		if !state.IsStageCompleted(done) {
 			t.Errorf("stage %q should be COMPLETED before the interrupt", done)
 		}
@@ -124,12 +148,12 @@ func assertInterruptCheckpoint(t *testing.T, projectDir string) {
 
 func interruptRunMidStage(t *testing.T, binary, projectDir, spec string) {
 	t.Helper()
-	run := exec.Command(binary, "run", "--spec", spec, "--provider", "mock", "--mock-hang-stage", "developer")
+	run := exec.Command(binary, "run", "--spec", spec, "--provider", "mock", "--mock-hang-stage", "architect")
 	run.Dir = projectDir
 	if err := run.Start(); err != nil {
 		t.Fatalf("start hung run: %v", err)
 	}
-	waitForStageStatus(t, projectDir, "developer", orchestrator.StageStatusRunning)
+	waitForStageStatus(t, projectDir, "architect", orchestrator.StageStatusRunning)
 	if err := run.Process.Signal(os.Interrupt); err != nil {
 		t.Fatalf("send SIGINT: %v", err)
 	}

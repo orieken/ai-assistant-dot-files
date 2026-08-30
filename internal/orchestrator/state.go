@@ -12,7 +12,7 @@ import (
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 1
+const StateSchemaVersion = 2
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -31,6 +31,9 @@ const (
 	StageStatusCompleted   StageStatus = "COMPLETED"
 	StageStatusFailed      StageStatus = "FAILED"
 	StageStatusInterrupted StageStatus = "INTERRUPTED"
+	// StageStatusWaitingApproval marks a gated stage the executor refused to
+	// start because its gate has no approval yet (roadmap L2.13).
+	StageStatusWaitingApproval StageStatus = "WAITING_APPROVAL"
 )
 
 // StageRecord is the persisted result of one stage invocation.
@@ -40,6 +43,7 @@ type StageRecord struct {
 	FinishedAt     *time.Time  `json:"finishedAt,omitempty"`
 	ArtifactPath   string      `json:"artifactPath,omitempty"`
 	ArtifactSHA256 string      `json:"artifactSha256,omitempty"`
+	Gate           string      `json:"gate,omitempty"`
 	Error          string      `json:"error,omitempty"`
 }
 
@@ -48,6 +52,7 @@ type RunState struct {
 	SchemaVersion int                    `json:"schemaVersion"`
 	PlanName      string                 `json:"planName"`
 	Stages        map[string]StageRecord `json:"stages"`
+	Approvals     map[string]Approval    `json:"approvals"`
 	UpdatedAt     time.Time              `json:"updatedAt"`
 }
 
@@ -57,6 +62,7 @@ func NewRunState(planName string) *RunState {
 		SchemaVersion: StateSchemaVersion,
 		PlanName:      planName,
 		Stages:        map[string]StageRecord{},
+		Approvals:     map[string]Approval{},
 	}
 }
 
@@ -98,11 +104,14 @@ func decodeRunState(raw []byte, path string) (*RunState, error) {
 		return nil, fmt.Errorf("parse run state %s: %w", path, err)
 	}
 	if state.SchemaVersion != StateSchemaVersion {
-		return nil, fmt.Errorf("run state %s has schema version %d, this executor supports %d",
+		return nil, fmt.Errorf("run state %s has schema version %d, this executor supports %d — finish or delete the old run",
 			path, state.SchemaVersion, StateSchemaVersion)
 	}
 	if state.Stages == nil {
 		state.Stages = map[string]StageRecord{}
+	}
+	if state.Approvals == nil {
+		state.Approvals = map[string]Approval{}
 	}
 	return &state, nil
 }

@@ -1,12 +1,14 @@
 // Package orchestrator is the minimal pipeline executor decided by ADR-006
 // (loom executes pipelines) and roadmap item M0.4. It owns the run loop:
 // load a plan, execute stages in order via a Provider, persist durable state,
-// and stop. Routing, parallelism, gates, and policy are later roadmap items
-// (L2.13, L3.x) that plug into this skeleton — they do not live here.
+// halt at approval gates (L2.13), and stop. Routing, parallelism, and policy
+// evaluation are later roadmap items (L3.x, L2.16) that plug into this
+// skeleton — they do not live here.
 package orchestrator
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -14,8 +16,12 @@ import (
 // (agent names), never ordinals — hand-numbered step lists are a defect the
 // roadmap (L2.15) explicitly retires.
 type Stage struct {
-	ID      string
-	Agent   string
+	ID    string
+	Agent string
+	// Gate names the approval barrier guarding entry to this stage. Empty
+	// means ungated; a named gate means the executor refuses to start the
+	// stage until run state records a human approval for that name.
+	Gate    string
 	Timeout time.Duration
 }
 
@@ -35,7 +41,19 @@ func (p Plan) Validate() error {
 	if len(p.Stages) == 0 {
 		return fmt.Errorf("plan %q has no stages", p.Name)
 	}
-	return p.validateStageIDs()
+	if err := p.validateStageIDs(); err != nil {
+		return err
+	}
+	return p.validateGateNames()
+}
+
+func (p Plan) validateGateNames() error {
+	for _, stage := range p.Stages {
+		if stage.Gate != "" && strings.TrimSpace(stage.Gate) == "" {
+			return fmt.Errorf("plan %q stage %q has a blank gate name", p.Name, stage.ID)
+		}
+	}
+	return nil
 }
 
 func (p Plan) validateStageIDs() error {
@@ -50,6 +68,25 @@ func (p Plan) validateStageIDs() error {
 		seen[stage.ID] = true
 	}
 	return nil
+}
+
+// Gate names of the built-in plan, mirroring the human PAUSE checkpoints in
+// shared/skills/deliver-feature/SKILL.md (steps 11, 13, 25 / Phase 4).
+const (
+	GateConfirmDesign   = "confirm-design"
+	GateConfirmSecurity = "confirm-security"
+	GateConfirmShip     = "confirm-ship"
+)
+
+// defaultPlanGates maps the three gated stages of the built-in plan to their
+// gate names: design is confirmed before code is written, security before QA
+// signs off, and the ship gate before anything touches infrastructure.
+func defaultPlanGates() map[string]string {
+	return map[string]string{
+		"developer":       GateConfirmDesign,
+		"qa-engineer":     GateConfirmSecurity,
+		"devops-engineer": GateConfirmShip,
+	}
 }
 
 // DefaultDeliverFeaturePlanName names the built-in plan.
@@ -67,6 +104,7 @@ const defaultStageTimeout = 30 * time.Minute
 // not do — the linear order is preserved so behavior matches the markdown
 // pipeline while the substrate changes underneath (roadmap M0.4).
 func DefaultDeliverFeaturePlan() Plan {
+	gates := defaultPlanGates()
 	agents := []string{
 		"context-engineer",
 		"analyst",
@@ -85,7 +123,7 @@ func DefaultDeliverFeaturePlan() Plan {
 	}
 	stages := make([]Stage, 0, len(agents))
 	for _, agent := range agents {
-		stages = append(stages, Stage{ID: agent, Agent: agent, Timeout: defaultStageTimeout})
+		stages = append(stages, Stage{ID: agent, Agent: agent, Gate: gates[agent], Timeout: defaultStageTimeout})
 	}
 	return Plan{Name: DefaultDeliverFeaturePlanName, Stages: stages}
 }

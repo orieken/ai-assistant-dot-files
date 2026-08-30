@@ -33,6 +33,9 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 		if state.IsStageCompleted(stage.ID) {
 			continue
 		}
+		if err := e.checkGate(stage, state); err != nil {
+			return err
+		}
 		if err := e.runStage(ctx, stage, input, state); err != nil {
 			return err
 		}
@@ -56,6 +59,21 @@ func (e *Executor) prepareState(plan Plan) (*RunState, error) {
 			e.store.Path(), state.PlanName, plan.Name)
 	}
 	return state, nil
+}
+
+// checkGate is the process interrupt: a gated stage cannot start until run
+// state records an approval for its gate. Nothing a provider returns can
+// create that approval — only the CLI approval channels write it (roadmap
+// L2.13). The halt is persisted so the run resumes exactly here.
+func (e *Executor) checkGate(stage Stage, state *RunState) error {
+	if stage.Gate == "" || state.IsGateApproved(stage.Gate) {
+		return nil
+	}
+	record := StageRecord{Status: StageStatusWaitingApproval, StartedAt: time.Now().UTC(), Gate: stage.Gate}
+	if err := e.persistStatus(state, stage.ID, record); err != nil {
+		return err
+	}
+	return &WaitingApprovalError{Gate: stage.Gate, Stage: stage.ID}
 }
 
 func (e *Executor) runStage(ctx context.Context, stage Stage, input StageInput, state *RunState) error {
