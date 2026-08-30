@@ -54,7 +54,7 @@ File names follow the pattern: `ADR-NNN-short-description.md` in kebab-case.
 | ADR-003 | Enterprise memory sync protocol                 | Proposed | 2026-07-31 |
 | ADR-004 | Bugfix artifacts use the features namespace     | Accepted | 2026-08-05 |
 | ADR-005 | Use explicit `.sh` install script paths          | Accepted | 2026-08-15 |
-| ADR-006 | Loom executes pipelines                         | Proposed | 2026-08-29 |
+| ADR-006 | Loom executes pipelines                         | Accepted | 2026-08-29 |
 
 ---
 
