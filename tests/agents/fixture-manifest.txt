@@ -47,3 +47,8 @@ tech-writer/actual-output.md
 devops-engineer/actual-output.md
 performance-engineer/actual-output.md
 data-engineer/actual-output.md
+accessibility-engineer/actual-output.md
+visual-qa-engineer/actual-output.md
+context-engineer/actual-output.md
+spec-writer/actual-output.md
+product-owner/actual-output.md
