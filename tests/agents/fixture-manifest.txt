@@ -37,3 +37,8 @@ tool-validator/expected-patterns.txt
 unit-tester/expected-patterns.txt
 visual-qa-engineer/expected-patterns.txt
 security-reviewer/actual-output.md
+analyst/actual-output.md
+architect/actual-output.md
+code-reviewer/actual-output.md
+developer/actual-output.md
+qa-engineer/actual-output.md
