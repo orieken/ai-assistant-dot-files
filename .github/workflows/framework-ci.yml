@@ -6,12 +6,20 @@ on:
   pull_request:
     branches: [main]
 
+# Default for every job; jobs restate it explicitly per iac-conventions.md.
+# All actions are pinned to full commit SHAs (same pins as loom-release.yml
+# where the action overlaps) — never mutable tags.
+permissions:
+  contents: read
+
 jobs:
   check-parity:
     name: Config parity (shared/ vs. generated configs)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
       - name: Install PyYAML (needed by the .roomodes validation; don't rely on runner preinstall)
         run: python3 -m pip install --quiet pyyaml
       - name: Run check-parity.sh
@@ -20,19 +28,25 @@ jobs:
   test-agents:
     name: Agent golden-file tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
       - name: Run test-agents.sh
         run: bash scripts/test-agents.sh
-        # Note: agent invocation itself can't run in CI (no LLM call available here) — this only
-        # validates any actual-output.md fixtures already committed. Everything else reports SKIP,
-        # which is a pass (exit 0), not a failure. See tests/agents/README.md.
+        # Agent invocation itself can't run in CI (no LLM call available here) — this
+        # validates committed actual-output.md baselines against expected patterns and
+        # contracts. Since M0.2, every fixture listed in tests/agents/fixture-manifest.txt
+        # must exist (missing = FAIL, exit 1); SKIP remains only for agents that have
+        # never had a baseline committed. See tests/agents/README.md.
 
   health-check:
     name: Framework health check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
       - name: Install PyYAML (health-check shells out to check-parity.sh, which needs it)
         run: python3 -m pip install --quiet pyyaml
       - name: Run health-check.sh
@@ -41,8 +55,10 @@ jobs:
   test-install:
     name: Install verification matrix
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
       - name: Run test-install.sh
         run: bash scripts/test-install.sh
         # Runs a real `install.sh --project <scratch-dir> --platform <name>` for all 6 platforms and
@@ -54,8 +70,10 @@ jobs:
     name: Agent version bump + changelog check
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
         with:
           fetch-depth: 0
       - name: Run check-agent-versions-ci.sh
@@ -73,8 +91,10 @@ jobs:
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       vars.AGENT_EVAL_ENABLED == 'true'
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
       - name: Install claude CLI
         run: |
           # Install the claude CLI so run-agent-evals.sh can invoke claude --bare -p.
@@ -91,21 +111,32 @@ jobs:
         # Set repository secret ANTHROPIC_API_KEY to authenticate.
 
   go-build:
-    name: Go build + tests (loom module and embedding example)
+    name: Go build + tests + coverage (loom module and embedding example)
     runs-on: ubuntu-latest
-    # Read-only job; broader workflow-wide hardening (SHA pinning, permissions
-    # on every job) is roadmap M0.2's scope.
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v5 — same pin as loom-release.yml
         with:
           go-version-file: go.mod
       - name: Build and test the loom module
         run: |
           go build ./...
-          go test ./...
+          go test ./... -coverprofile=coverage.out
+      - name: Coverage ratchet
+        # Ratchet policy (roadmap M0.2): the floor is the honest measured combined
+        # statement coverage of the loom module — 52.1% on 2026-08-29 — NOT the
+        # aspirational 85% from CLAUDE.md. CI fails below the floor. When real
+        # coverage rises, raise COVERAGE_FLOOR to the new measured value in this
+        # step; never lower it. Target remains 85%.
+        env:
+          COVERAGE_FLOOR: "52.0"
+        run: |
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {sub(/%/, "", $3); print $3}')
+          echo "combined statement coverage: ${total}% (floor: ${COVERAGE_FLOOR}%)"
+          awk -v t="$total" -v f="$COVERAGE_FLOOR" 'BEGIN { exit (t + 0 < f + 0) ? 1 : 0 }' \
+            || { echo "FAIL: coverage ${total}% is below the ratchet floor ${COVERAGE_FLOOR}%"; exit 1; }
       - name: Build the out-of-repo embedding example (D.2)
         # Own go.mod + replace — proves a consumer can register a custom tool
         # against the public tools package without loom internals or mcp-go
@@ -113,3 +144,20 @@ jobs:
         run: |
           cd examples/embedding
           go build ./...
+
+  golangci-lint:
+    name: golangci-lint (complexity gate — this IS the build gate)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4 — same pin as loom-release.yml
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v5 — same pin as loom-release.yml
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          # Pinned linter version: v2 config schema (.golangci.yml at the repo
+          # root, gocyclo min-complexity 7 — enforces the framework-wide < 7
+          # rule), runs under the go1.27 toolchain from go.mod.
+          version: v2.13.2

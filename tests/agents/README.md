@@ -62,9 +62,15 @@ pass. Useful for post-edit spot-checks where you want to see reasoning inline.
 1. Open a Claude Code session in this repo (or one with `shared/agents/` installed).
 2. Invoke the agent against the fixture, e.g.: "Act as the `security-reviewer` agent (see
    `shared/agents/security-reviewer.md`) and review `tests/agents/security-reviewer/input-vulnerable-code.ts`."
-3. Save its full markdown output to `tests/agents/security-reviewer/actual-output.md`.
+3. Save its full markdown output to `tests/agents/security-reviewer/actual-output.md`, and add that
+   path to `tests/agents/fixture-manifest.txt` (the script fails on any committed baseline that
+   isn't listed there).
 4. Run `./scripts/test-agents.sh` — it checks `actual-output.md` against both `expected-patterns.txt` and
    the agent's contract in `shared/contracts/` (required section headings), and reports PASS/FAIL/SKIP.
+
+**Fixture manifest (since roadmap M0.2)**: `fixture-manifest.txt` lists every fixture file that must
+exist. A listed file that is missing is a FAIL (exit 1) — deleting a fixture can never silently SKIP.
+SKIP remains only for agents that have never had a baseline committed.
 
 **Run at least one of these paths after editing any agent prompt** — it's the fastest way to catch a prompt
 edit that accidentally dropped a required section, stopped surfacing an obvious finding, or regressed the

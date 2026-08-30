@@ -72,9 +72,37 @@ echo "Fixtures: $TESTS_DIR"
 echo ""
 
 if [[ ! -d "$TESTS_DIR" ]]; then
-  echo "No tests/agents/ directory found — nothing to test."
-  exit 0
+  echo "FAIL: no tests/agents/ directory found — the agent suite cannot be green by absence."
+  exit 1
 fi
+
+# --- Fixture manifest check (roadmap M0.2, audit H9) ---------------------------
+# A missing required fixture is a FAIL, not a SKIP: every file listed in
+# fixture-manifest.txt must exist, and every committed golden baseline
+# (actual-output.md) must be listed there, so deleting either can never pass.
+MANIFEST="$TESTS_DIR/fixture-manifest.txt"
+MANIFEST_VERIFIED=0
+echo "--- fixture manifest ---"
+if [[ -f "$MANIFEST" ]]; then
+  while IFS= read -r rel || [[ -n "$rel" ]]; do
+    [[ -z "$rel" || "$rel" == \#* ]] && continue
+    if [[ -f "$TESTS_DIR/$rel" ]]; then
+      ((MANIFEST_VERIFIED++)) || true
+    else
+      fail "required fixture missing: tests/agents/$rel (listed in fixture-manifest.txt)"
+    fi
+  done < "$MANIFEST"
+  while IFS= read -r found; do
+    rel="${found#"$TESTS_DIR"/}"
+    if ! grep -qxF -- "$rel" "$MANIFEST"; then
+      fail "unlisted golden baseline: tests/agents/$rel — add it to fixture-manifest.txt"
+    fi
+  done < <(find "$TESTS_DIR" -name actual-output.md)
+  echo "  $MANIFEST_VERIFIED manifest fixtures verified"
+else
+  fail "tests/agents/fixture-manifest.txt is missing — required since roadmap M0.2"
+fi
+echo ""
 
 for agent_dir in "$TESTS_DIR"/*/; do
   agent_name="$(basename "$agent_dir")"
@@ -84,7 +112,9 @@ for agent_dir in "$TESTS_DIR"/*/; do
   echo "--- $agent_name ---"
 
   if [[ ! -f "$actual" ]]; then
-    skip "$agent_name — no actual-output.md. Run this agent against its input-* fixture in a live Claude Code session, save the output here, then re-run this script."
+    # SKIP is legitimate only for agents with no committed baseline; a baseline
+    # listed in fixture-manifest.txt that goes missing is caught as FAIL above.
+    skip "$agent_name — no golden baseline committed yet. Run this agent against its input-* fixture in a live Claude Code session, save the output as actual-output.md, add it to fixture-manifest.txt, then re-run this script."
     echo ""
     continue
   fi

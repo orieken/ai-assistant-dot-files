@@ -1,0 +1,39 @@
+# Required fixture files, relative to tests/agents/.
+# scripts/test-agents.sh FAILS (exit 1) if any listed file is missing — a deleted
+# fixture can never silently SKIP (roadmap M0.2, audit H9).
+# When you commit a new golden baseline (actual-output.md), add it here — the
+# script also fails on any committed baseline that is not listed.
+accessibility-engineer/expected-patterns.txt
+agent-evaluator/expected-patterns.txt
+analyst/expected-patterns.txt
+architect/expected-patterns.txt
+code-reviewer/expected-patterns.txt
+context-auditor/expected-patterns.txt
+context-engineer/expected-patterns.txt
+data-engineer/expected-patterns.txt
+developer/expected-patterns.txt
+devops-engineer/expected-patterns.txt
+documentation-auditor/expected-patterns.txt
+documentation-manager/expected-patterns.txt
+knowledge-auditor/expected-patterns.txt
+memory-auditor/expected-patterns.txt
+model-tier-auditor/expected-patterns.txt
+pattern-reviewer/expected-patterns.txt
+performance-engineer/expected-patterns.txt
+privacy-auditor/expected-patterns.txt
+product-owner/expected-patterns.txt
+prompt-evaluator/expected-patterns.txt
+qa-engineer/expected-patterns.txt
+refactor-engineer/expected-patterns.txt
+release-manager/expected-patterns.txt
+retrieval-evaluator/expected-patterns.txt
+rule-auditor/expected-patterns.txt
+security-reviewer/expected-patterns.txt
+spec-writer/expected-patterns.txt
+sre-engineer/expected-patterns.txt
+tech-writer/expected-patterns.txt
+test-driven-developer/expected-patterns.txt
+tool-validator/expected-patterns.txt
+unit-tester/expected-patterns.txt
+visual-qa-engineer/expected-patterns.txt
+security-reviewer/actual-output.md
