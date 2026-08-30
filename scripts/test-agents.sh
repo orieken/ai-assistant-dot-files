@@ -135,7 +135,10 @@ for agent_dir in "$TESTS_DIR"/*/; do
   contract_file="$(contract_for_agent "$agent_name")"
   if [[ -n "$contract_file" && -f "$CONTRACTS_DIR/$contract_file" ]]; then
     while IFS= read -r line; do
-      if [[ "$line" =~ ^-\ \`(.+)\`$ ]]; then
+      # Match only "- `## Heading`" bullets from Required Sections. The capture group
+      # forbids backticks so a Validation Rules bullet — which quotes a heading and then
+      # continues with more backticked prose — is not mistaken for a required section.
+      if [[ "$line" =~ ^-\ \`(#{2,6}[^\`]+)\`$ ]]; then
         section="${BASH_REMATCH[1]}"
         if grep -qF -- "$section" "$actual"; then
           pass "contract section: $section"
