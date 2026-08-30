@@ -334,8 +334,8 @@ Grouped by what they're for:
 | `promote-memory` | Evaluates one delivery's `retrospective.md` immediately for promotion-worthy content — KI, ADR, rule change, or lesson |
 | `learning-engine` | Extracts candidate lessons from past pipeline retrospectives — opposing-force pair with `forgetting-engine` (opt-in hook) |
 | `forgetting-engine` | Flags obsolete KIs and audits the capability inventory for duplicate skills and keyword collisions — opposing-force pair with `learning-engine` |
-| `orchestrate` | AOS Phase 3 runtime entry point: loads a Workflow definition and executes stages with checkpoint support and parallel branch handling |
-| `scheduler` | Orchestrates scheduled or hook-driven pipeline runs (cron triggers, automated memory audits, periodic health checks) |
+| `orchestrate` | AOS Phase 3 entry point: reads a Workflow definition and steps through its stages as prompt instructions the host LLM follows. Today "parallel" branches run sequentially and checkpointing is prompt-discipline, not a runtime guarantee — the real executor is specified, ships with M0.4 (skeleton) and L3.3 (parallelism) |
+| `scheduler` | Scheduled or hook-driven pipeline runs (cron triggers, automated memory audits, periodic health checks) — specified; the hook executor that would run these deterministically ships with L3.10 |
 
 ### Feature lifecycle
 | Skill | Trigger on |
@@ -465,9 +465,16 @@ pattern/abstraction, a performance SLA, a data model change, a UI surface, a sec
 respectively); skipped otherwise, straight through to the next mandatory step. Amber nodes are **real
 stops** — the pipeline doesn't proceed past one without your explicit confirmation. Every arrow is also
 gated by `validate-artifact` (structural contract check) where the producing agent has a contract in
-`shared/contracts/`, and the whole run is checkpointed to `.claude/feature-workspace/pipeline-state.json`
-+ `pipeline-trace.json` so it can be resumed or rolled back (`resume-pipeline`) rather than restarted from
-scratch.
+`shared/contracts/`.
+
+An honest caveat on enforcement: today this entire pipeline runs as prompt instructions the host
+platform's LLM follows — the stops, the contract gates, and the checkpoint files
+(`.claude/feature-workspace/<feature>/pipeline-state.json` + `pipeline-trace.json` read by
+`resume-pipeline`) are prompt-discipline, not process guarantees. A Go executor that owns the run
+loop and durable state is specified and ships incrementally: M0.4 (executor skeleton), L2.12
+(executor-owned pipeline state), L2.13 (gates as process interrupts), L2.15 (real resume) — see
+[docs/roadmaps/BUILD-ROADMAP.md](docs/roadmaps/BUILD-ROADMAP.md) and
+[ADR-006](docs/adrs/ADR-006-loom-executes-pipelines.md).
 
 ### Using the agents by tool
 

@@ -158,12 +158,18 @@ be both complete and predictable.
 
 ## 4. The Pipeline's Own Observability
 
-The pipeline instruments itself the same way you'd instrument a production system:
+The pipeline is *specified* to instrument itself the way you'd instrument a production system.
+Honest status first: every artifact below is written by the host platform's LLM following prompt
+instructions — there is no runtime recorder today, and durations recorded by a model are estimates,
+not measurements. Executor-owned state ships with M0.4/L2.12, and real OpenTelemetry emission with
+L3.8 (see `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006). The artifact set as specified:
 
 - **`pipeline-state.json`** (per feature, in `.claude/feature-workspace/`, persisted to `docs/features/<name>/`)
   — resumability: current phase, completed agents, artifact checksums. `resume-pipeline` reads this.
+  Ownership moves from prompt-discipline to the Go executor with L2.12.
 - **`pipeline-trace.json`** (same location) — timing, status, iteration counts, and `budgetUtilization` per
   agent. `pipeline-trace` (single run) and `pipeline-retrospective` (cross-delivery trends) read this.
+  Trustworthy wall-clock timing arrives when the executor emits it (M0.4 onward, OTel with L3.8).
 - **`docs/agent-metrics/scorecard-YYYY-MM.md`** — monthly quality scores per agent (security TPR proxy,
   code-reviewer first-pass acceptance, analyst completeness, architect fitness-function coverage),
   trend-compared month over month.
