@@ -13,6 +13,7 @@ import (
 type Executor struct {
 	provider Provider
 	store    *StateStore
+	onStale  func([]StaleStage)
 }
 
 // NewExecutor wires a provider and a state store into an executor.
@@ -20,12 +21,19 @@ func NewExecutor(provider Provider, store *StateStore) *Executor {
 	return &Executor{provider: provider, store: store}
 }
 
+// OnStale registers a callback invoked once per Run, before any stage
+// executes, with the stages that digest verification demoted. It is how the
+// CLI tells the human which completed work is being redone and why.
+func (e *Executor) OnStale(report func([]StaleStage)) {
+	e.onStale = report
+}
+
 // Run executes every stage of the plan that is not already COMPLETED in
 // persisted state, stopping on the first failure. Cancelling ctx (SIGINT)
 // persists a clean INTERRUPTED checkpoint for the in-flight stage before
 // returning, so a later Run resumes by re-running that stage.
 func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
-	state, err := e.prepareState(plan)
+	state, err := e.prepareState(plan, input)
 	if err != nil {
 		return err
 	}
@@ -43,7 +51,7 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 	return nil
 }
 
-func (e *Executor) prepareState(plan Plan) (*RunState, error) {
+func (e *Executor) prepareState(plan Plan, input StageInput) (*RunState, error) {
 	if err := plan.Validate(); err != nil {
 		return nil, err
 	}
@@ -52,11 +60,48 @@ func (e *Executor) prepareState(plan Plan) (*RunState, error) {
 		return nil, err
 	}
 	if state == nil {
-		return NewRunState(plan.Name), nil
+		return newRunFor(plan, input), nil
 	}
+	if err := checkStateBelongsToRun(state, plan, input, e.store.Path()); err != nil {
+		return nil, err
+	}
+	return e.verifyResumedState(plan, state)
+}
+
+func newRunFor(plan Plan, input StageInput) *RunState {
+	state := NewRunState(plan.Name)
+	state.SpecPath = input.SpecPath
+	state.FeatureName = FeatureNameFromSpec(input.SpecPath)
+	return state
+}
+
+// checkStateBelongsToRun refuses state from a different plan or a different
+// spec: resuming one feature's run against another's spec would replay the
+// wrong work against the right state.
+func checkStateBelongsToRun(state *RunState, plan Plan, input StageInput, path string) error {
 	if state.PlanName != plan.Name {
-		return nil, fmt.Errorf("run state %s belongs to plan %q, not %q — refusing to mix runs",
-			e.store.Path(), state.PlanName, plan.Name)
+		return fmt.Errorf("run state %s belongs to plan %q, not %q — refusing to mix runs",
+			path, state.PlanName, plan.Name)
+	}
+	if state.SpecPath != "" && input.SpecPath != "" && state.SpecPath != input.SpecPath {
+		return fmt.Errorf("run state %s belongs to spec %q, not %q — refusing to mix runs",
+			path, state.SpecPath, input.SpecPath)
+	}
+	return nil
+}
+
+// verifyResumedState is the L2.12 integrity check: every completed stage's
+// artifact is re-hashed in Go before the run loop trusts it.
+func (e *Executor) verifyResumedState(plan Plan, state *RunState) (*RunState, error) {
+	stale := verifyCompletedStages(plan, state)
+	if len(stale) == 0 {
+		return state, nil
+	}
+	if err := e.store.Save(state); err != nil {
+		return nil, fmt.Errorf("persist verification result: %w", err)
+	}
+	if e.onStale != nil {
+		e.onStale(stale)
 	}
 	return state, nil
 }

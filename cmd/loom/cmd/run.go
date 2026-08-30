@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	"github.com/orieken/loom/internal/orchestrator"
@@ -135,7 +134,7 @@ func prepareRunWorkspace(specPath string) (string, orchestrator.StageInput, erro
 	if _, err := os.Stat(absSpec); err != nil {
 		return "", orchestrator.StageInput{}, fmt.Errorf("feature spec not found: %w", err)
 	}
-	feature := featureSlug(absSpec)
+	feature := orchestrator.FeatureNameFromSpec(absSpec)
 	workspace, err := filepath.Abs(filepath.Join(".claude", "feature-workspace", feature))
 	if err != nil {
 		return "", orchestrator.StageInput{}, fmt.Errorf("resolve workspace path: %w", err)
@@ -144,13 +143,6 @@ func prepareRunWorkspace(specPath string) (string, orchestrator.StageInput, erro
 		return "", orchestrator.StageInput{}, fmt.Errorf("create workspace: %w", err)
 	}
 	return workspace, orchestrator.StageInput{SpecPath: absSpec, WorkspaceDir: workspace}, nil
-}
-
-// featureSlug derives the workspace name from the spec file name, matching
-// deliver-feature's convention (features/user-auth.md -> user-auth).
-func featureSlug(specPath string) string {
-	base := filepath.Base(specPath)
-	return strings.TrimSuffix(base, filepath.Ext(base))
 }
 
 // checkResumeState enforces the resume contract: --resume requires existing

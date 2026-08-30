@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 2
+const StateSchemaVersion = 3
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -34,6 +35,10 @@ const (
 	// StageStatusWaitingApproval marks a gated stage the executor refused to
 	// start because its gate has no approval yet (roadmap L2.13).
 	StageStatusWaitingApproval StageStatus = "WAITING_APPROVAL"
+	// StageStatusStale marks a stage that completed once but whose artifact
+	// no longer matches its recorded digest, or whose input went stale
+	// (roadmap L2.12). A stale stage re-runs.
+	StageStatusStale StageStatus = "STALE"
 )
 
 // StageRecord is the persisted result of one stage invocation.
@@ -44,6 +49,9 @@ type StageRecord struct {
 	ArtifactPath   string      `json:"artifactPath,omitempty"`
 	ArtifactSHA256 string      `json:"artifactSha256,omitempty"`
 	Gate           string      `json:"gate,omitempty"`
+	PreviousStatus StageStatus `json:"previousStatus,omitempty"`
+	StaleReason    StaleReason `json:"staleReason,omitempty"`
+	FoundSHA256    string      `json:"foundSha256,omitempty"`
 	Error          string      `json:"error,omitempty"`
 }
 
@@ -51,6 +59,9 @@ type StageRecord struct {
 type RunState struct {
 	SchemaVersion int                    `json:"schemaVersion"`
 	PlanName      string                 `json:"planName"`
+	FeatureName   string                 `json:"featureName,omitempty"`
+	SpecPath      string                 `json:"specPath,omitempty"`
+	StartedAt     time.Time              `json:"startedAt"`
 	Stages        map[string]StageRecord `json:"stages"`
 	Approvals     map[string]Approval    `json:"approvals"`
 	UpdatedAt     time.Time              `json:"updatedAt"`
@@ -61,6 +72,7 @@ func NewRunState(planName string) *RunState {
 	return &RunState{
 		SchemaVersion: StateSchemaVersion,
 		PlanName:      planName,
+		StartedAt:     time.Now().UTC(),
 		Stages:        map[string]StageRecord{},
 		Approvals:     map[string]Approval{},
 	}
@@ -157,6 +169,13 @@ func (st *StateStore) commitTemp(tmp *os.File, raw []byte) error {
 		return fmt.Errorf("rename temp state file into place: %w", err)
 	}
 	return nil
+}
+
+// FeatureNameFromSpec derives the feature name from its spec file, matching
+// the workspace convention (features/user-auth.md -> user-auth).
+func FeatureNameFromSpec(specPath string) string {
+	base := filepath.Base(specPath)
+	return strings.TrimSuffix(base, filepath.Ext(base))
 }
 
 // ArtifactSHA256 computes the hex SHA-256 of an artifact file, in Go —
