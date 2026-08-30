@@ -63,3 +63,8 @@ knowledge-auditor/actual-output.md
 memory-auditor/actual-output.md
 model-tier-auditor/actual-output.md
 pattern-reviewer/actual-output.md
+privacy-auditor/actual-output.md
+prompt-evaluator/actual-output.md
+retrieval-evaluator/actual-output.md
+rule-auditor/actual-output.md
+tool-validator/actual-output.md
