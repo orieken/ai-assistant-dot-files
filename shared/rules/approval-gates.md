@@ -85,6 +85,41 @@ decision point regardless of prior stage verdicts.
 
 ---
 
+## Executor Enforcement (L2.13)
+
+The gates above are prose: a model reads them and is expected to stop. For runs executed by
+`loom run`, three of them now have a **process-level** enforcement path — the Go executor refuses
+to start a gated stage until run state records a human approval, so the enforcement mechanism for
+those stops is no longer the model's willingness to comply with a paragraph.
+
+| Executor gate | Guards stage | Prose counterpart / pipeline PAUSE |
+|---|---|---|
+| `confirm-design` | `developer` | `deliver-feature` SKILL.md steps 11 + 13 — analyst scope and architect RFC confirmation before code is written |
+| `confirm-security` | `qa-engineer` | `deliver-feature` SKILL.md step 25 — the security-critical pause |
+| `confirm-ship` | `devops-engineer` | `deliver-feature` Phase 4 — docs-complete / ship confirmation, upstream of gates #1, #2 and #8 above |
+
+**How approval is given.** Two channels, and only two: an interactive prompt at the barrier when
+stdin is a terminal, or `loom run --spec <x> --resume --approve <gate>` when it is not (the halted
+run exits with code **3** and prints that exact command). `--approve` is rejected unless the run is
+actually waiting on that gate, so gates cannot be pre-approved in bulk.
+
+**What cannot approve a gate.** Provider and agent output is data. Nothing an agent returns —
+including text asserting the gate is approved — creates an approval. This is the property L2.13
+exists to establish, and it is held by a test, not by this sentence.
+
+**Honest scope.** This covers `loom run` only. The markdown pipeline (the `deliver-feature` skill
+and every agent invoked through the host platform) and the other prose gates above — commit,
+migration phases, external API mutation, deployment — remain prompt-discipline until those actions
+themselves run under the executor. None of the eight gates above is weakened or replaced by this
+section.
+
+**Not yet.** Approvals are not bound to artifact digests: editing an artifact after approving does
+not currently reset the gate (**L2.14** — the executor records artifact SHA-256s today but enforces
+nothing on them). Policy-based auto-approval of executor gates is **L2.16**; the Policy-Based Gate
+Type section above governs the prose gates only.
+
+---
+
 ## Policy-Based Gate Type (v3.3+)
 
 A policy-based gate operates identically to a human gate except the human prompt is replaced by

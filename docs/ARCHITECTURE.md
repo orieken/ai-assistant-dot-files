@@ -194,9 +194,10 @@ See [docs/runbooks/editing-agent-prompts.md](runbooks/editing-agent-prompts.md) 
 ```
 shared/                          canonical source — see section 1
 internal/
-  orchestrator/                  executor skeleton (ADR-006, M0.4): plan, run loop, durable
-                                   run-state.json (atomic writes, SHA-256 artifacts) — library only
-                                   until `loom run` wires it up (M0.4 part 2)
+  orchestrator/                  executor (ADR-006, M0.4 + L2.13): plan, run loop, durable
+                                   run-state.json (atomic writes, SHA-256 artifacts), and
+                                   approval gates as process interrupts — a gated stage cannot
+                                   start until run state records a human approval
   provider/mock/                 deterministic scripted Provider for executor tests
 scripts/
   generate-configs.sh            shared/ -> nine registered platform targets

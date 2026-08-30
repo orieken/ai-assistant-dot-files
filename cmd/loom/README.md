@@ -47,12 +47,27 @@ loom run --spec docs/features/user-auth/spec.md --provider mock
   the binary is missing the stage fails with a remediation message — there is no
   silent fallback. `mock` is for tests and dry runs.
 
+- **Approval gates**: a gated stage does not start until a human approves its gate
+  (roadmap L2.13). The built-in plan gates `developer` behind `confirm-design`,
+  `qa-engineer` behind `confirm-security`, and `devops-engineer` behind
+  `confirm-ship` — the same stops `deliver-feature` asks a human for. On a
+  terminal you are asked `approve gate "X" for stage "Y"? [y/N]` at the barrier;
+  otherwise the run persists `WAITING_APPROVAL`, prints the resume command, and
+  exits with code **3** so scripts can tell "waiting on a human" from a failure:
+
+  ```bash
+  loom run --spec docs/features/user-auth/spec.md --resume --approve confirm-design
+  ```
+
+  `--approve` is only valid with `--resume`, and only for the gate the run is
+  actually halted on. Nothing an agent returns can approve a gate.
+
 **What it does NOT do yet** (skeleton by design — see `docs/roadmaps/BUILD-ROADMAP.md`):
-no approval gates (L2.13) or gate-reset enforcement (L2.14), no retries or
-backoff, no parallelism (L3.3), no policy evaluation (L2.16), no conditional
-stage routing (L3.1) — every stage of the linear plan runs, including ones the
-markdown pipeline would skip — and no telemetry emission (L3.8). Gates in
-particular mean: do not point it at anything requiring human approval yet.
+no gate-reset enforcement — editing an artifact after approving does not reset
+the gate (L2.14) — no retries or backoff, no parallelism (L3.3), no policy
+evaluation (L2.16), no conditional stage routing (L3.1) — every stage of the
+linear plan runs, including ones the markdown pipeline would skip — and no
+telemetry emission (L3.8).
 
 ## Maturity level report
 

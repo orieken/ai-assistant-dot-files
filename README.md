@@ -471,8 +471,11 @@ An honest caveat on enforcement: today this entire pipeline runs as prompt instr
 platform's LLM follows — the stops, the contract gates, and the checkpoint files
 (`.claude/feature-workspace/<feature>/pipeline-state.json` + `pipeline-trace.json` read by
 `resume-pipeline`) are prompt-discipline, not process guarantees. A Go executor that owns the run
-loop and durable state is specified and ships incrementally: M0.4 (executor skeleton), L2.12
-(executor-owned pipeline state), L2.13 (gates as process interrupts), L2.15 (real resume) — see
+loop and durable state is specified and ships incrementally: M0.4 (executor skeleton) and L2.13
+(gates as process interrupts) have landed — `loom run` halts at `confirm-design`,
+`confirm-security`, and `confirm-ship` and nothing a model returns can unlock them, though the
+markdown pipeline above still runs on prompt-discipline; L2.12 (executor-owned pipeline state),
+L2.14 (gates reset on edit), and L2.15 (real resume) are still ahead — see
 [docs/roadmaps/BUILD-ROADMAP.md](docs/roadmaps/BUILD-ROADMAP.md) and
 [ADR-006](docs/adrs/ADR-006-loom-executes-pipelines.md).
 
