@@ -1,0 +1,162 @@
+package orchestrator
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+)
+
+// StateSchemaVersion identifies the run-state JSON shape. Bump on any
+// incompatible change so a future reader can refuse or migrate old files.
+const StateSchemaVersion = 1
+
+// RunStateFileName is the executor-owned state file inside the feature
+// workspace. NOTE: this lives beside the markdown pipeline's
+// pipeline-state.json; roadmap L2.12 migrates pipeline-state.json semantics
+// (checksum-verified resume, tamper refusal) into this file and retires the
+// prompt-owned one.
+const RunStateFileName = "run-state.json"
+
+// StageStatus is the lifecycle state of one stage in a run.
+type StageStatus string
+
+// Stage lifecycle values. A stage is only skipped on resume when COMPLETED;
+// RUNNING, INTERRUPTED, and FAILED stages are re-run.
+const (
+	StageStatusRunning     StageStatus = "RUNNING"
+	StageStatusCompleted   StageStatus = "COMPLETED"
+	StageStatusFailed      StageStatus = "FAILED"
+	StageStatusInterrupted StageStatus = "INTERRUPTED"
+)
+
+// StageRecord is the persisted result of one stage invocation.
+type StageRecord struct {
+	Status         StageStatus `json:"status"`
+	StartedAt      time.Time   `json:"startedAt"`
+	FinishedAt     *time.Time  `json:"finishedAt,omitempty"`
+	ArtifactPath   string      `json:"artifactPath,omitempty"`
+	ArtifactSHA256 string      `json:"artifactSha256,omitempty"`
+	Error          string      `json:"error,omitempty"`
+}
+
+// RunState is the executor-owned durable state for one feature delivery run.
+type RunState struct {
+	SchemaVersion int                    `json:"schemaVersion"`
+	PlanName      string                 `json:"planName"`
+	Stages        map[string]StageRecord `json:"stages"`
+	UpdatedAt     time.Time              `json:"updatedAt"`
+}
+
+// NewRunState returns an empty state for a fresh run of the named plan.
+func NewRunState(planName string) *RunState {
+	return &RunState{
+		SchemaVersion: StateSchemaVersion,
+		PlanName:      planName,
+		Stages:        map[string]StageRecord{},
+	}
+}
+
+// IsStageCompleted reports whether a stage already finished successfully and
+// may be skipped on resume.
+func (s *RunState) IsStageCompleted(stageID string) bool {
+	return s.Stages[stageID].Status == StageStatusCompleted
+}
+
+// StateStore persists RunState to a single JSON file with atomic writes.
+type StateStore struct {
+	path string
+}
+
+// NewStateStore returns a store writing to the given file path.
+func NewStateStore(path string) *StateStore {
+	return &StateStore{path: path}
+}
+
+// Path returns the file the store reads and writes.
+func (st *StateStore) Path() string { return st.path }
+
+// Load reads persisted state. It returns (nil, nil) when no state file
+// exists — a fresh run, not an error.
+func (st *StateStore) Load() (*RunState, error) {
+	raw, err := os.ReadFile(st.path)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read run state: %w", err)
+	}
+	return decodeRunState(raw, st.path)
+}
+
+func decodeRunState(raw []byte, path string) (*RunState, error) {
+	var state RunState
+	if err := json.Unmarshal(raw, &state); err != nil {
+		return nil, fmt.Errorf("parse run state %s: %w", path, err)
+	}
+	if state.SchemaVersion != StateSchemaVersion {
+		return nil, fmt.Errorf("run state %s has schema version %d, this executor supports %d",
+			path, state.SchemaVersion, StateSchemaVersion)
+	}
+	if state.Stages == nil {
+		state.Stages = map[string]StageRecord{}
+	}
+	return &state, nil
+}
+
+// Save persists state atomically: it writes a temp file in the same
+// directory, then os.Rename over the target. A crash between the temp write
+// and the rename leaves the previous state file intact — readers never see
+// a partial JSON document.
+func (st *StateStore) Save(state *RunState) error {
+	state.UpdatedAt = time.Now().UTC()
+	raw, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode run state: %w", err)
+	}
+	return st.writeAtomic(raw)
+}
+
+func (st *StateStore) writeAtomic(raw []byte) error {
+	dir := filepath.Dir(st.path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create state directory: %w", err)
+	}
+	tmp, err := os.CreateTemp(dir, RunStateFileName+".tmp-*")
+	if err != nil {
+		return fmt.Errorf("create temp state file: %w", err)
+	}
+	return st.commitTemp(tmp, raw)
+}
+
+func (st *StateStore) commitTemp(tmp *os.File, raw []byte) error {
+	tmpName := tmp.Name()
+	if _, err := tmp.Write(raw); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("write temp state file: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("close temp state file: %w", err)
+	}
+	if err := os.Rename(tmpName, st.path); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("rename temp state file into place: %w", err)
+	}
+	return nil
+}
+
+// ArtifactSHA256 computes the hex SHA-256 of an artifact file, in Go —
+// never delegated to a prompt (roadmap L2.12 alignment).
+func ArtifactSHA256(path string) (string, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read artifact for checksum: %w", err)
+	}
+	sum := sha256.Sum256(raw)
+	return hex.EncodeToString(sum[:]), nil
+}
