@@ -42,3 +42,8 @@ architect/actual-output.md
 code-reviewer/actual-output.md
 developer/actual-output.md
 qa-engineer/actual-output.md
+sre-engineer/actual-output.md
+tech-writer/actual-output.md
+devops-engineer/actual-output.md
+performance-engineer/actual-output.md
+data-engineer/actual-output.md
