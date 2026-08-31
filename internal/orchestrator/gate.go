@@ -88,7 +88,7 @@ func (e *Executor) Approve(gate string, method ApprovalMethod) error {
 	if err := e.store.Save(state); err != nil {
 		return fmt.Errorf("persist approval for gate %q: %w", gate, err)
 	}
-	return nil
+	return e.emit(Event{Kind: EventGateApproved, Gate: gate, ApprovalMethod: method})
 }
 
 // RecordApproval writes an approval for a named gate. Callers that must

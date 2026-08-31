@@ -97,9 +97,36 @@ loom state show --spec docs/features/user-auth/spec.md [--json]
   ordering available.
 - `state approve` **records** a human's approval for audit; it does not enforce the gate.
   Enforcement exists only for stages run by `loom run` (see above).
+- `loom state timeline --spec <spec> [--json]` prints the run's event log (see below).
 - The two pipelines refuse each other's state files: `loom run` will not resume a run recorded
   by `loom state`, and vice versa. They route differently, so resuming across them would replay
   the wrong work.
+
+## Run event timeline
+
+Both pipelines append to `.claude/feature-workspace/<feature>/run-events.jsonl` — one JSON
+object per line, written by this binary with timestamps taken from the clock at the moment
+each transition happens. Stage durations are therefore *measured* by subtracting two
+timestamps, not estimated by a model after the fact.
+
+```bash
+loom state timeline --spec docs/features/user-auth/spec.md
+#  0s  run.started
+#  0s  stage.started        analyst
+#  4s  stage.completed      analyst
+#  4s  gate.waiting         developer confirm-design
+# 2m1s gate.approved        confirm-design tty
+```
+
+Recorded kinds: `run.started`, `run.completed`, `stage.started`, `stage.completed`,
+`stage.failed`, `stage.interrupted`, `stage.stale`, `gate.waiting`, `gate.approved`.
+
+- **Append-only.** The file is never rewritten or truncated; each event is one write. A
+  process killed mid-write can leave a torn final line, which readers skip rather than
+  failing on.
+- **Not telemetry.** This is a local audit log. OpenTelemetry emission is roadmap L3.8, and
+  this file does not replace `pipeline-trace.json`, whose `budgetUtilization` and iteration
+  counts are still model-written estimates.
 
 ## Maturity level report
 

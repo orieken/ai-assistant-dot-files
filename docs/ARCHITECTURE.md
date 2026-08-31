@@ -159,11 +159,23 @@ be both complete and predictable.
 ## 4. The Pipeline's Own Observability
 
 The pipeline is *specified* to instrument itself the way you'd instrument a production system.
-Honest status first: every artifact below is written by the host platform's LLM following prompt
-instructions — there is no runtime recorder today, and durations recorded by a model are estimates,
-not measurements. Executor-owned state ships with M0.4/L2.12, and real OpenTelemetry emission with
-L3.8 (see `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006). The artifact set as specified:
+Honest status first, artifact by artifact — some of this is now measured, and the rest is still a
+model's own account of itself:
 
+- **Measured** (written by the Go binary, timestamps from the clock): `run-state.json` and
+  `run-events.jsonl`. Stage transitions, gate decisions, and artifact digests are recorded by
+  `loom run`, or by the `loom state` subcommands the markdown pipeline calls (M0.4, L2.13, L2.12).
+  Stage durations are derivable by subtracting two recorded timestamps.
+- **Estimated** (written by the host platform's LLM following prompt instructions):
+  `pipeline-trace.json`'s `budgetUtilization` and iteration counts, the scorecards, and the
+  lessons-learned corpus. A duration recalled by a model is not a measurement.
+
+Real OpenTelemetry emission is still ahead (L3.8) — `run-events.jsonl` is a local audit log, not a
+telemetry pipeline. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifact set as specified:
+
+- **`run-events.jsonl`** (per feature, beside run state) — append-only event log written by the Go
+  binary from both pipelines: stage transitions, gate halts and approvals, and integrity failures,
+  each with a real timestamp. Read with `loom state timeline`.
 - **`pipeline-state.json`** (per feature, in `.claude/feature-workspace/`, persisted to `docs/features/<name>/`)
   — resumability: current phase, completed agents, artifact checksums. `resume-pipeline` reads this.
   Ownership has moved to the Go executor for `loom run` (L2.12): it keeps its own
@@ -171,7 +183,8 @@ L3.8 (see `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006). The artifact set as spe
   prompt-owned for markdown-pipeline runs.
 - **`pipeline-trace.json`** (same location) — timing, status, iteration counts, and `budgetUtilization` per
   agent. `pipeline-trace` (single run) and `pipeline-retrospective` (cross-delivery trends) read this.
-  Trustworthy wall-clock timing arrives when the executor emits it (M0.4 onward, OTel with L3.8).
+  Its timings remain model-written estimates. Measured wall-clock timing now exists alongside it in
+  `run-events.jsonl` (L2.12); folding the two together, and emitting OTel, is L3.8.
 - **`docs/agent-metrics/scorecard-YYYY-MM.md`** — monthly quality scores per agent (security TPR proxy,
   code-reviewer first-pass acceptance, analyst completeness, architect fitness-function coverage),
   trend-compared month over month.
@@ -201,7 +214,8 @@ internal/
                                    process interrupts — a gated stage cannot start until run
                                    state records a human approval — and artifact digests
                                    computed and re-verified in Go, so an edited artifact stops
-                                   counting as completed work
+                                   counting as completed work, plus an append-only
+                                   run-events.jsonl audit timeline written by both pipelines
   provider/mock/                 deterministic scripted Provider for executor tests
 scripts/
   generate-configs.sh            shared/ -> nine registered platform targets

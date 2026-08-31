@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -232,5 +233,63 @@ func TestRunStateRefusesExecutorOwnedState(t *testing.T) {
 	_, err := callState(t, runStateRecord, stateFlags{spec: spec, stage: "analyst"})
 	if err == nil || !strings.Contains(err.Error(), "executor") {
 		t.Errorf("loom state accepted executor-owned state: %v", err)
+	}
+}
+
+func TestRunStateWritesTheSameTimelineTheExecutorDoes(t *testing.T) {
+	spec := stateProject(t)
+	recordStages(t, spec, "analyst", "developer")
+	if _, err := callState(t, runStateApprove, stateFlags{spec: spec, gate: "confirm-design"}); err != nil {
+		t.Fatalf("approve: %v", err)
+	}
+
+	output, err := callState(t, runStateTimeline, stateFlags{spec: spec})
+	if err != nil {
+		t.Fatalf("timeline: %v", err)
+	}
+	for _, want := range []string{"stage.completed", "analyst", "developer", "gate.approved", "confirm-design"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("timeline output missing %q:\n%s", want, output)
+		}
+	}
+}
+
+func TestRunStateTimelineRecordsVerificationFailures(t *testing.T) {
+	spec := stateProject(t)
+	artifact := writeArtifact(t, "analysis.md", "# analysis\n")
+	if _, err := callState(t, runStateRecord, stateFlags{spec: spec, stage: "analyst", artifact: artifact}); err != nil {
+		t.Fatalf("record: %v", err)
+	}
+	if err := os.WriteFile(artifact, []byte("# analysis, edited\n"), 0o644); err != nil {
+		t.Fatalf("edit artifact: %v", err)
+	}
+	if _, err := callState(t, runStateVerify, stateFlags{spec: spec}); !errors.Is(err, errStateVerifyFailed) {
+		t.Fatalf("verify error = %v", err)
+	}
+
+	last := lastTimelineEvent(t, spec)
+	if last.Kind != orchestrator.EventStageStale || last.StaleReason != orchestrator.StaleReasonEdited {
+		t.Errorf("last event = %+v, want a stale analyst", last)
+	}
+}
+
+func lastTimelineEvent(t *testing.T, spec string) orchestrator.Event {
+	t.Helper()
+	output, err := callState(t, runStateTimeline, stateFlags{spec: spec, asJSON: true})
+	if err != nil {
+		t.Fatalf("timeline --json: %v", err)
+	}
+	var events []orchestrator.Event
+	if err := json.Unmarshal([]byte(output), &events); err != nil {
+		t.Fatalf("--json output does not parse: %v\n%s", err, output)
+	}
+	return events[len(events)-1]
+}
+
+func TestRunStateTimelineWithoutEventsFails(t *testing.T) {
+	spec := stateProject(t)
+
+	if _, err := callState(t, runStateTimeline, stateFlags{spec: spec}); err == nil {
+		t.Error("timeline succeeded for a run with no events")
 	}
 }

@@ -13,12 +13,19 @@ import (
 type Executor struct {
 	provider Provider
 	store    *StateStore
+	timeline *Timeline
 	onStale  func([]StaleStage)
 }
 
 // NewExecutor wires a provider and a state store into an executor.
 func NewExecutor(provider Provider, store *StateStore) *Executor {
-	return &Executor{provider: provider, store: store}
+	return &Executor{provider: provider, store: store, timeline: NewTimeline(store.Path())}
+}
+
+// emit appends one event to the run's timeline. Timestamps come from the
+// clock here, not from anything a provider reported.
+func (e *Executor) emit(event Event) error {
+	return e.timeline.Append(event)
 }
 
 // OnStale registers a callback invoked once per Run, before any stage
@@ -37,6 +44,9 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 	if err != nil {
 		return err
 	}
+	if err := e.emit(Event{Kind: EventRunStarted}); err != nil {
+		return err
+	}
 	for _, stage := range plan.Stages {
 		if state.IsStageCompleted(stage.ID) {
 			continue
@@ -48,7 +58,7 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 			return err
 		}
 	}
-	return nil
+	return e.emit(Event{Kind: EventRunCompleted})
 }
 
 func (e *Executor) prepareState(plan Plan, input StageInput) (*RunState, error) {
@@ -69,6 +79,17 @@ func (e *Executor) prepareState(plan Plan, input StageInput) (*RunState, error) 
 		return nil, err
 	}
 	return e.verifyResumedState(state)
+}
+
+func (e *Executor) emitStale(state *RunState, stale []StaleStage) error {
+	for _, item := range stale {
+		event := Event{Kind: EventStageStale, Stage: item.StageID, StaleReason: item.Reason,
+			Sequence: state.Stages[item.StageID].Sequence}
+		if err := e.emit(event); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func newRunFor(plan Plan, input StageInput) *RunState {
@@ -103,6 +124,9 @@ func (e *Executor) verifyResumedState(state *RunState) (*RunState, error) {
 	if err := e.store.Save(state); err != nil {
 		return nil, fmt.Errorf("persist verification result: %w", err)
 	}
+	if err := e.emitStale(state, stale); err != nil {
+		return nil, err
+	}
 	if e.onStale != nil {
 		e.onStale(stale)
 	}
@@ -131,11 +155,17 @@ func (e *Executor) checkGate(stage Stage, state *RunState) error {
 	if err := e.persistStatus(state, stage.ID, record); err != nil {
 		return err
 	}
+	if err := e.emit(Event{Kind: EventGateWaiting, Stage: stage.ID, Gate: stage.Gate}); err != nil {
+		return err
+	}
 	return &WaitingApprovalError{Gate: stage.Gate, Stage: stage.ID}
 }
 
 func (e *Executor) runStage(ctx context.Context, stage Stage, input StageInput, state *RunState) error {
 	if err := e.persistStatus(state, stage.ID, StageRecord{Status: StageStatusRunning, StartedAt: time.Now().UTC()}); err != nil {
+		return err
+	}
+	if err := e.emit(Event{Kind: EventStageStarted, Stage: stage.ID, Sequence: state.Stages[stage.ID].Sequence}); err != nil {
 		return err
 	}
 	output, invokeErr := e.invoke(ctx, stage, input)
@@ -172,6 +202,9 @@ func (e *Executor) persistFailure(ctx context.Context, state *RunState, stage St
 	if err := e.persistStatus(state, stage.ID, record); err != nil {
 		return errors.Join(invokeErr, err)
 	}
+	if err := e.emitStageEnd(state, stage.ID, record); err != nil {
+		return errors.Join(invokeErr, err)
+	}
 	return fmt.Errorf("stage %q: %w", stage.ID, invokeErr)
 }
 
@@ -188,7 +221,25 @@ func (e *Executor) persistCompletion(state *RunState, stage Stage, output StageO
 		}
 		record.ArtifactSHA256 = sum
 	}
-	return e.persistStatus(state, stage.ID, record)
+	if err := e.persistStatus(state, stage.ID, record); err != nil {
+		return err
+	}
+	return e.emitStageEnd(state, stage.ID, record)
+}
+
+// emitStageEnd records how a stage finished, using the same record the
+// state file holds so the two never disagree.
+func (e *Executor) emitStageEnd(state *RunState, stageID string, record StageRecord) error {
+	kinds := map[StageStatus]EventKind{
+		StageStatusCompleted:   EventStageCompleted,
+		StageStatusFailed:      EventStageFailed,
+		StageStatusInterrupted: EventStageInterrupted,
+	}
+	kind, ok := kinds[record.Status]
+	if !ok {
+		return nil
+	}
+	return e.emit(Event{Kind: kind, Stage: stageID, Sequence: state.Stages[stageID].Sequence, Error: record.Error})
 }
 
 func (e *Executor) persistStatus(state *RunState, stageID string, record StageRecord) error {

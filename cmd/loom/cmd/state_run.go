@@ -29,8 +29,24 @@ func runStateRecord(cmd *cobra.Command, _ []string) error {
 	if err := store.Save(state); err != nil {
 		return err
 	}
+	if err := appendEvent(stateArgs.spec, orchestrator.Event{
+		Kind: orchestrator.EventStageCompleted, Stage: stateArgs.stage, Sequence: record.Sequence,
+	}); err != nil {
+		return err
+	}
 	cmd.Printf("recorded %s #%d%s\n", stateArgs.stage, record.Sequence, digestSuffix(record))
 	return nil
+}
+
+// appendEvent records a markdown-pipeline transition on the same timeline
+// the executor writes, so one run has one audit trail whichever pipeline
+// produced it.
+func appendEvent(specPath string, event orchestrator.Event) error {
+	timeline, err := openTimeline(specPath)
+	if err != nil {
+		return err
+	}
+	return timeline.Append(event)
 }
 
 // completedRecord hashes the artifact here, in Go. There is deliberately no
@@ -85,9 +101,23 @@ func runStateVerify(cmd *cobra.Command, _ []string) error {
 	if err := store.Save(state); err != nil {
 		return err
 	}
+	if err := recordStaleEvents(state, stale); err != nil {
+		return err
+	}
 	printVerifyReport(cmd, state, stale)
 	if len(stale) > 0 {
 		return errStateVerifyFailed
+	}
+	return nil
+}
+
+func recordStaleEvents(state *orchestrator.RunState, stale []orchestrator.StaleStage) error {
+	for _, item := range stale {
+		event := orchestrator.Event{Kind: orchestrator.EventStageStale, Stage: item.StageID,
+			StaleReason: item.Reason, Sequence: state.Stages[item.StageID].Sequence}
+		if err := appendEvent(stateArgs.spec, event); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -113,6 +143,11 @@ func runStateApprove(cmd *cobra.Command, _ []string) error {
 	}
 	state.RecordApproval(stateArgs.gate, orchestrator.ApprovalMethodCLI)
 	if err := store.Save(state); err != nil {
+		return err
+	}
+	if err := appendEvent(stateArgs.spec, orchestrator.Event{
+		Kind: orchestrator.EventGateApproved, Gate: stateArgs.gate, ApprovalMethod: orchestrator.ApprovalMethodCLI,
+	}); err != nil {
 		return err
 	}
 	cmd.Printf("recorded approval for gate %q\n", stateArgs.gate)

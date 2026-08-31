@@ -58,6 +58,13 @@ var stateApproveCmd = &cobra.Command{
 	RunE:  runStateApprove,
 }
 
+var stateTimelineCmd = &cobra.Command{
+	Use:   "timeline",
+	Short: "Print the recorded event timeline for a run",
+	Args:  cobra.NoArgs,
+	RunE:  runStateTimeline,
+}
+
 var stateShowCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Show recorded stages, approvals, and where the run stands",
@@ -67,8 +74,8 @@ var stateShowCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(stateCmd)
-	stateCmd.AddCommand(stateRecordCmd, stateVerifyCmd, stateApproveCmd, stateShowCmd)
-	for _, sub := range []*cobra.Command{stateRecordCmd, stateVerifyCmd, stateApproveCmd, stateShowCmd} {
+	stateCmd.AddCommand(stateRecordCmd, stateVerifyCmd, stateApproveCmd, stateShowCmd, stateTimelineCmd)
+	for _, sub := range []*cobra.Command{stateRecordCmd, stateVerifyCmd, stateApproveCmd, stateShowCmd, stateTimelineCmd} {
 		sub.Flags().StringVar(&stateArgs.spec, "spec", "", "feature spec markdown file (required)")
 		_ = sub.MarkFlagRequired("spec")
 	}
@@ -78,6 +85,17 @@ func init() {
 	stateApproveCmd.Flags().StringVar(&stateArgs.gate, "gate", "", "gate name being approved (required)")
 	_ = stateApproveCmd.MarkFlagRequired("gate")
 	stateShowCmd.Flags().BoolVar(&stateArgs.asJSON, "json", false, "print machine-readable JSON")
+	stateTimelineCmd.Flags().BoolVar(&stateArgs.asJSON, "json", false, "print machine-readable JSON")
+}
+
+// openTimeline returns the event log beside a spec's run state. Both
+// pipelines append to the same file, in the same shape.
+func openTimeline(specPath string) (*orchestrator.Timeline, error) {
+	workspace, _, err := prepareRunWorkspace(specPath)
+	if err != nil {
+		return nil, err
+	}
+	return orchestrator.NewTimeline(filepath.Join(workspace, orchestrator.RunStateFileName)), nil
 }
 
 // openMarkdownState loads the state for a spec, creating it on first use.

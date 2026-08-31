@@ -192,9 +192,13 @@ loom state verify --spec <feature-file>
 # after a human approves a gate — an audit record, not enforcement
 loom state approve --spec <feature-file> --gate <gate-name>
 
-# where the run stands
+# where the run stands, and what happened when
 loom state show --spec <feature-file>
+loom state timeline --spec <feature-file>
 ```
+
+Each of these calls also appends to `run-events.jsonl`, an append-only audit log with real
+timestamps — so stage durations are measured rather than estimated. Do not hand-write that file.
 
 A re-recorded stage keeps its original position in the run, so the CHANGES REQUESTED loop is
 recorded correctly without any bookkeeping on your part. `loom state verify` demotes any stage whose
