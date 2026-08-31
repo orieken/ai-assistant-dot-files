@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -82,21 +83,28 @@ func (p *Provider) buildPrompt(stage orchestrator.Stage, input orchestrator.Stag
 	if err != nil {
 		return "", fmt.Errorf("agent definition for stage %q not found at %s: %w", stage.ID, definitionPath, err)
 	}
-	return fmt.Sprintf(
+	prompt := fmt.Sprintf(
 		"%s\n\n---\n\nAct exactly as the agent defined above.\nFeature spec: %s\nWorkspace directory (read prior stage artifacts here): %s\nProduce your complete markdown artifact on stdout and nothing else.\n",
-		definition, input.SpecPath, input.WorkspaceDir), nil
+		definition, input.SpecPath, input.WorkspaceDir)
+	if stage.StateKind == "" {
+		return prompt, nil
+	}
+	instruction, err := typedInstruction(stage, input)
+	if err != nil {
+		return "", err
+	}
+	return prompt + instruction, nil
 }
 
 // runSubprocess executes `claude -p <prompt>` with stdout captured to the
 // stage's artifact path. exec.CommandContext kills the subprocess when ctx
 // ends — that is how stage timeouts and SIGINT reach it.
 func (p *Provider) runSubprocess(ctx context.Context, binaryPath, prompt string, stage orchestrator.Stage, input orchestrator.StageInput) (orchestrator.StageOutput, error) {
-	artifactPath := filepath.Join(input.WorkspaceDir, stage.ID+".md")
-	artifact, err := os.Create(artifactPath)
+	stdout, artifactPath, err := p.captureTarget(stage, input)
 	if err != nil {
-		return orchestrator.StageOutput{}, fmt.Errorf("create artifact file: %w", err)
+		return orchestrator.StageOutput{}, err
 	}
-	defer func() { _ = artifact.Close() }()
+	defer stdout.close()
 
 	stderr := &bytes.Buffer{}
 	// The prompt travels over stdin, not argv: agent definitions begin with
@@ -105,17 +113,33 @@ func (p *Provider) runSubprocess(ctx context.Context, binaryPath, prompt string,
 	// definitions. `claude -p` reads the prompt from stdin when piped.
 	command := exec.CommandContext(ctx, binaryPath, "-p")
 	command.Stdin = strings.NewReader(prompt)
-	command.Stdout = artifact
+	command.Stdout = stdout.writer
 	command.Stderr = stderr
 
 	started := time.Now()
 	p.logger.Info("stage.started", "stage", stage.ID, "agent", stage.Agent, "binary", binaryPath)
 	runErr := command.Run()
 	p.logger.Info("stage.finished", "stage", stage.ID, "durationMs", time.Since(started).Milliseconds(), "success", runErr == nil)
-	return p.finish(ctx, runErr, stage, artifactPath, stderr)
+	return p.finish(ctx, runErr, stage, artifactPath, stdout, stderr)
 }
 
-func (p *Provider) finish(ctx context.Context, waitErr error, stage orchestrator.Stage, artifactPath string, stderr *bytes.Buffer) (orchestrator.StageOutput, error) {
+// captureTarget decides where the agent's stdout goes: a typed stage's
+// response is held in memory so it can be parsed and validated, while an
+// untyped stage still streams straight into its markdown artifact.
+func (p *Provider) captureTarget(stage orchestrator.Stage, input orchestrator.StageInput) (*capture, string, error) {
+	if stage.StateKind != "" {
+		buffer := &bytes.Buffer{}
+		return &capture{writer: buffer, buffer: buffer}, "", nil
+	}
+	artifactPath := filepath.Join(input.WorkspaceDir, stage.ID+".md")
+	file, err := os.Create(artifactPath)
+	if err != nil {
+		return nil, "", fmt.Errorf("create artifact file: %w", err)
+	}
+	return &capture{writer: file, file: file}, artifactPath, nil
+}
+
+func (p *Provider) finish(ctx context.Context, waitErr error, stage orchestrator.Stage, artifactPath string, stdout *capture, stderr *bytes.Buffer) (orchestrator.StageOutput, error) {
 	if ctx.Err() != nil {
 		return orchestrator.StageOutput{}, fmt.Errorf("stage %q subprocess terminated: %w", stage.ID, ctx.Err())
 	}
@@ -123,7 +147,28 @@ func (p *Provider) finish(ctx context.Context, waitErr error, stage orchestrator
 		return orchestrator.StageOutput{}, fmt.Errorf("stage %q agent exited with error: %w — stderr: %s",
 			stage.ID, waitErr, truncate(stderr.String(), 2000))
 	}
-	return orchestrator.StageOutput{ArtifactPath: artifactPath}, nil
+	if stdout.buffer == nil {
+		return orchestrator.StageOutput{ArtifactPath: artifactPath}, nil
+	}
+	payload, err := extractJSON(stdout.buffer.Bytes())
+	if err != nil {
+		return orchestrator.StageOutput{}, fmt.Errorf("stage %q: %w", stage.ID, err)
+	}
+	return orchestrator.StageOutput{Payload: payload}, nil
+}
+
+// capture is where a stage's stdout lands: an artifact file for markdown
+// stages, an in-memory buffer for typed ones.
+type capture struct {
+	writer io.Writer
+	file   *os.File
+	buffer *bytes.Buffer
+}
+
+func (c *capture) close() {
+	if c.file != nil {
+		_ = c.file.Close()
+	}
 }
 
 func truncate(s string, limit int) string {

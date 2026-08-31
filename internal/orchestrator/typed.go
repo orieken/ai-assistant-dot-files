@@ -63,7 +63,27 @@ func persistTypedOutput(stage Stage, input StageInput, output StageOutput) (stri
 	if _, err := state.Decode(state.Kind(stage.StateKind), output.Payload); err != nil {
 		return "", fmt.Errorf("stage %q returned invalid state: %w", stage.ID, err)
 	}
-	return writeTypedState(stage, input, output.Payload)
+	path, err := writeTypedState(stage, input, output.Payload)
+	if err != nil {
+		return "", err
+	}
+	return path, renderView(stage, input, output.Payload)
+}
+
+// renderView writes the human-readable markdown for a typed stage under the
+// contract's filename — `analysis.md`, not `analyst.md` — because the
+// stages that are still untyped were told to read the contract's name. The
+// view is derived, so it is deliberately not digest-tracked: editing it
+// must not be able to corrupt a run.
+func renderView(stage Stage, input StageInput, payload []byte) error {
+	name, body, err := state.RenderView(state.Kind(stage.StateKind), payload)
+	if err != nil {
+		return fmt.Errorf("render view for stage %q: %w", stage.ID, err)
+	}
+	if err := os.WriteFile(filepath.Join(input.WorkspaceDir, name), []byte(body), 0o644); err != nil {
+		return fmt.Errorf("write view for stage %q: %w", stage.ID, err)
+	}
+	return nil
 }
 
 func writeTypedState(stage Stage, input StageInput, payload []byte) (string, error) {

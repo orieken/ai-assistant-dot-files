@@ -211,3 +211,50 @@ func assertArchitectConsumesAnalyst(t *testing.T) {
 		}
 	}
 }
+
+// TestTypedStageRendersTheContractsMarkdownView checks the half of L2.9
+// that keeps the still-untyped stages working: they were told to read
+// analysis.md, so that is where the view lands.
+func TestTypedStageRendersTheContractsMarkdownView(t *testing.T) {
+	executor, _, store, input := newHarness(t, typedScripts(t))
+	if err := executor.Run(context.Background(), typedPlan(), input); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	for _, view := range []string{"analysis.md", "architecture-notes.md"} {
+		body, err := os.ReadFile(filepath.Join(input.WorkspaceDir, view))
+		if err != nil {
+			t.Fatalf("rendered view %s missing: %v", view, err)
+		}
+		if !strings.Contains(string(body), "## ") {
+			t.Errorf("%s does not look like a rendered document:\n%s", view, body)
+		}
+	}
+	// The view is derived, so it is not what integrity tracks — editing it
+	// must not be able to corrupt a run.
+	record := mustLoad(t, store).Stages["analyst"]
+	if strings.HasSuffix(record.ArtifactPath, ".md") {
+		t.Errorf("the rendered view is being tracked as the artifact: %q", record.ArtifactPath)
+	}
+}
+
+func TestEditingTheRenderedViewDoesNotDemoteTheStage(t *testing.T) {
+	executor, provider, _, input := newHarness(t, typedScripts(t))
+	if err := executor.Run(context.Background(), typedPlan(), input); err != nil {
+		t.Fatalf("first run: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(input.WorkspaceDir, "analysis.md"), []byte("# scribbled over\n"), 0o644); err != nil {
+		t.Fatalf("edit view: %v", err)
+	}
+	var reported []orchestrator.StaleStage
+	executor.OnStale(func(stale []orchestrator.StaleStage) { reported = stale })
+	if err := executor.Run(context.Background(), typedPlan(), input); err != nil {
+		t.Fatalf("resume: %v", err)
+	}
+
+	if len(reported) != 0 {
+		t.Errorf("editing a derived view demoted %+v; only state is tracked", reported)
+	}
+	assertInvocations(t, provider, []string{"analyst", "architect", "developer"})
+}
