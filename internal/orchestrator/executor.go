@@ -62,14 +62,17 @@ func (e *Executor) prepareState(plan Plan, input StageInput) (*RunState, error) 
 	if state == nil {
 		return newRunFor(plan, input), nil
 	}
+	if err := state.CheckCreatedBy(CreatedByExecutor); err != nil {
+		return nil, err
+	}
 	if err := checkStateBelongsToRun(state, plan, input, e.store.Path()); err != nil {
 		return nil, err
 	}
-	return e.verifyResumedState(plan, state)
+	return e.verifyResumedState(state)
 }
 
 func newRunFor(plan Plan, input StageInput) *RunState {
-	state := NewRunState(plan.Name)
+	state := NewRunState(plan.Name, CreatedByExecutor)
 	state.SpecPath = input.SpecPath
 	state.FeatureName = FeatureNameFromSpec(input.SpecPath)
 	return state
@@ -92,8 +95,8 @@ func checkStateBelongsToRun(state *RunState, plan Plan, input StageInput, path s
 
 // verifyResumedState is the L2.12 integrity check: every completed stage's
 // artifact is re-hashed in Go before the run loop trusts it.
-func (e *Executor) verifyResumedState(plan Plan, state *RunState) (*RunState, error) {
-	stale := verifyCompletedStages(plan, state)
+func (e *Executor) verifyResumedState(state *RunState) (*RunState, error) {
+	stale := VerifyCompletedStages(state)
 	if len(stale) == 0 {
 		return state, nil
 	}
@@ -104,6 +107,16 @@ func (e *Executor) verifyResumedState(plan Plan, state *RunState) (*RunState, er
 		e.onStale(stale)
 	}
 	return state, nil
+}
+
+// sequenceFor keeps a stage's original position when it is re-recorded: a
+// re-run after an interrupt or a review loop is the same step of the run,
+// not a new one.
+func sequenceFor(state *RunState, stageID string) int {
+	if existing := state.Stages[stageID].Sequence; existing > 0 {
+		return existing
+	}
+	return state.NextSequence()
 }
 
 // checkGate is the process interrupt: a gated stage cannot start until run
@@ -179,6 +192,9 @@ func (e *Executor) persistCompletion(state *RunState, stage Stage, output StageO
 }
 
 func (e *Executor) persistStatus(state *RunState, stageID string, record StageRecord) error {
+	if record.Sequence == 0 {
+		record.Sequence = sequenceFor(state, stageID)
+	}
 	state.Stages[stageID] = record
 	if err := e.store.Save(state); err != nil {
 		return fmt.Errorf("persist state for stage %q: %w", stageID, err)

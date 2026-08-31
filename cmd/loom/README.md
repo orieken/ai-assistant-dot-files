@@ -75,6 +75,32 @@ after approving its gate does not revoke the approval (L2.14) — no
 every stage of the linear plan runs, including ones the markdown pipeline
 would skip — and no telemetry emission (L3.8).
 
+## Recording markdown-pipeline checkpoints
+
+`loom state` is how the `deliver-feature` skill records checkpoints without a model
+computing its own integrity hashes (roadmap L2.12). The model keeps routing — conditional
+skips, contract retry loops, the code-reviewer loop, none of which `loom run` can do yet —
+while this binary reads each artifact and hashes it.
+
+```bash
+loom state record --spec docs/features/user-auth/spec.md --stage analyst   --artifact .claude/feature-workspace/user-auth/analysis.md
+loom state verify --spec docs/features/user-auth/spec.md   # exits non-zero on any mismatch
+loom state approve --spec docs/features/user-auth/spec.md --gate confirm-design
+loom state show --spec docs/features/user-auth/spec.md [--json]
+```
+
+- No subcommand accepts a caller-supplied digest. A caller that could hand `loom` a hash
+  could hand it a wrong one, which is the failure mode being closed.
+- Stages carry a **sequence** assigned when first recorded and preserved when re-recorded, so
+  a CHANGES REQUESTED loop keeps its place in the run and `verify` knows what is downstream of
+  an edited artifact. The markdown pipeline has no fixed plan, so recording order is the only
+  ordering available.
+- `state approve` **records** a human's approval for audit; it does not enforce the gate.
+  Enforcement exists only for stages run by `loom run` (see above).
+- The two pipelines refuse each other's state files: `loom run` will not resume a run recorded
+  by `loom state`, and vice versa. They route differently, so resuming across them would replay
+  the wrong work.
+
 ## Maturity level report
 
 `loom health` ends with an agentic-maturity assessment driven by

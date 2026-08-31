@@ -27,7 +27,7 @@ func init() {
 func Execute(frameworkFS, mcpFS platform.Content) {
 	configureInstall(frameworkFS, mcpFS)
 	err := rootCmd.Execute()
-	if errors.Is(err, errHealthFailed) {
+	if errors.Is(err, errHealthFailed) || errors.Is(err, errStateVerifyFailed) {
 		os.Exit(1)
 	}
 	if errors.Is(err, orchestrator.ErrWaitingApproval) {

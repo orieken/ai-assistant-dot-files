@@ -18,6 +18,11 @@ type ApprovalMethod string
 const (
 	ApprovalMethodTTY  ApprovalMethod = "tty"
 	ApprovalMethodFlag ApprovalMethod = "flag"
+	// ApprovalMethodCLI records an approval entered with `loom state
+	// approve` for a markdown-pipeline run. It is an audit record of a human
+	// decision, not an enforced gate — the markdown pipeline can proceed
+	// without it (roadmap L2.13 covers `loom run` only).
+	ApprovalMethodCLI ApprovalMethod = "cli"
 )
 
 // Approval is the durable record that a named gate was unlocked by a human.
@@ -79,11 +84,19 @@ func (e *Executor) Approve(gate string, method ApprovalMethod) error {
 	if err := checkWaitingOn(state, gate); err != nil {
 		return err
 	}
-	state.Approvals[gate] = Approval{ApprovedAt: time.Now().UTC(), Method: method, Approver: currentApprover()}
+	state.RecordApproval(gate, method)
 	if err := e.store.Save(state); err != nil {
 		return fmt.Errorf("persist approval for gate %q: %w", gate, err)
 	}
 	return nil
+}
+
+// RecordApproval writes an approval for a named gate. Callers that must
+// enforce "the run is actually waiting on this gate" go through
+// Executor.Approve; this is the plain record used by the markdown
+// pipeline, which has no executor barrier to wait at.
+func (s *RunState) RecordApproval(gate string, method ApprovalMethod) {
+	s.Approvals[gate] = Approval{ApprovedAt: time.Now().UTC(), Method: method, Approver: currentApprover()}
 }
 
 func checkWaitingOn(state *RunState, gate string) error {

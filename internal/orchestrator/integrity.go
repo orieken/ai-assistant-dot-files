@@ -31,24 +31,26 @@ type StaleStage struct {
 	Reason  StaleReason
 }
 
-// verifyCompletedStages walks the plan in order, demoting any completed
-// stage whose artifact no longer matches its recorded digest, then cascades
-// the demotion to every later completed stage. It returns the demotions in
-// plan order; the caller persists once.
+// VerifyCompletedStages walks the recorded stages in sequence order,
+// demoting any completed stage whose artifact no longer matches its
+// recorded digest, then cascading the demotion to every stage recorded
+// after it. It returns the demotions in sequence order; the caller persists
+// once. Sequence rather than plan order is what lets the markdown pipeline,
+// which has no plan, share this code.
 //
 // Demotion never touches Approvals: unlocking a gate stays unlocked even
 // when the stage behind it goes stale. Binding approvals to digests is
 // roadmap L2.14, deliberately not built here.
-func verifyCompletedStages(plan Plan, state *RunState) []StaleStage {
+func VerifyCompletedStages(state *RunState) []StaleStage {
 	stale := make([]StaleStage, 0)
 	cascading := false
-	for _, stage := range plan.Stages {
-		reason, demote := stageStaleReason(state, stage.ID, cascading)
+	for _, stageID := range state.StagesInSequence() {
+		reason, demote := stageStaleReason(state, stageID, cascading)
 		if !demote {
 			continue
 		}
-		markStale(state, stage.ID, reason)
-		stale = append(stale, StaleStage{StageID: stage.ID, Reason: reason})
+		markStale(state, stageID, reason)
+		stale = append(stale, StaleStage{StageID: stageID, Reason: reason})
 		cascading = true
 	}
 	return stale

@@ -2,9 +2,11 @@ package orchestrator_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/orieken/loom/internal/orchestrator"
 	"github.com/orieken/loom/internal/provider/mock"
@@ -195,5 +197,86 @@ func TestLoadRefusesSchemaVersionTwoStateFile(t *testing.T) {
 	}
 	if _, err := orchestrator.NewStateStore(path).Load(); err == nil {
 		t.Fatal("Load accepted a v2 run state; schema 3 adds stale tracking and must refuse it")
+	}
+}
+
+// recordedStage builds a COMPLETED record with a real artifact and digest,
+// the way `loom state record` would.
+func recordedStage(t *testing.T, dir, stageID string, sequence int) orchestrator.StageRecord {
+	t.Helper()
+	path := filepath.Join(dir, stageID+".md")
+	if err := os.WriteFile(path, []byte("# "+stageID), 0o644); err != nil {
+		t.Fatalf("write artifact: %v", err)
+	}
+	sum, err := orchestrator.ArtifactSHA256(path)
+	if err != nil {
+		t.Fatalf("hash artifact: %v", err)
+	}
+	return orchestrator.StageRecord{
+		Status: orchestrator.StageStatusCompleted, Sequence: sequence,
+		ArtifactPath: path, ArtifactSHA256: sum,
+	}
+}
+
+func TestSequenceIsAssignedInOrderAndSurvivesReruns(t *testing.T) {
+	executor, provider, store, input := newHarness(t, map[string]mock.Script{
+		"analyst":     {ArtifactContent: "# analysis"},
+		"developer":   {Hang: true},
+		"qa-engineer": {ArtifactContent: "# qa report"},
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	timer := time.AfterFunc(20*time.Millisecond, cancel)
+	defer timer.Stop()
+	if err := executor.Run(ctx, threeStagePlan(), input); !errors.Is(err, context.Canceled) {
+		t.Fatalf("interrupted run error = %v, want context.Canceled", err)
+	}
+	cancel()
+	firstPass := mustLoad(t, store).Stages["developer"].Sequence
+
+	provider.SetScript("developer", mock.Script{ArtifactContent: "# implementation"})
+	if err := executor.Run(context.Background(), threeStagePlan(), input); err != nil {
+		t.Fatalf("resume run: %v", err)
+	}
+
+	state := mustLoad(t, store)
+	if got := state.Stages["developer"].Sequence; got != firstPass {
+		t.Errorf("re-running a stage changed its sequence: %d -> %d", firstPass, got)
+	}
+	want := []string{"analyst", "developer", "qa-engineer"}
+	got := state.StagesInSequence()
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("sequence order = %v, want %v", got, want)
+		}
+	}
+}
+
+func TestCheckCreatedByRefusesTheOtherPipeline(t *testing.T) {
+	state := orchestrator.NewRunState("deliver-feature", orchestrator.CreatedByMarkdown)
+	if err := state.CheckCreatedBy(orchestrator.CreatedByExecutor); err == nil {
+		t.Error("executor accepted state written by the markdown pipeline")
+	}
+	if err := state.CheckCreatedBy(orchestrator.CreatedByMarkdown); err != nil {
+		t.Errorf("markdown pipeline refused its own state: %v", err)
+	}
+}
+
+func TestVerifyCascadesBySequenceNotByMapOrder(t *testing.T) {
+	dir := t.TempDir()
+	state := orchestrator.NewRunState("deliver-feature", orchestrator.CreatedByMarkdown)
+	for i, stageID := range []string{"analyst", "developer", "qa-engineer"} {
+		state.Stages[stageID] = recordedStage(t, dir, stageID, i+1)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "developer.md"), []byte("# developer, edited"), 0o644); err != nil {
+		t.Fatalf("edit artifact: %v", err)
+	}
+
+	stale := orchestrator.VerifyCompletedStages(state)
+
+	if len(stale) != 2 || stale[0].StageID != "developer" || stale[1].StageID != "qa-engineer" {
+		t.Fatalf("stale = %+v, want developer then qa-engineer by sequence", stale)
+	}
+	if state.Stages["analyst"].Status != orchestrator.StageStatusCompleted {
+		t.Error("a stage recorded before the edited one was demoted")
 	}
 }

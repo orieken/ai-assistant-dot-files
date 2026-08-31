@@ -174,12 +174,36 @@ non-Non-Negotiable gates.
 
 **Scope note (roadmap L2.12).** Everything in this section describes the *markdown* pipeline — this
 skill, run by the host platform's model. When a feature is delivered by `loom run` instead, none of
-it applies: the Go executor owns `.claude/feature-workspace/<feature-name>/run-state.json`, computes
-every artifact's SHA-256 itself, and re-verifies those digests on resume, demoting any stage whose
-artifact changed on disk (and every stage recorded after it) so it re-runs. A model never computes
-its own integrity hashes there. The procedure below stays authoritative here because this pipeline
-does things the executor cannot yet do — conditional agent skips, contract-validation retry loops,
-and the code-reviewer↔developer loop (roadmap L2.11, L3.1).
+it applies: the Go executor owns `.claude/feature-workspace/<feature-name>/run-state.json` outright.
+This pipeline keeps routing (conditional agent skips, contract-validation retry loops, the
+code-reviewer↔developer loop — roadmap L2.11, L3.1), but it must **not** compute its own integrity
+hashes.
+
+**Record every checkpoint with `loom state` when the binary is available** (check once, at Phase 0,
+with `command -v loom`). Go reads the artifact and hashes it — never write a `sha256` value yourself:
+
+```bash
+# after each step marked **Checkpoint**
+loom state record --spec <feature-file> --stage <agent-name> --artifact .claude/feature-workspace/<feature-name>/<artifact>.md
+
+# before trusting existing artifacts on a resume (see resume-pipeline)
+loom state verify --spec <feature-file>
+
+# after a human approves a gate — an audit record, not enforcement
+loom state approve --spec <feature-file> --gate <gate-name>
+
+# where the run stands
+loom state show --spec <feature-file>
+```
+
+A re-recorded stage keeps its original position in the run, so the CHANGES REQUESTED loop is
+recorded correctly without any bookkeeping on your part. `loom state verify` demotes any stage whose
+artifact changed on disk, plus every stage recorded after it, and exits non-zero.
+
+**Fallback when `loom` is not installed** (Cursor, Windsurf, and any host without the binary): use
+the hand-written `pipeline-state.json` procedure below exactly as written. It is the lesser of the
+two — a model recording its own checksums is not integrity — but it keeps the pipeline working
+where no binary exists.
 
 After every step marked **Checkpoint** above, write/update both `.claude/feature-workspace/<feature-name>/pipeline-state.json`
 (resumability — see below) and `.claude/feature-workspace/<feature-name>/pipeline-trace.json` (timing/performance history —

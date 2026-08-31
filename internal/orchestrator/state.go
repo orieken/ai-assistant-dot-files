@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 3
+const StateSchemaVersion = 4
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -49,6 +50,7 @@ type StageRecord struct {
 	ArtifactPath   string      `json:"artifactPath,omitempty"`
 	ArtifactSHA256 string      `json:"artifactSha256,omitempty"`
 	Gate           string      `json:"gate,omitempty"`
+	Sequence       int         `json:"sequence"`
 	PreviousStatus StageStatus `json:"previousStatus,omitempty"`
 	StaleReason    StaleReason `json:"staleReason,omitempty"`
 	FoundSHA256    string      `json:"foundSha256,omitempty"`
@@ -59,6 +61,7 @@ type StageRecord struct {
 type RunState struct {
 	SchemaVersion int                    `json:"schemaVersion"`
 	PlanName      string                 `json:"planName"`
+	CreatedBy     Creator                `json:"createdBy"`
 	FeatureName   string                 `json:"featureName,omitempty"`
 	SpecPath      string                 `json:"specPath,omitempty"`
 	StartedAt     time.Time              `json:"startedAt"`
@@ -67,15 +70,62 @@ type RunState struct {
 	UpdatedAt     time.Time              `json:"updatedAt"`
 }
 
+// Creator identifies which pipeline owns a state file. The two pipelines
+// route differently — the markdown one skips conditional agents and loops
+// developer/code-reviewer, the executor's plan is linear — so sharing a
+// file is fine but resuming each other's runs is not.
+type Creator string
+
+// The two pipelines that write run state.
+const (
+	CreatedByExecutor Creator = "executor"
+	CreatedByMarkdown Creator = "markdown"
+)
+
 // NewRunState returns an empty state for a fresh run of the named plan.
-func NewRunState(planName string) *RunState {
+func NewRunState(planName string, createdBy Creator) *RunState {
 	return &RunState{
 		SchemaVersion: StateSchemaVersion,
 		PlanName:      planName,
+		CreatedBy:     createdBy,
 		StartedAt:     time.Now().UTC(),
 		Stages:        map[string]StageRecord{},
 		Approvals:     map[string]Approval{},
 	}
+}
+
+// CheckCreatedBy refuses a state file written by the other pipeline.
+func (s *RunState) CheckCreatedBy(want Creator) error {
+	if s.CreatedBy == want {
+		return nil
+	}
+	return fmt.Errorf("this run state was written by the %s pipeline, not the %s one — the two route differently and cannot resume each other's runs",
+		s.CreatedBy, want)
+}
+
+// NextSequence returns the sequence number for a stage record being created
+// for the first time. Sequences are monotonic in recording order and are
+// preserved when a stage is re-recorded (a re-run after a review loop is
+// still the same position in the run), so they order stages for a pipeline
+// that has no fixed plan to order by.
+func (s *RunState) NextSequence() int {
+	highest := 0
+	for _, record := range s.Stages {
+		if record.Sequence > highest {
+			highest = record.Sequence
+		}
+	}
+	return highest + 1
+}
+
+// StagesInSequence returns the recorded stage IDs in recording order.
+func (s *RunState) StagesInSequence() []string {
+	ids := make([]string, 0, len(s.Stages))
+	for id := range s.Stages {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return s.Stages[ids[i]].Sequence < s.Stages[ids[j]].Sequence })
+	return ids
 }
 
 // IsStageCompleted reports whether a stage already finished successfully and

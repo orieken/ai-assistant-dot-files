@@ -184,7 +184,7 @@ func TestResumeSkipsCompletedAndRerunsInterruptedStage(t *testing.T) {
 
 func TestRunRefusesStateFromDifferentPlan(t *testing.T) {
 	executor, _, store, input := newHarness(t, nil)
-	if err := store.Save(orchestrator.NewRunState("some-other-plan")); err != nil {
+	if err := store.Save(orchestrator.NewRunState("some-other-plan", orchestrator.CreatedByExecutor)); err != nil {
 		t.Fatalf("seed state: %v", err)
 	}
 	err := executor.Run(context.Background(), threeStagePlan(), input)
@@ -234,7 +234,7 @@ func TestPlanValidateRejectsDefects(t *testing.T) {
 func TestStateSurvivesCrashBetweenTempWriteAndRename(t *testing.T) {
 	dir := t.TempDir()
 	store := orchestrator.NewStateStore(filepath.Join(dir, orchestrator.RunStateFileName))
-	state := orchestrator.NewRunState("test-plan")
+	state := orchestrator.NewRunState("test-plan", orchestrator.CreatedByExecutor)
 	state.Stages["analyst"] = orchestrator.StageRecord{Status: orchestrator.StageStatusCompleted, StartedAt: time.Now().UTC()}
 	if err := store.Save(state); err != nil {
 		t.Fatalf("save: %v", err)
