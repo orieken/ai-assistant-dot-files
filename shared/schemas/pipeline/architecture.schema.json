@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/orieken/loom/internal/state/architecture-state",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "structuralDecisions": {
+      "items": {
+        "properties": {
+          "decision": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "tradeOffs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "What this decision costs; every decision has a cost"
+          },
+          "fitness": {
+            "properties": {
+              "property": {
+                "type": "string",
+                "description": "The property being measured"
+              },
+              "verification": {
+                "type": "string",
+                "description": "How CI verifies it: tool"
+              },
+              "owner": {
+                "type": "string",
+                "description": "Architect or DevOps"
+              },
+              "judgmentOnly": {
+                "type": "boolean",
+                "description": "True when the property cannot be machine-verified and is documented as judgment-only"
+              }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "property",
+              "verification"
+            ],
+            "description": "Omitted only when judgmentOnly is true"
+          },
+          "judgmentOnly": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision",
+          "rationale"
+        ]
+      },
+      "type": "array"
+    },
+    "componentPlacement": {
+      "items": {
+        "properties": {
+          "component": {
+            "type": "string"
+          },
+          "layer": {
+            "type": "string",
+            "description": "Entities"
+          },
+          "package": {
+            "type": "string",
+            "description": "Where it goes in this repo"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "component",
+          "layer",
+          "package"
+        ]
+      },
+      "type": "array"
+    },
+    "boundedContext": {
+      "properties": {
+        "owning": {
+          "type": "string",
+          "description": "The domain context that owns this feature"
+        },
+        "crossings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Boundaries this feature crosses"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "owning"
+      ]
+    },
+    "stabilityDesign": {
+      "items": {
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Circuit Breaker"
+          },
+          "appliesTo": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pattern",
+          "appliesTo"
+        ]
+      },
+      "type": "array"
+    },
+    "observabilityDesign": {
+      "items": {
+        "properties": {
+          "signal": {
+            "type": "string"
+          },
+          "emittedFrom": {
+            "type": "string",
+            "description": "Adapter or interceptor layer"
+          },
+          "cardinality": {
+            "type": "string",
+            "description": "Expected label cardinality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "signal",
+          "emittedFrom"
+        ]
+      },
+      "type": "array"
+    },
+    "layerBoundaryChecks": {
+      "items": {
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "FAIL",
+              "NOT_APPLICABLE"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rule",
+          "verdict"
+        ]
+      },
+      "type": "array"
+    },
+    "antiPatternChecks": {
+      "items": {
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Distributed monolith"
+          },
+          "found": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pattern",
+          "found"
+        ]
+      },
+      "type": "array"
+    },
+    "fitnessFunctions": {
+      "items": {
+        "properties": {
+          "property": {
+            "type": "string",
+            "description": "The property being measured"
+          },
+          "verification": {
+            "type": "string",
+            "description": "How CI verifies it: tool"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Architect or DevOps"
+          },
+          "judgmentOnly": {
+            "type": "boolean",
+            "description": "True when the property cannot be machine-verified and is documented as judgment-only"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "property",
+          "verification"
+        ]
+      },
+      "type": "array"
+    },
+    "refactoringOpportunities": {
+      "items": {
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "A named Fowler operation"
+          },
+          "target": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation",
+          "target"
+        ]
+      },
+      "type": "array"
+    },
+    "developerHandoffNotes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "openQuestions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "rfcPath": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "feature",
+    "structuralDecisions",
+    "boundedContext",
+    "fitnessFunctions"
+  ]
+}

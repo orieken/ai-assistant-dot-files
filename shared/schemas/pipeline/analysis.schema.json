@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/orieken/loom/internal/state/analysis-state",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer"
+    },
+    "feature": {
+      "type": "string",
+      "description": "kebab-case feature slug"
+    },
+    "summary": {
+      "type": "string",
+      "description": "One paragraph of what this does and why"
+    },
+    "acceptanceCriteria": {
+      "items": {
+        "properties": {
+          "statement": {
+            "type": "string",
+            "description": "What must be true"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Concrete examples or data rows for complex rules"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "statement"
+        ]
+      },
+      "type": "array"
+    },
+    "nonFunctionalRequirements": {
+      "items": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "performance",
+              "security",
+              "scaling",
+              "accessibility",
+              "other"
+            ]
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "string",
+            "description": "The measurable limit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "category",
+          "requirement"
+        ]
+      },
+      "type": "array"
+    },
+    "proposedFitnessFunctions": {
+      "items": {
+        "properties": {
+          "property": {
+            "type": "string",
+            "description": "The property being measured"
+          },
+          "verification": {
+            "type": "string",
+            "description": "How CI verifies it: tool"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Architect or DevOps"
+          },
+          "judgmentOnly": {
+            "type": "boolean",
+            "description": "True when the property cannot be machine-verified and is documented as judgment-only"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "property",
+          "verification"
+        ]
+      },
+      "type": "array"
+    },
+    "outOfScope": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "boundedContext": {
+      "properties": {
+        "owning": {
+          "type": "string",
+          "description": "The domain context that owns this feature"
+        },
+        "crossings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Boundaries this feature crosses"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "owning"
+      ]
+    },
+    "domainEvents": {
+      "properties": {
+        "commands": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "eventsProduced": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "owningAggregates": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "readModels": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "affectedComponents": {
+      "items": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repo-relative path"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "path",
+          "reason"
+        ]
+      },
+      "type": "array"
+    },
+    "dataModelChanges": {
+      "items": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "none",
+              "expand",
+              "contract"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "description",
+          "phase"
+        ]
+      },
+      "type": "array"
+    },
+    "apiChanges": {
+      "items": {
+        "properties": {
+          "endpoint": {
+            "type": "string"
+          },
+          "change": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "endpoint",
+          "change"
+        ]
+      },
+      "type": "array"
+    },
+    "newDependencies": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "architecturalFlags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "tasks": {
+      "properties": {
+        "developer": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "qa": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "techWriter": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "devops": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "edgeCases": {
+      "items": {
+        "properties": {
+          "case": {
+            "type": "string"
+          },
+          "handling": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "case",
+          "handling"
+        ]
+      },
+      "type": "array"
+    },
+    "definitionOfDone": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "openQuestions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "feature",
+    "summary",
+    "acceptanceCriteria",
+    "boundedContext",
+    "affectedComponents",
+    "tasks",
+    "definitionOfDone"
+  ]
+}
