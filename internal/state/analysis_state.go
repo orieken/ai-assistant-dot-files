@@ -92,6 +92,10 @@ type AnalysisState struct {
 	// makes the routing input explicit; acting on it is L3.1.
 	ArchitecturalFlags []string `json:"architecturalFlags,omitempty"`
 
+	// Retrieval carries the frontmatter fields the retrieval corpus
+	// indexes on and validate-artifact checks for.
+	Retrieval Retrieval `json:"retrieval,omitempty"`
+
 	Tasks            TaskList   `json:"tasks" jsonschema:"required"`
 	EdgeCases        []EdgeCase `json:"edgeCases,omitempty"`
 	DefinitionOfDone []string   `json:"definitionOfDone" jsonschema:"required"`

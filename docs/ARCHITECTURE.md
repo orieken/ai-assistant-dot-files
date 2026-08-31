@@ -216,6 +216,10 @@ internal/
                                    computed and re-verified in Go, so an edited artifact stops
                                    counting as completed work, plus an append-only
                                    run-events.jsonl audit timeline written by both pipelines
+  state/                         typed pipeline state (ADR-006, L2.9 first cut): Go structs for
+                                   the analyst -> architect hop, JSON Schema generated from them
+                                   into shared/schemas/pipeline/, field-level projections, and
+                                   the markdown renderers that turn state back into a view
   provider/mock/                 deterministic scripted Provider for executor tests
 scripts/
   generate-configs.sh            shared/ -> nine registered platform targets

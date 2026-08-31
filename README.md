@@ -475,8 +475,10 @@ loop and durable state is specified and ships incrementally: M0.4 (executor skel
 as process interrupts), and L2.12 (executor-owned state, digests verified in Go) have landed —
 `loom run` halts at `confirm-design`, `confirm-security`, and `confirm-ship` with nothing a model
 returns able to unlock them, and re-runs any stage whose artifact changed on disk. The markdown
-pipeline above still runs on prompt-discipline; L2.14 (gates reset on edit) and L2.15 (real resume)
-are still ahead — see
+pipeline above still runs on prompt-discipline; L2.9's first cut has landed too — under `loom run`
+the analyst and architect exchange schema-validated typed state, with markdown rendered from it as
+a view — while the remaining stages still pass markdown. L2.14 (gates reset on edit) and L2.15
+(real resume) are still ahead — see
 [docs/roadmaps/BUILD-ROADMAP.md](docs/roadmaps/BUILD-ROADMAP.md) and
 [ADR-006](docs/adrs/ADR-006-loom-executes-pipelines.md).
 

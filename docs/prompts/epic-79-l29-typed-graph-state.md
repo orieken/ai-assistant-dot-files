@@ -44,6 +44,7 @@ here directly). Do NOT push.
 | Which pipeline | Executor-first. `loom run` gets typed state; the markdown pipeline is untouched by this epic | The same split that worked for L2.13 and L2.12. Type safety buys enforcement only where a process, not a prompt, is doing the handoff |
 | Where typed state lives | One file per stage: `.claude/feature-workspace/<feature>/state/<stage>.json`. That file **is** the stage's artifact, so L2.12's digest recording and staleness cascade apply to it unchanged | Reusing the artifact path means integrity, resume, and the stale cascade all work on day one with no new mechanism |
 | Rendered markdown | Written under the **contract's** filename (`analysis.md`, `architecture-notes.md`), regenerated from state, and **not** digest-tracked. This is load-bearing, not cosmetic: `developer.md` and `qa-engineer.md` are still untyped and their prompts say to read `analysis.md`, so the typed hop stays invisible to them | It is a derived view. Verifying a derived file would make hand-editing the view corrupt the run, which is exactly backwards |
+| Retrieval frontmatter | Both state types carry a `Retrieval` block (domain terms, issue refs, linked ADRs, linked KIs); the renderer emits all seven frontmatter fields, deriving `feature`, `bounded_context`, and `files_touched` from state the document already has | `validate-artifact` SKILL.md step 5 checks those seven fields and the retrieval corpus indexes on them (epic 59). A typed artifact without them would be strictly worse for retrieval than the markdown one it replaces, which would undercut the case for typing more stages |
 | Projections | A consuming stage declares the fields it reads; the executor passes only those, as JSON, in `StageInput`. This epic ships the mechanism for the one hop | Field-level access is the point of L2.9. Applying projections across every stage and retiring `summarize-artifact` is **L2.10** — do not touch that skill here |
 | Validation depth | JSON Schema conformance only: on stage output (reject and fail the stage) and on load (a state file that no longer conforms is a load-time error). Cross-field and business rules are **L2.11** | The roadmap splits these deliberately. Semantic rules without typed state to hang them on is what L2.11 exists to fix |
 | Non-JSON agent responses | Accept raw JSON, or exactly one ```` ```json ```` fenced block with only whitespace around it. Anything else fails the stage with the raw response logged | Models wrap output in fences as a formatting habit; failing a run over that would report a formatting reflex as a modelling error. Scanning for the first balanced object anywhere was rejected — it would happily accept a schema example the agent quoted back |
@@ -136,6 +137,8 @@ output and markdown rendering`), report, PAUSE.
 
 ## Phase D — Contracts and docs — BLOCKED BY Phase C
 
+0. Fold in the retrieval frontmatter per the design table before the doc work: `Retrieval` on both
+   state types, all seven fields rendered, schemas regenerated, tests for the derived values.
 1. `shared/contracts/analysis-contract.md` and `architecture-contract.md`: add a schema reference
    and state the split honestly — under `loom run` these artifacts are typed state validated
    against the schema; for the markdown pipeline the heading rules below remain authoritative. Do

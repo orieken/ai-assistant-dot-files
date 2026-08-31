@@ -6,6 +6,7 @@ import "fmt"
 // architecture-contract.md requires, in contract order.
 func renderArchitecture(architecture ArchitectureState) string {
 	doc := &document{}
+	doc.frontmatter(architecture.frontmatter())
 	doc.title("Architecture Notes: " + architecture.Feature)
 	doc.section("## Structural Decisions", decisionLines(architecture.StructuralDecisions))
 	doc.section("## Component Placement", placementLines(architecture.ComponentPlacement))

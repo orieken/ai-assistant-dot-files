@@ -3,6 +3,21 @@
 **Produced by**: analyst
 **Consumed by**: architect, performance-engineer, data-engineer, developer, qa-engineer, tech-writer, devops-engineer
 
+## Typed State (`loom run`)
+
+Under `loom run`, this artifact is **typed state**, not a markdown document: the stage returns JSON
+conforming to `shared/schemas/pipeline/analysis.schema.json` (generated from `internal/state/` — never hand-edit it),
+the executor validates it, and `analysis.md` is *rendered* from that state as a human-readable view
+(roadmap L2.9). The rendered view reproduces every heading below, so the structural check in this
+contract still describes what a reader sees; the machine handoff no longer goes through it.
+
+Two consequences worth knowing: the view is derived, so editing it changes nothing a downstream
+stage reads — the state document under `state/` is what integrity tracks (L2.12). And a downstream
+stage receives only the fields its projection declares, not the whole document.
+
+For the markdown pipeline (the `deliver-feature` skill), everything below remains authoritative
+exactly as written.
+
 ## Required Sections (exact heading text and level)
 - `## Summary`
 - `### Acceptance Criteria`

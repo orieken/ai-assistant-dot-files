@@ -9,6 +9,7 @@ import (
 // analysis-contract.md requires, in contract order.
 func renderAnalysis(analysis AnalysisState) string {
 	doc := &document{}
+	doc.frontmatter(analysis.frontmatter())
 	doc.title("Feature Analysis: " + analysis.Feature)
 	doc.section("## Summary", []string{analysis.Summary})
 	doc.section("### Acceptance Criteria", criteriaLines(analysis.AcceptanceCriteria))

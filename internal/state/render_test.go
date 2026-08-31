@@ -154,3 +154,87 @@ func TestRenderRefusesUnknownKindAndInvalidState(t *testing.T) {
 		t.Error("rendered a state document that fails validation")
 	}
 }
+
+// TestRenderedViewCarriesRetrievalFrontmatter covers what validate-artifact
+// checks (SKILL.md step 5) and what the retrieval corpus indexes on: all
+// seven fields, always present.
+func TestRenderedViewCarriesRetrievalFrontmatter(t *testing.T) {
+	analysis := validAnalysis()
+	analysis.Retrieval = state.Retrieval{
+		DomainTerms: []string{"Session", "Credential"},
+		IssueRefs:   []string{"PROJ-123"},
+		LinkedADRs:  []string{"docs/adrs/ADR-006-loom-executes-pipelines.md"},
+	}
+	raw, err := json.Marshal(analysis)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+
+	_, body, err := state.RenderView(state.KindAnalysis, raw)
+	if err != nil {
+		t.Fatalf("RenderView: %v", err)
+	}
+
+	if !strings.HasPrefix(body, "---\n") {
+		t.Fatalf("rendered view does not start with a frontmatter block:\n%s", truncateForTest(body))
+	}
+	for _, field := range []string{"feature:", "bounded_context:", "domain_terms:", "files_touched:", "issue_refs:", "linked_adrs:", "linked_kis:"} {
+		if !strings.Contains(body, "\n"+field) {
+			t.Errorf("frontmatter is missing %q", field)
+		}
+	}
+}
+
+func TestFrontmatterDerivesWhatTheStateAlreadyKnows(t *testing.T) {
+	raw, err := json.Marshal(validAnalysis())
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+
+	_, body, err := state.RenderView(state.KindAnalysis, raw)
+	if err != nil {
+		t.Fatalf("RenderView: %v", err)
+	}
+
+	source := validAnalysis()
+	for _, want := range []string{
+		`feature: "` + source.Feature + `"`,
+		`bounded_context: "` + source.BoundedContext.Owning + `"`,
+		`files_touched: ["` + source.AffectedComponents[0].Path + `"]`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("frontmatter missing derived value %q", want)
+		}
+	}
+	// An agent that supplied nothing still gets well-formed empty lists —
+	// a missing field is a WARN, an empty list is a fact.
+	if !strings.Contains(body, "issue_refs: []") {
+		t.Error("unsupplied retrieval fields should render as empty lists")
+	}
+}
+
+func TestArchitectureFrontmatterUsesComponentPlacement(t *testing.T) {
+	architecture := validArchitecture()
+	architecture.ComponentPlacement = []state.ComponentPlacement{
+		{Component: "SessionIssuer", Layer: "UseCases", Package: "internal/identity"},
+	}
+	raw, err := json.Marshal(architecture)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+
+	_, body, err := state.RenderView(state.KindArchitecture, raw)
+	if err != nil {
+		t.Fatalf("RenderView: %v", err)
+	}
+	if !strings.Contains(body, `files_touched: ["internal/identity"]`) {
+		t.Errorf("architecture frontmatter did not derive files_touched from placements:\n%s", truncateForTest(body))
+	}
+}
+
+func truncateForTest(body string) string {
+	if len(body) <= 400 {
+		return body
+	}
+	return body[:400] + "…"
+}

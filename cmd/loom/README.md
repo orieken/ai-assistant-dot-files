@@ -102,6 +102,31 @@ loom state show --spec docs/features/user-auth/spec.md [--json]
   by `loom state`, and vice versa. They route differently, so resuming across them would replay
   the wrong work.
 
+## Typed pipeline state
+
+Two stages of the built-in plan exchange **typed state** instead of markdown (roadmap L2.9,
+first cut): the analyst produces it and the architect consumes a projection of it.
+
+- **Where**: `.claude/feature-workspace/<feature>/state/<stage>.json`. That document IS the
+  stage's artifact, so digest verification and the staleness cascade cover it exactly as they
+  cover any other artifact.
+- **Schemas**: `shared/schemas/pipeline/*.schema.json`, generated from `internal/state/` by
+  `go run ./cmd/gen-schemas`. Never hand-edit them; a test fails when they drift from the
+  structs. The schema is inlined into the stage prompt, so a typed run does not depend on the
+  framework being installed in the target project.
+- **Markdown is a view**: `analysis.md` and `architecture-notes.md` are *rendered* from state
+  under the filenames every contract and downstream agent already expects — including the
+  retrieval frontmatter. The view is derived and not digest-tracked: annotate it freely, nothing
+  downstream reads it and nothing will demote a stage because you did.
+- **Projections**: the architect receives the fields `architecture-contract.md` needs, not the
+  whole analysis. It never sees the QA task list or the definition of done, because it does not
+  read them.
+- **Invalid output fails loudly**: a response that is not a single JSON object (raw, or one
+  fenced block) fails the stage, as does one missing a required field or inventing a field the
+  schema does not have. There is no repair or retry loop.
+
+Every other stage still writes markdown, unchanged.
+
 ## Run event timeline
 
 Both pipelines append to `.claude/feature-workspace/<feature>/run-events.jsonl` — one JSON

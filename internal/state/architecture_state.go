@@ -92,6 +92,10 @@ type ArchitectureState struct {
 	FitnessFunctions         []FitnessFunction        `json:"fitnessFunctions" jsonschema:"required"`
 	RefactoringOpportunities []RefactoringOpportunity `json:"refactoringOpportunities,omitempty"`
 
+	// Retrieval carries the frontmatter fields the retrieval corpus
+	// indexes on and validate-artifact checks for.
+	Retrieval Retrieval `json:"retrieval,omitempty"`
+
 	DeveloperHandoffNotes []string `json:"developerHandoffNotes,omitempty"`
 	OpenQuestions         []string `json:"openQuestions,omitempty"`
 	// RFCPath is set when the architect wrote an RFC, which the pipeline

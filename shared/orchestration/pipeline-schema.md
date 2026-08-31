@@ -2,6 +2,13 @@
 
 Workflows in `shared/workflows/` and `docs/workflows/` use this schema.
 
+> **Note (roadmap L2.9).** The *artifact* schemas for typed stages are no longer prose: they are
+> generated from Go structs in `internal/state/` into `shared/schemas/pipeline/`, and a test fails
+> if the committed copies drift. The workflow schema described in this file — stages, roles,
+> audits, checkpoints — is still hand-maintained; generating it belongs to the planner/router work
+> (L3.1), not here. What a stage `produces` is the contract's filename either way, since typed
+> stages render their markdown view under that name.
+
 ## Full Example
 
 ```yaml

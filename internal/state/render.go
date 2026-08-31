@@ -60,6 +60,34 @@ type document struct {
 	builder strings.Builder
 }
 
+// frontmatter writes the retrieval block validate-artifact checks for. All
+// seven fields are always emitted, empty lists included: a missing field is
+// a WARN, while an empty list is the fact that there are none.
+func (d *document) frontmatter(meta frontmatter) {
+	d.builder.WriteString("---\n")
+	fmt.Fprintf(&d.builder, "feature: %q\n", meta.feature)
+	fmt.Fprintf(&d.builder, "bounded_context: %q\n", meta.boundedContext)
+	fmt.Fprintf(&d.builder, "domain_terms: %s\n", yamlList(meta.domainTerms))
+	fmt.Fprintf(&d.builder, "files_touched: %s\n", yamlList(meta.filesTouched))
+	fmt.Fprintf(&d.builder, "issue_refs: %s\n", yamlList(meta.issueRefs))
+	fmt.Fprintf(&d.builder, "linked_adrs: %s\n", yamlList(meta.linkedADRs))
+	fmt.Fprintf(&d.builder, "linked_kis: %s\n", yamlList(meta.linkedKIs))
+	d.builder.WriteString("---\n\n")
+}
+
+// yamlList renders a flow-style sequence, which keeps the block compact and
+// unambiguous for both empty and populated lists.
+func yamlList(values []string) string {
+	if len(values) == 0 {
+		return "[]"
+	}
+	quoted := make([]string, 0, len(values))
+	for _, value := range values {
+		quoted = append(quoted, fmt.Sprintf("%q", value))
+	}
+	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
 func (d *document) title(text string) {
 	fmt.Fprintf(&d.builder, "# %s\n", text)
 }
