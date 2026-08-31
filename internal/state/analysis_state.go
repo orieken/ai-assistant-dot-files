@@ -85,11 +85,10 @@ type AnalysisState struct {
 	APIChanges         []APIChange         `json:"apiChanges,omitempty"`
 	NewDependencies    []string            `json:"newDependencies,omitempty"`
 
-	// ArchitecturalFlags is what deliver-feature/SKILL.md step 12 routes on
-	// ("invoke architect if analysis.md has Architectural Flags != None").
-	// The markdown template never had a heading for it, so the prose
-	// pipeline reads a field its own template does not produce. Typing it
-	// makes the routing input explicit; acting on it is L3.1.
+	// ArchitecturalFlags is the explicit escape hatch for structural work
+	// the derived signals in RequiresArchitect cannot see — a new base
+	// class, a reversal of an existing ADR — and the way a human forces an
+	// architect regardless. Acting on it is L3.1.
 	ArchitecturalFlags []string `json:"architecturalFlags,omitempty"`
 
 	// Retrieval carries the frontmatter fields the retrieval corpus
@@ -120,12 +119,12 @@ func (a AnalysisState) Validate() error {
 // RequiresArchitect reports whether this analysis describes structural work
 // that needs an architect before code is written.
 //
-// deliver-feature/SKILL.md routes this decision on an "Architectural Flags"
-// heading that exists in neither analysis.template.md nor
-// analysis-contract.md — so the prose pipeline reads a field nothing
-// produces. Deriving it from contract-validated facts makes the condition a
-// function that can be tested, instead of a self-assessment the analyst
-// writes about its own work.
+// deliver-feature/SKILL.md step 12 states the same condition in prose, and
+// this is its tested form. Deriving the answer from contract-validated
+// facts makes it a function anyone can check, rather than a self-assessment
+// the analyst writes about its own work. (Step 12 used to route on an
+// "Architectural Flags" heading that existed in neither the template nor
+// the contract; epic 79 corrected it to name fields that exist.)
 //
 // The four derived signals below cover the common cases. They cannot see
 // "this introduces a new base class" or "this reverses ADR-004", which

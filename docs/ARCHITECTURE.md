@@ -178,9 +178,11 @@ telemetry pipeline. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifa
   each with a real timestamp. Read with `loom state timeline`.
 - **`pipeline-state.json`** (per feature, in `.claude/feature-workspace/`, persisted to `docs/features/<name>/`)
   — resumability: current phase, completed agents, artifact checksums. `resume-pipeline` reads this.
-  Ownership has moved to the Go executor for `loom run` (L2.12): it keeps its own
-  `run-state.json`, hashes artifacts itself, and re-verifies them on resume. This file remains
-  prompt-owned for markdown-pipeline runs.
+  Ownership has moved to the Go executor (L2.12). Under `loom run` the executor keeps its own
+  `run-state.json`, hashes artifacts itself, and re-verifies them on resume. The markdown pipeline
+  now records its checkpoints through `loom state` too — `deliver-feature` checks for the binary at
+  Phase 0 — so this hand-written file is the explicit **fallback** for hosts without `loom`
+  installed, not the default path.
 - **`pipeline-trace.json`** (same location) — timing, status, iteration counts, and `budgetUtilization` per
   agent. `pipeline-trace` (single run) and `pipeline-retrospective` (cross-delivery trends) read this.
   Its timings remain model-written estimates. Measured wall-clock timing now exists alongside it in

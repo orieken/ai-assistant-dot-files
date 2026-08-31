@@ -1,6 +1,16 @@
 # `loom` Build Roadmap — L2 → L4
 
 **Status**: active build plan · **Framework version**: v3.3.14 @ `59efe14` · **Compiled**: 2026-08-29
+· **Status markers last reconciled**: 2026-08-31
+
+> **Reading the Problem statements.** Each item's "Problem" paragraph describes the state of the
+> repository *when this roadmap was compiled*, in present tense. Items that have since shipped carry
+> a **SHIPPED** line under their workstream header — read that first, because the Problem paragraph
+> below it is deliberately preserved as the historical motivation, not as a current claim.
+>
+> Absence of a SHIPPED line means only that no one has reconciled it, not that the work is unbuilt.
+> Markers below were verified against the code on the date above; older milestones (M0.1–M0.3, L2.4,
+> D.1–D.5) shipped earlier and are tracked in `docs/prompts/README.md`'s Completed Prompts table.
 
 This is the single authoritative roadmap. It merges and supersedes:
 
@@ -129,6 +139,10 @@ highest-leverage item in the entire document.
 
 ### M0.4 — Stand up the executor skeleton
 **Workstream**: KERNEL · **Effort**: L · **Blocked by**: M0.1, M0.2 · **Blocks**: L2.9, L2.12, L2.13, L2.14, L3.1, L3.3, L3.8, L4.1
+
+**SHIPPED** 2026-08-29 (epic 76, `ba78f21` + `cab0156`) — `internal/orchestrator/` owns the run
+loop and durable `run-state.json`; `loom run` executes the built-in plan via a claude subprocess
+provider, with a mock provider for tests.
 
 1. **Problem**: Both source roadmaps assume a kernel and neither builds one. `agy.md` item 1 names it
    ("a native tool orchestration kernel"); the maturity TODO targets `internal/orchestrator/*` in
@@ -305,6 +319,11 @@ human-in-the-loop control.*
 ### L2.9 — Replace markdown-file state passing with a typed graph state
 **Workstream**: KERNEL · **Effort**: XL · **Blocked by**: M0.4 · **Blocks**: L2.10, L2.11, L3.1, L3.2, L4.4
 
+**SHIPPED (first cut)** 2026-08-31 (epic 79, `74155f1`…`3430594`) — `internal/state/` types the
+analyst → architect hop: Go structs, JSON Schema generated into `shared/schemas/pipeline/`,
+field-level projections, and markdown rendered as a view. **The other sixteen artifacts still pass
+markdown**, so the Problem below still describes most of the pipeline. Typing them is later work.
+
 1. **Problem**: There is no state object. Agents hand each other whole markdown documents on disk
    (`analysis.md`, `architecture-notes.md`, `implementation-notes.md`, … 15 artifacts). The only real
    delivery in the repo has a 15 KB `analysis.md`. Every downstream agent re-parses the full text;
@@ -355,6 +374,11 @@ human-in-the-loop control.*
 ### L2.12 — Move `pipeline-state.json` ownership into the executor
 **Workstream**: KERNEL · **Effort**: M · **Blocked by**: M0.4 · **Blocks**: L2.14
 
+**SHIPPED** 2026-08-31 (epic 78, `8441ffc`…`7e574c9`) — digests are computed and re-verified in
+Go, an edited artifact demotes its stage and cascades, and `loom state record/verify/approve/show/
+timeline` gives the markdown pipeline a way to record checkpoints without hashing its own work.
+`run-events.jsonl` gives events and timing an owner.
+
 1. **Problem**: The state file — including SHA-256 checksums used for tamper detection and gate-edit
    detection — is written *by the LLM following prose instructions* (`deliver-feature/SKILL.md`,
    "Checkpointing & Pipeline State"). A model computing and recording its own integrity hashes is not
@@ -371,6 +395,12 @@ human-in-the-loop control.*
 
 ### L2.13 — Implement gates as process interrupts, not prose
 **Workstream**: KERNEL · **Effort**: L · **Blocked by**: M0.4 · **Blocks**: L2.14, L4.5
+
+**SHIPPED** 2026-08-30 (epic 77, `868c281`…`a971b2f`) — the executor refuses to start a gated
+stage without a recorded human approval; approval arrives only via a TTY prompt or
+`loom run --resume --approve <gate>`, and a halted run exits 3. Provider output cannot self-approve.
+**Scope**: `loom run` only — the markdown pipeline and the other prose gates remain
+prompt-discipline.
 
 1. **Problem**: All eight gates in `approval-gates.md` are natural-language instructions ("user must
    say 'ship'"). The enforcement mechanism for an irreversible action — DB contract-phase `DROP`,

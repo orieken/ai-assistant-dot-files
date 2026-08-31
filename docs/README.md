@@ -18,7 +18,7 @@ docs/
   THREAT_MODEL.md         -- STRIDE threat model; implementation-status annotations (Epic 65).
   TODO.md                 -- Folder-by-folder documentation audit ledger.
   human-tasks.md          -- Decisions and tasks that require human action, not agent execution.
-  roadmap-2026-08-07.md   -- 2026-08-07 framework roadmap with Epics 69–73.
+  roadmap-2026-08-07.md   -- 2026-08-07 framework roadmap with Epics 69–73 (superseded by roadmaps/).
   clean-code-guidelines.docx -- Full language-example reference, cited from root CLAUDE.md.
   adrs/                  -- Architecture Decision Records.
   agent-metrics/          -- Monthly agent-scorecard output, evals subdirectory.
@@ -29,6 +29,8 @@ docs/
   patterns/               -- Reusable design and framework pattern docs (Saturday/Sunday/GoF/Clean Architecture).
   pipeline-retrospectives/ -- Cross-delivery trend analysis output.
   prompts/                -- Self-contained agent handoff prompts for framework improvements.
+  roadmaps/               -- Forward-looking build plans, including BUILD-ROADMAP.md, the single
+                             authoritative L2-L4 roadmap linked from the root README.
   runbooks/               -- Operational runbooks and guides (see runbooks/README.md for the index).
   blog-posts/             -- Draft blog content about the framework (see blog-content-brief.md).
   audits/                 -- Ad-hoc external audit reports -- scratch inputs, not permanent

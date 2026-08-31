@@ -133,7 +133,19 @@ loom health
 
 # Serve the six framework MCP tools over stdio (register with: claude mcp add loom -- loom mcp serve)
 loom mcp serve
+
+# Execute the delivery pipeline for a spec, halting at each approval gate
+loom run --spec docs/features/user-auth/spec.md
+loom run --spec docs/features/user-auth/spec.md --resume --approve confirm-design
+
+# Record and verify markdown-pipeline checkpoints (digests computed in Go, never by a model)
+loom state record --spec docs/features/user-auth/spec.md --stage analyst --artifact .claude/feature-workspace/user-auth/analysis.md
+loom state verify --spec docs/features/user-auth/spec.md
 ```
+
+`loom run` and `loom state` are documented in full in
+[cmd/loom/README.md](cmd/loom/README.md) — approval gates, state integrity, typed
+pipeline state, and the run event timeline.
 
 `loom install` auto-detects which AI platforms you have installed and only writes configs for those.
 Pass `--platform <name>` to target one specifically. Files are **symlinked by default** so a `git pull`
@@ -334,7 +346,7 @@ Grouped by what they're for:
 | `promote-memory` | Evaluates one delivery's `retrospective.md` immediately for promotion-worthy content — KI, ADR, rule change, or lesson |
 | `learning-engine` | Extracts candidate lessons from past pipeline retrospectives — opposing-force pair with `forgetting-engine` (opt-in hook) |
 | `forgetting-engine` | Flags obsolete KIs and audits the capability inventory for duplicate skills and keyword collisions — opposing-force pair with `learning-engine` |
-| `orchestrate` | AOS Phase 3 entry point: reads a Workflow definition and steps through its stages as prompt instructions the host LLM follows. Today "parallel" branches run sequentially and checkpointing is prompt-discipline, not a runtime guarantee — the real executor is specified, ships with M0.4 (skeleton) and L3.3 (parallelism) |
+| `orchestrate` | AOS Phase 3 entry point: reads a Workflow definition and steps through its stages as prompt instructions the host LLM follows. Today "parallel" branches run sequentially and checkpointing is prompt-discipline, not a runtime guarantee — the real executor shipped with M0.4 and now owns gates, state integrity, and typed handoffs under `loom run`; parallelism is still ahead with L3.3 |
 | `scheduler` | Scheduled or hook-driven pipeline runs (cron triggers, automated memory audits, periodic health checks) — specified; the hook executor that would run these deterministically ships with L3.10 |
 
 ### Feature lifecycle
