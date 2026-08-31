@@ -54,7 +54,7 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 		if err := e.checkGate(stage, state); err != nil {
 			return err
 		}
-		if err := e.runStage(ctx, stage, input, state); err != nil {
+		if err := e.runStage(ctx, stage, plan, input, state); err != nil {
 			return err
 		}
 	}
@@ -161,18 +161,22 @@ func (e *Executor) checkGate(stage Stage, state *RunState) error {
 	return &WaitingApprovalError{Gate: stage.Gate, Stage: stage.ID}
 }
 
-func (e *Executor) runStage(ctx context.Context, stage Stage, input StageInput, state *RunState) error {
+func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input StageInput, state *RunState) error {
 	if err := e.persistStatus(state, stage.ID, StageRecord{Status: StageStatusRunning, StartedAt: time.Now().UTC()}); err != nil {
 		return err
 	}
 	if err := e.emit(Event{Kind: EventStageStarted, Stage: stage.ID, Sequence: state.Stages[stage.ID].Sequence}); err != nil {
 		return err
 	}
+	input, projectErr := projectUpstream(stage, plan, input)
+	if projectErr != nil {
+		return e.persistFailure(ctx, state, stage, projectErr)
+	}
 	output, invokeErr := e.invoke(ctx, stage, input)
 	if invokeErr != nil {
 		return e.persistFailure(ctx, state, stage, invokeErr)
 	}
-	return e.persistCompletion(state, stage, output)
+	return e.persistCompletion(state, stage, input, output)
 }
 
 // invoke calls the provider under the stage's timeout. A zero timeout means
@@ -184,6 +188,16 @@ func (e *Executor) invoke(ctx context.Context, stage Stage, input StageInput) (S
 	stageCtx, cancel := context.WithTimeout(ctx, stage.Timeout)
 	defer cancel()
 	return e.provider.Invoke(stageCtx, stage, input)
+}
+
+// artifactFor resolves what this stage's artifact is: a typed stage's
+// validated state document, written here, or the markdown file a provider
+// wrote itself.
+func artifactFor(stage Stage, input StageInput, output StageOutput) (string, error) {
+	if stage.StateKind == "" {
+		return output.ArtifactPath, nil
+	}
+	return persistTypedOutput(stage, input, output)
 }
 
 // persistFailure distinguishes parent cancellation (SIGINT — checkpoint as
@@ -208,14 +222,18 @@ func (e *Executor) persistFailure(ctx context.Context, state *RunState, stage St
 	return fmt.Errorf("stage %q: %w", stage.ID, invokeErr)
 }
 
-func (e *Executor) persistCompletion(state *RunState, stage Stage, output StageOutput) error {
+func (e *Executor) persistCompletion(state *RunState, stage Stage, input StageInput, output StageOutput) error {
+	artifactPath, err := artifactFor(stage, input, output)
+	if err != nil {
+		return e.persistFailure(context.Background(), state, stage, err)
+	}
 	record := state.Stages[stage.ID]
 	now := time.Now().UTC()
 	record.FinishedAt = &now
 	record.Status = StageStatusCompleted
-	record.ArtifactPath = output.ArtifactPath
-	if output.ArtifactPath != "" {
-		sum, err := ArtifactSHA256(output.ArtifactPath)
+	record.ArtifactPath = artifactPath
+	if artifactPath != "" {
+		sum, err := ArtifactSHA256(artifactPath)
 		if err != nil {
 			return fmt.Errorf("stage %q completed but its artifact is unreadable: %w", stage.ID, err)
 		}

@@ -50,10 +50,19 @@ func findAgentsDir() (string, error) {
 func newMockProvider(plan orchestrator.Plan, hangStage string) orchestrator.Provider {
 	scripts := make(map[string]mock.Script, len(plan.Stages))
 	for _, stage := range plan.Stages {
-		scripts[stage.ID] = mock.Script{ArtifactContent: fmt.Sprintf("# mock artifact for %s\n", stage.ID)}
+		scripts[stage.ID] = scriptFor(stage)
 	}
 	if hangStage != "" {
 		scripts[hangStage] = mock.Script{Hang: true}
 	}
 	return mock.New(scripts)
+}
+
+// scriptFor gives typed stages a valid state document and every other stage
+// a canned markdown artifact.
+func scriptFor(stage orchestrator.Stage) mock.Script {
+	if script, typed := mock.TypedScript(stage.StateKind); typed {
+		return script
+	}
+	return mock.Script{ArtifactContent: fmt.Sprintf("# mock artifact for %s\n", stage.ID)}
 }

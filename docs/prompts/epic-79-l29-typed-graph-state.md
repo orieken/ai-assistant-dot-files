@@ -48,6 +48,7 @@ here directly). Do NOT push.
 | Validation depth | JSON Schema conformance only: on stage output (reject and fail the stage) and on load (a state file that no longer conforms is a load-time error). Cross-field and business rules are **L2.11** | The roadmap splits these deliberately. Semantic rules without typed state to hang them on is what L2.11 exists to fix |
 | Invalid agent output | The stage fails, loudly, with the validation error recorded in run state and the timeline. No repair prompt, no retry | Retries and self-repair are L3.x. A silent repair loop would hide exactly the modelling failures this epic needs to surface |
 | Schema versioning | Each state struct carries `schemaVersion`; a mismatched version is a load-time error with a clear message. No migration code | Consistent with run-state's policy, and for the same reason: nothing is deployed anywhere yet |
+| Architect routing input | `deliver-feature/SKILL.md:91` routes on an "Architectural Flags" heading that exists nowhere in the template or contract. Phase B adds `AnalysisState.RequiresArchitect()` — a pure predicate derived from context crossings, data-model changes, new dependencies, and performance NFRs with thresholds — plus `ArchitecturalFlags` as an explicit escape hatch (derived OR explicit). The prose is corrected to name fields that exist | A routing condition asserted by the model is a self-assessment; one derived from contract-validated facts is a testable function. Crossings and schema changes alone would miss new base classes and cross-cutting concerns, which is exactly what `architect.md` says it exists for — hence four signals and a human-settable override. *Who calls the predicate* stays L3.1 |
 | `Provider` interface | `StageOutput` gains a `Payload []byte` field (the raw JSON the agent emitted). The interface stays one method | Epic 77 kept the interface untouched for gates because gates are not data. State is data — this is the field it was always going to need |
 
 ## Shared guardrails (all phases)
@@ -99,8 +100,13 @@ report, PAUSE.
      architect receives a projection of `AnalysisState` — the fields `architecture-contract.md`
      actually needs — not the whole document.
    - Stages outside the slice are unaffected: no payload, markdown artifact, same behavior.
-2. Mock provider: `Script` gains a `Payload` so tests can script typed output.
-3. Tests: the architect stage receives analyst fields with **no markdown file on the path** (the
+2. Mock provider: `Script` gains a `Payload` so tests can script typed output; `loom run --provider mock` emits valid typed payloads for typed stages.
+3. `AnalysisState.RequiresArchitect()` per the design table, with table-driven tests covering the
+   false-negative cases (a feature with no crossing and no schema change that still needs an
+   architect must be reachable through the explicit flag). Correct `deliver-feature/SKILL.md:91` to
+   route on fields the template actually produces. Do not wire the predicate into execution — that
+   is L3.1.
+4. Tests: the architect stage receives analyst fields with **no markdown file on the path** (the
    L2.9 done-when — name the test accordingly); an invalid payload fails the stage with the
    validation error in run state and one `stage.failed` timeline event; editing a `state/*.json`
    out of band demotes the stage exactly as L2.12 does for any artifact; untyped stages still work.

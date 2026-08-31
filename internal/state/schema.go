@@ -17,31 +17,40 @@ import (
 // the repo root.
 const SchemaDir = "shared/schemas/pipeline"
 
-// StageSchema names one stage's state document and the type behind it.
+// Kind names a state document type. A plan stage declares the kind it
+// produces, so typedness is plan data — like gates — rather than a global
+// property of an agent's name.
+type Kind string
+
+// The kinds typed today. L2.9's first cut types one hop; the rest of the
+// pipeline still exchanges markdown, and this list is where later epics
+// grow.
+const (
+	KindAnalysis     Kind = "analysis"
+	KindArchitecture Kind = "architecture"
+)
+
+// StageSchema names one state document kind and the type behind it.
 type StageSchema struct {
-	// Stage is the stage ID this schema belongs to, matching the plan's
-	// stable stage IDs (never an ordinal).
-	Stage string
+	Kind Kind
 	// FileName is the committed schema file, e.g. analysis.schema.json.
 	FileName string
 	subject  interface{}
 }
 
-// StageSchemas returns every stage whose state is typed today. L2.9's first
-// cut types one hop; the rest of the pipeline still exchanges markdown, and
-// this list is where later epics grow.
+// StageSchemas returns every typed state document.
 func StageSchemas() []StageSchema {
 	return []StageSchema{
-		{Stage: "analyst", FileName: "analysis.schema.json", subject: &AnalysisState{}},
-		{Stage: "architect", FileName: "architecture.schema.json", subject: &ArchitectureState{}},
+		{Kind: KindAnalysis, FileName: "analysis.schema.json", subject: &AnalysisState{}},
+		{Kind: KindArchitecture, FileName: "architecture.schema.json", subject: &ArchitectureState{}},
 	}
 }
 
-// SchemaForStage returns the generated JSON Schema for a stage, or false
-// when that stage is not typed yet.
-func SchemaForStage(stageID string) ([]byte, bool) {
+// SchemaForKind returns the generated JSON Schema for a state kind, or
+// false when the kind is unknown.
+func SchemaForKind(kind Kind) ([]byte, bool) {
 	for _, schema := range StageSchemas() {
-		if schema.Stage != stageID {
+		if schema.Kind != kind {
 			continue
 		}
 		raw, err := schema.Generate()
@@ -63,7 +72,38 @@ func (s StageSchema) Generate() ([]byte, error) {
 	encoder := json.NewEncoder(&rendered)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(schema); err != nil {
-		return nil, fmt.Errorf("render schema for stage %q: %w", s.Stage, err)
+		return nil, fmt.Errorf("render schema for kind %q: %w", s.Kind, err)
 	}
 	return rendered.Bytes(), nil
+}
+
+// TypedStateDir is the workspace subdirectory holding one JSON document per
+// typed stage. The document IS the stage's artifact, so L2.12's digest
+// recording and staleness cascade cover typed state with no new mechanism.
+const TypedStateDir = "state"
+
+// Decode parses and validates a payload of the given kind. Unknown fields
+// are rejected: the schema is generated from these same structs, so a field
+// the struct does not have is a field the agent invented.
+func Decode(kind Kind, payload []byte) (Validatable, error) {
+	switch kind {
+	case KindAnalysis:
+		return decodeInto(payload, &AnalysisState{})
+	case KindArchitecture:
+		return decodeInto(payload, &ArchitectureState{})
+	default:
+		return nil, fmt.Errorf("unknown state kind %q", kind)
+	}
+}
+
+func decodeInto(payload []byte, target Validatable) (Validatable, error) {
+	decoder := json.NewDecoder(bytes.NewReader(payload))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return nil, fmt.Errorf("payload does not conform to the stage schema: %w", err)
+	}
+	if err := target.Validate(); err != nil {
+		return nil, err
+	}
+	return target, nil
 }

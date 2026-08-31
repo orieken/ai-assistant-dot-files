@@ -112,3 +112,56 @@ func (a AnalysisState) Validate() error {
 		requireItems("definitionOfDone", len(a.DefinitionOfDone)),
 	)
 }
+
+// RequiresArchitect reports whether this analysis describes structural work
+// that needs an architect before code is written.
+//
+// deliver-feature/SKILL.md routes this decision on an "Architectural Flags"
+// heading that exists in neither analysis.template.md nor
+// analysis-contract.md — so the prose pipeline reads a field nothing
+// produces. Deriving it from contract-validated facts makes the condition a
+// function that can be tested, instead of a self-assessment the analyst
+// writes about its own work.
+//
+// The four derived signals below cover the common cases. They cannot see
+// "this introduces a new base class" or "this reverses ADR-004", which
+// architect.md also exists for — that is what ArchitecturalFlags is for,
+// and why the two are OR'd rather than the derivation standing alone.
+//
+// Deciding what to DO with this answer (skipping the stage, routing around
+// it) is L3.1; this is a fact about the analysis, not a routing rule.
+func (a AnalysisState) RequiresArchitect() bool {
+	if len(a.ArchitecturalFlags) > 0 {
+		return true
+	}
+	return a.crossesContexts() || a.changesDataModel() ||
+		len(a.NewDependencies) > 0 || a.hasPerformanceThreshold()
+}
+
+func (a AnalysisState) crossesContexts() bool {
+	return len(a.BoundedContext.Crossings) > 0
+}
+
+// changesDataModel ignores entries explicitly recorded as "none" so that an
+// analyst documenting the absence of a migration does not summon an
+// architect.
+func (a AnalysisState) changesDataModel() bool {
+	for _, change := range a.DataModelChanges {
+		if change.Phase == MigrationPhaseExpand || change.Phase == MigrationPhaseContract {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPerformanceThreshold treats a measurable latency or throughput target
+// as structural: thresholds are what force timeouts, circuit breakers, and
+// idempotency decisions (Nygard stability patterns).
+func (a AnalysisState) hasPerformanceThreshold() bool {
+	for _, requirement := range a.NonFunctionalRequirements {
+		if requirement.Category == "performance" && requirement.Threshold != "" {
+			return true
+		}
+	}
+	return false
+}

@@ -146,7 +146,7 @@ func TestArchitectureRoundTripsThroughJSON(t *testing.T) {
 // this fails the build rather than waiting for someone to notice.
 func TestCommittedSchemasMatchTheStructs(t *testing.T) {
 	for _, schema := range state.StageSchemas() {
-		t.Run(schema.Stage, func(t *testing.T) {
+		t.Run(string(schema.Kind), func(t *testing.T) {
 			generated, err := schema.Generate()
 			if err != nil {
 				t.Fatalf("generate: %v", err)
@@ -180,17 +180,17 @@ func repoRoot(t *testing.T) string {
 	return ""
 }
 
-func TestSchemaForStageCoversOnlyTypedStages(t *testing.T) {
-	if _, ok := state.SchemaForStage("analyst"); !ok {
-		t.Error("analyst has no schema; it is part of L2.9's first cut")
+func TestSchemaForKindCoversOnlyTypedKinds(t *testing.T) {
+	if _, ok := state.SchemaForKind(state.KindAnalysis); !ok {
+		t.Error("analysis has no schema; it is part of L2.9's first cut")
 	}
-	if _, ok := state.SchemaForStage("developer"); ok {
-		t.Error("developer reported a schema; only the analyst -> architect hop is typed in this cut")
+	if _, ok := state.SchemaForKind(state.Kind("implementation")); ok {
+		t.Error("implementation reported a schema; only the analyst -> architect hop is typed in this cut")
 	}
 }
 
 func TestGeneratedSchemaDeclaresRequiredFields(t *testing.T) {
-	raw, ok := state.SchemaForStage("analyst")
+	raw, ok := state.SchemaForKind(state.KindAnalysis)
 	if !ok {
 		t.Fatal("no analyst schema")
 	}
@@ -214,4 +214,72 @@ func contains(values []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func TestRequiresArchitectDerivesFromStructuralFacts(t *testing.T) {
+	cases := []struct {
+		name  string
+		shape func(*state.AnalysisState)
+		want  bool
+	}{
+		{"plain feature needs no architect", func(a *state.AnalysisState) {
+			a.BoundedContext.Crossings = nil
+			a.DataModelChanges = nil
+			a.NonFunctionalRequirements = nil
+		}, false},
+		{"context crossing is an integration decision", func(a *state.AnalysisState) {
+			a.DataModelChanges = nil
+			a.NonFunctionalRequirements = nil
+			a.BoundedContext.Crossings = []string{"billing"}
+		}, true},
+		{"expand migration constrains the deploy", func(a *state.AnalysisState) {
+			a.BoundedContext.Crossings = nil
+			a.NonFunctionalRequirements = nil
+			a.DataModelChanges = []state.DataModelChange{{Description: "add table", Phase: state.MigrationPhaseExpand}}
+		}, true},
+		{"a documented absence of migration does not summon an architect", func(a *state.AnalysisState) {
+			a.BoundedContext.Crossings = nil
+			a.NonFunctionalRequirements = nil
+			a.DataModelChanges = []state.DataModelChange{{Description: "none", Phase: state.MigrationPhaseNone}}
+		}, false},
+		{"new dependency is an adapter decision", func(a *state.AnalysisState) {
+			a.BoundedContext.Crossings = nil
+			a.DataModelChanges = nil
+			a.NonFunctionalRequirements = nil
+			a.NewDependencies = []string{"github.com/some/queue"}
+		}, true},
+		{"performance threshold forces stability patterns", func(a *state.AnalysisState) {
+			a.BoundedContext.Crossings = nil
+			a.DataModelChanges = nil
+			a.NonFunctionalRequirements = []state.NonFunctionalRequirement{
+				{Category: "performance", Requirement: "fast", Threshold: "p99 < 200ms"},
+			}
+		}, true},
+		{"performance prose without a threshold is not structural", func(a *state.AnalysisState) {
+			a.BoundedContext.Crossings = nil
+			a.DataModelChanges = nil
+			a.NonFunctionalRequirements = []state.NonFunctionalRequirement{
+				{Category: "performance", Requirement: "should feel snappy"},
+			}
+		}, false},
+		// The derivation cannot see "this introduces a new base class" or
+		// "this reverses ADR-004". The explicit flag is how those reach the
+		// architect, and why it is OR'd with the derived signals.
+		{"explicit flag reaches an architect the derivation cannot see", func(a *state.AnalysisState) {
+			a.BoundedContext.Crossings = nil
+			a.DataModelChanges = nil
+			a.NonFunctionalRequirements = nil
+			a.ArchitecturalFlags = []string{"introduces a new base class for all report exporters"}
+		}, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			analysis := validAnalysis()
+			analysis.NewDependencies = nil
+			tc.shape(&analysis)
+			if got := analysis.RequiresArchitect(); got != tc.want {
+				t.Errorf("RequiresArchitect() = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }

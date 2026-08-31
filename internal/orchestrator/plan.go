@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/orieken/loom/internal/state"
 )
 
 // Stage is one step of a Plan. Stages are identified by stable string IDs
@@ -21,8 +23,16 @@ type Stage struct {
 	// Gate names the approval barrier guarding entry to this stage. Empty
 	// means ungated; a named gate means the executor refuses to start the
 	// stage until run state records a human approval for that name.
-	Gate    string
-	Timeout time.Duration
+	Gate string
+	// StateKind names the typed state document this stage produces
+	// (roadmap L2.9), empty for stages that still write markdown. Typedness
+	// is plan data for the same reason gates are: the plan, not an agent's
+	// name, decides how a stage exchanges data.
+	StateKind string
+	// Consumes names the stage whose typed state is projected into this
+	// stage's input. Empty when the stage reads no upstream state.
+	Consumes string
+	Timeout  time.Duration
 }
 
 // Plan is an ordered list of stages the executor runs sequentially.
@@ -89,6 +99,18 @@ func defaultPlanGates() map[string]string {
 	}
 }
 
+// defaultTypedStages declares which stages of the built-in plan exchange
+// typed state and where each reads its input from. L2.9's first cut types
+// the analyst -> architect hop; every other stage still writes markdown.
+func defaultTypedStages() (kinds map[string]string, consumes map[string]string) {
+	return map[string]string{
+		"analyst":   string(state.KindAnalysis),
+		"architect": string(state.KindArchitecture),
+	}, map[string]string{
+		"architect": "analyst",
+	}
+}
+
 // DefaultDeliverFeaturePlanName names the built-in plan.
 const DefaultDeliverFeaturePlanName = "deliver-feature"
 
@@ -105,6 +127,7 @@ const defaultStageTimeout = 30 * time.Minute
 // pipeline while the substrate changes underneath (roadmap M0.4).
 func DefaultDeliverFeaturePlan() Plan {
 	gates := defaultPlanGates()
+	kinds, consumes := defaultTypedStages()
 	agents := []string{
 		"context-engineer",
 		"analyst",
@@ -123,7 +146,8 @@ func DefaultDeliverFeaturePlan() Plan {
 	}
 	stages := make([]Stage, 0, len(agents))
 	for _, agent := range agents {
-		stages = append(stages, Stage{ID: agent, Agent: agent, Gate: gates[agent], Timeout: defaultStageTimeout})
+		stages = append(stages, Stage{ID: agent, Agent: agent, Gate: gates[agent],
+			StateKind: kinds[agent], Consumes: consumes[agent], Timeout: defaultStageTimeout})
 	}
 	return Plan{Name: DefaultDeliverFeaturePlanName, Stages: stages}
 }

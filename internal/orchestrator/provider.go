@@ -7,6 +7,14 @@ import "context"
 type StageInput struct {
 	SpecPath     string
 	WorkspaceDir string
+	// UpstreamState is the projected slice of the previous stage's typed
+	// state this stage is allowed to read (roadmap L2.9) — the fields its
+	// contract declares, not the whole document. Empty for stages that
+	// still exchange markdown.
+	UpstreamState []byte
+	// UpstreamStage names where UpstreamState came from, so a provider can
+	// tell the agent what it is reading.
+	UpstreamStage string
 }
 
 // StageOutput is what a stage invocation produces. ArtifactPath may be empty
@@ -14,6 +22,10 @@ type StageInput struct {
 // artifact's SHA-256 in run state.
 type StageOutput struct {
 	ArtifactPath string
+	// Payload is the JSON state document a typed stage produced. The
+	// executor validates it against the stage's schema and writes it as the
+	// stage's artifact; stages that still write markdown leave it empty.
+	Payload []byte
 }
 
 // Provider invokes one stage's agent and blocks until it finishes or ctx is

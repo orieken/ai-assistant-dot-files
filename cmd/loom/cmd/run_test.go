@@ -98,12 +98,24 @@ func assertNoApprovals(t *testing.T, projectDir string) {
 	}
 }
 
+// assertArtifactExists checks the artifact a stage actually produces: a
+// typed stage's state document (roadmap L2.9), or a markdown file for the
+// stages still on markdown.
 func assertArtifactExists(t *testing.T, projectDir, stageID string) {
 	t.Helper()
-	artifact := filepath.Join(projectDir, ".claude", "feature-workspace", "user-auth", stageID+".md")
-	if _, err := os.Stat(artifact); err != nil {
+	if _, err := os.Stat(stageArtifactPath(projectDir, stageID)); err != nil {
 		t.Errorf("stage %q artifact missing: %v", stageID, err)
 	}
+}
+
+func stageArtifactPath(projectDir, stageID string) string {
+	workspace := filepath.Join(projectDir, ".claude", "feature-workspace", "user-auth")
+	for _, stage := range orchestrator.DefaultDeliverFeaturePlan().Stages {
+		if stage.ID == stageID && stage.StateKind != "" {
+			return filepath.Join(workspace, "state", stageID+".json")
+		}
+	}
+	return filepath.Join(workspace, stageID+".md")
 }
 
 func assertFreshRunOverStateRefused(t *testing.T, binary, projectDir, spec string) {
@@ -398,7 +410,7 @@ func TestAskApprovalReadsTheHumanAnswer(t *testing.T) {
 }
 
 func workspaceArtifact(projectDir, stageID string) string {
-	return filepath.Join(projectDir, ".claude", "feature-workspace", "user-auth", stageID+".md")
+	return stageArtifactPath(projectDir, stageID)
 }
 
 // TestRunDetectsOutOfBandArtifactEdit is the L2.12 done-when through the
@@ -412,8 +424,10 @@ func TestRunDetectsOutOfBandArtifactEdit(t *testing.T) {
 		t.Fatal("setup run did not halt at the first gate")
 	}
 
-	if err := os.WriteFile(workspaceArtifact(projectDir, "analyst"), []byte("# analysis, hand-edited\n"), 0o644); err != nil {
-		t.Fatalf("edit analyst artifact: %v", err)
+	// The analyst's artifact is now its typed state document — L2.12's
+	// integrity machinery covers typed state with no new mechanism.
+	if err := os.WriteFile(workspaceArtifact(projectDir, "analyst"), []byte(`{"hand":"edited"}`), 0o644); err != nil {
+		t.Fatalf("edit analyst state: %v", err)
 	}
 	output, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume", "--approve", "confirm-design")
 	if code != ExitCodeWaitingApproval {
