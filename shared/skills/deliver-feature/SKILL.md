@@ -172,6 +172,15 @@ non-Non-Negotiable gates.
 
 ## Checkpointing & Pipeline State
 
+**Scope note (roadmap L2.12).** Everything in this section describes the *markdown* pipeline — this
+skill, run by the host platform's model. When a feature is delivered by `loom run` instead, none of
+it applies: the Go executor owns `.claude/feature-workspace/<feature-name>/run-state.json`, computes
+every artifact's SHA-256 itself, and re-verifies those digests on resume, demoting any stage whose
+artifact changed on disk (and every stage recorded after it) so it re-runs. A model never computes
+its own integrity hashes there. The procedure below stays authoritative here because this pipeline
+does things the executor cannot yet do — conditional agent skips, contract-validation retry loops,
+and the code-reviewer↔developer loop (roadmap L2.11, L3.1).
+
 After every step marked **Checkpoint** above, write/update both `.claude/feature-workspace/<feature-name>/pipeline-state.json`
 (resumability — see below) and `.claude/feature-workspace/<feature-name>/pipeline-trace.json` (timing/performance history —
 see "Pipeline Tracing" below). They're updated together but serve different consumers: `pipeline-state.json`

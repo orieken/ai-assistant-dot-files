@@ -166,7 +166,9 @@ L3.8 (see `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006). The artifact set as spe
 
 - **`pipeline-state.json`** (per feature, in `.claude/feature-workspace/`, persisted to `docs/features/<name>/`)
   — resumability: current phase, completed agents, artifact checksums. `resume-pipeline` reads this.
-  Ownership moves from prompt-discipline to the Go executor with L2.12.
+  Ownership has moved to the Go executor for `loom run` (L2.12): it keeps its own
+  `run-state.json`, hashes artifacts itself, and re-verifies them on resume. This file remains
+  prompt-owned for markdown-pipeline runs.
 - **`pipeline-trace.json`** (same location) — timing, status, iteration counts, and `budgetUtilization` per
   agent. `pipeline-trace` (single run) and `pipeline-retrospective` (cross-delivery trends) read this.
   Trustworthy wall-clock timing arrives when the executor emits it (M0.4 onward, OTel with L3.8).
@@ -194,10 +196,12 @@ See [docs/runbooks/editing-agent-prompts.md](runbooks/editing-agent-prompts.md) 
 ```
 shared/                          canonical source — see section 1
 internal/
-  orchestrator/                  executor (ADR-006, M0.4 + L2.13): plan, run loop, durable
-                                   run-state.json (atomic writes, SHA-256 artifacts), and
-                                   approval gates as process interrupts — a gated stage cannot
-                                   start until run state records a human approval
+  orchestrator/                  executor (ADR-006, M0.4 + L2.13 + L2.12): plan, run loop,
+                                   durable run-state.json (atomic writes), approval gates as
+                                   process interrupts — a gated stage cannot start until run
+                                   state records a human approval — and artifact digests
+                                   computed and re-verified in Go, so an edited artifact stops
+                                   counting as completed work
   provider/mock/                 deterministic scripted Provider for executor tests
 scripts/
   generate-configs.sh            shared/ -> nine registered platform targets

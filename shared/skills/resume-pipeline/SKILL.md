@@ -23,6 +23,12 @@ Do NOT use when there's no `pipeline-state.json` for the feature — that's a fr
 
 ## Process
 
+> **Scope note (roadmap L2.12).** This skill resumes *markdown* pipeline runs. A run started with
+> `loom run` is resumed with `loom run --spec <x> --resume` instead — the executor re-verifies every
+> completed stage's artifact digest in Go before trusting it, so the checksum recomputation Mode 1
+> asks for below is done by code there, not by a model. Do not use this skill against a
+> `run-state.json`.
+
 ### Mode 1: Resume (default)
 1. Read `pipeline-state.json`. For each `completedAgents` entry, recompute the checksum of its artifact and compare. If any mismatch: treat that step and everything after it as not completed (the on-disk file was hand-edited or corrupted since the checkpoint) — report this to the user before proceeding.
 2. Determine the true `lastCompletedStep` (the highest step whose checksum still matches, or the value in the state file if all match).

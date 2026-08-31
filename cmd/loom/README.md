@@ -39,6 +39,11 @@ loom run --spec docs/features/user-auth/spec.md --provider mock
   written atomically (temp file + rename), with per-stage status, timestamps, and
   the SHA-256 of each stage's artifact. A fresh run refuses to start over existing
   state (pass `--resume` or delete the file); `--resume` requires existing state.
+- **Integrity on resume**: before the run loop trusts anything, every COMPLETED stage's artifact is
+  re-hashed in Go and compared to the digest recorded when it finished. A changed or missing
+  artifact demotes that stage to `STALE` — it re-runs — and the demotion cascades to every stage
+  completed after it, whose own output came from content that no longer exists. The resume prints
+  what it invalidated and why. There is no flag to skip verification (roadmap L2.12).
 - **Interruption**: the first Ctrl-C cancels the in-flight stage and persists a
   clean `INTERRUPTED` checkpoint; a second Ctrl-C kills immediately. `--resume`
   skips completed stages and re-runs the interrupted one.
@@ -63,11 +68,12 @@ loom run --spec docs/features/user-auth/spec.md --provider mock
   actually halted on. Nothing an agent returns can approve a gate.
 
 **What it does NOT do yet** (skeleton by design — see `docs/roadmaps/BUILD-ROADMAP.md`):
-no gate-reset enforcement — editing an artifact after approving does not reset
-the gate (L2.14) — no retries or backoff, no parallelism (L3.3), no policy
-evaluation (L2.16), no conditional stage routing (L3.1) — every stage of the
-linear plan runs, including ones the markdown pipeline would skip — and no
-telemetry emission (L3.8).
+no gate-reset enforcement — a stale stage re-runs, but editing an artifact
+after approving its gate does not revoke the approval (L2.14) — no
+`--from-phase` or rollback (L2.15), no retries or backoff, no parallelism
+(L3.3), no policy evaluation (L2.16), no conditional stage routing (L3.1) —
+every stage of the linear plan runs, including ones the markdown pipeline
+would skip — and no telemetry emission (L3.8).
 
 ## Maturity level report
 
