@@ -84,9 +84,12 @@ func TestTimelineRecordsGateHaltApprovalAndStaleness(t *testing.T) {
 	if err := executor.Run(context.Background(), plan, input); err != nil {
 		t.Fatalf("run after approval: %v", err)
 	}
+	// Since L2.14 the edit also resets the gate, so this resume halts —
+	// which is the point: the timeline records the halt, the approval, and
+	// the staleness that caused it.
 	editArtifact(t, input, "analyst", "# analysis, hand-edited")
-	if err := executor.Run(context.Background(), plan, input); err != nil {
-		t.Fatalf("resume after edit: %v", err)
+	if err := executor.Run(context.Background(), plan, input); !errors.Is(err, orchestrator.ErrWaitingApproval) {
+		t.Fatalf("resume after edit = %v, want a halt at the reset gate", err)
 	}
 
 	assertGateAndStaleEvents(t, firstOfEachKind(readTimeline(t, store)))

@@ -140,10 +140,11 @@ func TestStageWithoutAnArtifactStaysCompleted(t *testing.T) {
 	assertInvocations(t, provider, []string{"analyst", "developer", "qa-engineer"})
 }
 
-// TestStaleStageDoesNotRevokeApproval pins the L2.14 boundary: editing an
-// artifact invalidates the stage, but binding approvals to digests is the
-// next epic's job. Asserted so that work starts from a known state.
-func TestStaleStageDoesNotRevokeApproval(t *testing.T) {
+// TestStaleStageRevokesTheApproval inverts what this test asserted before
+// L2.14 landed (epic 80): editing an artifact used to demote the stage
+// while the approval survived, so the gated stage proceeded on a decision
+// about content that no longer existed. It now resets the gate.
+func TestStaleStageRevokesTheApproval(t *testing.T) {
 	executor, _, store, input := newHarness(t, completedScripts())
 	plan := gatedPlan()
 	_ = runUntilGate(t, executor, plan, input)
@@ -156,12 +157,12 @@ func TestStaleStageDoesNotRevokeApproval(t *testing.T) {
 
 	editArtifact(t, input, "analyst", "# analysis, hand-edited after approval")
 	executor.OnStale(func([]orchestrator.StaleStage) {})
-	if err := executor.Run(context.Background(), plan, input); err != nil {
-		t.Fatalf("resume after edit: %v", err)
+	if err := executor.Run(context.Background(), plan, input); !errors.Is(err, orchestrator.ErrWaitingApproval) {
+		t.Fatalf("resume after edit = %v, want a halt at the reset gate", err)
 	}
 
-	if !mustLoad(t, store).IsGateApproved("confirm-design") {
-		t.Error("editing an artifact revoked an approval; reset-on-edit is L2.14, not this epic")
+	if mustLoad(t, store).IsGateApproved("confirm-design") {
+		t.Error("editing a bound artifact left the approval standing (L2.14)")
 	}
 }
 

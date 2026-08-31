@@ -34,6 +34,9 @@ const (
 	EventStageStale       EventKind = "stage.stale"
 	EventGateWaiting      EventKind = "gate.waiting"
 	EventGateApproved     EventKind = "gate.approved"
+	// EventGateInvalidated records an approval reset by an edit to a bound
+	// artifact (roadmap L2.14). Stage names the artifact that changed.
+	EventGateInvalidated EventKind = "gate.invalidated"
 )
 
 // Event is one line of the timeline.

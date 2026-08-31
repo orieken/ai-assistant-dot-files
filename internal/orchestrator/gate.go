@@ -25,12 +25,28 @@ const (
 	ApprovalMethodCLI ApprovalMethod = "cli"
 )
 
-// Approval is the durable record that a named gate was unlocked by a human.
+// Approval is the durable record that a named gate was unlocked by a human,
+// bound to the artifacts that human was shown (roadmap L2.14). An approval
+// with no digests approves nothing in particular; one with digests approves
+// exactly that state of the run.
 type Approval struct {
 	ApprovedAt time.Time      `json:"approvedAt"`
 	Method     ApprovalMethod `json:"method"`
 	Approver   string         `json:"approver"`
+	// ArtifactDigests is the SHA-256 of every completed stage's artifact at
+	// the moment of approval. A human approving a gate is approving the
+	// state of the run, not one file — so an edit to any of them resets the
+	// gate, which is what all eight prose gates have always declared.
+	ArtifactDigests map[string]string `json:"artifactDigests,omitempty"`
+	// InvalidatedAt and InvalidatedBy are set when a bound artifact changed
+	// after approval. The record is kept rather than deleted: it is the
+	// audit trail of what was approved, and when it stopped being true.
+	InvalidatedAt *time.Time `json:"invalidatedAt,omitempty"`
+	InvalidatedBy string     `json:"invalidatedBy,omitempty"`
 }
+
+// IsValid reports whether this approval still stands.
+func (a Approval) IsValid() bool { return a.InvalidatedAt == nil }
 
 // ErrWaitingApproval is the sentinel every gate halt wraps, so callers can
 // branch with errors.Is without depending on the concrete error type.
@@ -50,12 +66,12 @@ func (e *WaitingApprovalError) Error() string {
 // Unwrap makes errors.Is(err, ErrWaitingApproval) true for every gate halt.
 func (e *WaitingApprovalError) Unwrap() error { return ErrWaitingApproval }
 
-// IsGateApproved reports whether the named gate has been unlocked for this
-// run. One approval unlocks one gate for the lifetime of the run; digest
-// binding and reset-on-edit are roadmap item L2.14.
+// IsGateApproved reports whether the named gate is unlocked for this run.
+// An approval that was invalidated by a later edit does not count — that is
+// L2.14's whole point.
 func (s *RunState) IsGateApproved(gate string) bool {
-	_, ok := s.Approvals[gate]
-	return ok
+	approval, ok := s.Approvals[gate]
+	return ok && approval.IsValid()
 }
 
 // WaitingGate returns the gate this run is currently halted on, or "" when
@@ -91,12 +107,43 @@ func (e *Executor) Approve(gate string, method ApprovalMethod) error {
 	return e.emit(Event{Kind: EventGateApproved, Gate: gate, ApprovalMethod: method})
 }
 
-// RecordApproval writes an approval for a named gate. Callers that must
+// RecordApproval writes an approval for a named gate, binding it to the
+// digests of everything completed so far. Re-approving after an
+// invalidation replaces the record with a fresh binding. Callers that must
 // enforce "the run is actually waiting on this gate" go through
 // Executor.Approve; this is the plain record used by the markdown
 // pipeline, which has no executor barrier to wait at.
 func (s *RunState) RecordApproval(gate string, method ApprovalMethod) {
-	s.Approvals[gate] = Approval{ApprovedAt: time.Now().UTC(), Method: method, Approver: currentApprover()}
+	s.Approvals[gate] = Approval{
+		ApprovedAt: time.Now().UTC(), Method: method, Approver: currentApprover(),
+		ArtifactDigests: s.completedDigests(),
+	}
+}
+
+// completedDigests snapshots what a human is approving: the recorded digest
+// of every completed stage's artifact. Stages that produced no artifact
+// bind nothing — there is no content to have changed.
+func (s *RunState) completedDigests() map[string]string {
+	digests := make(map[string]string, len(s.Stages))
+	for stageID, record := range s.Stages {
+		if record.Status == StageStatusCompleted && record.ArtifactSHA256 != "" {
+			digests[stageID] = record.ArtifactSHA256
+		}
+	}
+	return digests
+}
+
+// InvalidateApproval marks an approval stale because a bound artifact
+// changed, naming the stage responsible.
+func (s *RunState) InvalidateApproval(gate, changedStage string) {
+	approval, ok := s.Approvals[gate]
+	if !ok || !approval.IsValid() {
+		return
+	}
+	now := time.Now().UTC()
+	approval.InvalidatedAt = &now
+	approval.InvalidatedBy = changedStage
+	s.Approvals[gate] = approval
 }
 
 func checkWaitingOn(state *RunState, gate string) error {

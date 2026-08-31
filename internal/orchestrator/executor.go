@@ -127,6 +127,12 @@ func (e *Executor) verifyResumedState(state *RunState) (*RunState, error) {
 	if err := e.emitStale(state, stale); err != nil {
 		return nil, err
 	}
+	if err := e.invalidateApprovalsFor(state, stale); err != nil {
+		return nil, err
+	}
+	if err := e.store.Save(state); err != nil {
+		return nil, fmt.Errorf("persist approval invalidation: %w", err)
+	}
 	if e.onStale != nil {
 		e.onStale(stale)
 	}
@@ -148,8 +154,17 @@ func sequenceFor(state *RunState, stageID string) int {
 // create that approval — only the CLI approval channels write it (roadmap
 // L2.13). The halt is persisted so the run resumes exactly here.
 func (e *Executor) checkGate(stage Stage, state *RunState) error {
-	if stage.Gate == "" || state.IsGateApproved(stage.Gate) {
+	if stage.Gate == "" {
 		return nil
+	}
+	if state.IsGateApproved(stage.Gate) {
+		invalidated, err := e.enforceApprovalBinding(state, stage)
+		if err != nil {
+			return err
+		}
+		if !invalidated {
+			return nil
+		}
 	}
 	record := StageRecord{Status: StageStatusWaitingApproval, StartedAt: time.Now().UTC(), Gate: stage.Gate}
 	if err := e.persistStatus(state, stage.ID, record); err != nil {

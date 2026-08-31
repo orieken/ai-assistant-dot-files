@@ -442,10 +442,25 @@ func TestRunDetectsOutOfBandArtifactEdit(t *testing.T) {
 	// Re-running the analyst rewrites the canned artifact, so the edit is
 	// gone and every stage up to the next gate is COMPLETED again.
 	assertStagesCompleted(t, projectDir, stagesBeforeFirstGate, true)
+
+	// Since L2.14 the approval given on that same command line is bound to
+	// the digests recorded before verification ran, so the edit resets it
+	// and the run halts at confirm-design rather than continuing. A second
+	// approval — of the state as it now stands — proceeds.
+	assertWaitingOnGate(t, projectDir, "developer", "confirm-design")
+	output, code = runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume", "--approve", "confirm-design")
+	if code != ExitCodeWaitingApproval {
+		t.Fatalf("re-approval exit code = %d, want %d\n%s", code, ExitCodeWaitingApproval, output)
+	}
 	assertWaitingOnGate(t, projectDir, "qa-engineer", "confirm-security")
 }
 
-func TestRunStaleStageDoesNotRevokeAnApproval(t *testing.T) {
+// TestRunEditAfterAnApprovalLeavesThatGateAlone is the other half of
+// L2.14's binding rule: an approval binds only what was complete when the
+// human gave it. The developer had not run when confirm-design was
+// approved, so editing its artifact demotes the stage without resetting a
+// gate that was never about that work.
+func TestRunEditAfterAnApprovalLeavesThatGateAlone(t *testing.T) {
 	binary := buildLoomBinary(t)
 	projectDir := t.TempDir()
 	spec := writeSpec(t, projectDir)
@@ -463,12 +478,15 @@ func TestRunStaleStageDoesNotRevokeAnApproval(t *testing.T) {
 	if code != ExitCodeWaitingApproval {
 		t.Fatalf("resume exit code = %d, want %d\n%s", code, ExitCodeWaitingApproval, output)
 	}
-	if !loadRunState(t, projectDir).IsGateApproved("confirm-design") {
-		t.Error("editing an artifact behind an approved gate revoked the approval; reset-on-edit is L2.14")
+	state := loadRunState(t, projectDir)
+	if !state.IsGateApproved("confirm-design") {
+		t.Error("an edit to work completed after the approval reset the gate; the binding is not that wide")
 	}
 	if strings.Contains(output, "approve gate") {
-		t.Errorf("stale stage re-prompted for an already-approved gate:\n%s", output)
+		t.Errorf("stale stage re-prompted for a gate whose binding still holds:\n%s", output)
 	}
+	// The demoted developer re-runs and the run halts at the next gate.
+	assertWaitingOnGate(t, projectDir, "qa-engineer", "confirm-security")
 }
 
 func TestRunRecordsRunIdentityAndRefusesAnotherSpec(t *testing.T) {
