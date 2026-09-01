@@ -116,6 +116,7 @@ func executeRun(cmd *cobra.Command, plan orchestrator.Plan, provider orchestrato
 		return err
 	}
 	cmd.Printf("Plan %q completed. Artifacts: %s\n", plan.Name, input.WorkspaceDir)
+	reportRunUsage(cmd, store)
 	return nil
 }
 

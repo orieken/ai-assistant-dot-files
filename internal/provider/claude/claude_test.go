@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +36,21 @@ func writeFakeClaude(t *testing.T, dir, script string) string {
 	return path
 }
 
+// envelopeScript builds a fake CLI that prints a `--output-format json`
+// result envelope carrying the given agent output, with realistic usage
+// numbers. Every test that expects a successful invocation goes through
+// this, because a bare `echo` is no longer a valid CLI response.
+func envelopeScript(result string) string {
+	return `cat <<'ENVELOPE'
+{"type":"result","subtype":"success","is_error":false,
+ "result":` + strconv.Quote(result) + `,
+ "total_cost_usd":0.0425,
+ "usage":{"input_tokens":1200,"output_tokens":340,
+          "cache_read_input_tokens":800,"cache_creation_input_tokens":64},
+ "modelUsage":{"claude-opus-5":{"inputTokens":1200}}}
+ENVELOPE`
+}
+
 func newTestProvider(t *testing.T, binaryPath string) (*claude.Provider, orchestrator.Stage, orchestrator.StageInput) {
 	t.Helper()
 	agentsDir := t.TempDir()
@@ -53,7 +69,7 @@ func newTestProvider(t *testing.T, binaryPath string) (*claude.Provider, orchest
 }
 
 func TestInvokeCapturesStdoutToArtifact(t *testing.T) {
-	binary := writeFakeClaude(t, t.TempDir(), `echo "# analysis output"`)
+	binary := writeFakeClaude(t, t.TempDir(), envelopeScript("# analysis output"))
 	provider, stage, input := newTestProvider(t, binary)
 
 	output, err := provider.Invoke(context.Background(), stage, input)
@@ -79,7 +95,8 @@ func TestInvokeSendsPromptOverStdinNotArgv(t *testing.T) {
 	stdinFile := filepath.Join(dir, "stdin.txt")
 	// The fake dumps argv and stdin separately so the test can assert both.
 	binary := writeFakeClaude(t, dir, `printf '%s\n' "$@" > `+argsFile+`
-cat > `+stdinFile)
+cat > `+stdinFile+`
+`+envelopeScript("# analysis output"))
 	provider, stage, input := newTestProvider(t, binary)
 
 	if _, err := provider.Invoke(context.Background(), stage, input); err != nil {
@@ -90,9 +107,11 @@ cat > `+stdinFile)
 
 func assertPromptPlumbing(t *testing.T, argsFile, stdinFile string, input orchestrator.StageInput) {
 	t.Helper()
-	args := readFile(t, argsFile)
-	if strings.TrimSpace(args) != "-p" {
-		t.Errorf("argv = %q, want only -p — the prompt must travel over stdin (agent frontmatter starts with ---)", args)
+	args := strings.Fields(readFile(t, argsFile))
+	wantArgs := []string{"-p", "--output-format", "json"}
+	if strings.Join(args, " ") != strings.Join(wantArgs, " ") {
+		t.Errorf("argv = %v, want %v — the prompt must travel over stdin (agent frontmatter starts with ---), "+
+			"and the JSON envelope is where token counts come from", args, wantArgs)
 	}
 	prompt := readFile(t, stdinFile)
 	for _, want := range []string{testAgentDefinition, input.SpecPath, input.WorkspaceDir} {
@@ -126,7 +145,7 @@ func TestInvokeFailsClearlyWhenBinaryMissing(t *testing.T) {
 }
 
 func TestInvokeFailsWhenAgentDefinitionMissing(t *testing.T) {
-	binary := writeFakeClaude(t, t.TempDir(), `echo ok`)
+	binary := writeFakeClaude(t, t.TempDir(), envelopeScript("ok"))
 	provider, stage, input := newTestProvider(t, binary)
 	stage.Agent = "no-such-agent"
 
@@ -165,5 +184,102 @@ func TestInvokeReportsNonzeroExitWithStderr(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "agent blew up") {
 		t.Errorf("error %q does not surface the subprocess stderr", err)
+	}
+}
+
+// The envelope is where token counts and cost come from, so a stage must
+// carry them out. These numbers are reported, never computed here.
+func TestInvokeReportsUsageFromTheEnvelope(t *testing.T) {
+	binary := writeFakeClaude(t, t.TempDir(), envelopeScript("# analysis output"))
+	provider, stage, input := newTestProvider(t, binary)
+
+	output, err := provider.Invoke(context.Background(), stage, input)
+	if err != nil {
+		t.Fatalf("Invoke: %v", err)
+	}
+	if output.Usage == nil {
+		t.Fatal("stage reported no usage — the envelope carried it")
+	}
+	want := orchestrator.Usage{
+		Model: "claude-opus-5", InputTokens: 1200, OutputTokens: 340,
+		CacheReadTokens: 800, CacheCreationTokens: 64, CostUSD: 0.0425,
+	}
+	if *output.Usage != want {
+		t.Errorf("usage = %+v, want %+v", *output.Usage, want)
+	}
+}
+
+// A malformed envelope must fail the stage. Falling back to treating raw
+// stdout as the artifact would make a broken run look like a successful one
+// that happened to cost nothing — reintroducing exactly the unmeasured
+// number this whole item removes.
+func TestInvokeFailsOnAMalformedEnvelopeRatherThanFallingBack(t *testing.T) {
+	binary := writeFakeClaude(t, t.TempDir(), `echo "# not an envelope, just markdown"`)
+	provider, stage, input := newTestProvider(t, binary)
+
+	_, err := provider.Invoke(context.Background(), stage, input)
+	if err == nil {
+		t.Fatal("Invoke succeeded on non-envelope output; it must fail the stage")
+	}
+	// The raw output has to survive into the error, or the failure is
+	// undiagnosable.
+	if !strings.Contains(err.Error(), "not an envelope") {
+		t.Errorf("error %q does not preserve the raw output", err)
+	}
+	if _, statErr := os.Stat(filepath.Join(input.WorkspaceDir, "analyst.md")); statErr == nil {
+		t.Error("an artifact was written despite the envelope failing to parse")
+	}
+}
+
+// An envelope the CLI itself marks as an error is a failed stage, even
+// though the process exited zero.
+func TestInvokeFailsWhenTheEnvelopeReportsAnError(t *testing.T) {
+	binary := writeFakeClaude(t, t.TempDir(),
+		`echo '{"type":"result","subtype":"error_during_execution","is_error":true,"result":"context limit reached"}'`)
+	provider, stage, input := newTestProvider(t, binary)
+
+	_, err := provider.Invoke(context.Background(), stage, input)
+	if err == nil {
+		t.Fatal("Invoke succeeded on an is_error envelope")
+	}
+	for _, want := range []string{"error_during_execution", "context limit reached"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q does not mention %q", err, want)
+		}
+	}
+}
+
+// Fields loom does not read must not break a run: the CLI adds them over
+// time, and a strict decode would turn an upgrade into a failed pipeline.
+func TestInvokeIgnoresUnknownEnvelopeFields(t *testing.T) {
+	binary := writeFakeClaude(t, t.TempDir(),
+		`echo '{"type":"result","is_error":false,"result":"# out","total_cost_usd":0.01,`+
+			`"usage":{"input_tokens":5,"output_tokens":7},"some_future_field":{"nested":true},"num_turns":3}'`)
+	provider, stage, input := newTestProvider(t, binary)
+
+	output, err := provider.Invoke(context.Background(), stage, input)
+	if err != nil {
+		t.Fatalf("Invoke rejected an envelope carrying an unknown field: %v", err)
+	}
+	if output.Usage.InputTokens != 5 || output.Usage.CostUSD != 0.01 {
+		t.Errorf("usage = %+v, want the fields loom does read", *output.Usage)
+	}
+}
+
+// With several models in modelUsage no single name is true, so none is
+// reported. An attribute that names an arbitrary member of a set is worse
+// than an absent one.
+func TestInvokeReportsNoModelWhenSeveralServedTheRequest(t *testing.T) {
+	binary := writeFakeClaude(t, t.TempDir(),
+		`echo '{"type":"result","is_error":false,"result":"# out","usage":{"input_tokens":1},`+
+			`"modelUsage":{"claude-opus-5":{},"claude-haiku-4-5":{}}}'`)
+	provider, stage, input := newTestProvider(t, binary)
+
+	output, err := provider.Invoke(context.Background(), stage, input)
+	if err != nil {
+		t.Fatalf("Invoke: %v", err)
+	}
+	if output.Usage.Model != "" {
+		t.Errorf("model = %q, want empty when several models served the request", output.Usage.Model)
 	}
 }

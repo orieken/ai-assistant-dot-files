@@ -16,10 +16,11 @@ import (
 // behaviour is testable without an SDK, an exporter, or a collector.
 type recordingTracer struct {
 	mutex  sync.Mutex
-	runs   []orchestrator.RunSpan
-	stages []orchestrator.StageSpan
-	ended  []orchestrator.SpanOutcome
-	open   int
+	runs      []orchestrator.RunSpan
+	stages    []orchestrator.StageSpan
+	providers []orchestrator.ProviderSpan
+	ended     []orchestrator.SpanOutcome
+	open      int
 }
 
 func (r *recordingTracer) StartRun(ctx context.Context, run orchestrator.RunSpan) (context.Context, orchestrator.Span) {
@@ -34,6 +35,14 @@ func (r *recordingTracer) StartStage(ctx context.Context, stage orchestrator.Sta
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.stages = append(r.stages, stage)
+	r.open++
+	return ctx, &recordingSpan{tracer: r}
+}
+
+func (r *recordingTracer) StartProvider(ctx context.Context, invocation orchestrator.ProviderSpan) (context.Context, orchestrator.Span) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.providers = append(r.providers, invocation)
 	r.open++
 	return ctx, &recordingSpan{tracer: r}
 }
@@ -121,8 +130,12 @@ func TestStageSpanReportsThePersistedStatus(t *testing.T) {
 	}
 
 	state := mustLoad(t, store)
+	// Spans close innermost-first, so each stage contributes its provider
+	// span and then itself.
 	want := []orchestrator.StageStatus{
+		orchestrator.StageStatusCompleted, // analyst provider span
 		orchestrator.StageStatusCompleted, // analyst stage span
+		orchestrator.StageStatusFailed,    // developer provider span
 		orchestrator.StageStatusFailed,    // developer stage span
 		orchestrator.StageStatusFailed,    // run span
 	}
@@ -196,5 +209,98 @@ func TestWithNilTracerDisablesTracing(t *testing.T) {
 
 	if err := executor.Run(context.Background(), threeStagePlan(), input); err != nil {
 		t.Fatalf("Run: %v", err)
+	}
+}
+
+// The model call gets its own span beneath the stage. A stage is not only
+// its invocation — projection, validation and persistence happen around it
+// — so attaching cost to the stage span would silently claim that time too.
+func TestProviderInvocationGetsItsOwnSpanUnderTheStage(t *testing.T) {
+	executor, _, _, input := newHarness(t, map[string]mock.Script{
+		"analyst":     {ArtifactContent: "# analysis"},
+		"developer":   {ArtifactContent: "# implementation"},
+		"qa-engineer": {ArtifactContent: "# qa report"},
+	})
+	tracer := &recordingTracer{}
+	executor.WithTracer(tracer)
+
+	if err := executor.Run(context.Background(), threeStagePlan(), input); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if len(tracer.providers) != 3 {
+		t.Fatalf("provider spans = %d, want one per invoked stage (3)", len(tracer.providers))
+	}
+	for _, invocation := range tracer.providers {
+		if invocation.Operation != orchestrator.GenAIOperationName {
+			t.Errorf("operation = %q, want the GenAI semconv name %q", invocation.Operation, orchestrator.GenAIOperationName)
+		}
+	}
+	if tracer.open != 0 {
+		t.Errorf("%d spans left open", tracer.open)
+	}
+}
+
+// Usage the provider reported must reach run state, so the cost of a run is
+// answerable without a collector configured.
+func TestReportedUsageIsRecordedInRunState(t *testing.T) {
+	usage := &orchestrator.Usage{Model: "claude-opus-5", InputTokens: 100, OutputTokens: 20, CostUSD: 0.5}
+	executor, _, store, input := newHarness(t, map[string]mock.Script{
+		"analyst":     {ArtifactContent: "# analysis", Usage: usage},
+		"developer":   {ArtifactContent: "# implementation", Usage: usage},
+		"qa-engineer": {ArtifactContent: "# qa report", Usage: usage},
+	})
+
+	if err := executor.Run(context.Background(), threeStagePlan(), input); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	state := mustLoad(t, store)
+	if got := state.Stages["developer"].Usage; got == nil || *got != *usage {
+		t.Errorf("developer usage = %+v, want %+v", got, usage)
+	}
+	total := state.TotalUsage()
+	if total.InputTokens != 300 || total.CostUSD != 1.5 {
+		t.Errorf("total usage = %+v, want 300 input tokens and 1.5 USD", total)
+	}
+}
+
+// A provider that reports nothing must total to nothing, not to zeros
+// presented as measurements. Absence and zero are different facts.
+func TestUsageIsAbsentNotZeroWhenNothingIsReported(t *testing.T) {
+	executor, _, store, input := newHarness(t, map[string]mock.Script{
+		"analyst":     {ArtifactContent: "# analysis"},
+		"developer":   {ArtifactContent: "# implementation"},
+		"qa-engineer": {ArtifactContent: "# qa report"},
+	})
+
+	if err := executor.Run(context.Background(), threeStagePlan(), input); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if got := mustLoad(t, store).Stages["analyst"].Usage; got != nil {
+		t.Errorf("usage = %+v, want nil when the provider reported nothing", got)
+	}
+}
+
+// A call that produced tokens and then failed still cost money. Dropping
+// its usage would understate the run, and failures are often the expensive
+// part.
+func TestFailedStageKeepsTheUsageItAlreadyConsumed(t *testing.T) {
+	usage := &orchestrator.Usage{InputTokens: 900, OutputTokens: 10, CostUSD: 0.25}
+	executor, _, store, input := newHarness(t, map[string]mock.Script{
+		"analyst":   {ArtifactContent: "# analysis"},
+		"developer": {Err: errors.New("agent exploded"), Usage: usage},
+	})
+
+	if err := executor.Run(context.Background(), threeStagePlan(), input); err == nil {
+		t.Fatal("Run succeeded; the developer stage was scripted to fail")
+	}
+
+	record := mustLoad(t, store).Stages["developer"]
+	if record.Status != orchestrator.StageStatusFailed {
+		t.Fatalf("developer status = %q, want FAILED", record.Status)
+	}
+	if record.Usage == nil || record.Usage.CostUSD != 0.25 {
+		t.Errorf("failed stage usage = %+v, want the 0.25 USD it consumed before failing", record.Usage)
 	}
 }

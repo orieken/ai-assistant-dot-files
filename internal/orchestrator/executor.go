@@ -311,11 +311,11 @@ func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input S
 func (e *Executor) executeStage(ctx context.Context, stage Stage, plan Plan, input StageInput, state *RunState) error {
 	input, projectErr := projectUpstream(stage, plan, input)
 	if projectErr != nil {
-		return e.persistFailure(ctx, state, stage, projectErr)
+		return e.persistFailure(ctx, state, stageFailure{stage: stage, err: projectErr})
 	}
 	output, invokeErr := e.runOrInvoke(ctx, stage, plan, input)
 	if invokeErr != nil {
-		return e.persistFailure(ctx, state, stage, invokeErr)
+		return e.persistFailure(ctx, state, stageFailure{stage: stage, err: invokeErr, usage: output.Usage})
 	}
 	return e.persistCompletion(state, stage, plan, input, output)
 }
@@ -363,15 +363,38 @@ func (e *Executor) runOrInvoke(ctx context.Context, stage Stage, plan Plan, inpu
 	return e.invoke(ctx, stage, input)
 }
 
-// invoke calls the provider under the stage's timeout. A zero timeout means
-// no per-stage deadline beyond the parent context.
+// invoke calls the provider under the stage's timeout, inside its own span.
+// A zero timeout means no per-stage deadline beyond the parent context.
 func (e *Executor) invoke(ctx context.Context, stage Stage, input StageInput) (StageOutput, error) {
+	ctx, span := e.tracer.StartProvider(ctx, ProviderSpan{
+		Stage: stage.ID, Agent: stage.Agent, Operation: GenAIOperationName,
+	})
+	output, err := e.callProvider(ctx, stage, input)
+	span.End(invokeOutcome(output, err))
+	return output, err
+}
+
+func (e *Executor) callProvider(ctx context.Context, stage Stage, input StageInput) (StageOutput, error) {
 	if stage.Timeout <= 0 {
 		return e.provider.Invoke(ctx, stage, input)
 	}
 	stageCtx, cancel := context.WithTimeout(ctx, stage.Timeout)
 	defer cancel()
 	return e.provider.Invoke(stageCtx, stage, input)
+}
+
+// GenAIOperationName is the GenAI semantic convention's operation name for
+// what a stage does: one prompt, one completion.
+const GenAIOperationName = "generate_content"
+
+// invokeOutcome carries whatever usage the provider reported, including on
+// failure — a call that produced tokens and then failed still cost money,
+// and a trace that dropped those numbers would understate the run.
+func invokeOutcome(output StageOutput, err error) SpanOutcome {
+	if err != nil {
+		return SpanOutcome{Status: StageStatusFailed, Err: err, Usage: output.Usage}
+	}
+	return SpanOutcome{Status: StageStatusCompleted, Usage: output.Usage}
 }
 
 // artifactFor resolves what this stage's artifact is: a typed stage's
@@ -387,35 +410,48 @@ func artifactFor(stage Stage, input StageInput, output StageOutput) (string, err
 // persistFailure distinguishes parent cancellation (SIGINT — checkpoint as
 // INTERRUPTED, resumable) from a stage failure or timeout (FAILED, stops
 // the run).
-func (e *Executor) persistFailure(ctx context.Context, state *RunState, stage Stage, invokeErr error) error {
-	record := state.Stages[stage.ID]
+// stageFailure is what a stage failed with, and what it consumed before it
+// did. The usage is carried here rather than dropped because a call that
+// produced tokens and then failed still cost money — a run whose total
+// omitted its failures would understate itself, and the failures are often
+// the expensive part.
+type stageFailure struct {
+	stage Stage
+	err   error
+	usage *Usage
+}
+
+func (e *Executor) persistFailure(ctx context.Context, state *RunState, failure stageFailure) error {
+	record := state.Stages[failure.stage.ID]
 	now := time.Now().UTC()
 	record.FinishedAt = &now
-	record.Error = invokeErr.Error()
+	record.Error = failure.err.Error()
+	record.Usage = failure.usage
 	if errors.Is(ctx.Err(), context.Canceled) {
 		record.Status = StageStatusInterrupted
 	} else {
 		record.Status = StageStatusFailed
 	}
-	if err := e.persistStatus(state, stage.ID, record); err != nil {
-		return errors.Join(invokeErr, err)
+	if err := e.persistStatus(state, failure.stage.ID, record); err != nil {
+		return errors.Join(failure.err, err)
 	}
-	if err := e.emitStageEnd(state, stage.ID, record); err != nil {
-		return errors.Join(invokeErr, err)
+	if err := e.emitStageEnd(state, failure.stage.ID, record); err != nil {
+		return errors.Join(failure.err, err)
 	}
-	return fmt.Errorf("stage %q: %w", stage.ID, invokeErr)
+	return fmt.Errorf("stage %q: %w", failure.stage.ID, failure.err)
 }
 
 func (e *Executor) persistCompletion(state *RunState, stage Stage, plan Plan, input StageInput, output StageOutput) error {
 	artifactPath, err := artifactFor(stage, input, output)
 	if err != nil {
-		return e.persistFailure(context.Background(), state, stage, err)
+		return e.persistFailure(context.Background(), state, stageFailure{stage: stage, err: err, usage: output.Usage})
 	}
 	record := state.Stages[stage.ID]
 	now := time.Now().UTC()
 	record.FinishedAt = &now
 	record.Status = StageStatusCompleted
 	record.ArtifactPath = artifactPath
+	record.Usage = output.Usage
 	if artifactPath != "" {
 		sum, err := ArtifactSHA256(artifactPath)
 		if err != nil {

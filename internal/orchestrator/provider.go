@@ -24,6 +24,9 @@ type StageOutput struct {
 	// executor validates it against the stage's schema and writes it as the
 	// stage's artifact; stages that still write markdown leave it empty.
 	Payload []byte
+	// Usage is what the invocation consumed, as the provider reported it
+	// (roadmap L3.8). Nil from a provider that reports nothing.
+	Usage *Usage
 }
 
 // Provider invokes one stage's agent and blocks until it finishes or ctx is

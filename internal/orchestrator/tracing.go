@@ -41,6 +41,18 @@ type StageSpan struct {
 	Internal  bool
 }
 
+// ProviderSpan describes one model invocation. It is a child of the stage
+// span rather than the stage span itself, because a stage is not only its
+// model call: projection, validation, and persistence happen inside the
+// stage and outside the invocation, and a cost figure attached to the whole
+// stage would silently claim that time too.
+type ProviderSpan struct {
+	Stage string
+	Agent string
+	// Operation is the GenAI semantic convention's operation name.
+	Operation string
+}
+
 // SpanOutcome is how a span ended. Status carries the executor's own
 // vocabulary (COMPLETED, FAILED, SKIPPED, INTERRUPTED…) so a trace and the
 // run state cannot describe the same stage differently.
@@ -48,6 +60,9 @@ type SpanOutcome struct {
 	Status StageStatus
 	Reason string
 	Err    error
+	// Usage is what the invocation reported consuming, when it reported
+	// anything. Nil elsewhere.
+	Usage *Usage
 }
 
 // Span is one open unit of work. End is safe to call on the zero value of
@@ -62,6 +77,7 @@ type Span interface {
 type Tracer interface {
 	StartRun(ctx context.Context, run RunSpan) (context.Context, Span)
 	StartStage(ctx context.Context, stage StageSpan) (context.Context, Span)
+	StartProvider(ctx context.Context, invocation ProviderSpan) (context.Context, Span)
 }
 
 // noopTracer is what an executor without a Tracer uses, so the run loop
@@ -73,6 +89,10 @@ func (noopTracer) StartRun(ctx context.Context, _ RunSpan) (context.Context, Spa
 }
 
 func (noopTracer) StartStage(ctx context.Context, _ StageSpan) (context.Context, Span) {
+	return ctx, noopSpan{}
+}
+
+func (noopTracer) StartProvider(ctx context.Context, _ ProviderSpan) (context.Context, Span) {
 	return ctx, noopSpan{}
 }
 

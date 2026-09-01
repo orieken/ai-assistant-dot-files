@@ -1,0 +1,83 @@
+package claude
+
+// The `claude -p --output-format json` envelope (roadmap L3.8).
+//
+// This is the only honest source of token counts and cost for a stage: the
+// CLI reports what it was actually charged. Nothing here computes a price.
+// A pricing table in this repository would be wrong within a quarter and
+// would produce a confident figure nobody was billed — the same class of
+// defect as a duration recalled by a model, which is what L3.8 exists to
+// remove.
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/orieken/loom/internal/orchestrator"
+)
+
+// envelope is the subset of the CLI's result object loom reads. Unknown
+// fields are ignored on purpose: the CLI adds them over time, and a strict
+// decode would turn a harmless upgrade into a failed run.
+type envelope struct {
+	Type       string                     `json:"type"`
+	Subtype    string                     `json:"subtype"`
+	IsError    bool                       `json:"is_error"`
+	Result     string                     `json:"result"`
+	TotalCost  float64                    `json:"total_cost_usd"`
+	Usage      envelopeUsage              `json:"usage"`
+	ModelUsage map[string]json.RawMessage `json:"modelUsage"`
+}
+
+type envelopeUsage struct {
+	InputTokens              int64 `json:"input_tokens"`
+	OutputTokens             int64 `json:"output_tokens"`
+	CacheReadInputTokens     int64 `json:"cache_read_input_tokens"`
+	CacheCreationInputTokens int64 `json:"cache_creation_input_tokens"`
+}
+
+// parseEnvelope decodes the CLI's JSON result. A failure here fails the
+// stage: there is deliberately no fallback to treating raw stdout as the
+// artifact, because that would make a malformed run look like a successful
+// one that happened to cost nothing — silently reintroducing the unmeasured
+// numbers this whole item is removing.
+func parseEnvelope(stdout []byte) (*envelope, error) {
+	var decoded envelope
+	if err := json.Unmarshal(stdout, &decoded); err != nil {
+		return nil, fmt.Errorf("claude CLI did not return a JSON result envelope "+
+			"(--output-format json): %w — output: %s", err, truncate(string(stdout), 2000))
+	}
+	if decoded.IsError {
+		return nil, fmt.Errorf("claude CLI reported an error result (subtype %q): %s",
+			decoded.Subtype, truncate(decoded.Result, 2000))
+	}
+	return &decoded, nil
+}
+
+// usage converts the envelope's accounting into the executor's. Cost comes
+// straight across; it is reported, never derived.
+func (e *envelope) usage() *orchestrator.Usage {
+	return &orchestrator.Usage{
+		Model:               e.model(),
+		InputTokens:         e.Usage.InputTokens,
+		OutputTokens:        e.Usage.OutputTokens,
+		CacheReadTokens:     e.Usage.CacheReadInputTokens,
+		CacheCreationTokens: e.Usage.CacheCreationInputTokens,
+		CostUSD:             e.TotalCost,
+	}
+}
+
+// model reads the model that served the request from modelUsage's keys.
+// With more than one key the request was served by several models and no
+// single name is true, so it reports none rather than picking one — an
+// attribute that is absent is honest, and one that names an arbitrary
+// member of a set is not.
+func (e *envelope) model() string {
+	if len(e.ModelUsage) != 1 {
+		return ""
+	}
+	for name := range e.ModelUsage {
+		return name
+	}
+	return ""
+}

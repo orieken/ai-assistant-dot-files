@@ -14,7 +14,7 @@ import (
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 7
+const StateSchemaVersion = 8
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -63,6 +63,10 @@ type StageRecord struct {
 	// Zero and one both mean a first pass; Sequence is unaffected, because
 	// a re-run is the same step of the run, not a new one.
 	Iteration int `json:"iteration,omitempty"`
+	// Usage is what the provider reported this stage's model call consumed
+	// (roadmap L3.8). Nil when the provider reported nothing — which is not
+	// the same as a provider reporting zero.
+	Usage *Usage `json:"usage,omitempty"`
 	// IterationArtifacts retains what each earlier round produced, each
 	// with its own digest.
 	IterationArtifacts []IterationArtifact `json:"iterationArtifacts,omitempty"`

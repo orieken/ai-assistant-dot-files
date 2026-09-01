@@ -229,8 +229,22 @@ func printStateReport(cmd *cobra.Command, state *orchestrator.RunState) {
 		record := state.Stages[stageID]
 		cmd.Printf("  %2d. %-28s %s%s\n", record.Sequence, stageID, record.Status, roundsSuffix(record))
 	}
+	printUsage(cmd, state)
 	printApprovals(cmd, state)
 	printRouteDecisions(cmd, state)
+}
+
+// printUsage answers "what did this run cost" without a collector, a trace
+// viewer, or anything having been configured in advance (roadmap L3.8).
+// Nothing is printed when no stage reported usage — a run that measured
+// nothing should say nothing rather than claim a total of zero.
+func printUsage(cmd *cobra.Command, state *orchestrator.RunState) {
+	total := state.TotalUsage()
+	if total == (orchestrator.Usage{}) {
+		return
+	}
+	cmd.Printf("  usage: %d in / %d out tokens (%d cache read, %d cache write) — $%.4f\n",
+		total.InputTokens, total.OutputTokens, total.CacheReadTokens, total.CacheCreationTokens, total.CostUSD)
 }
 
 // printRouteDecisions answers "why isn't devops running?" from run state,

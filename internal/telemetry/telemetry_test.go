@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/orieken/loom/internal/orchestrator"
@@ -274,5 +275,75 @@ func TestTraceFileForPutsTracesBesideRunState(t *testing.T) {
 	want := filepath.Join("/tmp/workspace", telemetry.TracesFileName)
 	if got != want {
 		t.Errorf("TraceFileFor = %q, want %q", got, want)
+	}
+}
+
+// Usage reaches the invocation span under the GenAI semantic convention's
+// own keys, so a generic GenAI dashboard reads them without knowing
+// anything about loom.
+// traceInvocation drives a full run -> stage -> invocation nesting with the
+// given usage, and returns every span in the resulting file.
+func traceInvocation(t *testing.T, usage *orchestrator.Usage) []otlpSpan {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), telemetry.TracesFileName)
+	session, err := telemetry.Start(telemetry.Options{Version: "test-version", TraceFile: path})
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	tracer := session.Tracer()
+	ctx, run := tracer.StartRun(context.Background(), orchestrator.RunSpan{Plan: "test-plan"})
+	ctx, stage := tracer.StartStage(ctx, orchestrator.StageSpan{ID: "developer"})
+	_, invocation := tracer.StartProvider(ctx, orchestrator.ProviderSpan{
+		Stage: "developer", Agent: "developer", Operation: orchestrator.GenAIOperationName,
+	})
+	invocation.End(orchestrator.SpanOutcome{Status: orchestrator.StageStatusCompleted, Usage: usage})
+	stage.End(orchestrator.SpanOutcome{Status: orchestrator.StageStatusCompleted})
+	run.End(orchestrator.SpanOutcome{Status: orchestrator.StageStatusCompleted})
+	if err := session.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	return decodeSpans(t, path)
+}
+
+func TestProviderSpanCarriesGenAIUsageAttributes(t *testing.T) {
+	spans := traceInvocation(t, &orchestrator.Usage{
+		Model: "claude-opus-5", InputTokens: 1200, OutputTokens: 340,
+		CacheReadTokens: 800, CacheCreationTokens: 64, CostUSD: 0.0425,
+	})
+	span := findSpan(t, spans, orchestrator.GenAIOperationName+" developer")
+	assertIntAttribute(t, span, "gen_ai.usage.input_tokens", "1200")
+	assertIntAttribute(t, span, "gen_ai.usage.output_tokens", "340")
+	assertIntAttribute(t, span, "loom.usage.cache_read_tokens", "800")
+	model := span.attribute(t, "gen_ai.request.model")
+	if model.Value.StringValue == nil || *model.Value.StringValue != "claude-opus-5" {
+		t.Errorf("gen_ai.request.model = %+v, want \"claude-opus-5\"", model.Value)
+	}
+	cost := span.attribute(t, "loom.usage.cost_usd")
+	if cost.Value.DoubleValue == nil || *cost.Value.DoubleValue != 0.0425 {
+		t.Errorf("loom.usage.cost_usd = %+v, want 0.0425", cost.Value)
+	}
+	// The invocation is a child of the stage, not of the run.
+	if span.ParentSpanID != findSpan(t, spans, "loom.stage developer").SpanID {
+		t.Error("invocation span is not a child of its stage span")
+	}
+}
+
+func assertIntAttribute(t *testing.T, span otlpSpan, key, want string) {
+	t.Helper()
+	attr := span.attribute(t, key)
+	if attr.Value.IntValue == nil || *attr.Value.IntValue != want {
+		t.Errorf("%s = %+v, want intValue %q", key, attr.Value, want)
+	}
+}
+
+// A span with no reported usage must carry no usage attributes at all.
+// Explicit zeros would assert a measurement that was never taken.
+func TestNoUsageReportedMeansNoUsageAttributes(t *testing.T) {
+	spans := traceInvocation(t, nil)
+
+	for _, attr := range findSpan(t, spans, orchestrator.GenAIOperationName+" developer").Attributes {
+		if strings.HasPrefix(attr.Key, "gen_ai.usage.") || strings.HasPrefix(attr.Key, "loom.usage.") {
+			t.Errorf("attribute %q present with no usage reported — absent and zero are different facts", attr.Key)
+		}
 	}
 }

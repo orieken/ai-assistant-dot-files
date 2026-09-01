@@ -1,8 +1,10 @@
 // Package claude is the real Provider for the executor skeleton (roadmap
 // M0.4 part 2): it invokes each stage's agent by spawning the `claude` CLI
-// headless (`claude -p <prompt>`) as a subprocess. The prompt is built from
-// the agent's shared/agents/<agent>.md definition plus the feature spec
-// path; stdout is captured to the stage's artifact path. Timeouts arrive
+// headless (`claude -p --output-format json`) as a subprocess. The prompt is
+// built from the agent's shared/agents/<agent>.md definition plus the feature
+// spec path; stdout carries a JSON result envelope whose `result` becomes the
+// stage's artifact and whose `usage` becomes the stage's cost (roadmap L3.8).
+// Timeouts arrive
 // via ctx (the executor applies the stage's timeout) and are enforced by
 // exec.CommandContext, which kills the subprocess when ctx ends. If the
 // claude binary is absent the stage FAILS with a remediation message — it
@@ -13,7 +15,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -39,7 +40,7 @@ type Config struct {
 	Logger *slog.Logger
 }
 
-// Provider spawns `claude -p` per stage.
+// Provider spawns the claude CLI once per stage.
 type Provider struct {
 	binaryName string
 	agentsDir  string
@@ -96,50 +97,33 @@ func (p *Provider) buildPrompt(stage orchestrator.Stage, input orchestrator.Stag
 	return prompt + instruction, nil
 }
 
-// runSubprocess executes `claude -p <prompt>` with stdout captured to the
-// stage's artifact path. exec.CommandContext kills the subprocess when ctx
-// ends — that is how stage timeouts and SIGINT reach it.
+// runSubprocess executes `claude -p --output-format json <prompt>` and
+// parses the result envelope. exec.CommandContext kills the subprocess when
+// ctx ends — that is how stage timeouts and SIGINT reach it.
+//
+// stdout is captured in memory for every stage now, not only typed ones.
+// The envelope has to be parsed before the agent's own output can be
+// separated from the accounting around it, so there is nothing left to
+// stream straight to a file.
 func (p *Provider) runSubprocess(ctx context.Context, binaryPath, prompt string, stage orchestrator.Stage, input orchestrator.StageInput) (orchestrator.StageOutput, error) {
-	stdout, artifactPath, err := p.captureTarget(stage, input)
-	if err != nil {
-		return orchestrator.StageOutput{}, err
-	}
-	defer stdout.close()
-
-	stderr := &bytes.Buffer{}
+	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
 	// The prompt travels over stdin, not argv: agent definitions begin with
 	// `---` YAML frontmatter, which the claude CLI's argument parser would
 	// treat as an option — and stdin also sidesteps ARG_MAX for large
 	// definitions. `claude -p` reads the prompt from stdin when piped.
-	command := exec.CommandContext(ctx, binaryPath, "-p")
+	command := exec.CommandContext(ctx, binaryPath, "-p", "--output-format", "json")
 	command.Stdin = strings.NewReader(prompt)
-	command.Stdout = stdout.writer
+	command.Stdout = stdout
 	command.Stderr = stderr
 
 	started := time.Now()
 	p.logger.Info("stage.started", "stage", stage.ID, "agent", stage.Agent, "binary", binaryPath)
 	runErr := command.Run()
 	p.logger.Info("stage.finished", "stage", stage.ID, "durationMs", time.Since(started).Milliseconds(), "success", runErr == nil)
-	return p.finish(ctx, runErr, stage, artifactPath, stdout, stderr)
+	return p.finish(ctx, runErr, stage, input, stdout, stderr)
 }
 
-// captureTarget decides where the agent's stdout goes: a typed stage's
-// response is held in memory so it can be parsed and validated, while an
-// untyped stage still streams straight into its markdown artifact.
-func (p *Provider) captureTarget(stage orchestrator.Stage, input orchestrator.StageInput) (*capture, string, error) {
-	if stage.StateKind != "" {
-		buffer := &bytes.Buffer{}
-		return &capture{writer: buffer, buffer: buffer}, "", nil
-	}
-	artifactPath := filepath.Join(input.WorkspaceDir, stage.ID+".md")
-	file, err := os.Create(artifactPath)
-	if err != nil {
-		return nil, "", fmt.Errorf("create artifact file: %w", err)
-	}
-	return &capture{writer: file, file: file}, artifactPath, nil
-}
-
-func (p *Provider) finish(ctx context.Context, waitErr error, stage orchestrator.Stage, artifactPath string, stdout *capture, stderr *bytes.Buffer) (orchestrator.StageOutput, error) {
+func (p *Provider) finish(ctx context.Context, waitErr error, stage orchestrator.Stage, input orchestrator.StageInput, stdout, stderr *bytes.Buffer) (orchestrator.StageOutput, error) {
 	if ctx.Err() != nil {
 		return orchestrator.StageOutput{}, fmt.Errorf("stage %q subprocess terminated: %w", stage.ID, ctx.Err())
 	}
@@ -147,28 +131,30 @@ func (p *Provider) finish(ctx context.Context, waitErr error, stage orchestrator
 		return orchestrator.StageOutput{}, fmt.Errorf("stage %q agent exited with error: %w — stderr: %s",
 			stage.ID, waitErr, truncate(stderr.String(), 2000))
 	}
-	if stdout.buffer == nil {
-		return orchestrator.StageOutput{ArtifactPath: artifactPath}, nil
-	}
-	payload, err := extractJSON(stdout.buffer.Bytes())
+	result, err := parseEnvelope(stdout.Bytes())
 	if err != nil {
 		return orchestrator.StageOutput{}, fmt.Errorf("stage %q: %w", stage.ID, err)
 	}
-	return orchestrator.StageOutput{Payload: payload}, nil
+	return p.outputFor(stage, input, result)
 }
 
-// capture is where a stage's stdout lands: an artifact file for markdown
-// stages, an in-memory buffer for typed ones.
-type capture struct {
-	writer io.Writer
-	file   *os.File
-	buffer *bytes.Buffer
-}
-
-func (c *capture) close() {
-	if c.file != nil {
-		_ = c.file.Close()
+// outputFor turns the envelope's result text into the stage's artifact: a
+// validated JSON payload for a typed stage, a markdown file for the rest.
+// Usage rides along either way — it is a property of the invocation, not of
+// what the invocation happened to produce.
+func (p *Provider) outputFor(stage orchestrator.Stage, input orchestrator.StageInput, result *envelope) (orchestrator.StageOutput, error) {
+	if stage.StateKind != "" {
+		payload, err := extractJSON([]byte(result.Result))
+		if err != nil {
+			return orchestrator.StageOutput{Usage: result.usage()}, fmt.Errorf("stage %q: %w", stage.ID, err)
+		}
+		return orchestrator.StageOutput{Payload: payload, Usage: result.usage()}, nil
 	}
+	artifactPath := filepath.Join(input.WorkspaceDir, stage.ID+".md")
+	if err := os.WriteFile(artifactPath, []byte(result.Result), 0o644); err != nil {
+		return orchestrator.StageOutput{Usage: result.usage()}, fmt.Errorf("stage %q: write artifact: %w", stage.ID, err)
+	}
+	return orchestrator.StageOutput{ArtifactPath: artifactPath, Usage: result.usage()}, nil
 }
 
 func truncate(s string, limit int) string {

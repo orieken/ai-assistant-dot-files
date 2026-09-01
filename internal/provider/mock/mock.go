@@ -31,6 +31,11 @@ type Script struct {
 	// L2.9). The executor validates it and writes it as the artifact, so a
 	// script setting Payload leaves ArtifactContent empty.
 	Payload []byte
+	// Usage is what this invocation reports consuming (roadmap L3.8). Nil
+	// is the default and the honest one for a mock: it consumed nothing
+	// from a model, and reporting zeros would assert a measurement that
+	// was never taken.
+	Usage *orchestrator.Usage
 }
 
 // Provider is a scripted, deterministic orchestrator.Provider.
@@ -63,23 +68,23 @@ func (p *Provider) Invoke(ctx context.Context, stage orchestrator.Stage, input o
 		return orchestrator.StageOutput{}, ctx.Err()
 	}
 	if script.Err != nil {
-		return orchestrator.StageOutput{}, script.Err
+		return orchestrator.StageOutput{Usage: script.Usage}, script.Err
 	}
 	if len(script.Payload) > 0 {
-		return orchestrator.StageOutput{Payload: script.Payload}, nil
+		return orchestrator.StageOutput{Payload: script.Payload, Usage: script.Usage}, nil
 	}
 	return p.writeArtifact(stage, input, script)
 }
 
 func (p *Provider) writeArtifact(stage orchestrator.Stage, input orchestrator.StageInput, script Script) (orchestrator.StageOutput, error) {
 	if script.ArtifactContent == "" {
-		return orchestrator.StageOutput{}, nil
+		return orchestrator.StageOutput{Usage: script.Usage}, nil
 	}
 	path := filepath.Join(input.WorkspaceDir, stage.ID+".md")
 	if err := os.WriteFile(path, []byte(script.ArtifactContent), 0o644); err != nil {
 		return orchestrator.StageOutput{}, fmt.Errorf("mock artifact write: %w", err)
 	}
-	return orchestrator.StageOutput{ArtifactPath: path}, nil
+	return orchestrator.StageOutput{ArtifactPath: path, Usage: script.Usage}, nil
 }
 
 func (p *Provider) record(stageID string) {

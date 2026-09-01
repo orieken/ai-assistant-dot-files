@@ -40,6 +40,24 @@ const (
 	attrReason        = "loom.reason"
 )
 
+// GenAI semantic convention keys. These are the ones the convention
+// actually defines, used only on the invocation span — a generic GenAI
+// dashboard reads these and needs to know nothing about loom.
+const (
+	attrGenAIOperation   = "gen_ai.operation.name"
+	attrGenAIModel       = "gen_ai.request.model"
+	attrGenAIInputTokens = "gen_ai.usage.input_tokens"
+	attrGenAIOutputToken = "gen_ai.usage.output_tokens"
+)
+
+// Cache traffic and cost have no GenAI semconv key, so they take the loom
+// prefix rather than an invented gen_ai one that a dashboard would misread.
+const (
+	attrCacheRead     = "loom.usage.cache_read_tokens"
+	attrCacheCreation = "loom.usage.cache_creation_tokens"
+	attrCostUSD       = "loom.usage.cost_usd"
+)
+
 // otelTracer implements orchestrator.Tracer. It is unexported on purpose:
 // callers receive it as the interface from Session.Tracer, so a disabled
 // session can hand back an untyped nil. Returning a typed nil pointer here
@@ -95,6 +113,20 @@ func optionalStageAttributes(stage orchestrator.StageSpan) []attribute.KeyValue 
 	return attributes
 }
 
+// StartProvider opens the span for one model invocation, beneath its
+// stage. Usage attributes arrive at End, because none of them are known
+// until the call returns.
+func (t *otelTracer) StartProvider(ctx context.Context, invocation orchestrator.ProviderSpan) (context.Context, orchestrator.Span) {
+	ctx, span := t.tracer.Start(ctx, invocation.Operation+" "+invocation.Agent,
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(
+			attribute.String(attrGenAIOperation, invocation.Operation),
+			attribute.String(attrStageID, invocation.Stage),
+			attribute.String(attrStageAgent, invocation.Agent),
+		))
+	return ctx, &otelSpan{span: span}
+}
+
 type otelSpan struct {
 	span trace.Span
 }
@@ -108,8 +140,30 @@ func (s *otelSpan) End(outcome orchestrator.SpanOutcome) {
 	if outcome.Reason != "" {
 		s.span.SetAttributes(attribute.String(attrReason, outcome.Reason))
 	}
+	s.span.SetAttributes(usageAttributes(outcome.Usage)...)
 	s.recordStatus(outcome)
 	s.span.End()
+}
+
+// usageAttributes renders reported usage. A nil Usage yields no attributes
+// at all: "the provider reported nothing" and "the provider reported zero"
+// are different facts, and a span carrying explicit zeros would assert the
+// second when only the first is true.
+func usageAttributes(usage *orchestrator.Usage) []attribute.KeyValue {
+	if usage == nil {
+		return nil
+	}
+	attributes := []attribute.KeyValue{
+		attribute.Int64(attrGenAIInputTokens, usage.InputTokens),
+		attribute.Int64(attrGenAIOutputToken, usage.OutputTokens),
+		attribute.Int64(attrCacheRead, usage.CacheReadTokens),
+		attribute.Int64(attrCacheCreation, usage.CacheCreationTokens),
+		attribute.Float64(attrCostUSD, usage.CostUSD),
+	}
+	if usage.Model != "" {
+		attributes = append(attributes, attribute.String(attrGenAIModel, usage.Model))
+	}
+	return attributes
 }
 
 func (s *otelSpan) recordStatus(outcome orchestrator.SpanOutcome) {

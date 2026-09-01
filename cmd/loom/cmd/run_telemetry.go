@@ -22,6 +22,22 @@ import (
 // has otherwise finished its work.
 const flushTimeout = 5 * time.Second
 
+// reportRunUsage prints what the run cost, from run state rather than from
+// the trace — the figure has to be available whether or not anyone
+// configured a collector, and it is the same number either way.
+func reportRunUsage(cmd *cobra.Command, store *orchestrator.StateStore) {
+	state, err := store.Load()
+	if err != nil || state == nil {
+		return
+	}
+	total := state.TotalUsage()
+	if total == (orchestrator.Usage{}) {
+		return
+	}
+	cmd.Printf("Usage: %d in / %d out tokens (%d cache read, %d cache write) — $%.4f\n",
+		total.InputTokens, total.OutputTokens, total.CacheReadTokens, total.CacheCreationTokens, total.CostUSD)
+}
+
 // startTelemetry opens a tracing session for this run and returns the
 // shutdown to defer. A nil session yields a no-op shutdown, so callers do
 // not branch on whether telemetry is on.
