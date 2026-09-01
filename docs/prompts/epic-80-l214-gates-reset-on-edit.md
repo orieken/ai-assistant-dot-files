@@ -43,6 +43,7 @@ here directly). Do NOT push.
 | No cryptographic token | The approval record *is* the token: a digest set in state the executor owns. No signing, no expiry | Signing matters when an approval crosses a trust boundary — a webhook or queue channel, which is explicitly later work. Adding crypto now would be ceremony over a file only this process writes |
 | Stages completed after approval | Not bound. Only stages already complete when the human approved are part of what they saw | Binding future work to a past decision is incoherent; the next gate is what covers later stages |
 | Markdown pipeline | `loom state approve` records the same digest set, and `loom state verify` reports an approval as INVALIDATED when a bound artifact changed. It **detects**; it cannot enforce | This is the `edited_then_approved` signal the telemetry spec describes, computed in Go instead of by the model that wrote the checksums. Enforcement needs the gated action running under the executor — say so plainly rather than implying the markdown pipeline gained a guarantee |
+| Approving into a stale run | `--approve` is **refused up front** when verification is about to demote a bound stage: the error names the changed artifact and tells the human to resume first, then approve | Recording an approval that the same command's verification immediately invalidates wastes the human's decision and reads like a bug. Moving approval to *after* verification was considered and rejected: the demoted stage is then STALE rather than completed, so it would bind nothing, the stage would re-run, and the gate would pass content nobody saw — the exact hole this epic closes |
 | Timeline | A new `gate.invalidated` event carrying the gate and the stage whose artifact changed | The timeline already records `gate.waiting` and `gate.approved`; an invalidation is the third thing that happens to a gate, and L4.5 will mine exactly this |
 | Telemetry | `shared/telemetry/event-schema.md` gets a note that the executor now detects edited-then-approved structurally, and that its "edit detection heuristic" describes the markdown path only. Do **not** build the opt-in telemetry emitter | The `events.jsonl` emitter is L3.9. Writing it here would smuggle an unrelated roadmap item into a gate epic |
 | State schema | `Approval` gaining digest and invalidation fields bumps `StateSchemaVersion` to 5; no migration code — a v4 file is refused with the existing clear message | Same policy as every prior bump, and for the same reason: nothing is deployed anywhere yet |
@@ -97,10 +98,12 @@ gate`), report, PAUSE.
    re-approval is required, then halt on the normal non-interactive path (exit code 3) or re-prompt
    on a TTY. The message must make the cause obvious — a human who edited a file on purpose should
    not have to guess why the run stopped.
-2. `loom state approve` records the same digest set; `loom state verify` reports each approval as
+2. `applyApproveFlag` refuses to record an approval when verification would immediately invalidate
+   it, per the design table — name the artifact, say to resume first.
+3. `loom state approve` records the same digest set; `loom state verify` reports each approval as
    OK or INVALIDATED (naming the changed artifact) and `loom state show` displays it. Exit non-zero
    on an invalidated approval, as `verify` already does for a stale stage.
-3. Tests through the real binary: approve, edit, resume → refused with a message naming the
+4. Tests through the real binary: approve, edit, resume → refused with a message naming the
    artifact; re-approve → proceeds; the markdown path reports INVALIDATED without claiming to have
    prevented anything.
 

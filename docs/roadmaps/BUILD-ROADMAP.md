@@ -569,6 +569,32 @@ orchestration kernel exists, which is why they sit in Milestone 1 despite spanni
 4. **Done when**: an MCP host with no loom markdown installed can validate an artifact against a
    contract and read pipeline state for a run, via tool calls alone.
 
+### L2.17 — Bring the developer↔code-reviewer loop under the executor
+**Workstream**: KERNEL · **Effort**: L · **Blocked by**: M0.4 · **Blocks**: none · *(raised 2026-08-31, epic 80 review)*
+
+1. **Problem**: `deliver-feature/SKILL.md` steps 18–21 describe an *iteration*: code-reviewer returns
+   CHANGES REQUESTED, the current `implementation-notes.md` and `code-review-report.md` are copied to
+   `.history/`, and the pipeline repeats from step 18 "until APPROVED and structurally valid". The
+   same shape appears in the Tier B contract-retry loop (`maxContractRetries`, default 3) at every
+   validate-artifact step. None of it is executed by anything: the loop condition, the bound, the
+   history backup, and the decision to stop are all instructions an LLM is asked to follow about its
+   own prior output. The executor cannot help — `Plan` is a linear list of stages with no notion of
+   a cycle, so `loom run` invokes the developer exactly once and the code-reviewer's verdict changes
+   nothing. This is the largest remaining piece of the pipeline that exists only as prose.
+2. **Architectural Fix**: A bounded loop as plan data — a stage (or stage group) declaring
+   `repeat_until` with a machine-checkable condition and a `max_iterations`, evaluated by the
+   executor rather than the model. Iterations are recorded in run state (the `Sequence` field from
+   L2.12 already distinguishes a re-run from a new step), each iteration's artifacts are retained
+   rather than overwritten, and exhausting the bound is a halt with a clear reason, never a silent
+   pass. The review verdict must become a typed field a condition can read (L2.9 for the review
+   artifact), not prose a model re-reads.
+3. **Target Files**: `internal/orchestrator/plan.go` (loop declaration), new
+   `internal/orchestrator/loop.go`, `internal/state/` (typed review verdict),
+   `shared/skills/deliver-feature/SKILL.md:99-104`, `shared/contracts/review-contract.md`
+4. **Done when**: a code-reviewer stage returning CHANGES REQUESTED causes `loom run` to re-invoke
+   the developer with the review findings and stop after a declared bound, with every iteration
+   visible in run state — and no prose instruction anywhere in the path.
+
 ---
 
 # MILESTONE 2 — Level 3: Autonomous Orchestration Layer
