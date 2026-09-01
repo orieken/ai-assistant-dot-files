@@ -46,3 +46,6 @@ func skippedLines(decisions []RouteDecision) []string {
 	}
 	return lines
 }
+
+// render satisfies the renderable interface.
+func (r Route) render() string { return renderRoute(r) }

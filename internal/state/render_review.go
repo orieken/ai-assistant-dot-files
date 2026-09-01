@@ -63,3 +63,6 @@ func findingFiles(findings []Finding) []string {
 	}
 	return files
 }
+
+// render satisfies the renderable interface.
+func (r ReviewState) render() string { return renderReview(r) }

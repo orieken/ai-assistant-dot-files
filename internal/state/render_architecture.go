@@ -128,3 +128,6 @@ func refactoringLines(opportunities []RefactoringOpportunity) []string {
 	}
 	return lines
 }
+
+// render satisfies the renderable interface.
+func (a ArchitectureState) render() string { return renderArchitecture(a) }

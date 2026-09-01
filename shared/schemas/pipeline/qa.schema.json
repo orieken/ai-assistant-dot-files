@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/orieken/loom/internal/state/qa-state",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "testFilesCreated": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "testFilesModified": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "coverage": {
+      "properties": {
+        "acceptanceCriteriaCovered": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "acceptanceCriteriaTotal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "newTests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "statementCoveragePercent": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "acceptanceCriteriaCovered",
+        "acceptanceCriteriaTotal"
+      ]
+    },
+    "testResults": {
+      "properties": {
+        "passed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipReasons": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "passed",
+        "failed"
+      ]
+    },
+    "accessibilityCheck": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "bugsFound": {
+      "items": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "How it was fixed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "description",
+          "resolution"
+        ]
+      },
+      "type": "array"
+    },
+    "knownGaps": {
+      "items": {
+        "properties": {
+          "criterion": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "criterion",
+          "reason"
+        ]
+      },
+      "type": "array"
+    },
+    "notesForTechWriter": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "retrieval": {
+      "properties": {
+        "domainTerms": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Canonical terms from DOMAIN_DICTIONARY.md used by this feature"
+        },
+        "issueRefs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Ticket or issue references"
+        },
+        "linkedAdrs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced ADRs"
+        },
+        "linkedKis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced Knowledge Items"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "feature",
+    "coverage",
+    "testResults"
+  ]
+}

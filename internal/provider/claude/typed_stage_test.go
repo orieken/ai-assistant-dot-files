@@ -46,7 +46,7 @@ func TestTypedInstructionHandsOverTheProjectedUpstreamState(t *testing.T) {
 }
 
 func TestTypedInstructionRejectsAnUnknownKind(t *testing.T) {
-	stage := orchestrator.Stage{ID: "developer", Agent: "developer", StateKind: "implementation"}
+	stage := orchestrator.Stage{ID: "devops-engineer", Agent: "devops-engineer", StateKind: "devops"}
 	if _, err := typedInstruction(stage, orchestrator.StageInput{}); err == nil {
 		t.Error("accepted a state kind with no schema")
 	}

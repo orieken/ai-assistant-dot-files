@@ -180,12 +180,19 @@ func repoRoot(t *testing.T) string {
 	return ""
 }
 
-func TestSchemaForKindCoversOnlyTypedKinds(t *testing.T) {
-	if _, ok := state.SchemaForKind(state.KindAnalysis); !ok {
-		t.Error("analysis has no schema; it is part of L2.9's first cut")
+func TestSchemaForKindCoversTypedKinds(t *testing.T) {
+	for _, kind := range []state.Kind{
+		state.KindAnalysis, state.KindArchitecture, state.KindRoute,
+		state.KindReview, state.KindImplementation, state.KindSecurity, state.KindQA,
+	} {
+		if _, ok := state.SchemaForKind(kind); !ok {
+			t.Errorf("kind %q has no generated schema", kind)
+		}
 	}
-	if _, ok := state.SchemaForKind(state.Kind("implementation")); ok {
-		t.Error("implementation reported a schema; only the analyst -> architect hop is typed in this cut")
+	// The end-of-pipeline reports are still markdown; nothing evaluates a
+	// condition over them yet.
+	if _, ok := state.SchemaForKind(state.Kind("devops")); ok {
+		t.Error("devops reported a schema; it is not typed in this cut")
 	}
 }
 

@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/orieken/loom/internal/state/security-state",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "threatModelSummary": {
+      "type": "string"
+    },
+    "dependencyAudit": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "stride": {
+      "items": {
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "assessed": {
+            "type": "string",
+            "description": "What was considered"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "category",
+          "assessed"
+        ]
+      },
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "HIGH",
+              "MEDIUM",
+              "LOW",
+              "INFO"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "description": "Repo-relative path and line"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "fixApplied": {
+            "type": "string",
+            "description": "What was changed. Required for CRITICAL and HIGH — a recommendation is not a fix"
+          },
+          "verification": {
+            "type": "string",
+            "description": "How QA can verify the fix"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "severity",
+          "title",
+          "location",
+          "description"
+        ]
+      },
+      "type": "array"
+    },
+    "filesModified": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "securityChecklist": {
+      "items": {
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item",
+          "checked"
+        ]
+      },
+      "type": "array"
+    },
+    "notesForQa": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "notesForTechWriter": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "retrieval": {
+      "properties": {
+        "domainTerms": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Canonical terms from DOMAIN_DICTIONARY.md used by this feature"
+        },
+        "issueRefs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Ticket or issue references"
+        },
+        "linkedAdrs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced ADRs"
+        },
+        "linkedKis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced Knowledge Items"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "feature",
+    "threatModelSummary",
+    "stride"
+  ]
+}

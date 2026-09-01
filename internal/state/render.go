@@ -13,20 +13,24 @@ import (
 	"strings"
 )
 
+// viewFileNames maps each state kind to the contract filename it renders
+// to. A table rather than a switch: it is data, and it grows with every cut.
+func viewFileNames() map[Kind]string {
+	return map[Kind]string{
+		KindAnalysis:       "analysis.md",
+		KindArchitecture:   "architecture-notes.md",
+		KindRoute:          "route.md",
+		KindReview:         "code-review-report.md",
+		KindImplementation: "implementation-notes.md",
+		KindSecurity:       "security-report.md",
+		KindQA:             "qa-report.md",
+	}
+}
+
 // ViewFileName returns the markdown file a state kind renders to.
 func ViewFileName(kind Kind) (string, bool) {
-	switch kind {
-	case KindAnalysis:
-		return "analysis.md", true
-	case KindArchitecture:
-		return "architecture-notes.md", true
-	case KindRoute:
-		return "route.md", true
-	case KindReview:
-		return "code-review-report.md", true
-	default:
-		return "", false
-	}
+	name, known := viewFileNames()[kind]
+	return name, known
 }
 
 // RenderView renders a validated payload as markdown, returning the file
@@ -47,19 +51,18 @@ func RenderView(kind Kind, payload []byte) (string, string, error) {
 	return name, body, nil
 }
 
+// renderable is implemented by every state document that has a markdown
+// view. Polymorphism rather than a type switch that grows with each cut.
+type renderable interface {
+	render() string
+}
+
 func renderDocument(kind Kind, decoded Validatable) (string, error) {
-	switch typed := decoded.(type) {
-	case *AnalysisState:
-		return renderAnalysis(*typed), nil
-	case *ArchitectureState:
-		return renderArchitecture(*typed), nil
-	case *Route:
-		return renderRoute(*typed), nil
-	case *ReviewState:
-		return renderReview(*typed), nil
-	default:
+	document, ok := decoded.(renderable)
+	if !ok {
 		return "", fmt.Errorf("no renderer for state kind %q", kind)
 	}
+	return document.render(), nil
 }
 
 // document accumulates markdown. Its methods keep each renderer a flat list

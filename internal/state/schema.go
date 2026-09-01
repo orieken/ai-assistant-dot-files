@@ -26,10 +26,13 @@ type Kind string
 // pipeline still exchanges markdown, and this list is where later epics
 // grow.
 const (
-	KindAnalysis     Kind = "analysis"
-	KindArchitecture Kind = "architecture"
-	KindRoute        Kind = "route"
-	KindReview       Kind = "review"
+	KindAnalysis       Kind = "analysis"
+	KindArchitecture   Kind = "architecture"
+	KindRoute          Kind = "route"
+	KindReview         Kind = "review"
+	KindImplementation Kind = "implementation"
+	KindSecurity       Kind = "security"
+	KindQA             Kind = "qa"
 )
 
 // StageSchema names one state document kind and the type behind it.
@@ -47,6 +50,9 @@ func StageSchemas() []StageSchema {
 		{Kind: KindArchitecture, FileName: "architecture.schema.json", subject: &ArchitectureState{}},
 		{Kind: KindRoute, FileName: "route.schema.json", subject: &Route{}},
 		{Kind: KindReview, FileName: "review.schema.json", subject: &ReviewState{}},
+		{Kind: KindImplementation, FileName: "implementation.schema.json", subject: &ImplementationState{}},
+		{Kind: KindSecurity, FileName: "security.schema.json", subject: &SecurityState{}},
+		{Kind: KindQA, FileName: "qa.schema.json", subject: &QAState{}},
 	}
 }
 
@@ -86,22 +92,29 @@ func (s StageSchema) Generate() ([]byte, error) {
 // recording and staleness cascade cover typed state with no new mechanism.
 const TypedStateDir = "state"
 
+// documentFactories maps a kind to an empty document of that type. A table
+// rather than a switch, for the same reason viewFileNames is one.
+func documentFactories() map[Kind]func() Validatable {
+	return map[Kind]func() Validatable{
+		KindAnalysis:       func() Validatable { return &AnalysisState{} },
+		KindArchitecture:   func() Validatable { return &ArchitectureState{} },
+		KindRoute:          func() Validatable { return &Route{} },
+		KindReview:         func() Validatable { return &ReviewState{} },
+		KindImplementation: func() Validatable { return &ImplementationState{} },
+		KindSecurity:       func() Validatable { return &SecurityState{} },
+		KindQA:             func() Validatable { return &QAState{} },
+	}
+}
+
 // Decode parses and validates a payload of the given kind. Unknown fields
 // are rejected: the schema is generated from these same structs, so a field
 // the struct does not have is a field the agent invented.
 func Decode(kind Kind, payload []byte) (Validatable, error) {
-	switch kind {
-	case KindAnalysis:
-		return decodeInto(payload, &AnalysisState{})
-	case KindArchitecture:
-		return decodeInto(payload, &ArchitectureState{})
-	case KindRoute:
-		return decodeInto(payload, &Route{})
-	case KindReview:
-		return decodeInto(payload, &ReviewState{})
-	default:
+	newDocument, known := documentFactories()[kind]
+	if !known {
 		return nil, fmt.Errorf("unknown state kind %q", kind)
 	}
+	return decodeInto(payload, newDocument())
 }
 
 func decodeInto(payload []byte, target Validatable) (Validatable, error) {

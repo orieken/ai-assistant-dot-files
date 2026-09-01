@@ -150,3 +150,6 @@ func joinOr(values []string) string {
 func joinComma(values []string) string {
 	return strings.Join(values, ", ")
 }
+
+// render satisfies the renderable interface.
+func (a AnalysisState) render() string { return renderAnalysis(a) }

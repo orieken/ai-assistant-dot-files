@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/orieken/loom/internal/state/implementation-state",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "filesCreated": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "filesModified": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "interfaceDesign": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "description": "Public surface introduced or changed"
+    },
+    "refactoringLog": {
+      "items": {
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "A named Fowler operation"
+          },
+          "target": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation",
+          "target"
+        ]
+      },
+      "type": "array"
+    },
+    "selfReview": {
+      "items": {
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item",
+          "checked"
+        ]
+      },
+      "type": "array"
+    },
+    "simpleDesign": {
+      "items": {
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item",
+          "checked"
+        ]
+      },
+      "type": "array"
+    },
+    "keyDecisions": {
+      "items": {
+        "properties": {
+          "decision": {
+            "type": "string"
+          },
+          "reasoning": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision",
+          "reasoning"
+        ]
+      },
+      "type": "array"
+    },
+    "deviations": {
+      "items": {
+        "properties": {
+          "task": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task",
+          "reason"
+        ]
+      },
+      "type": "array"
+    },
+    "dependenciesAdded": {
+      "items": {
+        "properties": {
+          "package": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "package",
+          "reason"
+        ]
+      },
+      "type": "array"
+    },
+    "notesForQa": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "notesForDevops": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "retrieval": {
+      "properties": {
+        "domainTerms": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Canonical terms from DOMAIN_DICTIONARY.md used by this feature"
+        },
+        "issueRefs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Ticket or issue references"
+        },
+        "linkedAdrs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced ADRs"
+        },
+        "linkedKis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced Knowledge Items"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "feature",
+    "selfReview",
+    "simpleDesign"
+  ]
+}
