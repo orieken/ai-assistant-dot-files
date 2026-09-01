@@ -18,14 +18,6 @@
 scripts/publish-blog-posts.py
 docs/blog-posts/publishing.md
 
-# AI tool compatibility audit notes
-# docs/audits/ is a permanent dated series (see docs/README.md) — committed.
-# These two predate that convention: undated, and pasted from external tools
-# rather than produced by documentation-auditor. Left untracked pending a
-# decision to date them, refile them, or drop them.
-docs/audits/perplex-audit.md
-docs/audits/token-maximazation-chrome.md
-
 # Legacy and Backups
 *.bak
 archive/
