@@ -212,8 +212,17 @@ This pipeline keeps routing (conditional agent skips, contract-validation retry 
 code-reviewer↔developer loop — roadmap L2.11, L3.1), but it must **not** compute its own integrity
 hashes.
 
-**Record every checkpoint with `loom state` when the binary is available** (check once, at Phase 0,
-with `command -v loom`). Go reads the artifact and hashes it — never write a `sha256` value yourself:
+**Record every checkpoint with `loom state` when it is available.** Probe once, at Phase 0, for the
+*subcommand* rather than the binary — an older `loom` is on PATH but has no `state` command, and
+`command -v loom` would pass while every call below failed:
+
+```bash
+loom state --help >/dev/null 2>&1 && echo "loom state available"
+```
+
+If that probe fails for any reason — no binary, or a binary too old — use the hand-written
+`pipeline-state.json` fallback documented below, and do not call `loom state` at all. When it
+succeeds, Go reads the artifact and hashes it — never write a `sha256` value yourself:
 
 ```bash
 # after each step marked **Checkpoint**

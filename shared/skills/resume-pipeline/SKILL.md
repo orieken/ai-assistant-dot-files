@@ -28,7 +28,8 @@ Do NOT use when there's no `pipeline-state.json` for the feature — that's a fr
 > completed stage's artifact digest in Go before trusting it. Do not use this skill against an
 > executor-owned run.
 >
-> **When the `loom` binary is available, verify with it rather than by hand.** Run
+> **When `loom state` is available, verify with it rather than by hand** (probe with
+> `loom state --help`, not `command -v loom` — an older binary has no `state` command). Run
 > `loom state verify --spec <feature-file>` and read its per-stage report: it re-hashes every
 > recorded artifact, demotes any stage whose artifact changed (plus every stage recorded after it),
 > and exits non-zero if anything failed. `loom state show --spec <feature-file>` prints where the
