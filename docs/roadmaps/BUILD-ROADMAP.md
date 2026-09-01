@@ -582,7 +582,8 @@ orchestration kernel exists, which is why they sit in Milestone 1 despite spanni
 named condition over a typed review verdict and a bound of three rounds. Every round is retained
 and digested; exhausting the bound halts at `confirm-unresolved-review` for a human. The markdown
 pipeline's step 21, previously unbounded, now states the same bound. **Not** wired to the Tier B
-contract-retry loop — the mechanism generalises to it, but using it there is later work.
+contract-retry loop — the mechanism generalises to it, and that work is now **L2.18**, which has to
+put validation under the executor first.
 
 1. **Problem**: `deliver-feature/SKILL.md` steps 18–21 describe an *iteration*: code-reviewer returns
    CHANGES REQUESTED, the current `implementation-notes.md` and `code-review-report.md` are copied to
@@ -606,6 +607,33 @@ contract-retry loop — the mechanism generalises to it, but using it there is l
 4. **Done when**: a code-reviewer stage returning CHANGES REQUESTED causes `loom run` to re-invoke
    the developer with the review findings and stop after a declared bound, with every iteration
    visible in run state — and no prose instruction anywhere in the path.
+
+### L2.18 — Run contract validation under the executor, and bound its retries
+**Workstream**: KERNEL · **Effort**: L · **Blocked by**: L2.17 (shipped), L2.11 · **Blocks**: none · *(raised 2026-08-31)*
+
+1. **Problem**: `deliver-feature` calls `validate-artifact` between every contract-bound handoff and
+   wraps it in a Tier B retry loop — "apply Tier B retry loop up to `maxContractRetries`" appears at
+   a dozen steps. None of it executes: `validate-artifact` is a skill a model runs, the retry count
+   is a number a model is asked to remember, and the executor has no idea any of it happened. L2.17
+   built a bounded loop for exactly this shape and deliberately did not wire it here, because the
+   prerequisite is larger than the wiring: **validation itself does not run under the executor at
+   all**. A run can pass every contract gate without the executor knowing a gate exists.
+2. **Architectural Fix**: Make validation an executor stage — an internal stage like the router
+   (L3.0), evaluating a contract against a typed artifact — then declare `agent → validate` as a
+   bounded loop with the L2.17 mechanism, condition `validation-passed`, bound `maxContractRetries`.
+   Exhausting it halts at a gate, as the review loop does. For typed artifacts this is schema
+   conformance the executor already performs at stage output; the work is the stages still on
+   markdown, and how a failure's reasons reach the producing agent's next attempt (a projection,
+   as with review findings).
+3. **Target Files**: `internal/orchestrator/` (validation as an internal stage, loop declaration),
+   `shared/skills/validate-artifact/SKILL.md`, `shared/skills/deliver-feature/SKILL.md` (the dozen
+   Tier B call sites), `shared/contracts/*.md`
+4. **Done when**: a stage producing a contract-violating artifact is re-invoked with the violations,
+   bounded, and the run halts for a human when the bound is reached — with no prose instruction in
+   that path.
+5. **Note on ordering**: this is worth doing *after* L2.11 gives validation something semantic to
+   check. Wiring a bounded retry loop around a heading-presence grep would mechanise a check that
+   a structurally perfect, semantically empty artifact already passes.
 
 ---
 
@@ -899,12 +927,13 @@ able to route to agents it was never hardcoded to know about.)*
    the same format: produced in-repo during the qa run, or published by a separate test repository's
    CI and fetched by version key. A bundle whose version key does not match what was built is
    refused rather than silently trusted.
-3. **Open decision this item must settle first**: does `loom` **generate** the manifest — wrapping or
-   reimplementing the heatmap scanner — or only **consume** a bundle someone else produces?
-   Consuming is the smaller surface and keeps the framework out of the browser-automation business;
-   generating gives one implementation and one stability-tier definition rather than per-project
-   drift. Decide before designing the schema, since it determines whether the scanner is a `loom`
-   subcommand or a documented producer contract.
+3. **Decided 2026-08-31 — `loom` consumes, it does not generate.** The bundle format is a contract
+   `loom` defines and reads; producing it stays with whoever owns the tests, and
+   `saturday-playwright-heatmap`'s scanner already emits what the manifest needs. This keeps
+   Playwright and a browser out of `loom`'s dependency tree, and works identically for both
+   topologies in ADR-007. The cost is accepted: the stability-tier definition lives in a contract
+   other implementations must honour, so the contract has to be explicit about it and the consumer
+   has to reject a bundle that is not.
 4. **Target Files**: `shared/agents/visual-qa-engineer.md` (precondition), new
    `shared/contracts/ui-evidence-bundle-contract.md`, `shared/schemas/` (bundle schema),
    `internal/state/` (typed bundle reference if consumed by the executor),
