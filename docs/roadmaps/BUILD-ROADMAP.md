@@ -874,6 +874,41 @@ able to route to agents it was never hardcoded to know about.)*
 4. **Done when**: a delivery completes with zero synchronous auditor invocations and the audit report
    arrives on the PR.
 
+### L3.14 — Define and consume the UI evidence bundle
+**Workstream**: KERNEL · **Effort**: L · **Blocked by**: ADR-007 (Accepted), L2.9 (first cut) · **Blocks**: routing `visual-qa-engineer` (L3.0's known limit) · *(raised 2026-08-31)*
+
+1. **Problem**: `visual-qa-engineer` decides whether it can run by checking the filesystem for a
+   `heatmap-data/` directory and Playwright baselines — a fact about the environment, evaluated by a
+   model, with nothing durable recording what was found or which build it described. L3.0 could
+   therefore not route the stage at all, and nothing can tell a baseline captured against this
+   build from one captured three releases ago. The Saturday heatmap plugin already scans every
+   visible interactable element per page with a stability-ordered selector; that output is discarded
+   per scenario instead of becoming an artifact the pipeline can reason about.
+2. **Architectural Fix**: A **UI evidence bundle** as a versioned artifact contract, per ADR-007:
+   `manifest.json` (interactables per route, each with its selector and that selector's stability
+   tier — `id` | `testid` | `class` | `tag`), `coverage.json` (which manifest entries a run
+   exercised), and `baselines/`, all keyed to the app version or commit they were captured against.
+   `visual-qa-engineer`'s precondition becomes "a bundle for this version is available" — a fact
+   about an artifact, which the router *can* read. Sourcing has two supported answers, both reading
+   the same format: produced in-repo during the qa run, or published by a separate test repository's
+   CI and fetched by version key. A bundle whose version key does not match what was built is
+   refused rather than silently trusted.
+3. **Open decision this item must settle first**: does `loom` **generate** the manifest — wrapping or
+   reimplementing the heatmap scanner — or only **consume** a bundle someone else produces?
+   Consuming is the smaller surface and keeps the framework out of the browser-automation business;
+   generating gives one implementation and one stability-tier definition rather than per-project
+   drift. Decide before designing the schema, since it determines whether the scanner is a `loom`
+   subcommand or a documented producer contract.
+4. **Target Files**: `shared/agents/visual-qa-engineer.md` (precondition), new
+   `shared/contracts/ui-evidence-bundle-contract.md`, `shared/schemas/` (bundle schema),
+   `internal/state/` (typed bundle reference if consumed by the executor),
+   `shared/rules/testing-conventions.md`
+5. **Done when**: `visual-qa-engineer` runs or is routed out on the basis of a bundle's presence and
+   version key rather than a directory listing, and a bundle captured against a different build is
+   refused with a message naming both versions.
+6. **Not in scope**: enforcing the fetch for the separate-repository path — that is a supply-chain
+   step no current gate covers, and ADR-007 records it as documented-but-unenforced.
+
 ### L3.13 — Derive agent quality metrics from execution
 **Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.5, L3.8 · **Blocks**: none
 
