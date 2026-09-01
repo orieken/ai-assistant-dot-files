@@ -609,7 +609,45 @@ orchestration kernel exists, which is why they sit in Milestone 1 despite spanni
 
 ## Workstream: KERNEL — Dynamic Routing
 
+### L3.0 — Compute the route from the analysis, before the design gate
+**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.9 (first cut), L2.12, L2.13, L2.14 — all shipped · **Blocks**: L3.1 · *(raised 2026-08-31)*
+
+1. **Problem**: `loom run` executes all fourteen stages unconditionally. The markdown pipeline does
+   better — six of its stages are conditional — but the conditions are prose an LLM evaluates about
+   an artifact it just read, and a skipped stage leaves nothing durable saying *why*. Neither
+   pipeline can answer "is devops running on this feature, and if not, why not?" before it gets
+   there. L3.1 answers this with a planner selecting over a capability registry (L3.2), which is the
+   right end state and a long way off; almost every condition the pipeline actually needs is
+   already a fact in typed `AnalysisState`.
+2. **Architectural Fix**: A **re-plan point** after the analyst: a fixed prologue
+   (`context-engineer`, `analyst`) runs, then the executor computes the route from typed analysis
+   via predicates in Go — `RequiresArchitect()` (shipped, epic 79) and its siblings — and records it
+   as a typed **route artifact**: one row per stage, included or skipped, with the reason. Skipped
+   stages enter run state as `SKIPPED` immediately, so the whole shape of the run is visible before
+   the second stage finishes. The route is an artifact like any other, so it is digest-recorded, and
+   because it completes before `confirm-design`, L2.14 binds it: **the human approves the route
+   along with the design, and editing the route resets that gate.** Forcing a stage back in is
+   therefore a supported, attributed, gate-bound act rather than a workaround.
+   **Skippability is an allow-list in plan data**: the review stages (`code-reviewer`,
+   `security-reviewer`) are never auto-skipped, because the cost of wrongly skipping a review is
+   asymmetric with the cost of running one unnecessarily. A human may still skip them by editing the
+   route, which the gate then makes them re-approve.
+3. **Target Files**: `internal/state/route.go` (typed route + predicates), `internal/orchestrator/plan.go`
+   (`Skippable`, re-plan point), `internal/orchestrator/state.go` (`StageStatusSkipped`, skip
+   reason), `shared/skills/deliver-feature/SKILL.md` (steps 12–29 conditionals reference the same
+   predicates), `cmd/loom/README.md`
+4. **Done when**: a feature with no infrastructure work skips `devops-engineer` by a recorded route
+   decision — visible in `loom state show` and on the timeline before the developer stage starts —
+   and hand-editing the route invalidates the `confirm-design` approval.
+5. **Known limit**: a route computed from the analysis can be wrong about work the analysis did not
+   foresee — the developer touching UI files a spec never mentioned. Re-planning mid-run is a cycle,
+   which `Plan` cannot express; that is **L2.17**'s mechanism, and the two should land in that order
+   or be designed together.
+
 ### L3.1 — Build a Planner/Router node
+*(Scoped alongside **L3.0**, which computes the route from typed analysis with predicates in Go and
+needs no registry. L3.1 is the general form: a planner selecting over declared agent capabilities,
+able to route to agents it was never hardcoded to know about.)*
 **Workstream**: KERNEL · **Effort**: XL · **Blocked by**: L2.9, L3.2 · **Blocks**: L4.2
 
 1. **Problem**: There is no routing anywhere in the codebase. `deliver-feature/SKILL.md` is a

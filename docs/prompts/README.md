@@ -130,6 +130,7 @@ before starting.
 
 | Epic | File | Estimated size |
 |---|---|---|
+| **81** | [epic-81-l30-route-from-analysis.md](epic-81-l30-route-from-analysis.md) — L3.0: a re-plan point after the analyst computes the route from typed analysis, records it as an artifact before `confirm-design` (so the human approves the route and editing it resets the gate), and marks skipped stages in run state before the developer starts. Review stages are never auto-skipped. Unblocks L3.1 | M |
 | **80** | [epic-80-l214-gates-reset-on-edit.md](epic-80-l214-gates-reset-on-edit.md) — L2.14: approvals bind to the digests of every completed stage; an edit after approval invalidates it and the gate halts again; identical re-runs keep the approval; `loom state verify` reports INVALIDATED for the markdown pipeline (detection, not enforcement). Unblocks L4.5 | M |
 | **75** | [epic-75-distribution-adoption.md](epic-75-distribution-adoption.md) — Phase A: `loom mcp serve` (D.1, unblocked) · Phase B: public embedding package (D.2, needs M0.3+L2.4) · Phase C: `loom init --level N` profiles + rules-corpus split (D.3) · Phase D: `loom health` maturity report (D.4) · Phase E: capability tools on the MCP surface (D.5, per-tool blockers — `validate_artifact` shipped structural-only `c0e8441`; the other three tools await L2.12/L3.9/L2.16) | XL total; Phase A alone is M |
 
