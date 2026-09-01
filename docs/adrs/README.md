@@ -55,7 +55,7 @@ File names follow the pattern: `ADR-NNN-short-description.md` in kebab-case.
 | ADR-004 | Bugfix artifacts use the features namespace     | Accepted | 2026-08-05 |
 | ADR-005 | Use explicit `.sh` install script paths          | Accepted | 2026-08-15 |
 | ADR-006 | Loom executes pipelines                         | Accepted | 2026-08-29 |
-| ADR-007 | UI test location and the evidence-bundle contract | Proposed | 2026-08-31 |
+| ADR-007 | UI test location and the evidence-bundle contract | Accepted | 2026-08-31 |
 
 ---
 

@@ -2,11 +2,11 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
-2026-08-31
+2026-08-31 (proposed and accepted the same day)
 
 ## Context
 
@@ -43,10 +43,7 @@ back to it?**
 
 ## Decision
 
-*(Proposed — the two options below are the decision to be made. This section records the
-recommendation; it is not Accepted until a human says so.)*
-
-**Recommended: support both, and make the artifact contract the only thing the pipeline depends
+**Support both topologies, and make the artifact contract the only thing the pipeline depends
 on.**
 
 The pipeline must not assume it can run the UI suite. It must assume only that a **UI evidence
@@ -96,7 +93,8 @@ which is a checkable fact in both worlds — and one the router can read.
 **What is explicitly not decided here.**
 
 - Whether `loom` gains a manifest-generation tool, and whether it wraps `saturday-playwright-heatmap`
-  or reimplements the scan. That is an epic, and it should follow this ADR rather than precede it.
+  or reimplements the scan. That is an epic, and it follows this ADR rather than preceding it.
+  Nothing in this decision is implemented yet: accepting it settles the shape, not the schedule.
 - Whether the bundle is fetched by `loom` or by the project's CI before `loom run` starts.
 - Anything about non-UI test evidence. API and unit results have their own reporting path
   (`shared/rules/testing-conventions.md`) and are out of scope.
