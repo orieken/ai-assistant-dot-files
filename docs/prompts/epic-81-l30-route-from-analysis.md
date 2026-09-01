@@ -49,6 +49,8 @@ here directly). Do NOT push.
 | What the route is | A typed artifact (`internal/state/route.go`), one row per stage: stage ID, included or skipped, and the reason. Rendered to markdown like any other typed state | An artifact gets digest recording, staleness, and gate binding for free. A decision that lives only in memory cannot be approved, audited, or edited |
 | Gate binding | The route completes before `confirm-design`, so L2.14 binds it automatically. Editing the route invalidates that approval and the run halts until re-approved | This is the point of the whole shape: forcing a stage back in becomes a supported, attributed, gate-bound act rather than a workaround. **Write no new code for this** — verify it falls out, with a test |
 | Skippability | An allow-list in plan data (`Stage.Skippable`). `code-reviewer` and `security-reviewer` are **never** auto-skippable; a human may still skip them by editing the route, which the gate makes them re-approve | The costs are asymmetric: running devops unnecessarily wastes an invocation, skipping a security review on an auth change does not. Automation gets the cheap half of that trade |
+| `visual-qa-engineer` is not routable | It stays **included**; no predicate is written for it | Its condition is environmental — "does `heatmap-data/` or a Playwright baseline exist" — not a fact about the feature, so nothing in `AnalysisState` can decide it. **ADR-007** proposes the evidence-bundle contract that would make it decidable; until that is Accepted, including the stage and letting it report `UNCONFIGURED` is the honest behaviour |
+| `devops-engineer` skip is a NEW condition | The markdown pipeline runs devops unconditionally (SKILL.md step 34). Routing it is a behaviour change, grounded on the analysis's `### DevOps Tasks` being empty, and Phase C adds the same condition to step 34 so the two pipelines agree | The motivating example for this epic — "if there is no need for devops, skip it" — is not a port of an existing conditional. Say so plainly rather than letting it look like parity work, and make the prose change explicit rather than leaving the pipelines divergent |
 | Predicates | Methods on `AnalysisState`, in the shape of `RequiresArchitect()`: derived signals OR'd with an explicit override, each with table-driven tests including the false-negative case | One style, one place, already tested. A predicate that cannot be written from the analysis contract's fields is a signal the contract is missing something — escalate rather than reaching into the workspace |
 | Skipped stages in state | `StageStatusSkipped` with the reason, written at the re-plan point — not when the stage would have run | "Visible before the developer starts" is the requirement. A skip recorded lazily answers the question too late to be worth anything |
 | The markdown pipeline | `deliver-feature` steps 12–29 keep their conditionals, reworded to name the same signals the predicates use. No `loom` dependency is introduced into those steps | Same split as every epic since 77: the executor gets enforcement, the markdown pipeline gets an honest description. Wiring it to `loom route` is a later decision, not a silent one |
@@ -79,8 +81,11 @@ here directly). Do NOT push.
    - `Route` — `[]RouteDecision{Stage, Included bool, Reason string}` plus `SchemaVersion`,
      `Validate()`, and a renderer, following the existing typed-state conventions exactly. Regenerate
      schemas (`go run ./cmd/gen-schemas`); the drift test must stay green.
-   - Predicates on `AnalysisState` in the shape of `RequiresArchitect()`, one per conditional stage:
-     performance-engineer, data-engineer, accessibility-engineer, visual-qa-engineer, devops-engineer.
+   - Predicates on `AnalysisState` in the shape of `RequiresArchitect()`, one per routable stage:
+     performance-engineer (a `performance` NFR carrying a threshold), data-engineer (a data-model
+     change in an Expand or Contract phase), accessibility-engineer (an `accessibility` NFR — the
+     analysis contract makes one mandatory for any feature with UI), devops-engineer (a non-empty
+     DevOps task list). **No predicate for visual-qa-engineer** per the design table.
      Read `deliver-feature/SKILL.md` steps 12–29 for what each condition means today, and
      `analysis-contract.md` for what may legally be read. **If a condition cannot be expressed from
      the contract's fields, stop and escalate** — do not read the workspace or invent a field.
