@@ -35,10 +35,31 @@ type ArchitectInput struct {
 	OpenQuestions             []string                   `json:"openQuestions,omitempty"`
 }
 
+// DeveloperInput is what the developer reads when the loop sends it round
+// again: the verdict and the findings it has to address. Notably absent is
+// everything the reviewer said about surfaces and scores — the developer's
+// next iteration acts on instructions, not on an assessment of its last
+// attempt.
+type DeveloperInput struct {
+	Feature  string    `json:"feature"`
+	Verdict  Verdict   `json:"verdict"`
+	Findings []Finding `json:"findings"`
+}
+
+// ProjectReviewForDeveloper narrows a review to what the next iteration
+// needs. It is a field selection, like every other projection: no model
+// summarises the findings on the way back.
+func ProjectReviewForDeveloper(review ReviewState) DeveloperInput {
+	return DeveloperInput{Feature: review.Feature, Verdict: review.Verdict, Findings: review.Findings}
+}
+
 // ProjectFor computes the projection a consumer of the given kind receives
 // from its upstream document. It is a field selection, never a
 // summarization: no model sits on this path.
 func ProjectFor(consumer Kind, upstream Kind, upstreamPayload []byte) ([]byte, error) {
+	if upstream == KindReview {
+		return projectReview(upstreamPayload)
+	}
 	if consumer != KindArchitecture || upstream != KindAnalysis {
 		return nil, fmt.Errorf("no projection declared from %q to %q", upstream, consumer)
 	}
@@ -51,6 +72,18 @@ func ProjectFor(consumer Kind, upstream Kind, upstreamPayload []byte) ([]byte, e
 		return nil, fmt.Errorf("upstream state is not an analysis")
 	}
 	return json.Marshal(projectAnalysisForArchitect(*analysis))
+}
+
+func projectReview(payload []byte) ([]byte, error) {
+	decoded, err := Decode(KindReview, payload)
+	if err != nil {
+		return nil, fmt.Errorf("upstream review state: %w", err)
+	}
+	review, ok := decoded.(*ReviewState)
+	if !ok {
+		return nil, fmt.Errorf("upstream state is not a review")
+	}
+	return json.Marshal(ProjectReviewForDeveloper(*review))
 }
 
 func projectAnalysisForArchitect(analysis AnalysisState) ArchitectInput {

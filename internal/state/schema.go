@@ -29,6 +29,7 @@ const (
 	KindAnalysis     Kind = "analysis"
 	KindArchitecture Kind = "architecture"
 	KindRoute        Kind = "route"
+	KindReview       Kind = "review"
 )
 
 // StageSchema names one state document kind and the type behind it.
@@ -45,6 +46,7 @@ func StageSchemas() []StageSchema {
 		{Kind: KindAnalysis, FileName: "analysis.schema.json", subject: &AnalysisState{}},
 		{Kind: KindArchitecture, FileName: "architecture.schema.json", subject: &ArchitectureState{}},
 		{Kind: KindRoute, FileName: "route.schema.json", subject: &Route{}},
+		{Kind: KindReview, FileName: "review.schema.json", subject: &ReviewState{}},
 	}
 }
 
@@ -95,6 +97,8 @@ func Decode(kind Kind, payload []byte) (Validatable, error) {
 		return decodeInto(payload, &ArchitectureState{})
 	case KindRoute:
 		return decodeInto(payload, &Route{})
+	case KindReview:
+		return decodeInto(payload, &ReviewState{})
 	default:
 		return nil, fmt.Errorf("unknown state kind %q", kind)
 	}

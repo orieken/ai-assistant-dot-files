@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/orieken/loom/internal/state/review-state",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "APPROVED",
+        "CHANGES_REQUESTED"
+      ]
+    },
+    "designNarrative": {
+      "type": "string",
+      "description": "2-3 sentences on what the code does architecturally"
+    },
+    "designScore": {
+      "properties": {
+        "clarity": {
+          "type": "integer",
+          "maximum": 5,
+          "minimum": 1
+        },
+        "cohesion": {
+          "type": "integer",
+          "maximum": 5,
+          "minimum": 1
+        },
+        "coupling": {
+          "type": "integer",
+          "maximum": 5,
+          "minimum": 1
+        },
+        "craft": {
+          "type": "integer",
+          "maximum": 5,
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "clarity",
+        "cohesion",
+        "coupling",
+        "craft"
+      ]
+    },
+    "securitySurface": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "performanceSurface": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "testDesignReview": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "selfReviewCheck": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "description": "Whether the developer's self-review matched reality"
+    },
+    "findings": {
+      "items": {
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "A named refactoring operation or violation"
+          },
+          "file": {
+            "type": "string",
+            "description": "Repo-relative path"
+          },
+          "smell": {
+            "type": "string",
+            "description": "What is wrong"
+          },
+          "instruction": {
+            "type": "string",
+            "description": "What to do about it"
+          },
+          "blocking": {
+            "type": "boolean",
+            "description": "False for the non-blocking suggestions an approval may still carry"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation",
+          "file",
+          "smell",
+          "instruction"
+        ]
+      },
+      "type": "array"
+    },
+    "retrieval": {
+      "properties": {
+        "domainTerms": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Canonical terms from DOMAIN_DICTIONARY.md used by this feature"
+        },
+        "issueRefs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Ticket or issue references"
+        },
+        "linkedAdrs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced ADRs"
+        },
+        "linkedKis": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Repo-relative paths to referenced Knowledge Items"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "feature",
+    "verdict",
+    "designNarrative",
+    "designScore"
+  ]
+}
