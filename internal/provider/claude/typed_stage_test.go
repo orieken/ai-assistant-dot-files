@@ -29,7 +29,9 @@ func TestTypedInstructionInlinesTheSchemaAndForbidsCommentary(t *testing.T) {
 }
 
 func TestTypedInstructionHandsOverTheProjectedUpstreamState(t *testing.T) {
-	input := orchestrator.StageInput{UpstreamStage: "analyst", UpstreamState: []byte(`{"feature":"user-auth"}`)}
+	input := orchestrator.StageInput{UpstreamState: map[string][]byte{
+		"analyst": []byte(`{"feature":"user-auth"}`),
+	}}
 	stage := orchestrator.Stage{ID: "architect", Agent: "architect", StateKind: string(state.KindArchitecture)}
 
 	instruction, err := typedInstruction(stage, input)
@@ -40,8 +42,11 @@ func TestTypedInstructionHandsOverTheProjectedUpstreamState(t *testing.T) {
 	if !strings.Contains(instruction, `{"feature":"user-auth"}`) {
 		t.Error("instruction does not carry the projected upstream state")
 	}
-	if !strings.Contains(instruction, "do not go looking for its markdown") {
+	if !strings.Contains(instruction, "do not go looking for their markdown") {
 		t.Error("instruction should tell the agent the projection is its source of truth")
+	}
+	if !strings.Contains(instruction, "From analyst:") {
+		t.Error("each upstream block should say which stage it came from")
 	}
 }
 

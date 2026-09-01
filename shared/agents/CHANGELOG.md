@@ -16,6 +16,13 @@ Semantic-ish, not strict SemVer:
 When you bump an agent's `version:` frontmatter field, add a row under a new dated heading here in the same
 commit — the pre-commit hook checks for exactly this.
 
+## 2026-08-31 — analysis reaches QA and tech-writer as a projection, not a summary
+
+| Agent | Version | Change |
+|---|---|---|
+| qa-engineer | 1.3.0 -> 1.4.0 | Step 2 no longer calls `summarize-artifact` on `analysis.md`. Under `loom run` the acceptance criteria, edge cases, QA tasks, and definition of done arrive as a projection of typed analysis state — selected fields rather than a ~200-word LLM summary, so nothing is paraphrased or silently dropped. Without the executor, read the two relevant sections directly instead of the whole file (roadmap L2.9 / L2.10) |
+| tech-writer | 1.2.0 -> 1.3.0 | Step 1 same change: feature summary, out-of-scope list, and its own task list arrive as a projection instead of a summary |
+
 ## 2026-08-20 — context-engineer wired as mandatory Step 0 in all delivery and refactoring pipelines
 
 | Agent / Skill | Version | Change |

@@ -7,14 +7,12 @@ import "context"
 type StageInput struct {
 	SpecPath     string
 	WorkspaceDir string
-	// UpstreamState is the projected slice of the previous stage's typed
-	// state this stage is allowed to read (roadmap L2.9) — the fields its
-	// contract declares, not the whole document. Empty for stages that
-	// still exchange markdown.
-	UpstreamState []byte
-	// UpstreamStage names where UpstreamState came from, so a provider can
-	// tell the agent what it is reading.
-	UpstreamStage string
+	// UpstreamState holds the projected slice of each upstream stage's
+	// typed state this stage is allowed to read (roadmap L2.9), keyed by
+	// the stage it came from — a stage can read several, and which one a
+	// field came from is part of what the consumer needs to know. Empty for
+	// stages that read no typed state.
+	UpstreamState map[string][]byte
 }
 
 // StageOutput is what a stage invocation produces. ArtifactPath may be empty

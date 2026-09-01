@@ -25,31 +25,50 @@ func typedStatePath(workspaceDir, stageID string) string {
 // receives nothing rather than an error — the run loop already refuses to
 // reach a stage whose predecessor did not complete.
 func projectUpstream(stage Stage, plan Plan, input StageInput) (StageInput, error) {
-	if stage.Consumes == "" {
-		return input, nil
+	for _, upstream := range stage.Consumes {
+		projected, err := projectOne(stage, plan, input, upstream)
+		if err != nil {
+			return input, err
+		}
+		if projected == nil {
+			continue
+		}
+		input.UpstreamState = withUpstream(input.UpstreamState, upstream, projected)
 	}
-	payload, err := os.ReadFile(typedStatePath(input.WorkspaceDir, stage.Consumes))
-	if os.IsNotExist(err) {
-		return input, nil
-	}
-	if err != nil {
-		return input, fmt.Errorf("read upstream state for stage %q: %w", stage.ID, err)
-	}
-	return withProjection(stage, plan, input, payload)
+	return input, nil
 }
 
-func withProjection(stage Stage, plan Plan, input StageInput, payload []byte) (StageInput, error) {
-	upstreamKind, found := plan.stateKindOf(stage.Consumes)
-	if !found {
-		return input, fmt.Errorf("stage %q consumes %q, which produces no typed state", stage.ID, stage.Consumes)
+// projectOne returns the projected fields of one upstream stage, or nil
+// when that stage has not produced state yet — a stage the route skipped,
+// or one the loop has not reached. The run loop already refuses to reach a
+// stage whose predecessor did not complete, so absence here is legitimate.
+func projectOne(stage Stage, plan Plan, input StageInput, upstream string) ([]byte, error) {
+	payload, err := os.ReadFile(typedStatePath(input.WorkspaceDir, upstream))
+	if os.IsNotExist(err) {
+		return nil, nil
 	}
-	projected, err := state.ProjectFor(state.Kind(stage.StateKind), state.Kind(upstreamKind), payload)
 	if err != nil {
-		return input, fmt.Errorf("project state for stage %q: %w", stage.ID, err)
+		return nil, fmt.Errorf("read %q state for stage %q: %w", upstream, stage.ID, err)
 	}
-	input.UpstreamState = projected
-	input.UpstreamStage = stage.Consumes
-	return input, nil
+	upstreamKind, found := plan.stateKindOf(upstream)
+	if !found {
+		return nil, fmt.Errorf("stage %q consumes %q, which produces no typed state", stage.ID, upstream)
+	}
+	projected, err := state.ProjectionFor(stage.ID, state.Kind(upstreamKind), payload)
+	if err != nil {
+		return nil, fmt.Errorf("project %q state for stage %q: %w", upstream, stage.ID, err)
+	}
+	return projected, nil
+}
+
+// withUpstream adds one projection to the input's map without the caller
+// having to worry about whether it exists yet.
+func withUpstream(existing map[string][]byte, upstream string, projected []byte) map[string][]byte {
+	if existing == nil {
+		existing = map[string][]byte{}
+	}
+	existing[upstream] = projected
+	return existing
 }
 
 // persistTypedOutput validates a typed stage's payload and writes it as the

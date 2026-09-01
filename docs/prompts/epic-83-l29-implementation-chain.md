@@ -44,6 +44,8 @@ here directly). Do NOT push.
 | What stays with `summarize-artifact` | The step 37a retrieval surrogate, and any human-facing summary | The surrogate feeds `memory-registry`'s retrieval tier and has its own consumers; converting it is a different problem with a different done-when |
 | Untyped consumers keep working | Rendered markdown views under the contract filenames, as before | `sre-engineer`, `devops-engineer`, and `accessibility-engineer` still read `implementation-notes.md`. The typed hop must stay invisible to them |
 | Agent prompt files | `qa-engineer.md` and `tech-writer.md` **are** edited here, unlike every prior cut — their steps 2 and 1 name `summarize-artifact` explicitly | Those two steps describe *how the agent gets its input*, which is exactly what changes. Bump versions and add `shared/agents/CHANGELOG.md` entries; the pre-commit hook requires it. The developer/security/qa output instructions are still appended by the provider, not written into the agent files |
+| Multiple upstreams | `Stage.Consumes` becomes `[]string`, and `StageInput.UpstreamState` becomes a map keyed by upstream stage ID. Each upstream is projected separately and delivered as its own labelled block | qa-engineer reads three upstreams per its contract — implementation notes, the security report, and the analysis's acceptance criteria. Merging them into one flat object would lose provenance and let same-named fields (`feature`, `filesModified`) collide silently |
+| Projections are keyed by consumer stage and upstream kind | `(consuming stage ID, upstream Kind)`, not by the consumer's own state kind | What a stage *reads* and what it *writes* vary independently. `tech-writer` produces markdown in this cut but still needs projections, and keying by upstream kind alone would give the architect and the tech-writer the same slice of the analysis when they demonstrably need different fields |
 | State schema | Adding three kinds bumps `SchemaVersion` in `internal/state` to 2; run-state's own version is unaffected | The two version numbers are independent, and only state documents change shape |
 
 ## Shared guardrails (all phases)
@@ -84,8 +86,11 @@ security, and QA artifacts`), report, PAUSE.
 1. Declare the three stages' `StateKind` in the built-in plan, with `Consumes` where a projection
    applies. Provider instructions come from the schema as before — no agent prompt edits for these
    three.
-2. Projections: what `security-reviewer` and `qa-engineer` read from `implementation-notes`, and
-   what `tech-writer` reads from `qa-report`. Field selection only.
+2. Projections, keyed by `(consumer stage, upstream kind)` per the design table: `security-reviewer`
+   and `qa-engineer` from `implementation-notes`; `qa-engineer` from `security-report`;
+   `tech-writer` from `qa-report`. Field selection only. Re-key the two existing projections
+   (`architect ← analysis`, `developer ← review`) onto the same table rather than leaving two
+   addressing schemes.
 3. Replace the two `summarize-artifact` call sites with projections of `AnalysisState`:
    `qa-engineer` receives acceptance criteria and edge cases; `tech-writer` receives feature intent
    and scope. Edit those two agent files, bump their versions, add CHANGELOG entries.

@@ -21,7 +21,7 @@ func loopPlan(maxIterations int) orchestrator.Plan {
 	return orchestrator.Plan{
 		Name: "loop-plan",
 		Stages: []orchestrator.Stage{
-			{ID: "developer", Agent: "developer", Consumes: "code-reviewer", Timeout: 5 * time.Second},
+			{ID: "developer", Agent: "developer", Consumes: []string{"code-reviewer"}, Timeout: 5 * time.Second},
 			{ID: "code-reviewer", Agent: "code-reviewer",
 				StateKind: string(state.KindReview), Timeout: 5 * time.Second},
 			{ID: "qa-engineer", Agent: "qa-engineer", Timeout: 5 * time.Second},

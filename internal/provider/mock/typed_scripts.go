@@ -28,6 +28,12 @@ func typedPayload(kind state.Kind) ([]byte, bool) {
 		return mustEncode(sampleArchitecture()), true
 	case state.KindReview:
 		return mustEncode(SampleReview(state.VerdictApproved)), true
+	case state.KindImplementation:
+		return mustEncode(sampleImplementation()), true
+	case state.KindSecurity:
+		return mustEncode(sampleSecurity()), true
+	case state.KindQA:
+		return mustEncode(sampleQA()), true
 	default:
 		return nil, false
 	}
@@ -63,6 +69,45 @@ func SampleReview(verdict state.Verdict) state.ReviewState {
 		}}
 	}
 	return review
+}
+
+func sampleImplementation() state.ImplementationState {
+	return state.ImplementationState{
+		SchemaVersion: state.SchemaVersion,
+		Feature:       "mock-feature",
+		FilesCreated:  []string{"internal/mock/thing.go"},
+		SelfReview:    []state.ChecklistItem{{Item: "scripted self-review", Checked: true}},
+		SimpleDesign:  []state.ChecklistItem{{Item: "passes the tests", Checked: true}},
+	}
+}
+
+// sampleSecurity assesses every STRIDE category, because the schema
+// requires all six — the mock has to produce a document that validates.
+func sampleSecurity() state.SecurityState {
+	categories := []state.StrideCategory{
+		state.StrideSpoofing, state.StrideTampering, state.StrideRepudiation,
+		state.StrideInformationDisclosure, state.StrideDenialOfService, state.StrideElevationOfPrivilege,
+	}
+	stride := make([]state.StrideAnalysis, 0, len(categories))
+	for _, category := range categories {
+		stride = append(stride, state.StrideAnalysis{Category: category, Assessed: "scripted: not applicable"})
+	}
+	return state.SecurityState{
+		SchemaVersion:      state.SchemaVersion,
+		Feature:            "mock-feature",
+		ThreatModelSummary: "Scripted threat model produced by the mock provider.",
+		Stride:             stride,
+	}
+}
+
+func sampleQA() state.QAState {
+	return state.QAState{
+		SchemaVersion:    state.SchemaVersion,
+		Feature:          "mock-feature",
+		TestFilesCreated: []string{"internal/mock/thing_test.go"},
+		Coverage:         state.CoverageSummary{AcceptanceCriteriaCovered: 1, AcceptanceCriteriaTotal: 1, NewTests: 1},
+		TestResults:      state.TestResults{Passed: 1},
+	}
 }
 
 func sampleAnalysis() state.AnalysisState {

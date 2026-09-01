@@ -22,7 +22,7 @@ func typedPlan() orchestrator.Plan {
 		Stages: []orchestrator.Stage{
 			{ID: "analyst", Agent: "analyst", StateKind: string(state.KindAnalysis), Timeout: 5 * time.Second},
 			{ID: "architect", Agent: "architect", StateKind: string(state.KindArchitecture),
-				Consumes: "analyst", Timeout: 5 * time.Second},
+				Consumes: []string{"analyst"}, Timeout: 5 * time.Second},
 			{ID: "developer", Agent: "developer", Timeout: 5 * time.Second},
 		},
 	}
@@ -58,10 +58,10 @@ func TestTypedStagesExchangeDataWithNoMarkdownOnThePath(t *testing.T) {
 
 	assertNoMarkdownFor(t, input, "analyst", "architect")
 	received := provider.InputFor("architect")
-	if received.UpstreamStage != "analyst" || len(received.UpstreamState) == 0 {
-		t.Fatalf("architect received no upstream state: %+v", received)
+	if len(received.UpstreamState["analyst"]) == 0 {
+		t.Fatalf("architect received no projected analysis: %+v", received)
 	}
-	assertProjectionContent(t, received.UpstreamState)
+	assertProjectionContent(t, received.UpstreamState["analyst"])
 	assertTypedArtifactRecorded(t, store, input, "analyst")
 }
 
@@ -186,6 +186,10 @@ func TestDefaultPlanTypedStages(t *testing.T) {
 		"architect":                string(state.KindArchitecture),
 		// The review verdict is typed so the loop reads a field (L2.17).
 		"code-reviewer": string(state.KindReview),
+		// The implementation chain (L2.9 second cut).
+		"developer":         string(state.KindImplementation),
+		"security-reviewer": string(state.KindSecurity),
+		"qa-engineer":       string(state.KindQA),
 	}
 
 	if len(kinds) != len(want) {
@@ -212,7 +216,7 @@ func typedStagesOf(plan orchestrator.Plan) map[string]string {
 func assertArchitectConsumesAnalyst(t *testing.T) {
 	t.Helper()
 	for _, stage := range orchestrator.DefaultDeliverFeaturePlan().Stages {
-		if stage.ID == "architect" && stage.Consumes != "analyst" {
+		if stage.ID == "architect" && strings.Join(stage.Consumes, ",") != "analyst" {
 			t.Errorf("architect consumes %q, want analyst", stage.Consumes)
 		}
 	}
@@ -263,4 +267,67 @@ func TestEditingTheRenderedViewDoesNotDemoteTheStage(t *testing.T) {
 		t.Errorf("editing a derived view demoted %+v; only state is tracked", reported)
 	}
 	assertInvocations(t, provider, []string{"analyst", "architect", "developer"})
+}
+
+// TestQAEngineerReadsThreeUpstreams covers the multi-upstream case the
+// contracts describe: what was built, what security found, and the criteria
+// to test against — each labelled with where it came from.
+func TestQAEngineerReadsThreeUpstreams(t *testing.T) {
+	plan := orchestrator.DefaultDeliverFeaturePlan()
+	consumed := map[string][]string{}
+	for _, stage := range plan.Stages {
+		if len(stage.Consumes) > 0 {
+			consumed[stage.ID] = stage.Consumes
+		}
+	}
+
+	qa := consumed["qa-engineer"]
+	if len(qa) != 3 {
+		t.Fatalf("qa-engineer consumes %v, want its three declared upstreams", qa)
+	}
+	for _, want := range []string{"developer", "security-reviewer", "analyst"} {
+		if !containsString(qa, want) {
+			t.Errorf("qa-engineer does not consume %q", want)
+		}
+	}
+	// tech-writer produces markdown in this cut but still reads state.
+	if len(consumed["tech-writer"]) != 2 {
+		t.Errorf("tech-writer consumes %v, want qa-engineer and analyst", consumed["tech-writer"])
+	}
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+// TestMissingUpstreamIsNotAFailure covers a stage the route skipped or the
+// run has not reached: its projection is simply absent.
+func TestMissingUpstreamIsNotAFailure(t *testing.T) {
+	// A stage declared after the architect, so it has not produced state by
+	// the time the architect's projections are computed.
+	plan := typedPlan()
+	plan.Stages[1].Consumes = []string{"analyst", "later-stage"}
+	plan.Stages = append(plan.Stages, orchestrator.Stage{
+		ID: "later-stage", Agent: "later", Timeout: time.Second,
+	})
+	scripts := typedScripts(t)
+	scripts["later-stage"] = mock.Script{ArtifactContent: "# later"}
+	executor, provider, _, input := newHarness(t, scripts)
+
+	if err := executor.Run(context.Background(), plan, input); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	received := provider.InputFor("architect")
+	if len(received.UpstreamState["analyst"]) == 0 {
+		t.Error("the upstream that did run was not projected")
+	}
+	if _, present := received.UpstreamState["later-stage"]; present {
+		t.Error("a stage that had not produced state was projected anyway")
+	}
 }

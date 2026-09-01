@@ -178,7 +178,7 @@ func TestReviewProjectionGivesTheDeveloperOnlyWhatItActsOn(t *testing.T) {
 		t.Fatalf("marshal: %v", err)
 	}
 
-	projected, err := state.ProjectFor(state.Kind("implementation"), state.KindReview, raw)
+	projected, err := state.ProjectionFor("developer", state.KindReview, raw)
 	if err != nil {
 		t.Fatalf("ProjectFor: %v", err)
 	}

@@ -29,9 +29,10 @@ type Stage struct {
 	// is plan data for the same reason gates are: the plan, not an agent's
 	// name, decides how a stage exchanges data.
 	StateKind string
-	// Consumes names the stage whose typed state is projected into this
-	// stage's input. Empty when the stage reads no upstream state.
-	Consumes string
+	// Consumes names the stages whose typed state is projected into this
+	// stage's input. Empty when the stage reads no upstream state; more
+	// than one when its contract says it reads more than one.
+	Consumes []string
 	// Skippable marks a stage the router may route around (roadmap L3.0).
 	// The review stages are deliberately not skippable: an unnecessary
 	// devops run wastes an invocation, a skipped security review does not
@@ -137,19 +138,29 @@ func defaultSkippableStages() map[string]bool {
 // defaultTypedStages declares which stages of the built-in plan exchange
 // typed state and where each reads its input from. L2.9's first cut types
 // the analyst -> architect hop; every other stage still writes markdown.
-func defaultTypedStages() (kinds map[string]string, consumes map[string]string) {
+func defaultTypedStages() (kinds map[string]string, consumes map[string][]string) {
 	return map[string]string{
-		"analyst":       string(state.KindAnalysis),
-		RouterStageID:   string(state.KindRoute),
-		"architect":     string(state.KindArchitecture),
-		"code-reviewer": string(state.KindReview),
-	}, map[string]string{
+		"analyst":           string(state.KindAnalysis),
+		RouterStageID:       string(state.KindRoute),
+		"architect":         string(state.KindArchitecture),
+		"developer":         string(state.KindImplementation),
+		"code-reviewer":     string(state.KindReview),
+		"security-reviewer": string(state.KindSecurity),
+		"qa-engineer":       string(state.KindQA),
+	}, map[string][]string{
 		// The router deliberately has no projection: projections exist to
 		// narrow what a *model* is shown, and the router is the executor
 		// reading its own state. It loads the analysis in full itself.
-		"architect": "analyst",
+		"architect": {"analyst"},
 		// On a second round the developer reads the reviewer's findings.
-		"developer": "code-reviewer",
+		"developer":         {"code-reviewer"},
+		"security-reviewer": {"developer"},
+		// Three upstreams, per qa-contract.md's "Consumed by" line: what
+		// was built, what security found, and the criteria to test against.
+		"qa-engineer": {"developer", "security-reviewer", "analyst"},
+		// tech-writer produces markdown in this cut but still reads typed
+		// state — what a stage reads and what it writes vary separately.
+		"tech-writer": {"qa-engineer", "analyst"},
 	}
 }
 

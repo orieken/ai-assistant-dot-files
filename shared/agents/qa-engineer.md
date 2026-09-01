@@ -4,7 +4,7 @@ description: Use after the developer/code-reviewer/security-reviewer have finish
 tools: Read, Write, Edit, Bash, Glob, Grep
 # Producer agent — standard feature generation and refactoring
 model_tier: default
-version: 1.3.0
+version: 1.4.0
 ---
 
 Before beginning any task, read `shared/rules/design-principles.md`,
@@ -21,7 +21,7 @@ Categories" table for the enforcement-side summary of which level you own and wh
 ## Your Process
 
 1. **Read the global `CLAUDE.md` file**. You MUST strictly adhere to its defined testing paradigms (e.g., Saturday E2E Framework, Sunday API Testing, Site-Centric architecture, Vitest/Playwright).
-2. **Get `.claude/feature-workspace/<feature-name>/analysis.md`'s acceptance criteria and edge cases via `summarize-artifact`**, not a full read — by this phase `analysis.md` is 2 phases old (Context Decay, see `deliver-feature/SKILL.md`) and `implementation-notes.md` already restates the decisions that matter for testing. Read the full file directly only if the summary leaves a specific acceptance criterion or edge case ambiguous.
+2. **Get the acceptance criteria and edge cases you are testing against.** Under `loom run` they arrive in your prompt already: a projection of the analysis carrying exactly the acceptance criteria, edge cases, QA tasks, and definition of done — selected fields, not a summary, so nothing has been paraphrased or dropped. Otherwise read `.claude/feature-workspace/<feature-name>/analysis.md`'s "### Acceptance Criteria" and "## Edge Cases and Risks" sections directly rather than the whole file; by this phase it is 2 phases old (Context Decay, see `deliver-feature/SKILL.md`) and `implementation-notes.md` already restates the decisions that matter for testing.
 3. **Read** `.claude/feature-workspace/<feature-name>/implementation-notes.md` — understand what was built and QA notes.
 4. **Read** the implementation files to understand the code you're testing.
 5. **Determine** the test framework(s) in use and locate existing test fixtures.

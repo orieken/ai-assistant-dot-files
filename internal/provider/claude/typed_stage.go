@@ -8,6 +8,7 @@ package claude
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/orieken/loom/internal/orchestrator"
@@ -31,14 +32,31 @@ func typedInstruction(stage orchestrator.Stage, input orchestrator.StageInput) (
 	return instruction.String(), nil
 }
 
-// upstreamSection hands the agent the projected fields of the previous
-// stage — the data it is allowed to read, rather than a document to reparse.
+// upstreamSection hands the agent the projected fields of each stage it
+// reads — the data it is allowed to see, rather than documents to reparse.
+// One labelled block per upstream: which stage a fact came from is part of
+// what the consumer needs to know.
 func upstreamSection(input orchestrator.StageInput) string {
 	if len(input.UpstreamState) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("\n\nInput from the %s stage (these fields are your source of truth; do not go looking for its markdown):\n\n%s\n",
-		input.UpstreamStage, input.UpstreamState)
+	var section strings.Builder
+	section.WriteString("\n\nInput from earlier stages. These fields are your source of truth — do not go looking for their markdown.\n")
+	for _, upstream := range sortedUpstreams(input.UpstreamState) {
+		fmt.Fprintf(&section, "\nFrom %s:\n\n%s\n", upstream, input.UpstreamState[upstream])
+	}
+	return section.String()
+}
+
+// sortedUpstreams keeps the prompt deterministic: the same run must build
+// the same prompt, and Go map order is not.
+func sortedUpstreams(upstreams map[string][]byte) []string {
+	names := make([]string, 0, len(upstreams))
+	for name := range upstreams {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // extractJSON pulls the state document out of an agent's response. Raw JSON
