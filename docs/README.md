@@ -33,8 +33,11 @@ docs/
                              authoritative L2-L4 roadmap linked from the root README.
   runbooks/               -- Operational runbooks and guides (see runbooks/README.md for the index).
   blog-posts/             -- Draft blog content about the framework (see blog-content-brief.md).
-  audits/                 -- Ad-hoc external audit reports -- scratch inputs, not permanent
-                             documentation; act on findings, then delete once resolved.
+  audits/                 -- Dated audit reports, kept as a permanent series: <kind>-<YYYY-MM-DD>.md.
+                             Committed, not scratch -- health-check.sh warns when the newest
+                             doc-audit-*.md is stale, and that signal only works if the series
+                             persists and is visible to everyone. Superseded reports stay for
+                             comparison rather than being deleted.
   incidents/              -- Production incident records in <YYYY-MM-DD>-<slug>.md format.
                              Cross-referenced by the bugfix pipeline (deliver-bugfix "Fixed by" link)
                              and by extract-lessons (Step 6 incident-feature pair mining). Permanent —
