@@ -113,10 +113,26 @@ migration phases, external API mutation, deployment — remain prompt-discipline
 themselves run under the executor. None of the eight gates above is weakened or replaced by this
 section.
 
-**Not yet.** Approvals are not bound to artifact digests: editing an artifact after approving does
-not currently reset the gate (**L2.14** — the executor records artifact SHA-256s today but enforces
-nothing on them). Policy-based auto-approval of executor gates is **L2.16**; the Policy-Based Gate
-Type section above governs the prose gates only.
+**Reset on edit is enforced here (L2.14).** An approval binds to the SHA-256 of every artifact
+completed at the moment it was given. If any of them changes before the gated stage runs, the
+approval is marked invalid — the record is kept, naming what changed and when — and the run halts at
+that gate again until a human approves the state as it now stands. A stage that re-runs and produces
+a byte-identical artifact changes no digest, so its approval survives: the rule is *any edit*, not
+*any re-run*. An approval binds only what was complete when it was given, so work done afterwards
+belongs to the next gate.
+
+Note the scope difference from the eight gates above. Each of those says "any edit to **the pending
+artifact**", which is the right description for an action-shaped gate — one commit, one migration,
+one deploy. The executor's gates guard pipeline *stages*, so what a human approves there is the
+state of the run rather than a single file, and the binding is correspondingly wider.
+
+Two channels can also *detect* this without enforcing it: `loom state verify` reports an approval as
+INVALIDATED for markdown-pipeline runs, and `loom state show` marks it. That is a report, not a
+barrier — the markdown pipeline can still proceed, because the gated action does not run under the
+executor.
+
+**Not yet.** Policy-based auto-approval of executor gates is **L2.16**; the Policy-Based Gate Type
+section above governs the prose gates only.
 
 ---
 

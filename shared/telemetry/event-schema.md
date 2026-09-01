@@ -130,6 +130,15 @@ Emitted only when telemetry is enabled (opt-in guarantee is non-negotiable — s
 | `rejected` | Human declined or said "no"; pipeline halted or rolled back. |
 | `edited_then_approved` | Human edited the artifact (checksum changed between gate-presented and gate-approved) before confirming. This is the corrective-signal case `extract-lessons` and `retrospective` mine. |
 
+**Executor note (L2.14).** For runs executed by `loom run`, edited-then-approved is no longer a
+heuristic: an approval binds to the digests of everything completed when it was given, and the
+executor invalidates it in code when any of them changes, recording the gate, the stage responsible,
+and the time in `run-state.json` and on the `run-events.jsonl` timeline (`gate.invalidated`). The
+paragraph below describes the **markdown pipeline's** path, where the checksums are the model's own;
+`loom state verify` computes the same detection in Go for that pipeline when the binary is present.
+Emitting this as a `gate_decision` event is still unbuilt — the emitter is **L3.9**, and this schema
+is not changed here.
+
 **Edit detection heuristic**: compare the artifact's current checksum against the checksum recorded
 for that step in `pipeline-state.json` at the moment the gate halt was presented. If they differ,
 the artifact was edited — use `edited_then_approved` as the outcome. Checksum format matches

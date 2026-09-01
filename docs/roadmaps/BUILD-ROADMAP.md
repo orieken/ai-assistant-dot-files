@@ -419,6 +419,12 @@ prompt-discipline.
 ### L2.14 — Enforce "any edit resets the gate" in code
 **Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.12, L2.13 · **Blocks**: L4.5
 
+**SHIPPED** 2026-08-31 (epic 80, `27ac1f0`…`9db60ee`) — an approval binds to the digests of every
+stage completed when it was given; an edit invalidates it, the run halts at that gate again, and the
+invalidated record is kept for audit. Detection at verification rather than at the barrier, since a
+re-run would otherwise overwrite the edit that caused it. `loom state verify` reports the same for
+markdown-pipeline runs — detection, not enforcement.
+
 1. **Problem**: Every gate in `approval-gates.md` declares "Reset condition: any edit to the pending
    artifact resets the gate." Nothing enforces it. The `gate_decision` telemetry spec describes
    checksum-diffing to detect `edited_then_approved` — but the checksum is computed by the model, the

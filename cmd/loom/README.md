@@ -66,11 +66,16 @@ loom run --spec docs/features/user-auth/spec.md --provider mock
 
   `--approve` is only valid with `--resume`, and only for the gate the run is
   actually halted on. Nothing an agent returns can approve a gate.
+- **Any edit resets the gate**: an approval binds to the SHA-256 of every artifact
+  completed when it was given. Edit one of them and the approval is invalidated — the
+  record is kept, naming what changed — and the run halts at that gate again until you
+  approve the state as it now stands. A stage that re-runs to a byte-identical artifact
+  keeps its approval; work completed *after* an approval belongs to the next gate.
+  Approving a run whose own verification is about to reset that approval is refused up
+  front, rather than recorded and immediately destroyed.
 
 **What it does NOT do yet** (skeleton by design — see `docs/roadmaps/BUILD-ROADMAP.md`):
-no gate-reset enforcement — a stale stage re-runs, but editing an artifact
-after approving its gate does not revoke the approval (L2.14) — no
-`--from-phase` or rollback (L2.15), no retries or backoff, no parallelism
+no `--from-phase` or rollback (L2.15), no retries or backoff, no parallelism
 (L3.3), no policy evaluation (L2.16), no conditional stage routing (L3.1) —
 every stage of the linear plan runs, including ones the markdown pipeline
 would skip — and no telemetry emission (L3.8).
@@ -96,7 +101,10 @@ loom state show --spec docs/features/user-auth/spec.md [--json]
   an edited artifact. The markdown pipeline has no fixed plan, so recording order is the only
   ordering available.
 - `state approve` **records** a human's approval for audit; it does not enforce the gate.
-  Enforcement exists only for stages run by `loom run` (see above).
+  Enforcement exists only for stages run by `loom run` (see above). `state verify` does
+  report an approval as INVALIDATED once a bound artifact changes, and exits non-zero —
+  detection, which is strictly better than the nothing that came before it, and still not
+  a barrier.
 - `loom state timeline --spec <spec> [--json]` prints the run's event log (see below).
 - The two pipelines refuse each other's state files: `loom run` will not resume a run recorded
   by `loom state`, and vice versa. They route differently, so resuming across them would replay

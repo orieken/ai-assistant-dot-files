@@ -214,7 +214,9 @@ internal/
   orchestrator/                  executor (ADR-006, M0.4 + L2.13 + L2.12): plan, run loop,
                                    durable run-state.json (atomic writes), approval gates as
                                    process interrupts — a gated stage cannot start until run
-                                   state records a human approval — and artifact digests
+                                   state records a human approval, and approvals bind to the
+                                   digests they were given so an edit resets the gate — plus
+                                   artifact digests
                                    computed and re-verified in Go, so an edited artifact stops
                                    counting as completed work, plus an append-only
                                    run-events.jsonl audit timeline written by both pipelines
