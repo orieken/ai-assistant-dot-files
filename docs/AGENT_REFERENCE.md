@@ -13,22 +13,45 @@ actually has running today.)
 
 ## How to read "Counterbalance"
 
-Four different *kinds* of check show up across these 39 agents, and they're not interchangeable:
+Five different *kinds* of check show up across these 39 agents, and they're not interchangeable:
 
 | Kind | What it catches | Example |
 |---|---|---|
 | **Structural contract** | Missing/malformed sections in the artifact itself | `validate-artifact` against `shared/contracts/*.md` |
 | **Downstream agent review** | Wrong or low-quality content, live, on this delivery | `code-reviewer` reviewing `developer`'s output |
 | **Human approval gate** | Irreversible or consequential actions | `shared/rules/approval-gates.md`'s 8 gates |
+| **Process-enforced gate** | The same, but the barrier is code rather than an instruction — nothing an agent returns can pass it | `loom run` halting at `confirm-design` before `developer` (roadmap L2.13) |
 | **Aggregate/delayed metric** | Systemic drift across many deliveries, not visible in any one | `agent-scorecard`'s per-agent quality scores |
 
 A structural contract can't catch bad judgment; a downstream review can't catch a slow, aggregate decline in
-quality; a human gate only fires for the specific actions it names. Most agents below are checked by more
+quality; a human gate only fires for the specific actions it names; and a process-enforced gate only covers
+stages that actually run under the executor — for the markdown pipeline the same checkpoints remain
+prompt-discipline. Most agents below are checked by more
 than one kind — that's by design, not redundancy.
 
 ---
 
+## What counts as a pipeline agent
+
+**A pipeline agent is one the delivery plan invokes** — the fourteen stages `loom run` executes and
+`deliver-feature` describes, from `context-engineer` to `devops-engineer`. That definition is tied to an
+executable artifact (`DefaultDeliverFeaturePlan` in `internal/orchestrator/plan.go`) rather than to prose,
+so it cannot drift silently.
+
+Two consequences worth stating, because three documents previously disagreed about this:
+
+- `spec-writer` and `product-owner` are **pre-pipeline**. They act on the spec before delivery starts, not
+  on the feature workspace, and the delivery plan does not invoke them. They are documented first below
+  because that is the order a human meets them.
+- `visual-qa-engineer` **is** a pipeline agent — it is stage 11 of the plan — despite being added later
+  than the rest. Its own section remains under "Late-Addition" below for continuity.
+
+The executor's plan additionally contains an internal `router` stage (roadmap L3.0), which decides which
+of the conditional stages a given feature needs. It is not an agent and is not counted here.
+
 ## Pipeline Agents (in `deliver-feature` order)
+
+*(§1 and §2 below are the pre-pipeline agents described above; §3–§15 are the delivery plan's own.)*
 
 ### 1. `spec-writer`
 **Role**: Interviews the user one question at a time to draft a feature spec, then immediately critiques its
@@ -470,10 +493,11 @@ require understanding the agent's actual inference needs, not just its tool list
 
 Reading all 39 agents together, three patterns stand out:
 
-1. **The 14 pipeline agents are well-checked.** Every one has at least a structural contract; most have a
-   real downstream reviewer or a human approval gate too. This is the part of the framework that's had the
-   most iteration (three independent audits this session all confirmed the contract layer, once complete,
-   holds up).
+1. **The 14 pipeline agents are well-checked** — the fourteen the delivery plan invokes, per "What counts as
+   a pipeline agent" above, which includes `visual-qa-engineer` and excludes the pre-pipeline `spec-writer`
+   and `product-owner`. Every one has at least a structural contract; most have a real downstream reviewer
+   or a human approval gate too, and three now sit behind gates the executor enforces in code rather than
+   by instruction. This is the part of the framework that has had the most iteration.
 2. **The 12 standalone agents are inconsistently checked** — though less inconsistently than before
    `unit-tester` arrived with a real auto-chained reviewer rather than just a report a human might read.
    Some (`release-manager`, `data-engineer`-adjacent

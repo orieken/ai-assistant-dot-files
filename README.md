@@ -457,7 +457,8 @@ flowchart TD
 
     subgraph "Phase 3: Verification &amp; Shipping"
         Pause3 --> QAEngineer[qa-engineer]
-        QAEngineer --> SRE[sre-engineer]
+        QAEngineer --> VisualQA[visual-qa-engineer]
+        VisualQA --> SRE[sre-engineer]
         SRE --> TechWriter[tech-writer]
         TechWriter --> DevOpsEngineer[devops-engineer]
         DevOpsEngineer --> Pause4{{"⏸ confirm docs complete"}}
@@ -465,16 +466,24 @@ flowchart TD
     end
 
     classDef conditional stroke-dasharray: 5 5
-    class Architect,Perf,Data,A11y,SecurityReviewer conditional
+    class Architect,Perf,Data,A11y,SecurityReviewer,VisualQA,DevOpsEngineer conditional
 
     classDef checkpoint fill:#fef3c7,stroke:#d97706,color:#78350f
     class Pause1,Pause2,Pause3,Pause4,Ship checkpoint
 ```
 
+`spec-writer` runs *before* the pipeline — it acts on the spec, not on the feature workspace, and the
+delivery plan does not invoke it. The fourteen stages from `context-engineer` onward are the pipeline
+proper (see `docs/AGENT_REFERENCE.md`, "What counts as a pipeline agent").
+
 Dashed-border agents (`architect`, `performance-engineer`, `data-engineer`, `accessibility-engineer`,
-`security-reviewer`) are **conditional** — each runs only if its own trigger condition is met (a new
-pattern/abstraction, a performance SLA, a data model change, a UI surface, a security surface
-respectively); skipped otherwise, straight through to the next mandatory step. Amber nodes are **real
+`security-reviewer`, `visual-qa-engineer`, `devops-engineer`) are **conditional** — each runs only if its
+own trigger condition is met: a context crossing or migration or new dependency or performance threshold
+for the architect, a measurable threshold for performance, a schema change for data, an accessibility
+requirement for a11y, a security surface for the security review, UI evidence for visual QA, and DevOps
+tasks for devops. Skipped otherwise, straight through to the next mandatory step. Under `loom run` those
+conditions are computed once from the typed analysis and recorded with reasons (roadmap L3.0); in the
+markdown pipeline they are judgements the model makes while reading `analysis.md`. Amber nodes are **real
 stops** — the pipeline doesn't proceed past one without your explicit confirmation. Every arrow is also
 gated by `validate-artifact` (structural contract check) where the producing agent has a contract in
 `shared/contracts/`.
