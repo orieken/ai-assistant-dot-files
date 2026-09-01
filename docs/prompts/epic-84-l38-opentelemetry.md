@@ -39,7 +39,8 @@ here directly). Do NOT push.
 | Decision | Choice | Rationale |
 |---|---|---|
 | OTel is a real dependency | Add `go.opentelemetry.io/otel`, `otel/sdk`, and the OTLP trace exporter to `go.mod` | This is the largest third-party addition the module has taken. Hand-rolling spans to avoid it would produce a worse thing that no collector can read, which defeats the item. Accept the dependency deliberately |
-| Telemetry is off by default | No exporter configured means a no-op tracer. Enabled by the standard `OTEL_EXPORTER_OTLP_ENDPOINT` env var, plus a `--otel-file <path>` flag for offline runs | A CLI that phones somewhere by default is a bad citizen. Standard env var means existing collectors work with no loom-specific configuration to learn |
+| Network export is off by default; local export is on | The OTLP **endpoint** is opt-in via the standard `OTEL_EXPORTER_OTLP_ENDPOINT` env var. The **file** exporter is on by default, writing `traces.jsonl` into the feature workspace beside `run-state.json`; `--otel-file <path>` overrides the location, and an explicit off switch disables it | A CLI that phones somewhere by default is a bad citizen — but that concern is about network egress, and a file beside the run's own state leaves nothing. Making it opt-in would mean the cost of a run is unanswerable unless someone predicted beforehand that they'd want to know, including for runs already finished. L4.3 and L3.13 both want to read historical runs |
+| File format is OTLP JSON | The file exporter writes OTLP's JSON encoding, not the SDK's `stdouttrace` format | A saved file can be replayed into a collector or read by anything that already understands OTLP. `stdouttrace` is explicitly not a stable wire format, so the downstream items would be parsing something OTel does not promise to keep |
 | Spans do not replace the timeline | `run-events.jsonl` stays exactly as it is | They answer different questions. The timeline is the audit record of gates, digests, and staleness — point events, read by `loom state timeline`, and durable with no collector. Spans are the timing and cost record. Merging them would make the audit log depend on an exporter being configured |
 | Span shape | One root span per run; one child per stage; one grandchild per provider invocation. Loop iterations are sibling stage spans distinguished by an iteration attribute, not nested | Nesting iterations would make a three-round review loop look like three levels of depth. They are retries of one stage, and a trace viewer should show them side by side |
 | GenAI semconv | `gen_ai.operation.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens` on the provider span. Loom-specific facts (`loom.stage.id`, `loom.gate`, `loom.route.skipped`) use a `loom.` prefix | Follow the convention where one exists so a generic GenAI dashboard works, and do not squat on the `gen_ai.` namespace for things it does not define |
@@ -78,11 +79,11 @@ here directly). Do NOT push.
 2. Instrument the executor: a root run span and a per-stage child. Attributes for stage ID, agent,
    sequence, and terminal status. A stage that is skipped, stale, or waiting on a gate must be
    visible as such — a routed-around stage is a real outcome, not an absence.
-3. Wire `--otel-file` into `loom run`; document that `OTEL_EXPORTER_OTLP_ENDPOINT` is honoured.
+3. Wire `--otel-file` into `loom run` (overriding the default workspace location) plus a way to turn file export off; document that `OTEL_EXPORTER_OTLP_ENDPOINT` is honoured for network export.
 4. The import-graph fitness function: a test asserting `internal/state/` imports no telemetry
    package, per guardrail #8.
 5. Tests: a completed mock run produces one root span with the expected children; a run halted at a
-   gate still flushes what it recorded; no exporter configured emits nothing and costs nothing.
+   gate still flushes what it recorded; file export off with no endpoint set emits nothing and costs nothing; the emitted file parses as OTLP JSON.
 
 **Done when**: a `--provider mock` run produces a single well-formed trace whose span tree matches
 the stages that actually executed, and `internal/state/` provably has no telemetry import.

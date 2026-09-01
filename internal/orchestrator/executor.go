@@ -18,11 +18,17 @@ type Executor struct {
 	onReset  func(*StaleApprovalError)
 	onRoute  func(RouteSummary)
 	onLoop   func(LoopRound)
+	tracer   Tracer
 }
 
 // NewExecutor wires a provider and a state store into an executor.
 func NewExecutor(provider Provider, store *StateStore) *Executor {
-	return &Executor{provider: provider, store: store, timeline: NewTimeline(store.Path())}
+	return &Executor{
+		provider: provider,
+		store:    store,
+		timeline: NewTimeline(store.Path()),
+		tracer:   noopTracer{},
+	}
 }
 
 // emit appends one event to the run's timeline. Timestamps come from the
@@ -71,6 +77,19 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 	if err := e.emit(Event{Kind: EventRunStarted}); err != nil {
 		return err
 	}
+	ctx, span := e.tracer.StartRun(ctx, e.runSpanFor(plan, input))
+	err = e.runStages(ctx, plan, input, state)
+	span.End(runOutcome(err))
+	if err != nil {
+		return err
+	}
+	return e.emit(Event{Kind: EventRunCompleted})
+}
+
+// runStages is the loop itself, split out so Run can close the root span on
+// every exit path — including the gate halt, which is a normal outcome that
+// still has to flush what it recorded.
+func (e *Executor) runStages(ctx context.Context, plan Plan, input StageInput, state *RunState) error {
 	for index := 0; index < len(plan.Stages); index++ {
 		if err := e.advance(ctx, plan.Stages[index], plan, input, state); err != nil {
 			return err
@@ -83,7 +102,33 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 			index = back - 1
 		}
 	}
-	return e.emit(Event{Kind: EventRunCompleted})
+	return nil
+}
+
+func (e *Executor) runSpanFor(plan Plan, input StageInput) RunSpan {
+	return RunSpan{
+		Plan:      plan.Name,
+		Feature:   FeatureNameFromSpec(input.SpecPath),
+		SpecPath:  input.SpecPath,
+		StateFile: e.store.Path(),
+	}
+}
+
+// runOutcome maps how Run ended onto the executor's own status vocabulary,
+// so a trace and run state never describe the same run differently. A halt
+// at a gate is not a failure: the run is waiting on a human, which is the
+// outcome the design intends.
+func runOutcome(err error) SpanOutcome {
+	switch {
+	case err == nil:
+		return SpanOutcome{Status: StageStatusCompleted}
+	case errors.Is(err, ErrWaitingApproval):
+		return SpanOutcome{Status: StageStatusWaitingApproval, Err: err}
+	case errors.Is(err, context.Canceled):
+		return SpanOutcome{Status: StageStatusInterrupted, Err: err}
+	default:
+		return SpanOutcome{Status: StageStatusFailed, Err: err}
+	}
 }
 
 // advance moves one stage forward: clear its gate, then run it unless it is
@@ -255,6 +300,15 @@ func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input S
 	if err := e.emit(Event{Kind: EventStageStarted, Stage: stage.ID, Sequence: state.Stages[stage.ID].Sequence}); err != nil {
 		return err
 	}
+	ctx, span := e.tracer.StartStage(ctx, stageSpanFor(stage, state))
+	err := e.executeStage(ctx, stage, plan, input, state)
+	span.End(stageOutcome(state, stage.ID, err))
+	return err
+}
+
+// executeStage is the stage body: project what it may read, run it, and
+// persist whichever terminal state resulted.
+func (e *Executor) executeStage(ctx context.Context, stage Stage, plan Plan, input StageInput, state *RunState) error {
 	input, projectErr := projectUpstream(stage, plan, input)
 	if projectErr != nil {
 		return e.persistFailure(ctx, state, stage, projectErr)
@@ -264,6 +318,27 @@ func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input S
 		return e.persistFailure(ctx, state, stage, invokeErr)
 	}
 	return e.persistCompletion(state, stage, plan, input, output)
+}
+
+func stageSpanFor(stage Stage, state *RunState) StageSpan {
+	record := state.Stages[stage.ID]
+	return StageSpan{
+		ID:        stage.ID,
+		Agent:     stage.Agent,
+		Sequence:  record.Sequence,
+		Iteration: record.Iteration,
+		Gate:      stage.Gate,
+		Internal:  stage.Internal,
+	}
+}
+
+// stageOutcome reads the status the executor just persisted rather than
+// inferring one from the error, so the span reports what state records. A
+// stage that failed has already been written as FAILED by the time the span
+// closes.
+func stageOutcome(state *RunState, stageID string, err error) SpanOutcome {
+	record := state.Stages[stageID]
+	return SpanOutcome{Status: record.Status, Reason: record.SkipReason, Err: err}
 }
 
 // runningRecord marks a stage in flight without discarding what the record

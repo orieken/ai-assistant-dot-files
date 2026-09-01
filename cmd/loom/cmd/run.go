@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/orieken/loom/internal/orchestrator"
+	"github.com/orieken/loom/internal/telemetry"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,8 @@ type runFlags struct {
 	plan          string
 	approve       string
 	mockHangStage string
+	otelFile      string
+	noTelemetry   bool
 }
 
 var runArgs runFlags
@@ -42,7 +45,11 @@ Nothing an agent returns can approve a gate.
 
 Not yet implemented (see BUILD-ROADMAP.md): reset-on-edit for approvals
 (L2.14), retries/backoff, parallelism (L3.3), policy evaluation (L2.16),
-conditional stage routing (L3.1), telemetry (L3.8).`,
+conditional stage routing (L3.1).
+
+Traces (roadmap L3.8) are written as OTLP/JSON to <workspace>/traces.jsonl on
+every run; set OTEL_EXPORTER_OTLP_ENDPOINT to also export over OTLP/HTTP, or
+--no-telemetry to record nothing.`,
 	Args: cobra.NoArgs,
 	RunE: runRun,
 }
@@ -56,6 +63,10 @@ func init() {
 	runCmd.Flags().StringVar(&runArgs.plan, "plan", orchestrator.DefaultDeliverFeaturePlanName, "pipeline plan to execute")
 	runCmd.Flags().StringVar(&runArgs.mockHangStage, "mock-hang-stage", "", "mock provider only: stage ID that hangs until interrupted (testing)")
 	_ = runCmd.Flags().MarkHidden("mock-hang-stage")
+	runCmd.Flags().StringVar(&runArgs.otelFile, "otel-file", "",
+		"write OTLP/JSON traces here (default: <workspace>/"+telemetry.TracesFileName+")")
+	runCmd.Flags().BoolVar(&runArgs.noTelemetry, "no-telemetry", false,
+		"disable tracing entirely, including the local trace file")
 	_ = runCmd.MarkFlagRequired("spec")
 }
 
@@ -81,6 +92,11 @@ func runRun(cmd *cobra.Command, _ []string) error {
 
 func executeRun(cmd *cobra.Command, plan orchestrator.Plan, provider orchestrator.Provider, store *orchestrator.StateStore, input orchestrator.StageInput) error {
 	executor := orchestrator.NewExecutor(provider, store)
+	stopTelemetry, err := startTelemetry(cmd, executor, input.WorkspaceDir)
+	if err != nil {
+		return err
+	}
+	defer stopTelemetry()
 	executor.OnStale(func(stale []orchestrator.StaleStage) { reportStaleStages(cmd, stale) })
 	executor.OnApprovalReset(func(reset *orchestrator.StaleApprovalError) { reportApprovalReset(cmd, reset) })
 	executor.OnRoute(func(summary orchestrator.RouteSummary) { reportRoute(cmd, summary, input.WorkspaceDir) })
@@ -91,7 +107,7 @@ func executeRun(cmd *cobra.Command, plan orchestrator.Plan, provider orchestrato
 	ctx, stopSignals := interruptibleContext(cmd)
 	defer stopSignals()
 	cmd.Printf("Running plan %q (%d stages) — state: %s\n", plan.Name, len(plan.Stages), store.Path())
-	err := runWithGates(ctx, cmd, executor, plan, input)
+	err = runWithGates(ctx, cmd, executor, plan, input)
 	if errors.Is(err, context.Canceled) {
 		cmd.Printf("Interrupted — checkpoint saved. Continue with: loom run --spec %s --resume\n", runArgs.spec)
 		return err
