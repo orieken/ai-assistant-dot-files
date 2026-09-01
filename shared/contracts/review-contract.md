@@ -3,6 +3,20 @@
 **Produced by**: code-reviewer
 **Consumed by**: security-reviewer, qa-engineer, orchestrator (deliver-feature)
 
+## Typed State (`loom run`)
+
+Under `loom run` this artifact is typed state conforming to
+`shared/schemas/pipeline/review.schema.json` (generated from `internal/state/` —
+never hand-edit it), and `code-review-report.md` is rendered from it. The
+verdict is a field, which is what the review loop's exit condition reads
+(roadmap L2.17). The rendered view still carries the bolded literal under
+`## Overall Status`, because the markdown pipeline still parses that string —
+the validation rule below describes that path and remains authoritative for it.
+
+One rule the typed form adds: a `CHANGES_REQUESTED` verdict must carry at least
+one blocking finding. A rejection with nothing actionable would send the loop
+round again with nothing for the developer to do.
+
 ## Required Sections (exact heading text and level)
 - `## Overall Status`
 - `## Design Narrative`

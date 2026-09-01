@@ -208,7 +208,19 @@ func (e *Executor) reenter(plan Plan, loop Loop, input StageInput, runState *Run
 			return err
 		}
 	}
+	if e.onLoop != nil {
+		e.onLoop(LoopRound{Loop: loop.ID, From: loop.From, Iteration: iteration, Max: loop.MaxIterations})
+	}
 	return e.emit(Event{Kind: EventLoopIterated, Loop: loop.ID, Stage: loop.From, Iteration: iteration})
+}
+
+// LoopRound describes a loop about to repeat: which loop, where it
+// re-enters, and how many rounds are left.
+type LoopRound struct {
+	Loop      string
+	From      string
+	Iteration int
+	Max       int
 }
 
 func (e *Executor) retainAndReset(input StageInput, runState *RunState, stageID string, iteration int) error {

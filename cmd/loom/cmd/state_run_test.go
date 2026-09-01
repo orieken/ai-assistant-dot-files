@@ -398,3 +398,31 @@ func TestRunStateShowListsWhatWasRoutedOut(t *testing.T) {
 		}
 	}
 }
+
+func TestRunStateShowReportsRoundCounts(t *testing.T) {
+	spec := stateProject(t)
+	recordStages(t, spec, "analyst")
+	runState := loadStateFor(t, spec)
+	runState.Stages["code-reviewer"] = orchestrator.StageRecord{
+		Status: orchestrator.StageStatusCompleted, Sequence: 2, Iteration: 3,
+	}
+	runState.Stages["developer"] = orchestrator.StageRecord{
+		Status: orchestrator.StageStatusCompleted, Sequence: 3, Iteration: 1,
+	}
+	store := orchestrator.NewStateStore(filepath.Join(".claude", "feature-workspace", "user-auth", orchestrator.RunStateFileName))
+	if err := store.Save(runState); err != nil {
+		t.Fatalf("save state: %v", err)
+	}
+
+	output, err := callState(t, runStateShow, stateFlags{spec: spec})
+	if err != nil {
+		t.Fatalf("show: %v", err)
+	}
+
+	if !strings.Contains(output, "(3 rounds)") {
+		t.Errorf("show did not report the round count:\n%s", output)
+	}
+	if strings.Contains(output, "(1 rounds)") {
+		t.Errorf("a single pass should not report a round count:\n%s", output)
+	}
+}

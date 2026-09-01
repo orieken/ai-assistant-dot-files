@@ -578,6 +578,12 @@ orchestration kernel exists, which is why they sit in Milestone 1 despite spanni
 ### L2.17 — Bring the developer↔code-reviewer loop under the executor
 **Workstream**: KERNEL · **Effort**: L · **Blocked by**: M0.4 · **Blocks**: none · *(raised 2026-08-31, epic 80 review)*
 
+**SHIPPED** 2026-08-31 (epic 82, `0aafaf1`…) — the loop is a span declared in plan data with a
+named condition over a typed review verdict and a bound of three rounds. Every round is retained
+and digested; exhausting the bound halts at `confirm-unresolved-review` for a human. The markdown
+pipeline's step 21, previously unbounded, now states the same bound. **Not** wired to the Tier B
+contract-retry loop — the mechanism generalises to it, but using it there is later work.
+
 1. **Problem**: `deliver-feature/SKILL.md` steps 18–21 describe an *iteration*: code-reviewer returns
    CHANGES REQUESTED, the current `implementation-notes.md` and `code-review-report.md` are copied to
    `.history/`, and the pipeline repeats from step 18 "until APPROVED and structurally valid". The

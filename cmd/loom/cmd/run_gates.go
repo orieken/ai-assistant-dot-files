@@ -124,6 +124,13 @@ func reportRoute(cmd *cobra.Command, summary orchestrator.RouteSummary, workspac
 		filepath.Join(workspaceDir, "route.md"))
 }
 
+// reportLoopRound says which round is starting, so a run taking four
+// attempts reads as progress rather than as a stuck process.
+func reportLoopRound(cmd *cobra.Command, round orchestrator.LoopRound) {
+	cmd.Printf("%s loop: changes requested — round %d of %d, re-running from %s\n",
+		round.Loop, round.Iteration, round.Max, round.From)
+}
+
 // reportStaleStages tells the human which completed work is being redone
 // and why, before any of it re-runs. Verification is not optional and has
 // no flag to skip it — a way to opt out would reopen the hole it closes.

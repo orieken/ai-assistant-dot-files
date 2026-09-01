@@ -165,6 +165,31 @@ Halted at gate "confirm-design" before stage "developer" — approval required.
   checkpoint is about reaching that point in the run.
 - `loom state show` lists what was routed out and why.
 
+## The review loop
+
+`developer → code-reviewer` is a **bounded loop** declared in plan data (roadmap
+L2.17): the executor reads the reviewer's typed verdict, sends the developer back
+when it asks for changes, and counts the rounds.
+
+```
+review loop: changes requested — round 2 of 3, re-running from developer
+```
+
+- **The condition is a field, not a grep.** `review-approved` reads
+  `ReviewState.Verdict`. The rendered `code-review-report.md` still carries the
+  bolded literal for the markdown pipeline, but nothing parses prose to decide
+  whether to loop.
+- **Every round is retained.** `.iterations/<stage>.<n>.<ext>`, each with its own
+  digest recorded in run state — so what round two actually said is verifiable,
+  not merely remembered. `loom state show` reports the round count.
+- **The bound is three.** The markdown pipeline's version of this loop was
+  unbounded ("repeat until APPROVED"); the executor's has a number, because a
+  loop it cannot bound is one it cannot safely run.
+- **Exhausting the bound halts at `confirm-unresolved-review`.** Not a failure
+  and not a silent pass: a human accepts the outstanding findings or stops the
+  run, and that approval binds the artifacts like any other.
+- A gate *before* the loop is approved once and does not re-halt each round.
+
 ## Run event timeline
 
 Both pipelines append to `.claude/feature-workspace/<feature>/run-events.jsonl` — one JSON

@@ -227,7 +227,7 @@ func printStateReport(cmd *cobra.Command, state *orchestrator.RunState) {
 	cmd.Printf("%s (%s pipeline, started %s)\n", state.FeatureName, state.CreatedBy, state.StartedAt.Format(time.RFC3339))
 	for _, stageID := range state.StagesInSequence() {
 		record := state.Stages[stageID]
-		cmd.Printf("  %2d. %-28s %s\n", record.Sequence, stageID, record.Status)
+		cmd.Printf("  %2d. %-28s %s%s\n", record.Sequence, stageID, record.Status, roundsSuffix(record))
 	}
 	printApprovals(cmd, state)
 	printRouteDecisions(cmd, state)
@@ -249,6 +249,15 @@ func printRouteDecisions(cmd *cobra.Command, state *orchestrator.RunState) {
 	for _, line := range skipped {
 		cmd.Println(line)
 	}
+}
+
+// roundsSuffix reports how many rounds a looping stage took. A single pass
+// says nothing — the count only matters once it is more than one.
+func roundsSuffix(record orchestrator.StageRecord) string {
+	if record.Iteration < 2 {
+		return ""
+	}
+	return fmt.Sprintf("  (%d rounds)", record.Iteration)
 }
 
 func printApprovals(cmd *cobra.Command, state *orchestrator.RunState) {

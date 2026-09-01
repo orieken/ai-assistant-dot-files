@@ -134,3 +134,19 @@ func TestReportRouteSaysWhenNothingWasSkipped(t *testing.T) {
 		t.Errorf("route summary = %q, want it to confirm the full plan runs", output.String())
 	}
 }
+
+func TestReportLoopRoundSaysWhichRoundAndWhy(t *testing.T) {
+	command := &cobra.Command{}
+	var output bytes.Buffer
+	command.SetOut(&output)
+
+	reportLoopRound(command, orchestrator.LoopRound{
+		Loop: "review", From: "developer", Iteration: 2, Max: 3,
+	})
+
+	for _, want := range []string{"review loop", "changes requested", "round 2 of 3", "developer"} {
+		if !strings.Contains(output.String(), want) {
+			t.Errorf("loop message missing %q: %q", want, output.String())
+		}
+	}
+}

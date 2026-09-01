@@ -493,8 +493,10 @@ a view — while the remaining stages still pass markdown. L2.14 has landed too:
 the artifacts it was given, so editing one resets the gate and the run halts until a human approves
 what is actually there. L3.0 has landed as well: the executor computes which stages a run needs from the
 typed analysis, records the decision with a reason per stage, and has a human
-approve that route along with the design. L2.15 (real resume) and L2.17 (the
-developer↔code-reviewer loop) are still ahead — see
+approve that route along with the design. L2.17 has landed as well: the developer↔code-reviewer iteration is a bounded loop
+the executor runs, reading a typed verdict and stopping at a stated number of
+rounds rather than looping on a model's reading of its own output. L2.15 (real
+resume) is still ahead — see
 [docs/roadmaps/BUILD-ROADMAP.md](docs/roadmaps/BUILD-ROADMAP.md) and
 [ADR-006](docs/adrs/ADR-006-loom-executes-pipelines.md).
 

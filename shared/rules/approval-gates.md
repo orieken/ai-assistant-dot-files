@@ -97,6 +97,7 @@ those stops is no longer the model's willingness to comply with a paragraph.
 | `confirm-design` | `developer` | `deliver-feature` SKILL.md steps 11 + 13 — analyst scope and architect RFC confirmation before code is written |
 | `confirm-security` | `qa-engineer` | `deliver-feature` SKILL.md step 25 — the security-critical pause |
 | `confirm-ship` | `devops-engineer` | `deliver-feature` Phase 4 — docs-complete / ship confirmation, upstream of gates #1, #2 and #8 above |
+| `confirm-unresolved-review` | `code-reviewer` | **No prose counterpart.** It halts a run whose review loop reached its bound with changes still requested (L2.17). The markdown pipeline's loop was unbounded until this landed; step 21 now states the same three-round bound and asks the human directly |
 
 **How approval is given.** Two channels, and only two: an interactive prompt at the barrier when
 stdin is a terminal, or `loom run --spec <x> --resume --approve <gate>` when it is not (the halted

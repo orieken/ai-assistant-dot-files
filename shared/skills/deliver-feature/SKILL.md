@@ -99,7 +99,7 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 18. **Invoke developer** -> reads `context-manifest.md` first, then produces `implementation-notes.md`.
 19. **Invoke validate-artifact** against `shared/contracts/implementation-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
 20. **Invoke code-reviewer** -> produces `code-review-report.md`.
-21. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): apply Tier B retry loop up to `maxContractRetries`. If verdict is CHANGES REQUESTED (qualitative, independent of structural check): back up current `implementation-notes.md` and `code-review-report.md` to `.claude/feature-workspace/<feature-name>/.history/` (see Rollback), then repeat from step 18 until APPROVED and structurally valid. **Checkpoint** on final PASS+APPROVED.
+21. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): apply Tier B retry loop up to `maxContractRetries`. If verdict is CHANGES REQUESTED (qualitative, independent of structural check): back up current `implementation-notes.md` and `code-review-report.md` to `.claude/feature-workspace/<feature-name>/.history/` (see Rollback), then repeat from step 18. **Bound: three rounds.** If the third review still requests changes, STOP and put it to the human with the outstanding findings — do not keep looping, and do not proceed past an unresolved review on your own. **Checkpoint** on final PASS+APPROVED.
 22. **Invoke accessibility-engineer** (if `analysis.md` declares an accessibility requirement — the analysis contract makes one mandatory for any feature containing UI elements, so its presence is the signal that there is UI to review) -> produces `accessibility-report.md`. **Checkpoint**.
 23. **Invoke validate-artifact** against `shared/contracts/accessibility-contract.md` (only if accessibility-engineer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS or SKIP.
 24. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`.
@@ -169,6 +169,21 @@ checksums differ, the human edited the artifact — set `outcome: "edited_then_a
 Policy-evaluation pauses (AUTO_PROCEED / PAUSE_HUMAN) emit `policy.evaluated` events instead; do not
 double-emit `gate_decision` for those — `policy.evaluated` already captures the decision signal for
 non-Non-Negotiable gates.
+
+## The Review Loop (roadmap L2.17)
+
+Steps 18–21 are an iteration, and under `loom run` the executor performs it: the
+loop is declared in plan data as a span (`developer` → `code-reviewer`) with a
+named condition (`review-approved`, read from the review's typed verdict field)
+and a bound of three rounds. The executor evaluates the condition and counts the
+rounds; each round's artifacts are retained under `.iterations/` with their own
+digests rather than copied to `.history/`; and exhausting the bound halts at the
+`confirm-unresolved-review` gate, where a human either accepts the outstanding
+findings or stops the run.
+
+Here the same loop is yours to run, with the same bound — the number is stated
+in step 21 rather than left to judgement, because a loop with no stopping rule
+is one nobody can reason about.
 
 ## Which Stages Run (roadmap L3.0)
 

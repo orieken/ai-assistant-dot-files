@@ -17,6 +17,7 @@ type Executor struct {
 	onStale  func([]StaleStage)
 	onReset  func(*StaleApprovalError)
 	onRoute  func(RouteSummary)
+	onLoop   func(LoopRound)
 }
 
 // NewExecutor wires a provider and a state store into an executor.
@@ -49,6 +50,13 @@ func (e *Executor) OnApprovalReset(report func(*StaleApprovalError)) {
 // before the design gate asks them to approve it.
 func (e *Executor) OnRoute(report func(RouteSummary)) {
 	e.onRoute = report
+}
+
+// OnLoopRound registers a callback invoked when a loop sends its span round
+// again. It is how the CLI says which round is starting, so a run that
+// takes four attempts does not look like a run that is stuck.
+func (e *Executor) OnLoopRound(report func(LoopRound)) {
+	e.onLoop = report
 }
 
 // Run executes every stage of the plan that is not already COMPLETED in

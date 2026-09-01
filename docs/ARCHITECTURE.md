@@ -220,8 +220,10 @@ internal/
                                    computed and re-verified in Go, so an edited artifact stops
                                    counting as completed work, plus an append-only
                                    run-events.jsonl audit timeline written by both pipelines,
-                                   and a router that decides which stages a run needs from
-                                   the typed analysis before the design gate (L3.0)
+                                   a router that decides which stages a run needs from
+                                   the typed analysis before the design gate (L3.0), and a
+                                   bounded review loop the executor iterates and counts
+                                   rather than a model repeating on its own output (L2.17)
   state/                         typed pipeline state (ADR-006, L2.9 first cut): Go structs for
                                    the analyst -> architect hop, JSON Schema generated from them
                                    into shared/schemas/pipeline/, field-level projections, and
