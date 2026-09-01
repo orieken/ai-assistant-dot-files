@@ -26,6 +26,8 @@ func typedPayload(kind state.Kind) ([]byte, bool) {
 		return mustEncode(sampleAnalysis()), true
 	case state.KindArchitecture:
 		return mustEncode(sampleArchitecture()), true
+	case state.KindReview:
+		return mustEncode(SampleReview(state.VerdictApproved)), true
 	default:
 		return nil, false
 	}
@@ -40,6 +42,27 @@ func mustEncode(value interface{}) []byte {
 		panic("mock: cannot encode scripted state: " + err.Error())
 	}
 	return raw
+}
+
+// SampleReview builds a scripted review with the given verdict. A
+// changes-requested review carries a blocking finding, because the schema
+// requires one — a rejection with nothing actionable would spin the loop.
+func SampleReview(verdict state.Verdict) state.ReviewState {
+	review := state.ReviewState{
+		SchemaVersion:   state.SchemaVersion,
+		Feature:         "mock-feature",
+		Verdict:         verdict,
+		DesignNarrative: "Scripted review produced by the mock provider.",
+		DesignScore:     state.DesignScore{Clarity: 4, Cohesion: 4, Coupling: 4, Craft: 4},
+	}
+	if verdict == state.VerdictChangesRequested {
+		review.DesignScore.Cohesion = 2
+		review.Findings = []state.Finding{{
+			Operation: "Extract Function", File: "internal/mock/thing.go",
+			Smell: "does two things", Instruction: "split it", Blocking: true,
+		}}
+	}
+	return review
 }
 
 func sampleAnalysis() state.AnalysisState {

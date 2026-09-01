@@ -14,7 +14,7 @@ import (
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 6
+const StateSchemaVersion = 7
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -59,7 +59,14 @@ type StageRecord struct {
 	StaleReason    StaleReason `json:"staleReason,omitempty"`
 	FoundSHA256    string      `json:"foundSha256,omitempty"`
 	SkipReason     string      `json:"skipReason,omitempty"`
-	Error          string      `json:"error,omitempty"`
+	// Iteration counts the rounds a looping stage has run (roadmap L2.17).
+	// Zero and one both mean a first pass; Sequence is unaffected, because
+	// a re-run is the same step of the run, not a new one.
+	Iteration int `json:"iteration,omitempty"`
+	// IterationArtifacts retains what each earlier round produced, each
+	// with its own digest.
+	IterationArtifacts []IterationArtifact `json:"iterationArtifacts,omitempty"`
+	Error              string              `json:"error,omitempty"`
 }
 
 // RunState is the executor-owned durable state for one feature delivery run.

@@ -45,10 +45,12 @@ type Stage struct {
 	Timeout  time.Duration
 }
 
-// Plan is an ordered list of stages the executor runs sequentially.
+// Plan is an ordered list of stages the executor runs sequentially, plus
+// any bounded loops over spans of them (roadmap L2.17).
 type Plan struct {
 	Name   string
 	Stages []Stage
+	Loops  []Loop
 }
 
 // Validate rejects plans the executor cannot run safely: empty names,
@@ -96,6 +98,10 @@ const (
 	GateConfirmDesign   = "confirm-design"
 	GateConfirmSecurity = "confirm-security"
 	GateConfirmShip     = "confirm-ship"
+	// GateConfirmUnresolvedReview halts a run whose review loop hit its
+	// bound with changes still requested. It has no prose counterpart: the
+	// markdown pipeline's loop has no bound to exhaust.
+	GateConfirmUnresolvedReview = "confirm-unresolved-review"
 )
 
 // defaultPlanGates maps the three gated stages of the built-in plan to their
@@ -133,14 +139,17 @@ func defaultSkippableStages() map[string]bool {
 // the analyst -> architect hop; every other stage still writes markdown.
 func defaultTypedStages() (kinds map[string]string, consumes map[string]string) {
 	return map[string]string{
-		"analyst":     string(state.KindAnalysis),
-		RouterStageID: string(state.KindRoute),
-		"architect":   string(state.KindArchitecture),
+		"analyst":       string(state.KindAnalysis),
+		RouterStageID:   string(state.KindRoute),
+		"architect":     string(state.KindArchitecture),
+		"code-reviewer": string(state.KindReview),
 	}, map[string]string{
 		// The router deliberately has no projection: projections exist to
 		// narrow what a *model* is shown, and the router is the executor
 		// reading its own state. It loads the analysis in full itself.
 		"architect": "analyst",
+		// On a second round the developer reads the reviewer's findings.
+		"developer": "code-reviewer",
 	}
 }
 
@@ -185,5 +194,21 @@ func DefaultDeliverFeaturePlan() Plan {
 			StateKind: kinds[agent], Consumes: consumes[agent], Skippable: skippable[agent],
 			Internal: agent == RouterStageID, Timeout: defaultStageTimeout})
 	}
-	return Plan{Name: DefaultDeliverFeaturePlanName, Stages: stages}
+	return Plan{Name: DefaultDeliverFeaturePlanName, Stages: stages, Loops: defaultPlanLoops()}
 }
+
+// defaultPlanLoops encodes deliver-feature steps 18–21: the code-reviewer
+// sends the developer back until it approves. The prose states no bound —
+// "repeat until APPROVED" — so this puts a number on it, because a loop the
+// executor cannot bound is one it cannot safely run.
+func defaultPlanLoops() []Loop {
+	return []Loop{{
+		ID: "review", From: "developer", To: "code-reviewer",
+		Condition: ReviewApprovedCondition, Gate: GateConfirmUnresolvedReview,
+		MaxIterations: defaultReviewIterations,
+	}}
+}
+
+// defaultReviewIterations bounds the review loop. Three rounds matches the
+// Tier B contract-retry default in deliver-feature's own policy block.
+const defaultReviewIterations = 3

@@ -178,12 +178,14 @@ func TestUntypedStagesAreUnaffected(t *testing.T) {
 	}
 }
 
-func TestDefaultPlanTypesTheAnalystArchitectHop(t *testing.T) {
+func TestDefaultPlanTypedStages(t *testing.T) {
 	kinds := typedStagesOf(orchestrator.DefaultDeliverFeaturePlan())
 	want := map[string]string{
 		"analyst":                  string(state.KindAnalysis),
 		orchestrator.RouterStageID: string(state.KindRoute),
 		"architect":                string(state.KindArchitecture),
+		// The review verdict is typed so the loop reads a field (L2.17).
+		"code-reviewer": string(state.KindReview),
 	}
 
 	if len(kinds) != len(want) {

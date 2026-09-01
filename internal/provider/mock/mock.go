@@ -39,6 +39,8 @@ type Provider struct {
 	scripts     map[string]Script
 	invocations []string
 	inputs      map[string]orchestrator.StageInput
+	hook        func(stageID string, invocation int) *Script
+	visits      map[string]int
 }
 
 // New returns a mock provider with per-stage-ID scripts. Stages without a
@@ -55,7 +57,7 @@ func New(scripts map[string]Script) *Provider {
 func (p *Provider) Invoke(ctx context.Context, stage orchestrator.Stage, input orchestrator.StageInput) (orchestrator.StageOutput, error) {
 	p.record(stage.ID)
 	p.recordInput(stage.ID, input)
-	script := p.script(stage.ID)
+	script := p.scriptFor(stage.ID)
 	if script.Hang {
 		<-ctx.Done()
 		return orchestrator.StageOutput{}, ctx.Err()
@@ -90,6 +92,33 @@ func (p *Provider) script(stageID string) Script {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.scripts[stageID]
+}
+
+// SetHook lets a test vary a stage's script by how many times it has been
+// invoked — which is how a loop test scripts "reject twice, then approve".
+// Returning nil falls back to the stage's standing script.
+func (p *Provider) SetHook(hook func(stageID string, invocation int) *Script) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.hook = hook
+}
+
+// scriptFor consults the hook first, then the standing script.
+func (p *Provider) scriptFor(stageID string) Script {
+	p.mu.Lock()
+	hook := p.hook
+	if p.visits == nil {
+		p.visits = map[string]int{}
+	}
+	p.visits[stageID]++
+	visit := p.visits[stageID]
+	p.mu.Unlock()
+	if hook != nil {
+		if scripted := hook(stageID, visit); scripted != nil {
+			return *scripted
+		}
+	}
+	return p.script(stageID)
 }
 
 // SetScript replaces one stage's script — used by resume tests to turn a

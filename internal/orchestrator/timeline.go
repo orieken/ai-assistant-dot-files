@@ -35,8 +35,12 @@ const (
 	// EventStageSkipped records a stage the router routed around, with the
 	// reason (roadmap L3.0).
 	EventStageSkipped EventKind = "stage.skipped"
-	EventGateWaiting  EventKind = "gate.waiting"
-	EventGateApproved EventKind = "gate.approved"
+	// EventLoopIterated records the review loop sending the developer back
+	// for another round; EventLoopExhausted records it hitting its bound.
+	EventLoopIterated  EventKind = "loop.iterated"
+	EventLoopExhausted EventKind = "loop.exhausted"
+	EventGateWaiting   EventKind = "gate.waiting"
+	EventGateApproved  EventKind = "gate.approved"
 	// EventGateInvalidated records an approval reset by an edit to a bound
 	// artifact (roadmap L2.14). Stage names the artifact that changed.
 	EventGateInvalidated EventKind = "gate.invalidated"
@@ -51,6 +55,8 @@ type Event struct {
 	Gate           string         `json:"gate,omitempty"`
 	StaleReason    StaleReason    `json:"staleReason,omitempty"`
 	Reason         string         `json:"reason,omitempty"`
+	Loop           string         `json:"loop,omitempty"`
+	Iteration      int            `json:"iteration,omitempty"`
 	ApprovalMethod ApprovalMethod `json:"approvalMethod,omitempty"`
 	Error          string         `json:"error,omitempty"`
 }

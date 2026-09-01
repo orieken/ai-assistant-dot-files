@@ -63,9 +63,16 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 	if err := e.emit(Event{Kind: EventRunStarted}); err != nil {
 		return err
 	}
-	for _, stage := range plan.Stages {
-		if err := e.advance(ctx, stage, plan, input, state); err != nil {
+	for index := 0; index < len(plan.Stages); index++ {
+		if err := e.advance(ctx, plan.Stages[index], plan, input, state); err != nil {
 			return err
+		}
+		back, err := e.closeLoop(plan, plan.Stages[index], input, state)
+		if err != nil {
+			return err
+		}
+		if back >= 0 {
+			index = back - 1
 		}
 	}
 	return e.emit(Event{Kind: EventRunCompleted})
@@ -82,7 +89,7 @@ func (e *Executor) advance(ctx context.Context, stage Stage, plan Plan, input St
 	if err := e.checkGate(stage, state); err != nil {
 		return err
 	}
-	if err := e.restoreSkipAfterGate(state, stage.ID); err != nil {
+	if err := e.restoreStatusAfterGate(state, stage.ID); err != nil {
 		return err
 	}
 	if state.IsStageSettled(stage.ID) {
@@ -206,13 +213,14 @@ func (e *Executor) checkGate(stage Stage, state *RunState) error {
 }
 
 // waitingRecord marks a stage as halted at its gate without discarding what
-// the record already said. A routed-out stage still stops at its gate — the
-// checkpoint is about reaching this point in the run — so its skip decision
-// has to survive the halt and be restored once a human approves.
+// the record already said. A gate is a barrier on reaching a point in the
+// run, so a stage that was already settled — routed out, or completed
+// before a loop exhausted on it — must come back settled once a human
+// approves, rather than being resurrected by the halt.
 func waitingRecord(state *RunState, stage Stage) StageRecord {
 	record := state.Stages[stage.ID]
-	if record.Status == StageStatusSkipped {
-		record.PreviousStatus = StageStatusSkipped
+	if record.Status == StageStatusSkipped || record.Status == StageStatusCompleted {
+		record.PreviousStatus = record.Status
 	}
 	record.Status = StageStatusWaitingApproval
 	record.Gate = stage.Gate
@@ -220,21 +228,20 @@ func waitingRecord(state *RunState, stage Stage) StageRecord {
 	return record
 }
 
-// restoreSkipAfterGate puts a routed-out stage back to SKIPPED once its gate
-// is approved, so approving the checkpoint does not resurrect work the route
-// decided against.
-func (e *Executor) restoreSkipAfterGate(state *RunState, stageID string) error {
+// restoreStatusAfterGate puts a stage back to what it was before the halt,
+// so approving a checkpoint does not re-run work that was already settled.
+func (e *Executor) restoreStatusAfterGate(state *RunState, stageID string) error {
 	record := state.Stages[stageID]
-	if record.Status != StageStatusWaitingApproval || record.PreviousStatus != StageStatusSkipped {
+	if record.Status != StageStatusWaitingApproval || record.PreviousStatus == "" {
 		return nil
 	}
-	record.Status = StageStatusSkipped
+	record.Status = record.PreviousStatus
 	record.PreviousStatus = ""
 	return e.persistStatus(state, stageID, record)
 }
 
 func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input StageInput, state *RunState) error {
-	if err := e.persistStatus(state, stage.ID, StageRecord{Status: StageStatusRunning, StartedAt: time.Now().UTC()}); err != nil {
+	if err := e.persistStatus(state, stage.ID, runningRecord(state, stage.ID)); err != nil {
 		return err
 	}
 	if err := e.emit(Event{Kind: EventStageStarted, Stage: stage.ID, Sequence: state.Stages[stage.ID].Sequence}); err != nil {
@@ -249,6 +256,19 @@ func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input S
 		return e.persistFailure(ctx, state, stage, invokeErr)
 	}
 	return e.persistCompletion(state, stage, plan, input, output)
+}
+
+// runningRecord marks a stage in flight without discarding what the record
+// already carries. A fresh struct would drop the iteration count, which for
+// a looping stage means the loop never advances and never terminates — the
+// first thing the loop tests caught.
+func runningRecord(state *RunState, stageID string) StageRecord {
+	record := state.Stages[stageID]
+	record.Status = StageStatusRunning
+	record.StartedAt = time.Now().UTC()
+	record.FinishedAt = nil
+	record.Error = ""
+	return record
 }
 
 // runOrInvoke executes an internal stage here, or hands any other stage to
@@ -350,6 +370,9 @@ func (e *Executor) emitStageEnd(state *RunState, stageID string, record StageRec
 func (e *Executor) persistStatus(state *RunState, stageID string, record StageRecord) error {
 	if record.Sequence == 0 {
 		record.Sequence = sequenceFor(state, stageID)
+	}
+	if record.Iteration == 0 {
+		record.Iteration = 1
 	}
 	state.Stages[stageID] = record
 	if err := e.store.Save(state); err != nil {
