@@ -142,10 +142,12 @@ a token budget per pipeline-agent tier (Analyst/Architect ≤60%, Developer ≤8
 200k-token window).
 
 ### Context decay
-An artifact 2+ pipeline phases old gets read as a `summarize-artifact` summary, not the full file — e.g.
-`qa-engineer` and `tech-writer` (Phase 3) get `analysis.md`'s (Phase 1) gist, not its full text, since
-`implementation-notes.md` already restates what matters for their job. This never applies to the artifact an
-agent is *immediately* reviewing.
+An artifact 2+ pipeline phases old is never read in full — e.g. `qa-engineer` and `tech-writer` (Phase 3)
+get part of `analysis.md` (Phase 1), not its full text, since `implementation-notes.md` already restates what
+matters for their job. *Which* part depends on the pipeline: under `loom run` the analysis is typed state and
+each stage receives a deterministic projection of the fields its contract declares (roadmap L2.10); under the
+markdown pipeline each agent reads only its relevant sections, and `summarize-artifact` covers the eight
+artifacts that are still untyped. This never applies to the artifact an agent is *immediately* reviewing.
 
 ### Subagent isolation
 Spawning a subagent is a clean-slate context — it sees only its own definition plus the specific

@@ -7,6 +7,26 @@ triggers:
 standalone: true
 ---
 
+## Not the Inter-Stage Data Path
+
+This skill used to be how `qa-engineer` and `tech-writer` read `analysis.md`. It is not any more.
+
+Seven pipeline artifacts are **typed state** (`analysis`, `architecture`, `route`, `review`,
+`implementation-notes`, `security-report`, `qa-report` — see any of their contracts' Typed State
+sections). For those, a consuming stage receives a **projection**: the fields its contract declares,
+selected deterministically, with nothing paraphrased and nothing silently dropped. That is roadmap
+L2.10's answer to context decay, and it is strictly better than a summary here — it costs no model
+call, it is reproducible, and what it omits is declared in code rather than decided by a summarizer.
+
+So: never call this skill to hand one stage's output to the next stage when the artifact is typed.
+Two things it is still for:
+
+1. **Untyped artifacts.** Eight of the fifteen artifacts still pass as markdown — the end-of-pipeline
+   reports and `context-manifest`. Context decay still applies to them, unchanged.
+2. **The retrieval surrogate** (`--persist`, `deliver-feature/SKILL.md` step 37a) and any other
+   human-facing gist. The surrogate is not a handoff between stages; it is an indexing target for the
+   retrieval tier, and prose is the point rather than a compromise.
+
 ## Flags
 
 | Flag | Effect |
@@ -15,10 +35,9 @@ standalone: true
 | `--persist <feature-name>` | Surrogate mode. Summary is written to `docs/features/<feature-name>/summary.md` as a retrieval surrogate AND returned in output. The surrogate is what future BM25/vector retrieval tiers should index first. |
 
 ## When To Use
-- A downstream agent needs the gist of an artifact produced 2+ phases earlier in the pipeline (see
-  `deliver-feature/SKILL.md`, "Context Decay") — e.g. `qa-engineer` or `tech-writer` needing `analysis.md`'s
-  scope without re-reading every acceptance criterion verbatim, since they already have
-  `implementation-notes.md` (which restates the decisions that matter for their job).
+- A downstream agent needs the gist of an **untyped** artifact produced 2+ phases earlier in the
+  pipeline (see `deliver-feature/SKILL.md`, "Context Decay") — one of the eight artifacts that still
+  pass as markdown, whose broad strokes matter but whose exact wording usually doesn't.
 - Standalone: any time a human wants a quick gist of a long artifact before deciding whether to read it in full.
 - `deliver-feature` calls this with `--persist` after all artifacts are persisted to `docs/features/<name>/` to create a durable retrieval surrogate for the entire feature delivery.
 

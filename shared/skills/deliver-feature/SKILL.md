@@ -365,15 +365,20 @@ iteration-count record consumed by `pipeline-retrospective` and `agent-scorecard
 
 Phases are numbered 0-4 (Setup, Discovery and Design, Implementation and Review, Verification and
 Shipping, Persistence and Delivery). By the time an agent 2+ phases removed from an artifact's origin phase
-needs it, read a `summarize-artifact` summary instead of the full file — the broad strokes still matter, the
-exact wording usually doesn't, and the full file is still on disk for anyone who needs to dig in.
+needs it, don't read the full file — the broad strokes still matter, the exact wording usually doesn't, and
+the full file is still on disk for anyone who needs to dig in. For the eight artifacts that still pass as
+markdown, that means a `summarize-artifact` summary. For the seven that are typed state, it means a
+projection, which is deterministic and costs no model call — see any contract's Typed State section.
 
-Concretely: `analysis.md` originates in Phase 1. `qa-engineer`, `sre-engineer`, `tech-writer`, and
-`devops-engineer` run in Phase 3-4 — 2+ phases later — so they read a summary of `analysis.md`, not the full
-file (both `qa-engineer.md` and `tech-writer.md` have been updated to do this explicitly; `sre-engineer.md`
-and `devops-engineer.md` don't currently read `analysis.md` at all, so there's nothing to change there).
-`implementation-notes.md` and `code-review-report.md` (Phase 2) are only 1 phase old from Phase 3 — read
-those in full, not summarized.
+Concretely: `analysis.md` originates in Phase 1. `qa-engineer` and `tech-writer` run in Phase 3-4 — 2+
+phases later — so neither reads it in full. **How they avoid that now depends on which pipeline is running.**
+Under `loom run`, `analysis` is typed state and each receives a deterministic projection of the fields its
+contract declares: no model call, nothing paraphrased, and what is omitted is declared in code (roadmap
+L2.10). Under this markdown pipeline, each reads only the two sections relevant to its job — a smaller
+context than the full file, and a more faithful one than a paraphrase. Summarizing `analysis.md` for either
+agent is no longer correct in either pipeline. (`sre-engineer` and `devops-engineer` don't read `analysis.md`
+at all, so there was never anything to change there.) `implementation-notes.md` and `code-review-report.md`
+(Phase 2) are only 1 phase old from Phase 3 — read those in full, not summarized.
 
 This never applies to the artifact an agent is *immediately* reviewing (e.g. `code-reviewer` reading
 `implementation-notes.md`'s Self-Review Checklist needs the literal checked items) — only to older artifacts

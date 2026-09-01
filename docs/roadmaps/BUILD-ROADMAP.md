@@ -321,8 +321,17 @@ human-in-the-loop control.*
 
 **SHIPPED (first cut)** 2026-08-31 (epic 79, `74155f1`…`3430594`) — `internal/state/` types the
 analyst → architect hop: Go structs, JSON Schema generated into `shared/schemas/pipeline/`,
-field-level projections, and markdown rendered as a view. **The other sixteen artifacts still pass
-markdown**, so the Problem below still describes most of the pipeline. Typing them is later work.
+field-level projections, and markdown rendered as a view.
+
+**SHIPPED (second cut)** 2026-09-01 (epic 83, `0b2d6c4`…) — the implementation chain:
+`implementation-notes`, `security-report`, and `qa-report` are typed, joining `analysis`,
+`architecture`, `route` (L3.0) and `review` (L2.17) for **seven typed artifacts**. Two contract
+content rules became load-time invariants rather than greps — a non-zero `failed` test count and a
+CRITICAL/HIGH security finding with no fix applied are now validation errors. `Stage.Consumes` became
+plural and projections are keyed by `(consumer stage, upstream kind)`, since what a stage reads and
+what it writes vary independently. **Eight of the fifteen artifacts still pass markdown** — the
+end-of-pipeline reports (docs, devops, observability, accessibility, visual QA) and
+`context-manifest`. Nothing evaluates a condition over those yet, which is why they were left.
 
 1. **Problem**: There is no state object. Agents hand each other whole markdown documents on disk
    (`analysis.md`, `architecture-notes.md`, `implementation-notes.md`, … 15 artifacts). The only real
@@ -341,7 +350,23 @@ markdown**, so the Problem below still describes most of the pipeline. Typing th
    schema violation is a load-time error.
 
 ### L2.10 — Stop using an LLM as the context-compaction mechanism
-**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.9 · **Blocks**: none
+**Workstream**: KERNEL · **Effort**: S (was M) · **Blocked by**: L2.9 · **Blocks**: none
+
+**PARTLY ABSORBED** by epic 83 (2026-09-01). The two inter-stage call sites that existed were
+replaced with deterministic projections of `AnalysisState`: `qa-engineer` (step 2) now receives
+acceptance criteria, edge cases, QA tasks and the definition of done; `tech-writer` (step 1) receives
+the summary, out-of-scope list and its own task list. Both agent files were edited and versioned.
+Under `loom run` **no LLM call sits between the analysis and either agent**.
+
+**What remains**:
+1. The step 37a `--persist` retrieval surrogate in `deliver-feature/SKILL.md`, which is a *different*
+   problem — the surrogate feeds `memory-registry`'s retrieval tier and has consumers of its own, so
+   "replace it with field selection" is not the right fix and this item's done-when does not cover it.
+   Deciding what the surrogate becomes is the open question here.
+2. The markdown pipeline's fallback paths. Each edited agent keeps a no-executor path that reads the
+   two relevant sections rather than the whole file — smaller context, but still a read the executor
+   does by field selection. This closes only when those agents run under the executor.
+3. Any call site introduced by typing the remaining eight artifacts.
 
 1. **Problem**: Context decay is handled by `summarize-artifact --persist`, invoked at
    `deliver-feature/SKILL.md` step 37a — another LLM call producing a lossy ~200-word surrogate then

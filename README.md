@@ -336,7 +336,7 @@ Grouped by what they're for:
 | `retrospective` | "How did \* go?" — single-delivery narrative, auto-invoked every 5th delivery |
 | `extract-lessons` | Cross-delivery pattern extraction — recurring findings that should become rules/prompt changes/KIs |
 | `context-audit` | Context waste analysis — unused pins, duplicates, unconstrained large reads |
-| `summarize-artifact` | Condensing an older pipeline artifact for a downstream agent (context decay) |
+| `summarize-artifact` | Condensing an older *untyped* pipeline artifact, or writing the retrieval surrogate (context decay) |
 | `search-ki` / `create-ki` | Searching/authoring Knowledge Items in `shared/knowledge/` |
 | `search-ki-semantic` | Semantic KI/ADR search using LLM-as-retriever (AOS Phase 3) — catches paraphrases and conceptual matches that lexical search-ki misses |
 | `query-memory` | Registry-aware search across *every* memory source (KIs/ADRs plus feature archive, glossary, topology), not just KIs/ADRs |
@@ -496,9 +496,12 @@ loop and durable state is specified and ships incrementally: M0.4 (executor skel
 as process interrupts), and L2.12 (executor-owned state, digests verified in Go) have landed —
 `loom run` halts at `confirm-design`, `confirm-security`, and `confirm-ship` with nothing a model
 returns able to unlock them, and re-runs any stage whose artifact changed on disk. The markdown
-pipeline above still runs on prompt-discipline; L2.9's first cut has landed too — under `loom run`
-the analyst and architect exchange schema-validated typed state, with markdown rendered from it as
-a view — while the remaining stages still pass markdown. L2.14 has landed too: an approval binds to
+pipeline above still runs on prompt-discipline; L2.9 has landed through its second cut — under
+`loom run` seven artifacts are schema-validated typed state, with markdown rendered from them as a
+view, so the analyst→architect hop and the whole implementation chain (developer, security-reviewer,
+qa-engineer) exchange fields rather than prose, while eight end-of-pipeline artifacts still pass
+markdown. Two rules the contracts already stated — a green test suite, a fixed Critical finding —
+are checked when that state loads instead of being grepped afterwards. L2.14 has landed too: an approval binds to
 the artifacts it was given, so editing one resets the gate and the run halts until a human approves
 what is actually there. L3.0 has landed as well: the executor computes which stages a run needs from the
 typed analysis, records the decision with a reason per stage, and has a human

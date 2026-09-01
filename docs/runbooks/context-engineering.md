@@ -102,8 +102,10 @@ describes what's loaded *right now* — it is not where things are durably store
    Each pipeline artifact (`analysis.md`, `architecture-notes.md`, etc.) is itself an externalization of that
    agent's reasoning, handed off structurally rather than kept in conversation.
 4. **Dynamic Context Loading (Just-in-Time)** — load files when needed, summarize once processed. An
-   artifact 2+ pipeline phases old gets read via `summarize-artifact` (a ~200-word gist) instead of in full —
-   this is "Context Decay," see `shared/skills/deliver-feature/SKILL.md`.
+   artifact 2+ pipeline phases old is read as a gist rather than in full — this is "Context Decay," see
+   `shared/skills/deliver-feature/SKILL.md`. For a typed artifact under `loom run` that gist is a
+   deterministic projection; for the artifacts that still pass as markdown it is a `summarize-artifact`
+   summary.
 5. **Isolation of Subagent Boundaries** — spawning a subagent is a clean slate: it sees only its own
    definition and the specific artifact/task handed to it, never the orchestrator's full history or another
    subagent's internal reasoning. The orchestrator only ever consumes a subagent's final structured report

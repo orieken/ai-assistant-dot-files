@@ -3,6 +3,27 @@
 **Produced by**: security-reviewer
 **Consumed by**: qa-engineer, tech-writer, orchestrator (deliver-feature)
 
+## Typed State (`loom run`)
+
+Under `loom run`, this artifact is **typed state**, not a markdown document: the stage returns JSON
+conforming to `shared/schemas/pipeline/security.schema.json` (generated from `internal/state/` —
+never hand-edit it), the executor validates it, and `security-report.md` is *rendered* from that
+state as a human-readable view (roadmap L2.9). The rendered view reproduces every heading below.
+
+The typed form makes the severity ladder a real enum (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFO`)
+rather than a string in prose, and it turns the Validation Rule below into an **invariant checked at
+load time**: a CRITICAL or HIGH finding with an empty `fixApplied` is a validation error that names
+the finding, and the stage does not complete. Under the markdown pipeline the same rule is a
+`validate-artifact` check run after the fact; under the executor a report that violates it never
+becomes state at all. The "block on Critical findings" guardrail stops depending on a grep matching
+the right words.
+
+`qa-engineer` receives a projection of the findings and the QA notes, not the whole report;
+`tech-writer` reads the rendered view.
+
+For the markdown pipeline (the `deliver-feature` skill), everything below remains authoritative
+exactly as written.
+
 ## Required Sections (exact heading text and level)
 - `## Threat Model Summary`
 - `## Dependency Audit`

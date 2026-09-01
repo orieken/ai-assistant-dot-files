@@ -112,8 +112,9 @@ loom state show --spec docs/features/user-auth/spec.md [--json]
 
 ## Typed pipeline state
 
-Two stages of the built-in plan exchange **typed state** instead of markdown (roadmap L2.9,
-first cut): the analyst produces it and the architect consumes a projection of it.
+Seven artifacts of the built-in plan are **typed state** instead of markdown (roadmap L2.9):
+`analysis`, `architecture`, `route`, `review`, `implementation-notes`, `security-report`, and
+`qa-report`. Every hop between them carries fields, not prose.
 
 - **Where**: `.claude/feature-workspace/<feature>/state/<stage>.json`. That document IS the
   stage's artifact, so digest verification and the staleness cascade cover it exactly as they
@@ -122,18 +123,31 @@ first cut): the analyst produces it and the architect consumes a projection of i
   `go run ./cmd/gen-schemas`. Never hand-edit them; a test fails when they drift from the
   structs. The schema is inlined into the stage prompt, so a typed run does not depend on the
   framework being installed in the target project.
-- **Markdown is a view**: `analysis.md` and `architecture-notes.md` are *rendered* from state
-  under the filenames every contract and downstream agent already expects — including the
-  retrieval frontmatter. The view is derived and not digest-tracked: annotate it freely, nothing
-  downstream reads it and nothing will demote a stage because you did.
-- **Projections**: the architect receives the fields `architecture-contract.md` needs, not the
-  whole analysis. It never sees the QA task list or the definition of done, because it does not
-  read them.
+- **Markdown is a view**: `analysis.md`, `implementation-notes.md`, `qa-report.md` and the rest
+  are *rendered* from state under the filenames every contract and downstream agent already
+  expects — including the retrieval frontmatter. This is what keeps the typed hop invisible to
+  the stages that are still untyped: `sre-engineer`, `devops-engineer` and `accessibility-engineer`
+  read `implementation-notes.md` and cannot tell the difference. The view is derived and not
+  digest-tracked: annotate it freely, nothing downstream reads it and nothing will demote a stage
+  because you did.
+- **Projections**: a consuming stage receives the fields its contract needs, not the whole
+  upstream document. They are keyed by `(consuming stage, upstream kind)`, because what a stage
+  reads and what it writes vary independently — the architect and the qa-engineer both read the
+  analysis and get demonstrably different slices of it. A stage with several upstreams, like
+  `qa-engineer` with three, gets one labelled block each, so provenance survives and same-named
+  fields cannot silently collide.
+- **Contract rules become invariants**: two things the contracts already asserted are now checked
+  when state loads rather than grepped afterwards — a `qa-report` with a non-zero failed count,
+  and a CRITICAL or HIGH security finding with no fix applied, are validation errors that fail the
+  stage. A red suite cannot become completed state.
+- **No LLM on the data path**: `qa-engineer` and `tech-writer` used to read a model-written summary
+  of `analysis.md`. They now receive projections of it (roadmap L2.10).
 - **Invalid output fails loudly**: a response that is not a single JSON object (raw, or one
   fenced block) fails the stage, as does one missing a required field or inventing a field the
   schema does not have. There is no repair or retry loop.
 
-Every other stage still writes markdown, unchanged.
+The eight remaining artifacts — the end-of-pipeline reports and `context-manifest` — still pass
+markdown, unchanged. Nothing evaluates a condition over them yet.
 
 ## Routing: which stages actually run
 

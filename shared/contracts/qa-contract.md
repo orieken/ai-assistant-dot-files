@@ -3,6 +3,27 @@
 **Produced by**: qa-engineer
 **Consumed by**: sre-engineer, tech-writer, orchestrator (deliver-feature)
 
+## Typed State (`loom run`)
+
+Under `loom run`, this artifact is **typed state**, not a markdown document: the stage returns JSON
+conforming to `shared/schemas/pipeline/qa.schema.json` (generated from `internal/state/` — never
+hand-edit it), the executor validates it, and `qa-report.md` is *rendered* from that state as a
+human-readable view (roadmap L2.9). The rendered view reproduces every heading below.
+
+The typed form makes the Validation Rule below an **invariant checked at load time**: test results
+are numeric fields, and a non-zero `failed` count is a validation error, so a red suite cannot become
+completed state. Under the markdown pipeline the same rule is a `validate-artifact` check that greps
+`## Test Results` for the literal `Failed: 0`; under the executor there is no string to match.
+
+`qa-engineer` reads three upstreams here — a projection of `implementation-notes` (files touched,
+QA notes, deviations), a projection of `security-report` (findings and QA notes), and a projection of
+`analysis` (acceptance criteria, edge cases, QA tasks, definition of done). Each arrives as its own
+labelled block, so provenance survives and same-named fields from different upstreams cannot collide.
+That third projection replaced an LLM summarization call (roadmap L2.10).
+
+For the markdown pipeline (the `deliver-feature` skill), everything below remains authoritative
+exactly as written.
+
 ## Required Sections (exact heading text and level)
 - `## Test Files Created`
 - `## Test Files Modified`
