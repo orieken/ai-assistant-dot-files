@@ -293,3 +293,83 @@ func TestRunStateTimelineWithoutEventsFails(t *testing.T) {
 		t.Error("timeline succeeded for a run with no events")
 	}
 }
+
+// TestRunStateVerifyReportsAnInvalidatedApproval is the markdown pipeline's
+// half of L2.14: detection, not enforcement. `loom state` can say the
+// approval no longer holds; it cannot stop a prose pipeline from running.
+func TestRunStateVerifyReportsAnInvalidatedApproval(t *testing.T) {
+	spec := stateProject(t)
+	artifact := writeArtifact(t, "analysis.md", "# analysis\n")
+	if _, err := callState(t, runStateRecord, stateFlags{spec: spec, stage: "analyst", artifact: artifact}); err != nil {
+		t.Fatalf("record: %v", err)
+	}
+	if _, err := callState(t, runStateApprove, stateFlags{spec: spec, gate: "confirm-design"}); err != nil {
+		t.Fatalf("approve: %v", err)
+	}
+	if err := os.WriteFile(artifact, []byte("# analysis, edited after approval\n"), 0o644); err != nil {
+		t.Fatalf("edit artifact: %v", err)
+	}
+
+	output, err := callState(t, runStateVerify, stateFlags{spec: spec})
+	if !errors.Is(err, errStateVerifyFailed) {
+		t.Fatalf("verify error = %v, want failure", err)
+	}
+	assertOutputContains(t, output, "confirm-design", "INVALIDATED", "cannot prevent")
+	assertInvalidatedByAnalyst(t, spec)
+}
+
+func assertInvalidatedByAnalyst(t *testing.T, spec string) {
+	t.Helper()
+	approval := loadStateFor(t, spec).Approvals["confirm-design"]
+	if approval.IsValid() || approval.InvalidatedBy != "analyst" {
+		t.Errorf("approval record = %+v, want invalidated by analyst", approval)
+	}
+}
+
+func TestRunStateApprovalSurvivesAnUnrelatedEdit(t *testing.T) {
+	spec := stateProject(t)
+	recordStages(t, spec, "analyst")
+	if _, err := callState(t, runStateApprove, stateFlags{spec: spec, gate: "confirm-design"}); err != nil {
+		t.Fatalf("approve: %v", err)
+	}
+	// Recorded after the approval, so it is not part of what was approved.
+	later := writeArtifact(t, "implementation.md", "# implementation\n")
+	if _, err := callState(t, runStateRecord, stateFlags{spec: spec, stage: "developer", artifact: later}); err != nil {
+		t.Fatalf("record developer: %v", err)
+	}
+	if err := os.WriteFile(later, []byte("# implementation, edited\n"), 0o644); err != nil {
+		t.Fatalf("edit artifact: %v", err)
+	}
+
+	if _, err := callState(t, runStateVerify, stateFlags{spec: spec}); !errors.Is(err, errStateVerifyFailed) {
+		t.Fatalf("verify error = %v, want the stage itself to fail verification", err)
+	}
+	if !loadStateFor(t, spec).IsGateApproved("confirm-design") {
+		t.Error("an edit to work recorded after the approval reset the gate")
+	}
+}
+
+func TestRunStateShowMarksAnInvalidatedApproval(t *testing.T) {
+	spec := stateProject(t)
+	artifact := writeArtifact(t, "analysis.md", "# analysis\n")
+	if _, err := callState(t, runStateRecord, stateFlags{spec: spec, stage: "analyst", artifact: artifact}); err != nil {
+		t.Fatalf("record: %v", err)
+	}
+	if _, err := callState(t, runStateApprove, stateFlags{spec: spec, gate: "confirm-design"}); err != nil {
+		t.Fatalf("approve: %v", err)
+	}
+	if err := os.WriteFile(artifact, []byte("# analysis, edited\n"), 0o644); err != nil {
+		t.Fatalf("edit artifact: %v", err)
+	}
+	if _, err := callState(t, runStateVerify, stateFlags{spec: spec}); !errors.Is(err, errStateVerifyFailed) {
+		t.Fatalf("verify should have failed: %v", err)
+	}
+
+	output, err := callState(t, runStateShow, stateFlags{spec: spec})
+	if err != nil {
+		t.Fatalf("show: %v", err)
+	}
+	if !strings.Contains(output, "INVALIDATED") {
+		t.Errorf("show did not mark the invalidated approval:\n%s", output)
+	}
+}

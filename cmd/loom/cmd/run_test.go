@@ -511,3 +511,65 @@ func TestRunRecordsRunIdentityAndRefusesAnotherSpec(t *testing.T) {
 		t.Errorf("resuming against a different spec succeeded:\n%s", output)
 	}
 }
+
+// TestRunRefusesApprovingIntoAStaleRun covers the trap L2.14 would
+// otherwise create: approving a run whose own verification is about to
+// reset that approval. The refusal names the artifact and says what to do.
+func TestRunRefusesApprovingIntoAStaleRun(t *testing.T) {
+	binary := buildLoomBinary(t)
+	projectDir := t.TempDir()
+	spec := writeSpec(t, projectDir)
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock"); code != ExitCodeWaitingApproval {
+		t.Fatal("setup run did not halt at the first gate")
+	}
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume", "--approve", "confirm-design"); code != ExitCodeWaitingApproval {
+		t.Fatal("approved run did not reach the second gate")
+	}
+
+	// Edit something bound by the approval the next command would give.
+	if err := os.WriteFile(workspaceArtifact(projectDir, "analyst"), []byte(`{"hand":"edited"}`), 0o644); err != nil {
+		t.Fatalf("edit analyst state: %v", err)
+	}
+	output, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume", "--approve", "confirm-security")
+	if code == 0 {
+		t.Fatalf("approving into a stale run succeeded:\n%s", output)
+	}
+	assertOutputContains(t, output, "cannot approve", "analyst", "resume without --approve first")
+	// Nothing was recorded: the human's decision was not spent.
+	if _, recorded := loadRunState(t, projectDir).Approvals["confirm-security"]; recorded {
+		t.Error("a refused approval was still written to state")
+	}
+}
+
+func assertOutputContains(t *testing.T, output string, wants ...string) {
+	t.Helper()
+	for _, want := range wants {
+		if !strings.Contains(output, want) {
+			t.Errorf("output missing %q:\n%s", want, output)
+		}
+	}
+}
+
+// TestRunExplainsWhyAnApprovalWasReset checks the halt is legible: an edit
+// made on purpose should not read as an unexplained stop.
+func TestRunExplainsWhyAnApprovalWasReset(t *testing.T) {
+	binary := buildLoomBinary(t)
+	projectDir := t.TempDir()
+	spec := writeSpec(t, projectDir)
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock"); code != ExitCodeWaitingApproval {
+		t.Fatal("setup run did not halt at the first gate")
+	}
+	if _, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume", "--approve", "confirm-design"); code != ExitCodeWaitingApproval {
+		t.Fatal("approved run did not reach the second gate")
+	}
+	if err := os.WriteFile(workspaceArtifact(projectDir, "analyst"), []byte(`{"hand":"edited"}`), 0o644); err != nil {
+		t.Fatalf("edit analyst state: %v", err)
+	}
+
+	output, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--provider", "mock", "--resume")
+	if code != ExitCodeWaitingApproval {
+		t.Fatalf("resume exit code = %d, want %d\n%s", code, ExitCodeWaitingApproval, output)
+	}
+	assertOutputContains(t, output, `approval for gate "confirm-design" was reset`, `stage "analyst"`, "re-approve to continue")
+	assertWaitingOnGate(t, projectDir, "developer", "confirm-design")
+}

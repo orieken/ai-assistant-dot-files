@@ -15,6 +15,7 @@ type Executor struct {
 	store    *StateStore
 	timeline *Timeline
 	onStale  func([]StaleStage)
+	onReset  func(*StaleApprovalError)
 }
 
 // NewExecutor wires a provider and a state store into an executor.
@@ -33,6 +34,13 @@ func (e *Executor) emit(event Event) error {
 // CLI tells the human which completed work is being redone and why.
 func (e *Executor) OnStale(report func([]StaleStage)) {
 	e.onStale = report
+}
+
+// OnApprovalReset registers a callback invoked when an edit resets a gate's
+// approval. It is how the CLI explains a halt that a human's own edit
+// caused, rather than leaving them to work it out from the state file.
+func (e *Executor) OnApprovalReset(report func(*StaleApprovalError)) {
+	e.onReset = report
 }
 
 // Run executes every stage of the plan that is not already COMPLETED in

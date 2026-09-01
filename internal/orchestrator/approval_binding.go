@@ -12,6 +12,8 @@ package orchestrator
 // digest unchanged and keeps the approval — the rule is "any edit resets
 // the gate", not "any re-run".
 
+import "fmt"
+
 // invalidateApprovalsFor resets every approval bound to a stage that
 // digest verification just demoted. This is the primary detection point,
 // not the barrier: verification runs before the demoted stage re-runs, and
@@ -38,11 +40,68 @@ func (e *Executor) invalidateApprovalsBoundTo(state *RunState, stageID string) e
 			continue
 		}
 		state.InvalidateApproval(gate, stageID)
+		if e.onReset != nil {
+			e.onReset(&StaleApprovalError{Gate: gate, ChangedStage: stageID})
+		}
 		if err := e.emit(Event{Kind: EventGateInvalidated, Gate: gate, Stage: stageID}); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// StaleApprovalError says an approval no longer holds and names the
+// artifact that changed, so a human who edited a file on purpose is not
+// left guessing why the run stopped.
+type StaleApprovalError struct {
+	Gate         string
+	ChangedStage string
+}
+
+func (e *StaleApprovalError) Error() string {
+	return fmt.Sprintf("approval for gate %q was reset: stage %q's artifact changed after it was approved",
+		e.Gate, e.ChangedStage)
+}
+
+// WouldInvalidateApprovals reports the first gate whose approval an
+// impending verification would reset, and the stage responsible. The CLI
+// calls it before recording an approval so it never writes one that the
+// same command is about to destroy. Verification cascades by recorded
+// sequence, so this needs no plan.
+func (e *Executor) WouldInvalidateApprovals() (*StaleApprovalError, error) {
+	state, err := e.store.Load()
+	if err != nil || state == nil {
+		return nil, err
+	}
+	for _, stale := range VerifyCompletedStages(cloneForInspection(state)) {
+		if gate := gateBoundTo(state, stale.StageID); gate != "" {
+			return &StaleApprovalError{Gate: gate, ChangedStage: stale.StageID}, nil
+		}
+	}
+	return nil, nil
+}
+
+// cloneForInspection copies the parts VerifyCompletedStages mutates, so a
+// dry-run check cannot demote anything in the real state.
+func cloneForInspection(state *RunState) *RunState {
+	stages := make(map[string]StageRecord, len(state.Stages))
+	for id, record := range state.Stages {
+		stages[id] = record
+	}
+	return &RunState{SchemaVersion: state.SchemaVersion, PlanName: state.PlanName, Stages: stages,
+		Approvals: state.Approvals}
+}
+
+func gateBoundTo(state *RunState, stageID string) string {
+	for gate, approval := range state.Approvals {
+		if !approval.IsValid() {
+			continue
+		}
+		if _, bound := approval.ArtifactDigests[stageID]; bound {
+			return gate
+		}
+	}
+	return ""
 }
 
 // checkApprovalBinding re-verifies a bound approval. It returns the stage
@@ -85,6 +144,9 @@ func (e *Executor) enforceApprovalBinding(state *RunState, stage Stage) (bool, e
 		return false, nil
 	}
 	state.InvalidateApproval(stage.Gate, changedStage)
+	if e.onReset != nil {
+		e.onReset(&StaleApprovalError{Gate: stage.Gate, ChangedStage: changedStage})
+	}
 	if err := e.store.Save(state); err != nil {
 		return false, err
 	}

@@ -31,7 +31,24 @@ func applyApproveFlag(executor *orchestrator.Executor, gate string, resume bool)
 	if !resume {
 		return fmt.Errorf("--approve %q is only valid with --resume — gates are approved as a run reaches them", gate)
 	}
+	if err := refuseStaleApproval(executor); err != nil {
+		return err
+	}
 	return executor.Approve(gate, orchestrator.ApprovalMethodFlag)
+}
+
+// refuseStaleApproval stops a human from approving a run whose own
+// verification is about to reset that approval. Recording it and then
+// invalidating it in the same command wastes the decision and reads like a
+// bug; the fix is to re-run the changed stage first, then approve what it
+// produced (roadmap L2.14).
+func refuseStaleApproval(executor *orchestrator.Executor) error {
+	stale, err := executor.WouldInvalidateApprovals()
+	if err != nil || stale == nil {
+		return err
+	}
+	return fmt.Errorf("cannot approve %q: stage %q's artifact changed since it completed, which resets that approval — resume without --approve first to re-run it, then approve what it produces",
+		stale.Gate, stale.ChangedStage)
 }
 
 // runWithGates drives the executor across gate halts: on a TTY it asks the
@@ -85,6 +102,13 @@ func haltForApproval(cmd *cobra.Command, waiting *orchestrator.WaitingApprovalEr
 	cmd.PrintErrf("Halted at gate %q before stage %q — approval required.\n", waiting.Gate, waiting.Stage)
 	cmd.PrintErrf("Approve and continue with: loom run --spec %s --resume --approve %s\n", runArgs.spec, waiting.Gate)
 	return err
+}
+
+// reportApprovalReset explains a reset approval as it happens, so a halt
+// caused by the human's own edit does not look like an unexplained stop.
+func reportApprovalReset(cmd *cobra.Command, reset *orchestrator.StaleApprovalError) {
+	cmd.PrintErrf("approval for gate %q was reset: stage %q's artifact changed after it was approved — re-approve to continue\n",
+		reset.Gate, reset.ChangedStage)
 }
 
 // reportStaleStages tells the human which completed work is being redone

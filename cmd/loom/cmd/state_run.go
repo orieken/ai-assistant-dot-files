@@ -98,6 +98,7 @@ func runStateVerify(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	stale := orchestrator.VerifyCompletedStages(state)
+	reset := invalidateBoundApprovals(state, stale)
 	if err := store.Save(state); err != nil {
 		return err
 	}
@@ -105,10 +106,49 @@ func runStateVerify(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	printVerifyReport(cmd, state, stale)
-	if len(stale) > 0 {
+	printApprovalReport(cmd, state, reset)
+	if len(stale) > 0 || len(reset) > 0 {
 		return errStateVerifyFailed
 	}
 	return nil
+}
+
+// invalidateBoundApprovals applies the L2.14 rule to a markdown-pipeline
+// run: an edit to a bound artifact resets that approval. Here it is
+// DETECTION, not enforcement — nothing stops the markdown pipeline from
+// carrying on, because the gated action does not run under the executor.
+// What this gives is the `edited_then_approved` signal computed in Go
+// rather than by the model that wrote the checksums.
+func invalidateBoundApprovals(state *orchestrator.RunState, stale []orchestrator.StaleStage) []string {
+	reset := make([]string, 0)
+	for _, item := range stale {
+		for gate, approval := range state.Approvals {
+			if !approval.IsValid() {
+				continue
+			}
+			if _, bound := approval.ArtifactDigests[item.StageID]; !bound {
+				continue
+			}
+			state.InvalidateApproval(gate, item.StageID)
+			reset = append(reset, gate)
+		}
+	}
+	return reset
+}
+
+func printApprovalReport(cmd *cobra.Command, state *orchestrator.RunState, reset []string) {
+	for _, gate := range reset {
+		approval := state.Approvals[gate]
+		cmd.Printf("%-28s INVALIDATED (stage %q changed after approval)\n", gate, approval.InvalidatedBy)
+	}
+	for gate, approval := range state.Approvals {
+		if approval.IsValid() {
+			cmd.Printf("%-28s APPROVAL OK\n", gate)
+		}
+	}
+	if len(reset) > 0 {
+		cmd.PrintErrln("note: `loom state` detects a reset approval; it cannot prevent the markdown pipeline from continuing")
+	}
 }
 
 func recordStaleEvents(state *orchestrator.RunState, stale []orchestrator.StaleStage) error {
@@ -155,6 +195,13 @@ func runStateApprove(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
+func invalidatedSuffix(approval orchestrator.Approval) string {
+	if approval.IsValid() {
+		return ""
+	}
+	return fmt.Sprintf(" — INVALIDATED, %q changed", approval.InvalidatedBy)
+}
+
 func runStateShow(cmd *cobra.Command, _ []string) error {
 	_, state, err := requireExistingState(stateArgs.spec)
 	if err != nil {
@@ -192,6 +239,7 @@ func printApprovals(cmd *cobra.Command, state *orchestrator.RunState) {
 	}
 	cmd.Println("  approvals:")
 	for gate, approval := range state.Approvals {
-		cmd.Printf("    %-20s %s by %s (%s)\n", gate, approval.ApprovedAt.Format(time.RFC3339), approval.Approver, approval.Method)
+		cmd.Printf("    %-20s %s by %s (%s)%s\n", gate, approval.ApprovedAt.Format(time.RFC3339),
+			approval.Approver, approval.Method, invalidatedSuffix(approval))
 	}
 }
