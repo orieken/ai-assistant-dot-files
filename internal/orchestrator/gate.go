@@ -76,10 +76,16 @@ func (s *RunState) IsGateApproved(gate string) bool {
 
 // WaitingGate returns the gate this run is currently halted on, or "" when
 // it is not waiting on anything.
+// A run can hold more than one WAITING_APPROVAL record: halting at a later
+// gate, then being sent back to an earlier one by a reset approval, leaves
+// the later stage's record behind. The run is waiting on the *earliest*
+// barrier it has reached, so this walks stages in recorded sequence rather
+// than in map order — which was nondeterministic, and could report (and
+// let a human approve) a gate the run was not actually sitting at.
 func (s *RunState) WaitingGate() string {
-	for _, record := range s.Stages {
-		if record.Status == StageStatusWaitingApproval {
-			return record.Gate
+	for _, stageID := range s.StagesInSequence() {
+		if s.Stages[stageID].Status == StageStatusWaitingApproval {
+			return s.Stages[stageID].Gate
 		}
 	}
 	return ""

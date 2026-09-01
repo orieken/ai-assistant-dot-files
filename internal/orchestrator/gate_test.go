@@ -206,3 +206,23 @@ func TestPlanValidateRejectsBlankGateName(t *testing.T) {
 		t.Error("Validate accepted a whitespace-only gate name")
 	}
 }
+
+// TestWaitingGateReportsTheEarliestBarrier covers the case that made this
+// nondeterministic: a run that halted at a later gate and was then sent
+// back to an earlier one by a reset approval holds two WAITING_APPROVAL
+// records, and map order used to decide which gate was reported.
+func TestWaitingGateReportsTheEarliestBarrier(t *testing.T) {
+	state := orchestrator.NewRunState("test-plan", orchestrator.CreatedByExecutor)
+	state.Stages["qa-engineer"] = orchestrator.StageRecord{
+		Status: orchestrator.StageStatusWaitingApproval, Gate: "confirm-security", Sequence: 9,
+	}
+	state.Stages["developer"] = orchestrator.StageRecord{
+		Status: orchestrator.StageStatusWaitingApproval, Gate: "confirm-design", Sequence: 6,
+	}
+
+	for range 20 {
+		if got := state.WaitingGate(); got != "confirm-design" {
+			t.Fatalf("WaitingGate() = %q, want the earliest barrier confirm-design", got)
+		}
+	}
+}
