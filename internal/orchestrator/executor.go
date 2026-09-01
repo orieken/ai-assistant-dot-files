@@ -56,17 +56,31 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 		return err
 	}
 	for _, stage := range plan.Stages {
-		if state.IsStageCompleted(stage.ID) {
-			continue
-		}
-		if err := e.checkGate(stage, state); err != nil {
-			return err
-		}
-		if err := e.runStage(ctx, stage, plan, input, state); err != nil {
+		if err := e.advance(ctx, stage, plan, input, state); err != nil {
 			return err
 		}
 	}
 	return e.emit(Event{Kind: EventRunCompleted})
+}
+
+// advance moves one stage forward: clear its gate, then run it unless it is
+// already settled.
+//
+// The gate is checked before the settled check on purpose. A gate is a
+// barrier on reaching this point in the run, not a property of the stage
+// behind it, so routing a gated stage out must not silently delete the
+// human checkpoint that guarded it (roadmap L3.0).
+func (e *Executor) advance(ctx context.Context, stage Stage, plan Plan, input StageInput, state *RunState) error {
+	if err := e.checkGate(stage, state); err != nil {
+		return err
+	}
+	if err := e.restoreSkipAfterGate(state, stage.ID); err != nil {
+		return err
+	}
+	if state.IsStageSettled(stage.ID) {
+		return nil
+	}
+	return e.runStage(ctx, stage, plan, input, state)
 }
 
 func (e *Executor) prepareState(plan Plan, input StageInput) (*RunState, error) {
@@ -174,14 +188,41 @@ func (e *Executor) checkGate(stage Stage, state *RunState) error {
 			return nil
 		}
 	}
-	record := StageRecord{Status: StageStatusWaitingApproval, StartedAt: time.Now().UTC(), Gate: stage.Gate}
-	if err := e.persistStatus(state, stage.ID, record); err != nil {
+	if err := e.persistStatus(state, stage.ID, waitingRecord(state, stage)); err != nil {
 		return err
 	}
 	if err := e.emit(Event{Kind: EventGateWaiting, Stage: stage.ID, Gate: stage.Gate}); err != nil {
 		return err
 	}
 	return &WaitingApprovalError{Gate: stage.Gate, Stage: stage.ID}
+}
+
+// waitingRecord marks a stage as halted at its gate without discarding what
+// the record already said. A routed-out stage still stops at its gate — the
+// checkpoint is about reaching this point in the run — so its skip decision
+// has to survive the halt and be restored once a human approves.
+func waitingRecord(state *RunState, stage Stage) StageRecord {
+	record := state.Stages[stage.ID]
+	if record.Status == StageStatusSkipped {
+		record.PreviousStatus = StageStatusSkipped
+	}
+	record.Status = StageStatusWaitingApproval
+	record.Gate = stage.Gate
+	record.StartedAt = time.Now().UTC()
+	return record
+}
+
+// restoreSkipAfterGate puts a routed-out stage back to SKIPPED once its gate
+// is approved, so approving the checkpoint does not resurrect work the route
+// decided against.
+func (e *Executor) restoreSkipAfterGate(state *RunState, stageID string) error {
+	record := state.Stages[stageID]
+	if record.Status != StageStatusWaitingApproval || record.PreviousStatus != StageStatusSkipped {
+		return nil
+	}
+	record.Status = StageStatusSkipped
+	record.PreviousStatus = ""
+	return e.persistStatus(state, stageID, record)
 }
 
 func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input StageInput, state *RunState) error {
@@ -195,11 +236,20 @@ func (e *Executor) runStage(ctx context.Context, stage Stage, plan Plan, input S
 	if projectErr != nil {
 		return e.persistFailure(ctx, state, stage, projectErr)
 	}
-	output, invokeErr := e.invoke(ctx, stage, input)
+	output, invokeErr := e.runOrInvoke(ctx, stage, plan, input)
 	if invokeErr != nil {
 		return e.persistFailure(ctx, state, stage, invokeErr)
 	}
-	return e.persistCompletion(state, stage, input, output)
+	return e.persistCompletion(state, stage, plan, input, output)
+}
+
+// runOrInvoke executes an internal stage here, or hands any other stage to
+// the provider.
+func (e *Executor) runOrInvoke(ctx context.Context, stage Stage, plan Plan, input StageInput) (StageOutput, error) {
+	if stage.Internal {
+		return e.runInternalStage(stage, plan, input)
+	}
+	return e.invoke(ctx, stage, input)
 }
 
 // invoke calls the provider under the stage's timeout. A zero timeout means
@@ -245,7 +295,7 @@ func (e *Executor) persistFailure(ctx context.Context, state *RunState, stage St
 	return fmt.Errorf("stage %q: %w", stage.ID, invokeErr)
 }
 
-func (e *Executor) persistCompletion(state *RunState, stage Stage, input StageInput, output StageOutput) error {
+func (e *Executor) persistCompletion(state *RunState, stage Stage, plan Plan, input StageInput, output StageOutput) error {
 	artifactPath, err := artifactFor(stage, input, output)
 	if err != nil {
 		return e.persistFailure(context.Background(), state, stage, err)
@@ -265,7 +315,13 @@ func (e *Executor) persistCompletion(state *RunState, stage Stage, input StageIn
 	if err := e.persistStatus(state, stage.ID, record); err != nil {
 		return err
 	}
-	return e.emitStageEnd(state, stage.ID, record)
+	if err := e.emitStageEnd(state, stage.ID, record); err != nil {
+		return err
+	}
+	if stage.ID == RouterStageID {
+		return e.applyRoute(plan, input, state)
+	}
+	return nil
 }
 
 // emitStageEnd records how a stage finished, using the same record the

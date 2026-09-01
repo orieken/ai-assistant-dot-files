@@ -1,9 +1,9 @@
 // Package orchestrator is the minimal pipeline executor decided by ADR-006
 // (loom executes pipelines) and roadmap item M0.4. It owns the run loop:
 // load a plan, execute stages in order via a Provider, persist durable state,
-// halt at approval gates (L2.13), and stop. Routing, parallelism, and policy
-// evaluation are later roadmap items (L3.x, L2.16) that plug into this
-// skeleton — they do not live here.
+// halt at approval gates (L2.13), route around stages the analysis does not
+// call for (L3.0), and stop. Parallelism and policy evaluation are later
+// roadmap items (L3.3, L2.16) that plug into this skeleton.
 package orchestrator
 
 import (
@@ -32,6 +32,16 @@ type Stage struct {
 	// Consumes names the stage whose typed state is projected into this
 	// stage's input. Empty when the stage reads no upstream state.
 	Consumes string
+	// Skippable marks a stage the router may route around (roadmap L3.0).
+	// The review stages are deliberately not skippable: an unnecessary
+	// devops run wastes an invocation, a skipped security review does not
+	// fail so cheaply.
+	Skippable bool
+	// Internal marks a stage the executor runs itself rather than invoking
+	// a provider — the router is the only one today. An internal stage is
+	// still a stage: it has a record, a sequence, a digest, and is bound by
+	// the next gate like any other.
+	Internal bool
 	Timeout  time.Duration
 }
 
@@ -99,14 +109,37 @@ func defaultPlanGates() map[string]string {
 	}
 }
 
+// RouterStageID names the executor-internal stage that computes the route
+// from the analysis (roadmap L3.0). It sits after the analyst — the
+// earliest point the facts exist — and before the design gate, so the human
+// approves the route along with the design.
+const RouterStageID = "router"
+
+// defaultSkippableStages declares which stages the router may route around.
+// Everything absent from this map always runs. The review stages
+// (code-reviewer, security-reviewer) are absent deliberately.
+func defaultSkippableStages() map[string]bool {
+	return map[string]bool{
+		"architect":              true,
+		"performance-engineer":   true,
+		"data-engineer":          true,
+		"accessibility-engineer": true,
+		"devops-engineer":        true,
+	}
+}
+
 // defaultTypedStages declares which stages of the built-in plan exchange
 // typed state and where each reads its input from. L2.9's first cut types
 // the analyst -> architect hop; every other stage still writes markdown.
 func defaultTypedStages() (kinds map[string]string, consumes map[string]string) {
 	return map[string]string{
-		"analyst":   string(state.KindAnalysis),
-		"architect": string(state.KindArchitecture),
+		"analyst":     string(state.KindAnalysis),
+		RouterStageID: string(state.KindRoute),
+		"architect":   string(state.KindArchitecture),
 	}, map[string]string{
+		// The router deliberately has no projection: projections exist to
+		// narrow what a *model* is shown, and the router is the executor
+		// reading its own state. It loads the analysis in full itself.
 		"architect": "analyst",
 	}
 }
@@ -119,18 +152,20 @@ const DefaultDeliverFeaturePlanName = "deliver-feature"
 // #5); per-stage overrides belong in the plan, not in provider internals.
 const defaultStageTimeout = 30 * time.Minute
 
-// DefaultDeliverFeaturePlan returns the built-in plan encoding the existing
-// linear agent sequence from shared/skills/deliver-feature/SKILL.md, in
-// invocation order. Conditional-skip semantics (e.g. architect only when
-// analysis.md flags architecture work) are routing, which this skeleton does
-// not do — the linear order is preserved so behavior matches the markdown
-// pipeline while the substrate changes underneath (roadmap M0.4).
+// DefaultDeliverFeaturePlan returns the built-in plan: the agent sequence
+// from shared/skills/deliver-feature/SKILL.md in invocation order, plus the
+// executor-internal router after the analyst. Which of the conditional
+// stages actually run is decided by the router from typed analysis (roadmap
+// L3.0), not by the plan — the plan only declares which stages *may* be
+// routed around.
 func DefaultDeliverFeaturePlan() Plan {
 	gates := defaultPlanGates()
 	kinds, consumes := defaultTypedStages()
+	skippable := defaultSkippableStages()
 	agents := []string{
 		"context-engineer",
 		"analyst",
+		RouterStageID,
 		"architect",
 		"performance-engineer",
 		"data-engineer",
@@ -147,7 +182,8 @@ func DefaultDeliverFeaturePlan() Plan {
 	stages := make([]Stage, 0, len(agents))
 	for _, agent := range agents {
 		stages = append(stages, Stage{ID: agent, Agent: agent, Gate: gates[agent],
-			StateKind: kinds[agent], Consumes: consumes[agent], Timeout: defaultStageTimeout})
+			StateKind: kinds[agent], Consumes: consumes[agent], Skippable: skippable[agent],
+			Internal: agent == RouterStageID, Timeout: defaultStageTimeout})
 	}
 	return Plan{Name: DefaultDeliverFeaturePlanName, Stages: stages}
 }

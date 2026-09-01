@@ -66,6 +66,14 @@ func (e *WaitingApprovalError) Error() string {
 // Unwrap makes errors.Is(err, ErrWaitingApproval) true for every gate halt.
 func (e *WaitingApprovalError) Unwrap() error { return ErrWaitingApproval }
 
+// IsStageSettled reports whether a stage needs no further work: it either
+// completed successfully or was routed around. Both are terminal for the
+// run loop; RUNNING, INTERRUPTED, FAILED, and STALE are not.
+func (s *RunState) IsStageSettled(stageID string) bool {
+	status := s.Stages[stageID].Status
+	return status == StageStatusCompleted || status == StageStatusSkipped
+}
+
 // IsGateApproved reports whether the named gate is unlocked for this run.
 // An approval that was invalidated by a later edit does not count — that is
 // L2.14's whole point.

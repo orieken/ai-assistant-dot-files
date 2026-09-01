@@ -14,7 +14,7 @@ import (
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 5
+const StateSchemaVersion = 6
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -40,6 +40,10 @@ const (
 	// no longer matches its recorded digest, or whose input went stale
 	// (roadmap L2.12). A stale stage re-runs.
 	StageStatusStale StageStatus = "STALE"
+	// StageStatusSkipped marks a stage the router routed around (roadmap
+	// L3.0). It is terminal: a skipped stage does not run, and is not
+	// re-run on resume.
+	StageStatusSkipped StageStatus = "SKIPPED"
 )
 
 // StageRecord is the persisted result of one stage invocation.
@@ -54,6 +58,7 @@ type StageRecord struct {
 	PreviousStatus StageStatus `json:"previousStatus,omitempty"`
 	StaleReason    StaleReason `json:"staleReason,omitempty"`
 	FoundSHA256    string      `json:"foundSha256,omitempty"`
+	SkipReason     string      `json:"skipReason,omitempty"`
 	Error          string      `json:"error,omitempty"`
 }
 

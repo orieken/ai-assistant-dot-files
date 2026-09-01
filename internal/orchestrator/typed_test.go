@@ -180,7 +180,11 @@ func TestUntypedStagesAreUnaffected(t *testing.T) {
 
 func TestDefaultPlanTypesTheAnalystArchitectHop(t *testing.T) {
 	kinds := typedStagesOf(orchestrator.DefaultDeliverFeaturePlan())
-	want := map[string]string{"analyst": string(state.KindAnalysis), "architect": string(state.KindArchitecture)}
+	want := map[string]string{
+		"analyst":                  string(state.KindAnalysis),
+		orchestrator.RouterStageID: string(state.KindRoute),
+		"architect":                string(state.KindArchitecture),
+	}
 
 	if len(kinds) != len(want) {
 		t.Fatalf("typed stages = %v, want exactly %v in this cut", kinds, want)

@@ -35,10 +35,13 @@ func loadRunState(t *testing.T, projectDir string) *orchestrator.RunState {
 }
 
 // stagesBeforeFirstGate are the built-in plan's stages ahead of the
-// confirm-design gate on the developer stage.
-var stagesBeforeFirstGate = []string{
-	"context-engineer", "analyst", "architect", "performance-engineer", "data-engineer",
-}
+// confirm-design gate that always run. The conditional ones between the
+// router and the gate are routed out for the mock provider's analysis,
+// which declares no crossing, migration, threshold, or UI surface.
+var stagesBeforeFirstGate = []string{"context-engineer", "analyst", "router"}
+
+// stagesRoutedOut are skipped for the mock provider's scripted analysis.
+var stagesRoutedOut = []string{"architect", "performance-engineer", "data-engineer", "accessibility-engineer", "devops-engineer"}
 
 // TestRunMockProviderHaltsAtFirstGate runs the real built binary against the
 // mock provider: the run executes every ungated stage, halts at the
@@ -57,6 +60,7 @@ func TestRunMockProviderHaltsAtFirstGate(t *testing.T) {
 	}
 
 	assertStagesCompleted(t, projectDir, stagesBeforeFirstGate, true)
+	assertStagesSkipped(t, projectDir, stagesRoutedOut)
 	assertWaitingOnGate(t, projectDir, "developer", "confirm-design")
 	assertNoApprovals(t, projectDir)
 	assertFreshRunOverStateRefused(t, binary, projectDir, spec)
@@ -105,6 +109,20 @@ func assertArtifactExists(t *testing.T, projectDir, stageID string) {
 	t.Helper()
 	if _, err := os.Stat(stageArtifactPath(projectDir, stageID)); err != nil {
 		t.Errorf("stage %q artifact missing: %v", stageID, err)
+	}
+}
+
+func assertStagesSkipped(t *testing.T, projectDir string, stageIDs []string) {
+	t.Helper()
+	state := loadRunState(t, projectDir)
+	for _, stageID := range stageIDs {
+		record := state.Stages[stageID]
+		if record.Status != orchestrator.StageStatusSkipped {
+			t.Errorf("stage %q status = %q, want SKIPPED", stageID, record.Status)
+		}
+		if record.SkipReason == "" {
+			t.Errorf("stage %q was skipped with no recorded reason", stageID)
+		}
 	}
 }
 
@@ -157,10 +175,10 @@ func TestRunInterruptCheckpointAndResume(t *testing.T) {
 func assertInterruptCheckpoint(t *testing.T, projectDir string) {
 	t.Helper()
 	state := loadRunState(t, projectDir)
-	if got := state.Stages["architect"].Status; got != orchestrator.StageStatusInterrupted {
+	if got := state.Stages["analyst"].Status; got != orchestrator.StageStatusInterrupted {
 		t.Fatalf("hung stage status = %q, want INTERRUPTED", got)
 	}
-	for _, done := range []string{"context-engineer", "analyst"} {
+	for _, done := range []string{"context-engineer"} {
 		if !state.IsStageCompleted(done) {
 			t.Errorf("stage %q should be COMPLETED before the interrupt", done)
 		}
@@ -169,12 +187,12 @@ func assertInterruptCheckpoint(t *testing.T, projectDir string) {
 
 func interruptRunMidStage(t *testing.T, binary, projectDir, spec string) {
 	t.Helper()
-	run := exec.Command(binary, "run", "--spec", spec, "--provider", "mock", "--mock-hang-stage", "architect")
+	run := exec.Command(binary, "run", "--spec", spec, "--provider", "mock", "--mock-hang-stage", "analyst")
 	run.Dir = projectDir
 	if err := run.Start(); err != nil {
 		t.Fatalf("start hung run: %v", err)
 	}
-	waitForStageStatus(t, projectDir, "architect", orchestrator.StageStatusRunning)
+	waitForStageStatus(t, projectDir, "analyst", orchestrator.StageStatusRunning)
 	if err := run.Process.Signal(os.Interrupt); err != nil {
 		t.Fatalf("send SIGINT: %v", err)
 	}
@@ -284,18 +302,22 @@ func TestRunApproveEachGateToCompletion(t *testing.T) {
 		t.Fatalf("final leg exit code = %d, want 0\n%s", code, output)
 	}
 
-	assertEveryStageCompleted(t, projectDir)
+	assertEveryStageSettled(t, projectDir)
 	assertThreeFlagApprovals(t, projectDir)
 }
 
-func assertEveryStageCompleted(t *testing.T, projectDir string) {
+// assertEveryStageSettled checks the run finished: every stage either ran
+// or was routed around with a reason. Nothing is left pending.
+func assertEveryStageSettled(t *testing.T, projectDir string) {
 	t.Helper()
 	state := loadRunState(t, projectDir)
 	for _, stage := range orchestrator.DefaultDeliverFeaturePlan().Stages {
-		if !state.IsStageCompleted(stage.ID) {
-			t.Errorf("stage %q not COMPLETED after approving every gate", stage.ID)
+		if !state.IsStageSettled(stage.ID) {
+			t.Errorf("stage %q is neither completed nor skipped after approving every gate: %q",
+				stage.ID, state.Stages[stage.ID].Status)
 		}
 	}
+	assertStagesSkipped(t, projectDir, stagesRoutedOut)
 }
 
 func assertThreeFlagApprovals(t *testing.T, projectDir string) {
@@ -433,7 +455,7 @@ func TestRunDetectsOutOfBandArtifactEdit(t *testing.T) {
 	if code != ExitCodeWaitingApproval {
 		t.Fatalf("resume exit code = %d, want %d (halt at the next gate)\n%s", code, ExitCodeWaitingApproval, output)
 	}
-	for _, want := range []string{`stage "analyst" was COMPLETED but its artifact changed on disk`, `stage "architect"`} {
+	for _, want := range []string{`stage "analyst" was COMPLETED but its artifact changed on disk`, `stage "router"`} {
 		if !strings.Contains(output, want) {
 			t.Errorf("resume output missing %q:\n%s", want, output)
 		}
