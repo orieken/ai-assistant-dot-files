@@ -612,6 +612,13 @@ orchestration kernel exists, which is why they sit in Milestone 1 despite spanni
 ### L3.0 — Compute the route from the analysis, before the design gate
 **Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.9 (first cut), L2.12, L2.13, L2.14 — all shipped · **Blocks**: L3.1 · *(raised 2026-08-31)*
 
+**SHIPPED** 2026-08-31 (epic 81, `a4f458a`…) — an executor-internal `router` stage computes the
+route from typed analysis after the analyst, records one decision and reason per stage, and marks
+skips before the developer runs. The route is an artifact, so approving `confirm-design` binds it
+and editing it resets that approval. Two findings changed the design: a gate now survives its stage
+being routed out (skipping devops was silently deleting the ship checkpoint), and a reroute clears
+an earlier skip so work can come back.
+
 1. **Problem**: `loom run` executes all fourteen stages unconditionally. The markdown pipeline does
    better — six of its stages are conditional — but the conditions are prose an LLM evaluates about
    an artifact it just read, and a skipped stage leaves nothing durable saying *why*. Neither

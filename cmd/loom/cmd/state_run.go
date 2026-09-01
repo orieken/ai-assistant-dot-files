@@ -230,6 +230,25 @@ func printStateReport(cmd *cobra.Command, state *orchestrator.RunState) {
 		cmd.Printf("  %2d. %-28s %s\n", record.Sequence, stageID, record.Status)
 	}
 	printApprovals(cmd, state)
+	printRouteDecisions(cmd, state)
+}
+
+// printRouteDecisions answers "why isn't devops running?" from run state,
+// without anyone opening a JSON file (roadmap L3.0).
+func printRouteDecisions(cmd *cobra.Command, state *orchestrator.RunState) {
+	skipped := make([]string, 0)
+	for _, stageID := range state.StagesInSequence() {
+		if state.Stages[stageID].SkipReason != "" {
+			skipped = append(skipped, fmt.Sprintf("    %-24s %s", stageID, state.Stages[stageID].SkipReason))
+		}
+	}
+	if len(skipped) == 0 {
+		return
+	}
+	cmd.Println("  routed out:")
+	for _, line := range skipped {
+		cmd.Println(line)
+	}
 }
 
 func printApprovals(cmd *cobra.Command, state *orchestrator.RunState) {

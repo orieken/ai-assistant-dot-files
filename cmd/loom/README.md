@@ -135,6 +135,36 @@ first cut): the analyst produces it and the architect consumes a projection of i
 
 Every other stage still writes markdown, unchanged.
 
+## Routing: which stages actually run
+
+Immediately after the analyst — the earliest point the facts exist — the executor
+computes the **Delivery Route** from the typed analysis and records it as
+`route.md` plus `state/router.json` (roadmap L3.0). The run prints a one-line
+summary and halts at the design gate:
+
+```
+routed 7 of 12 stages — skipped architect, performance-engineer, data-engineer,
+  accessibility-engineer, devops-engineer (see .../route.md)
+Halted at gate "confirm-design" before stage "developer" — approval required.
+```
+
+- **Predicates, not prose**: a context crossing or migration or new dependency or
+  performance threshold summons the architect; a threshold summons performance; an
+  expand/contract migration summons data; an accessibility requirement (which the
+  analysis contract makes mandatory for any UI) summons accessibility; a non-empty
+  DevOps task list summons devops. Each decision records its reason.
+- **The route is approved with the design.** It completes before `confirm-design`,
+  so the approval binds its digest: edit `route.md`'s source to force a stage back
+  in and the gate resets, exactly as editing any other approved artifact does.
+- **Two stages are never routed around.** `code-reviewer` and `security-reviewer`
+  always run — an unnecessary review wastes an invocation, a skipped one does not
+  fail so cheaply. `visual-qa-engineer` also always runs: its condition is about
+  the environment, not the feature (see ADR-007).
+- **A gate survives its stage being skipped.** `confirm-ship` guards
+  `devops-engineer`; routing devops out still stops at the gate, because the
+  checkpoint is about reaching that point in the run.
+- `loom state show` lists what was routed out and why.
+
 ## Run event timeline
 
 Both pipelines append to `.claude/feature-workspace/<feature>/run-events.jsonl` — one JSON

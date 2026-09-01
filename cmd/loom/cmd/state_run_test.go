@@ -373,3 +373,28 @@ func TestRunStateShowMarksAnInvalidatedApproval(t *testing.T) {
 		t.Errorf("show did not mark the invalidated approval:\n%s", output)
 	}
 }
+
+func TestRunStateShowListsWhatWasRoutedOut(t *testing.T) {
+	spec := stateProject(t)
+	recordStages(t, spec, "analyst")
+	state := loadStateFor(t, spec)
+	state.Stages["devops-engineer"] = orchestrator.StageRecord{
+		Status: orchestrator.StageStatusSkipped, Sequence: 2,
+		SkipReason: "the analysis lists no DevOps tasks",
+	}
+	workspace := filepath.Join(".claude", "feature-workspace", "user-auth")
+	if err := orchestrator.NewStateStore(filepath.Join(workspace, orchestrator.RunStateFileName)).Save(state); err != nil {
+		t.Fatalf("save state: %v", err)
+	}
+
+	output, err := callState(t, runStateShow, stateFlags{spec: spec})
+	if err != nil {
+		t.Fatalf("show: %v", err)
+	}
+
+	for _, want := range []string{"routed out:", "devops-engineer", "no DevOps tasks"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("show output missing %q:\n%s", want, output)
+		}
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -109,6 +110,18 @@ func haltForApproval(cmd *cobra.Command, waiting *orchestrator.WaitingApprovalEr
 func reportApprovalReset(cmd *cobra.Command, reset *orchestrator.StaleApprovalError) {
 	cmd.PrintErrf("approval for gate %q was reset: stage %q's artifact changed after it was approved — re-approve to continue\n",
 		reset.Gate, reset.ChangedStage)
+}
+
+// reportRoute says what the run is about to do, in one line, before the
+// design gate asks a human to approve it. The reasons are in route.md.
+func reportRoute(cmd *cobra.Command, summary orchestrator.RouteSummary, workspaceDir string) {
+	if len(summary.Skipped) == 0 {
+		cmd.Printf("routed %d of %d stages — nothing skipped\n", summary.Included, summary.Total)
+		return
+	}
+	cmd.Printf("routed %d of %d stages — skipped %s (see %s)\n",
+		summary.Included, summary.Total, strings.Join(summary.Skipped, ", "),
+		filepath.Join(workspaceDir, "route.md"))
 }
 
 // reportStaleStages tells the human which completed work is being redone

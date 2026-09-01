@@ -90,7 +90,7 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 11. **PAUSE / Policy Evaluation**: Evaluate policy for analyst checkpoint. If mode is `policy-driven`, stage `autoProceedAnalyst: true`, contract validation == `PASS`, and diff lines < `maxDiffLines`: log `policy.evaluated` (`decision: AUTO_PROCEED`) to `.claude/telemetry/events.jsonl` and proceed immediately to step 12. Else: log `policy.evaluated` (`decision: PAUSE_HUMAN`), show summary to user, and wait for confirmation before continuing.
 12. **Invoke architect** (if `analysis.md` declares any of: Context Crossings; Data Model Changes in an Expand or Contract phase; New Dependencies; or a performance requirement with a measurable threshold — the last because thresholds are what force timeout, circuit-breaker, and idempotency decisions. Also invoke it whenever the analysis flags structural work the list above cannot see, such as a new base class or a reversal of an existing ADR, or when the human asks for one regardless. This mirrors `AnalysisState.RequiresArchitect()` in `internal/state/`, which is the tested form of the same condition) -> produces `architecture-notes.md`.
 13. **Invoke validate-artifact** against `shared/contracts/architecture-contract.md` (only if architect was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **PAUSE** if an RFC was written — human must acknowledge before developer starts. **Checkpoint** on PASS or SKIP.
-14. **Invoke performance-engineer** (if analysis.md has Performance SLAs or Non-Functional Requirements with latency/throughput targets) -> produces `performance-report.md`. **Checkpoint**.
+14. **Invoke performance-engineer** (if `analysis.md` has a performance Non-Functional Requirement carrying a measurable threshold — prose about feeling fast is not a target a review can work against) -> produces `performance-report.md`. **Checkpoint**.
 15. **Invoke validate-artifact** against `shared/contracts/performance-contract.md` (only if performance-engineer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS or SKIP.
 16. **Invoke data-engineer** (if analysis.md has Data Model Changes != "None") -> produces `data-engineering-notes.md`. **Checkpoint**.
 17. **Invoke validate-artifact** against `shared/contracts/data-engineering-contract.md` (only if data-engineer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS or SKIP.
@@ -100,7 +100,7 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 19. **Invoke validate-artifact** against `shared/contracts/implementation-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
 20. **Invoke code-reviewer** -> produces `code-review-report.md`.
 21. **Invoke validate-artifact** against `shared/contracts/review-contract.md`. If FAIL (structural): apply Tier B retry loop up to `maxContractRetries`. If verdict is CHANGES REQUESTED (qualitative, independent of structural check): back up current `implementation-notes.md` and `code-review-report.md` to `.claude/feature-workspace/<feature-name>/.history/` (see Rollback), then repeat from step 18 until APPROVED and structurally valid. **Checkpoint** on final PASS+APPROVED.
-22. **Invoke accessibility-engineer** (if the feature involves UI components, templates, or user-facing HTML) -> produces `accessibility-report.md`. **Checkpoint**.
+22. **Invoke accessibility-engineer** (if `analysis.md` declares an accessibility requirement — the analysis contract makes one mandatory for any feature containing UI elements, so its presence is the signal that there is UI to review) -> produces `accessibility-report.md`. **Checkpoint**.
 23. **Invoke validate-artifact** against `shared/contracts/accessibility-contract.md` (only if accessibility-engineer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS or SKIP.
 24. **Invoke security-reviewer** (if security surface exists — auth, user input, API endpoints, tokens, trust boundaries) -> produces `security-report.md`.
 25. **Invoke validate-artifact** against `shared/contracts/security-contract.md` (only if security-reviewer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. If Critical findings exist: block pipeline, alert user (halt immediately, non-negotiable escalation). **Checkpoint** on PASS or SKIP.
@@ -114,8 +114,8 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 31. **Invoke validate-artifact** against `shared/contracts/observability-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
 32. **Invoke tech-writer** -> produces `docs-report.md`. **Checkpoint**.
 33. **Invoke validate-artifact** against `shared/contracts/docs-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
-34. **Invoke devops-engineer** -> produces `devops-report.md`. **Checkpoint**.
-35. **Invoke validate-artifact** against `shared/contracts/devops-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS.
+34. **Invoke devops-engineer** (if `analysis.md` lists DevOps Tasks other than "None") -> produces `devops-report.md`. **Checkpoint** on PASS or SKIP. Note the ship confirmation in Phase 4 happens either way: skipping the infrastructure work does not skip confirming the feature is ready.
+35. **Invoke validate-artifact** against `shared/contracts/devops-contract.md` (only if devops-engineer was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **Checkpoint** on PASS or SKIP.
 
 ### Phase 4: Persistence and Delivery
 36. **Write delivery summary** -> produces `delivery-summary.md` in `.claude/feature-workspace/<feature-name>/`.
@@ -169,6 +169,24 @@ checksums differ, the human edited the artifact — set `outcome: "edited_then_a
 Policy-evaluation pauses (AUTO_PROCEED / PAUSE_HUMAN) emit `policy.evaluated` events instead; do not
 double-emit `gate_decision` for those — `policy.evaluated` already captures the decision signal for
 non-Non-Negotiable gates.
+
+## Which Stages Run (roadmap L3.0)
+
+The conditions on steps 12, 14, 16, 22, and 34 are the same ones
+`internal/state/`'s predicates evaluate — `RequiresArchitect`,
+`RequiresPerformanceEngineer`, `RequiresDataEngineer`,
+`RequiresAccessibilityEngineer`, `RequiresDevOpsEngineer` — so the two pipelines
+route identically. Under `loom run` they are computed once, in Go, immediately
+after the analyst and before the design gate, and recorded as the **Delivery Route**
+(`route.md`): one row per stage, run or skipped, with the reason. Here they remain judgements you make
+while reading `analysis.md`.
+
+Two stages are never routed around in either pipeline. `code-reviewer` and
+`security-reviewer` always run, because the costs are asymmetric: an unnecessary
+review wastes an invocation, a skipped one does not fail so cheaply. And
+`visual-qa-engineer`'s condition asks whether heatmap data or Playwright
+baselines exist, which is a fact about the environment rather than the feature —
+see ADR-007. It runs and reports `UNCONFIGURED` when they are absent.
 
 ## Checkpointing & Pipeline State
 

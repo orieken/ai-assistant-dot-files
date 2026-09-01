@@ -96,7 +96,32 @@ func (e *Executor) applyRoute(plan Plan, input StageInput, runState *RunState) e
 			return err
 		}
 	}
+	if e.onRoute != nil {
+		e.onRoute(summarize(*route))
+	}
 	return nil
+}
+
+// RouteSummary is the one-line view of a routing decision: how much of the
+// plan runs, and what was routed out. The reasons live in the rendered
+// route document rather than in the terminal, so a halt message is not
+// pushed off screen by a table that mostly says "runs as usual".
+type RouteSummary struct {
+	Included int
+	Total    int
+	Skipped  []string
+}
+
+func summarize(route state.Route) RouteSummary {
+	summary := RouteSummary{Total: len(route.Decisions)}
+	for _, decision := range route.Decisions {
+		if decision.Included {
+			summary.Included++
+			continue
+		}
+		summary.Skipped = append(summary.Skipped, decision.Stage)
+	}
+	return summary
 }
 
 func (e *Executor) applyRouteToStage(stage Stage, route state.Route, runState *RunState) error {

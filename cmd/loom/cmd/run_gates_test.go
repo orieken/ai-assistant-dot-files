@@ -106,3 +106,31 @@ func TestReportStaleStagesListsEveryDemotion(t *testing.T) {
 		t.Errorf("stale report = %q", output.String())
 	}
 }
+
+func TestReportRouteSummarisesAndPointsAtTheDocument(t *testing.T) {
+	command := &cobra.Command{}
+	var output bytes.Buffer
+	command.SetOut(&output)
+
+	reportRoute(command, orchestrator.RouteSummary{
+		Included: 9, Total: 14, Skipped: []string{"architect", "devops-engineer"},
+	}, "/workspace")
+
+	for _, want := range []string{"routed 9 of 14", "architect, devops-engineer", "/workspace/route.md"} {
+		if !strings.Contains(output.String(), want) {
+			t.Errorf("route summary missing %q: %q", want, output.String())
+		}
+	}
+}
+
+func TestReportRouteSaysWhenNothingWasSkipped(t *testing.T) {
+	command := &cobra.Command{}
+	var output bytes.Buffer
+	command.SetOut(&output)
+
+	reportRoute(command, orchestrator.RouteSummary{Included: 14, Total: 14}, "/workspace")
+
+	if !strings.Contains(output.String(), "nothing skipped") {
+		t.Errorf("route summary = %q, want it to confirm the full plan runs", output.String())
+	}
+}

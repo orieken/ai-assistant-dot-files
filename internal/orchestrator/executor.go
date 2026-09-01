@@ -16,6 +16,7 @@ type Executor struct {
 	timeline *Timeline
 	onStale  func([]StaleStage)
 	onReset  func(*StaleApprovalError)
+	onRoute  func(RouteSummary)
 }
 
 // NewExecutor wires a provider and a state store into an executor.
@@ -41,6 +42,13 @@ func (e *Executor) OnStale(report func([]StaleStage)) {
 // caused, rather than leaving them to work it out from the state file.
 func (e *Executor) OnApprovalReset(report func(*StaleApprovalError)) {
 	e.onReset = report
+}
+
+// OnRoute registers a callback invoked once, when the router decides which
+// stages run. It is how the CLI tells a human what is about to happen
+// before the design gate asks them to approve it.
+func (e *Executor) OnRoute(report func(RouteSummary)) {
+	e.onRoute = report
 }
 
 // Run executes every stage of the plan that is not already COMPLETED in
