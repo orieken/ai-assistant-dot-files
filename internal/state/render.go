@@ -20,6 +20,8 @@ func ViewFileName(kind Kind) (string, bool) {
 		return "analysis.md", true
 	case KindArchitecture:
 		return "architecture-notes.md", true
+	case KindRoute:
+		return "route.md", true
 	default:
 		return "", false
 	}
@@ -49,6 +51,8 @@ func renderDocument(kind Kind, decoded Validatable) (string, error) {
 		return renderAnalysis(*typed), nil
 	case *ArchitectureState:
 		return renderArchitecture(*typed), nil
+	case *Route:
+		return renderRoute(*typed), nil
 	default:
 		return "", fmt.Errorf("no renderer for state kind %q", kind)
 	}

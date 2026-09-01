@@ -141,6 +141,43 @@ func (a AnalysisState) RequiresArchitect() bool {
 		len(a.NewDependencies) > 0 || a.hasPerformanceThreshold()
 }
 
+// RequiresPerformanceEngineer reports whether the analysis carries a
+// measurable performance target. A threshold is what a performance review
+// has to work against; prose about feeling fast is not reviewable.
+func (a AnalysisState) RequiresPerformanceEngineer() bool {
+	return a.hasPerformanceThreshold()
+}
+
+// RequiresDataEngineer reports whether this feature changes the data model
+// in a way that has to be sequenced across a deploy.
+func (a AnalysisState) RequiresDataEngineer() bool {
+	return a.changesDataModel()
+}
+
+// RequiresAccessibilityEngineer reports whether the feature has a UI
+// surface. The analysis contract makes an accessibility requirement
+// mandatory for any feature containing UI elements, so its presence is the
+// contract-grounded signal that there is UI to review.
+func (a AnalysisState) RequiresAccessibilityEngineer() bool {
+	return a.hasRequirementCategory("accessibility")
+}
+
+// RequiresDevOpsEngineer reports whether this feature asks for CI,
+// environment, or deployment work. Note this is a NEW condition: the
+// markdown pipeline runs devops unconditionally today.
+func (a AnalysisState) RequiresDevOpsEngineer() bool {
+	return len(a.Tasks.DevOps) > 0
+}
+
+func (a AnalysisState) hasRequirementCategory(category string) bool {
+	for _, requirement := range a.NonFunctionalRequirements {
+		if requirement.Category == category {
+			return true
+		}
+	}
+	return false
+}
+
 func (a AnalysisState) crossesContexts() bool {
 	return len(a.BoundedContext.Crossings) > 0
 }
