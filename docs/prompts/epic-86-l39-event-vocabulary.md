@@ -85,19 +85,30 @@ here directly). Do NOT push.
 done-when, adjusted to the fifteen types that turned out to be real. **Commit** (`feat(telemetry):
 generate the event vocabulary from one Go enum`), report, PAUSE.
 
+### Phase B decisions (settled 2026-09-01, before the phase)
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Historical records are left alone | `shared/agents/CHANGELOG.md`, `docs/human-tasks.md`'s v3.0.0 release verification, `docs/audits/`, and the `docs/aos/` design pack are **not edited** | A changelog entry and a dated verification log ("events.jsonl NOT created — PASS") are correct as records of what was true then. Editing them to match today makes the history lie. Only *live instructions* get redirected |
+| `event-schema.md` is deleted, not rewritten | Both it and `event-recorder.md` go. `shared/telemetry/README.md` is the one surviving file | Keeping a schema document for a file nothing will ever write is close to the thing being retired. The README carries the honest content: the run event timeline, the generated vocabulary, the L3.8 traces, and the specified-but-unemitted list |
+| `shared/telemetry/` survives as a directory | Not folded into `shared/schemas/telemetry/` | The AOS design pack made telemetry a first-class top-level concern deliberately; quietly reversing that as a side effect of a cleanup is the wrong way to revisit it |
+
 ## Phase B — Retire the layer that never emitted — BLOCKED BY Phase A
 
-1. Delete `shared/telemetry/event-recorder.md` and `event-schema.md`'s claim to be a live wire
-   format. Rewrite `shared/telemetry/README.md` around what exists: the generated vocabulary, the
-   run event timeline, and the OTel traces from L3.8.
+1. Delete `shared/telemetry/event-recorder.md` and `shared/telemetry/event-schema.md`. Rewrite
+   `shared/telemetry/README.md` around what exists: the generated vocabulary, the run event
+   timeline, and the OTel traces from L3.8 — plus the specified-but-unemitted list.
 2. Record the nine specified-but-unemitted types in one place, each pointing at the roadmap item
    that would emit it. Remove their payload examples from `policy-schema.md`,
    `policy-evaluator.md`, and `audit-composition-pattern.md`, replacing each with a pointer — the
    `event` / `event_type` mismatch disappears with them.
-3. Redirect every remaining reference to `event-recorder` or `.claude/telemetry/events.jsonl` —
-   `deliver-feature`, `extract-lessons`, `scheduler`, `retrospective`, `evaluation/README.md`,
-   `policies/README.md`, `DOMAIN_DICTIONARY.md`, `docs/ARCHITECTURE.md`. A dangling reference is a
-   worse outcome than the contradiction being fixed.
+3. Redirect every remaining **live instruction** referencing `event-recorder` or
+   `.claude/telemetry/events.jsonl` — `deliver-feature`, `extract-lessons`, `scheduler`,
+   `retrospective`, `policies/README.md`, `evaluation/README.md`, `DOMAIN_DICTIONARY.md`,
+   `docs/ARCHITECTURE.md`, `docs/runbooks/parallel-delivery.md`. `retrospective` in particular
+   still mines `gate_decision` per feature and should read `artifact.corrected` instead, the way
+   `extract-lessons` was taught to in epic 85. A dangling reference is a worse outcome than the
+   contradiction being fixed.
 4. If any of them turns out to have a real caller or a real emitter, STOP and escalate.
 
 **Done when**: no file describes a telemetry file nothing writes, and every reference resolves.
