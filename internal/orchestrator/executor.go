@@ -90,6 +90,14 @@ func (e *Executor) Run(ctx context.Context, plan Plan, input StageInput) error {
 	if err := e.emit(Event{Kind: EventRunStarted}); err != nil {
 		return err
 	}
+	// Detect corrections before anything else touches the workspace. For an
+	// artifact that is still markdown, the tracked file IS the file a human
+	// edits, so verification is about to demote the stage and re-run it —
+	// and the agent's second attempt would then look like the human's
+	// correction (roadmap L4.5).
+	if err := e.collectCorrections(state); err != nil {
+		return err
+	}
 	ctx, span := e.tracer.StartRun(ctx, e.runSpanFor(plan, input))
 	err = e.runStages(ctx, plan, input, state)
 	span.End(runOutcome(err))
@@ -468,6 +476,8 @@ func (e *Executor) persistCompletion(state *RunState, stage Stage, plan Plan, in
 	record.FinishedAt = &now
 	record.Status = StageStatusCompleted
 	record.ArtifactPath = artifactPath
+	record.ViewPath = viewPathFor(stage, input)
+	record.Agent = stage.Agent
 	record.Usage = output.Usage
 	if artifactPath != "" {
 		sum, err := ArtifactSHA256(artifactPath)
@@ -479,6 +489,9 @@ func (e *Executor) persistCompletion(state *RunState, stage Stage, plan Plan, in
 	if err := e.persistStatus(state, stage.ID, record); err != nil {
 		return err
 	}
+	// The executor just wrote this stage's output, so any baseline holding
+	// it is stale in a way no human caused (roadmap L4.5).
+	e.refreshBaselinesFor(state, stage.ID)
 	if err := e.emitStageEnd(state, stage.ID, record); err != nil {
 		return err
 	}

@@ -94,6 +94,19 @@ func persistTypedOutput(stage Stage, input StageInput, output StageOutput) (stri
 // stages that are still untyped were told to read the contract's name. The
 // view is derived, so it is deliberately not digest-tracked: editing it
 // must not be able to corrupt a run.
+// viewPathFor returns where a typed stage's rendered markdown lives, or ""
+// for an untyped stage whose artifact is already markdown.
+func viewPathFor(stage Stage, input StageInput) string {
+	if stage.StateKind == "" {
+		return ""
+	}
+	name, ok := state.ViewFileName(state.Kind(stage.StateKind))
+	if !ok {
+		return ""
+	}
+	return filepath.Join(input.WorkspaceDir, name)
+}
+
 func renderView(stage Stage, input StageInput, payload []byte) error {
 	name, body, err := state.RenderView(state.Kind(stage.StateKind), payload)
 	if err != nil {

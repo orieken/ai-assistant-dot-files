@@ -118,13 +118,33 @@ func (e *Executor) retainGateArtifacts(state *RunState, gate string, reason Base
 			failure = err
 			continue
 		}
+		if retained.Path == "" {
+			continue
+		}
 		baseline.Artifacts[stageID] = retained
 	}
 	return baseline, failure
 }
 
+// correctionTarget is the file a human would edit to correct this stage.
+//
+// For a typed stage that is the rendered view, not the tracked state
+// document: the view is what a person opens, and editing it cannot corrupt
+// the run because the executor never reads it back. For an untyped stage
+// the markdown IS the tracked artifact, so they are the same file — and
+// editing it does have consequences (L2.12 re-runs the stage).
+func correctionTarget(record StageRecord) string {
+	if record.ViewPath != "" {
+		return record.ViewPath
+	}
+	return record.ArtifactPath
+}
+
 func (e *Executor) retainOne(state *RunState, gate, stageID string) (PresentedArtifact, error) {
-	source := state.Stages[stageID].ArtifactPath
+	source := correctionTarget(state.Stages[stageID])
+	if source == "" {
+		return PresentedArtifact{}, nil
+	}
 	target := e.baselinePath(gate, stageID, source)
 	if err := copyFile(source, target); err != nil {
 		return PresentedArtifact{}, fmt.Errorf("stage %q: %w", stageID, err)

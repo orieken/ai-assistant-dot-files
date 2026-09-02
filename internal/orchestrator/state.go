@@ -63,6 +63,16 @@ type StageRecord struct {
 	// Zero and one both mean a first pass; Sequence is unaffected, because
 	// a re-run is the same step of the run, not a new one.
 	Iteration int `json:"iteration,omitempty"`
+	// Agent is who produced this stage's artifact. Recorded on the record
+	// rather than looked up in the plan so attribution is self-contained —
+	// an approval has no plan in hand, and a correction must still name the
+	// agent whose output was corrected (roadmap L4.5).
+	Agent string `json:"agent,omitempty"`
+	// ViewPath is the rendered markdown a typed stage produces alongside its
+	// state document (roadmap L2.9). Empty for an untyped stage, whose
+	// artifact IS its markdown. It is recorded because it — not the tracked
+	// artifact — is the file a human reads and corrects (roadmap L4.5).
+	ViewPath string `json:"viewPath,omitempty"`
 	// Usage is what the provider reported this stage's model call consumed
 	// (roadmap L3.8). Nil when the provider reported nothing — which is not
 	// the same as a provider reporting zero.
@@ -88,7 +98,11 @@ type RunState struct {
 	// rather than merely detected — a digest says that something changed
 	// and never what.
 	Baselines map[string]GateBaseline `json:"baselines,omitempty"`
-	UpdatedAt time.Time               `json:"updatedAt"`
+	// Corrections records every human edit to a stage's output detected at
+	// a gate (roadmap L4.5), so the signal survives without reading the
+	// timeline. Append-only within a run.
+	Corrections []Correction `json:"corrections,omitempty"`
+	UpdatedAt   time.Time    `json:"updatedAt"`
 }
 
 // Creator identifies which pipeline owns a state file. The two pipelines

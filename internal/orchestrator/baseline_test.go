@@ -71,17 +71,18 @@ func TestGateHaltRetainsWhatTheHumanWasShown(t *testing.T) {
 	_ = input
 }
 
-// The first presentation is the one the human reacted to, and a re-run must
-// not replace it.
+// A stage that re-runs must never have its own output reported as a human
+// correction.
 //
-// Note what actually happens to a human's edit here, because it is not what
-// the telemetry schema assumes: editing a completed artifact makes the stage
-// STALE (L2.12), so the executor RE-RUNS it and the agent's fresh output
-// overwrites what the human wrote. The re-run's output is not necessarily
-// identical to the first — agents are not deterministic — so re-capturing on
-// the second halt would silently swap the evidence for something the human
-// never saw. This test scripts a differing re-run to make that concrete.
-func TestSecondPresentationDoesNotOverwriteTheFirst(t *testing.T) {
+// This is the sharp edge of the whole design. Editing a markdown artifact
+// makes its stage STALE (L2.12), so the executor re-runs it and the agent's
+// fresh output replaces the human's text. If the baseline still held what
+// the human wrote, the next comparison would diff it against the agent's
+// second attempt and attribute that to a person — a fabricated signal, and
+// exactly the confident wrong number this epic exists not to produce. The
+// executor therefore refreshes the baseline whenever it writes a stage's
+// output itself.
+func TestAReRunIsNotReportedAsAHumanCorrection(t *testing.T) {
 	executor, provider, store, input := newHarness(t, map[string]mock.Script{
 		"analyst": {ArtifactContent: "# original analysis"},
 	})
@@ -93,40 +94,32 @@ func TestSecondPresentationDoesNotOverwriteTheFirst(t *testing.T) {
 	})
 	runUntilHalt(t, executor, input)
 
-	// The human edits the artifact, then re-runs without approving.
 	artifact := mustLoad(t, store).Stages["analyst"].ArtifactPath
 	if err := os.WriteFile(artifact, []byte("# edited by a human"), 0o644); err != nil {
 		t.Fatalf("edit artifact: %v", err)
 	}
+	// The human resumes without approving: the edit is detected, then the
+	// staleness cascade re-runs the stage over the top of it.
 	runUntilHalt(t, executor, input)
-
-	// Precondition: the staleness cascade did re-run the stage, so the
-	// artifact on disk is now the agent's second attempt, not the human's
-	// edit. If this ever stops being true, the test below is testing
-	// nothing and the Phase B design has to be revisited.
 	assertFileContent(t, artifact, "# a different second attempt",
 		"precondition: the stage should have been re-run")
 
-	assertFileContent(t, baselineFor(t, store, "confirm-design").Artifacts["analyst"].Path,
-		"# original analysis",
-		"the first presentation was overwritten with something the human never saw")
-}
-
-func runUntilHalt(t *testing.T, executor *orchestrator.Executor, input orchestrator.StageInput) {
-	t.Helper()
-	if err := executor.Run(context.Background(), twiceGatedPlan(), input); !errors.Is(err, orchestrator.ErrWaitingApproval) {
-		t.Fatalf("Run error = %v, want ErrWaitingApproval", err)
+	corrections := mustLoad(t, store).Corrections
+	if len(corrections) != 1 {
+		t.Fatalf("corrections = %d (%+v), want exactly the human's one edit", len(corrections), corrections)
 	}
-}
+	assertFileContent(t, corrections[0].DiffPath,
+		"-# original analysis\n+# edited by a human\n",
+		"the diff must describe the human's edit, not the re-run")
 
-func assertFileContent(t *testing.T, path, want, why string) {
-	t.Helper()
-	content, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
+	// Approving now must find nothing further: the agent's second attempt
+	// is not a correction.
+	if err := executor.Approve("confirm-design", orchestrator.ApprovalMethodFlag); err != nil {
+		t.Fatalf("Approve: %v", err)
 	}
-	if string(content) != want {
-		t.Errorf("%s: content = %q, want %q", why, content, want)
+	if after := mustLoad(t, store).Corrections; len(after) != 1 {
+		t.Errorf("corrections = %d (%+v) after approval — the agent's own re-run was attributed to a human",
+			len(after), after)
 	}
 }
 
@@ -232,5 +225,23 @@ func TestBaselineFailureIsReportedButDoesNotFailTheRun(t *testing.T) {
 	}
 	if mustLoad(t, store).Stages["developer"].Status != orchestrator.StageStatusWaitingApproval {
 		t.Error("the gate halt itself was disturbed by a retention failure")
+	}
+}
+
+func runUntilHalt(t *testing.T, executor *orchestrator.Executor, input orchestrator.StageInput) {
+	t.Helper()
+	if err := executor.Run(context.Background(), twiceGatedPlan(), input); !errors.Is(err, orchestrator.ErrWaitingApproval) {
+		t.Fatalf("Run error = %v, want ErrWaitingApproval", err)
+	}
+}
+
+func assertFileContent(t *testing.T, path, want, why string) {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	if string(content) != want {
+		t.Errorf("%s: content = %q, want %q", why, content, want)
 	}
 }

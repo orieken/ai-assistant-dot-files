@@ -44,6 +44,12 @@ const (
 	// EventGateInvalidated records an approval reset by an edit to a bound
 	// artifact (roadmap L2.14). Stage names the artifact that changed.
 	EventGateInvalidated EventKind = "gate.invalidated"
+	// EventArtifactCorrected records a human editing a stage's output at a
+	// gate (roadmap L4.5) — the corrective signal the telemetry schema has
+	// always specified and nothing has ever emitted. Attributed to the
+	// producing stage and agent rather than to the gate, because whose
+	// output needed fixing is the part worth learning from.
+	EventArtifactCorrected EventKind = "artifact.corrected"
 )
 
 // Event is one line of the timeline.
@@ -58,7 +64,13 @@ type Event struct {
 	Loop           string         `json:"loop,omitempty"`
 	Iteration      int            `json:"iteration,omitempty"`
 	ApprovalMethod ApprovalMethod `json:"approvalMethod,omitempty"`
-	Error          string         `json:"error,omitempty"`
+	// Agent and Correction describe a human correction (roadmap L4.5):
+	// which agent produced what was corrected, and a +added/-removed
+	// summary. The diff itself is on disk, named by Reason, so one event
+	// stays one greppable line.
+	Agent      string `json:"agent,omitempty"`
+	Correction string `json:"correction,omitempty"`
+	Error      string `json:"error,omitempty"`
 }
 
 // Timeline appends events to one run's log.

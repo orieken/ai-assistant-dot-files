@@ -114,11 +114,19 @@ func (e *Executor) Approve(gate string, method ApprovalMethod) error {
 	if err := checkWaitingOn(state, gate); err != nil {
 		return err
 	}
+	// Detect BEFORE recording: an approval is the moment the schema's
+	// "checksum changed between gate-presented and gate-approved" is
+	// finally answerable, and refreshing the baseline first would erase the
+	// difference being measured.
+	corrections := e.detectCorrections(state)
 	state.RecordApproval(gate, method)
 	// Refresh the baseline: approving means accepting the state as it
 	// stands right now, so that state is what a *later* edit is measured
 	// against (roadmap L4.5).
 	e.captureBaseline(state, gate, BaselineApproved)
+	if err := e.recordCorrections(state, corrections); err != nil {
+		return err
+	}
 	if err := e.store.Save(state); err != nil {
 		return fmt.Errorf("persist approval for gate %q: %w", gate, err)
 	}
