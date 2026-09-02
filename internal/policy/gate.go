@@ -36,6 +36,22 @@ const (
 	GateDeploy                GateID = "deploy"
 )
 
+// The executor's own gates (roadmap L2.13). These name stage progressions
+// rather than the irreversible actions above, and they are the only gates
+// `loom run` actually halts at — the two vocabularies had no overlap at
+// all, so before these were eligible no valid policy could name a barrier
+// that exists.
+//
+// GateConfirmShip needs care in the docs: it PRECEDES the ship, commit and
+// deploy gates rather than being one of them. A policy on it does not
+// authorise a deployment, and a reader who assumes otherwise has misread it.
+const (
+	GateConfirmDesign           GateID = "confirm-design"
+	GateConfirmSecurity         GateID = "confirm-security"
+	GateConfirmShip             GateID = "confirm-ship"
+	GateConfirmUnresolvedReview GateID = "confirm-unresolved-review"
+)
+
 // alwaysHuman is the compiled kill-switch. It is a Go constant rather than
 // a YAML field on purpose: a list that can be edited by whoever is trying
 // to bypass it is not a control, and one that lives in prose a model reads
@@ -55,11 +71,11 @@ func alwaysHuman() map[GateID]string {
 
 // eligible lists the gates a policy may target.
 func eligible() map[GateID]bool {
-	return map[GateID]bool{
-		GateGitCommit:             true,
-		GateOutOfBoundaryWrite:    true,
-		GateFitnessFunctionWiring: true,
+	gates := make(map[GateID]bool, len(EligibleGates()))
+	for _, gate := range EligibleGates() {
+		gates[gate] = true
 	}
+	return gates
 }
 
 // CheckGate reports why a gate may not be targeted, or nil when it may.
@@ -83,7 +99,10 @@ func CheckGate(gate GateID) error {
 // EligibleGates returns the gates a policy may target, for error messages
 // and documentation.
 func EligibleGates() []GateID {
-	return []GateID{GateGitCommit, GateOutOfBoundaryWrite, GateFitnessFunctionWiring}
+	return []GateID{
+		GateGitCommit, GateOutOfBoundaryWrite, GateFitnessFunctionWiring,
+		GateConfirmDesign, GateConfirmSecurity, GateConfirmShip, GateConfirmUnresolvedReview,
+	}
 }
 
 func eligibleList() string {

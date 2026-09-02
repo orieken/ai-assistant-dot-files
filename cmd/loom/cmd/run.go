@@ -10,19 +10,21 @@ import (
 	"syscall"
 
 	"github.com/orieken/loom/internal/orchestrator"
+	"github.com/orieken/loom/internal/policy"
 	"github.com/orieken/loom/internal/telemetry"
 	"github.com/spf13/cobra"
 )
 
 type runFlags struct {
-	spec          string
-	resume        bool
-	provider      string
-	plan          string
-	approve       string
-	mockHangStage string
-	otelFile      string
-	noTelemetry   bool
+	spec           string
+	resume         bool
+	provider       string
+	plan           string
+	approve        string
+	mockHangStage  string
+	otelFile       string
+	noTelemetry    bool
+	dryRunPolicies bool
 }
 
 var runArgs runFlags
@@ -67,6 +69,8 @@ func init() {
 		"write OTLP/JSON traces here (default: <workspace>/"+telemetry.TracesFileName+")")
 	runCmd.Flags().BoolVar(&runArgs.noTelemetry, "no-telemetry", false,
 		"disable tracing entirely, including the local trace file")
+	runCmd.Flags().BoolVar(&runArgs.dryRunPolicies, "dry-run-policies", false,
+		"evaluate policies against an existing run's state, print the decisions, and exit without running anything")
 	_ = runCmd.MarkFlagRequired("spec")
 }
 
@@ -83,15 +87,35 @@ func runRun(cmd *cobra.Command, _ []string) error {
 	if err := checkResumeState(store, runArgs.resume); err != nil {
 		return err
 	}
+	policies, err := loadPolicies(policy.DefaultDir)
+	if err != nil {
+		return err
+	}
+	if runArgs.dryRunPolicies {
+		return runDryRunPolicies(cmd, store, policies)
+	}
 	provider, err := selectProvider(plan, runArgs.provider, runArgs.mockHangStage)
 	if err != nil {
 		return err
 	}
-	return executeRun(cmd, plan, provider, store, input)
+	return executeRun(cmd, runSetup{plan: plan, provider: provider, store: store, input: input, policies: policies})
 }
 
-func executeRun(cmd *cobra.Command, plan orchestrator.Plan, provider orchestrator.Provider, store *orchestrator.StateStore, input orchestrator.StageInput) error {
+// runSetup is what a run needs to start, gathered rather than passed as six
+// positional arguments.
+type runSetup struct {
+	plan     orchestrator.Plan
+	provider orchestrator.Provider
+	store    *orchestrator.StateStore
+	input    orchestrator.StageInput
+	policies []policy.Policy
+}
+
+func executeRun(cmd *cobra.Command, setup runSetup) error {
+	plan, provider, store, input := setup.plan, setup.provider, setup.store, setup.input
 	executor := orchestrator.NewExecutor(provider, store)
+	executor.WithPolicies(setup.policies)
+	executor.OnPolicyDecision(func(decision policy.Decision) { reportPolicyDecision(cmd, decision) })
 	stopTelemetry, err := startTelemetry(cmd, executor, input.WorkspaceDir)
 	if err != nil {
 		return err

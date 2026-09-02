@@ -67,6 +67,7 @@ func loopAndGateDocs() []EventDoc {
 		{EventGateApproved, "A human approved a gate through a named channel.", []string{"gate", "approvalMethod"}, "L2.13"},
 		{EventGateInvalidated, "An approval was reset because a bound artifact changed.", []string{"gate", "stage"}, "L2.14"},
 		{EventArtifactCorrected, "A human edited a stage's output at a gate.", []string{"stage", "agent", "gate", "correction", "diffPath"}, "L4.5"},
+		{EventPolicyEvaluated, "The policies watching a gate were evaluated; the run halts regardless.", []string{"gate", "reason", "correction"}, "L2.16"},
 	}
 }
 

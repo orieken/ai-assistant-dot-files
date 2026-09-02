@@ -15,6 +15,7 @@
         "gate.waiting",
         "loop.exhausted",
         "loop.iterated",
+        "policy.evaluated",
         "run.completed",
         "run.started",
         "stage.completed",

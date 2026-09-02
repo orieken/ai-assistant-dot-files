@@ -18,6 +18,7 @@ emitter.
 | `gate.waiting` | The run halted at a gate and is waiting on a human. | `stage`, `gate` | L2.13 |
 | `loop.exhausted` | A bounded loop reached its iteration limit. | `loop`, `stage`, `iteration` | L2.17 |
 | `loop.iterated` | A bounded loop sent its span round again. | `loop`, `stage`, `iteration` | L2.17 |
+| `policy.evaluated` | The policies watching a gate were evaluated; the run halts regardless. | `gate`, `reason`, `correction` | L2.16 |
 | `run.completed` | Every stage of the plan settled. | — | M0.4 |
 | `run.started` | A run began or resumed. | — | M0.4 |
 | `stage.completed` | A stage finished and its artifact was digested. | `stage`, `sequence` | M0.4 |

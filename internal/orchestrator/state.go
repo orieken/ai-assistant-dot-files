@@ -14,7 +14,7 @@ import (
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 9
+const StateSchemaVersion = 10
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -63,6 +63,11 @@ type StageRecord struct {
 	// Zero and one both mean a first pass; Sequence is unaffected, because
 	// a re-run is the same step of the run, not a new one.
 	Iteration int `json:"iteration,omitempty"`
+	// StateKind is the typed document kind this stage produced, empty for an
+	// untyped stage. Recorded on the record rather than looked up in the
+	// plan because a gate has no plan in hand and still has to find the
+	// review verdict or the security findings (roadmap L2.16).
+	StateKind string `json:"stateKind,omitempty"`
 	// Agent is who produced this stage's artifact. Recorded on the record
 	// rather than looked up in the plan so attribution is self-contained —
 	// an approval has no plan in hand, and a correction must still name the
@@ -98,6 +103,11 @@ type RunState struct {
 	// rather than merely detected — a digest says that something changed
 	// and never what.
 	Baselines map[string]GateBaseline `json:"baselines,omitempty"`
+	// PolicyDecisions records what the policies watching each gate decided
+	// (roadmap L2.16). Recorded, not acted on: this build still halts for a
+	// human at every gate. The record is the audit trail approval-gates.md
+	// promised and never had.
+	PolicyDecisions []PolicyRecord `json:"policyDecisions,omitempty"`
 	// Corrections records every human edit to a stage's output detected at
 	// a gate (roadmap L4.5), so the signal survives without reading the
 	// timeline. Append-only within a run.

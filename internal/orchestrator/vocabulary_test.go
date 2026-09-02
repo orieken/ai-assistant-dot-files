@@ -149,8 +149,11 @@ func TestGeneratedSchemaConstrainsKindToTheVocabulary(t *testing.T) {
 			t.Errorf("generated schema does not list %q in the kind enum", kind)
 		}
 	}
-	// One of the types specified elsewhere but emitted by nothing.
-	if strings.Contains(text, strconv.Quote("policy.evaluated")) {
-		t.Error("generated schema lists policy.evaluated, which nothing emits — the vocabulary holds only emitted types")
+	// A type specified elsewhere and still emitted by nothing. This used to
+	// name policy.evaluated, which graduated in L2.16 when something finally
+	// emitted it — which is the rule working: a type joins the vocabulary by
+	// acquiring an emitter, never by being documented.
+	if strings.Contains(text, strconv.Quote("contract.retry")) {
+		t.Error("generated schema lists contract.retry, which nothing emits — the vocabulary holds only emitted types")
 	}
 }

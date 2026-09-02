@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/orieken/loom/internal/policy"
 )
 
 // Executor runs a Plan's stages in order against a Provider, persisting
@@ -24,6 +26,11 @@ type Executor struct {
 	// action rather than controlling the run, so a failure is reported and
 	// never propagated.
 	onBaselineError func(error)
+	// policies are the loaded delivery policies evaluated at each gate
+	// (roadmap L2.16). Empty means no policy file exists, which is the
+	// default and the safe one.
+	policies []policy.Policy
+	onPolicy func(policy.Decision)
 }
 
 // NewExecutor wires a provider and a state store into an executor.
@@ -61,6 +68,19 @@ func (e *Executor) OnApprovalReset(report func(*StaleApprovalError)) {
 // before the design gate asks them to approve it.
 func (e *Executor) OnRoute(report func(RouteSummary)) {
 	e.onRoute = report
+}
+
+// WithPolicies registers the policies evaluated at each gate. They are
+// recorded and reported; nothing in this build acts on them.
+func (e *Executor) WithPolicies(policies []policy.Policy) {
+	e.policies = policies
+}
+
+// OnPolicyDecision registers a callback invoked with each gate's policy
+// decision, so the CLI can tell a human what a policy would have done
+// before anyone trusts it to do it.
+func (e *Executor) OnPolicyDecision(report func(policy.Decision)) {
+	e.onPolicy = report
 }
 
 // OnBaselineError registers a callback invoked when the executor cannot
@@ -277,6 +297,10 @@ func (e *Executor) checkGate(stage Stage, state *RunState) error {
 			return nil
 		}
 	}
+	// Evaluate before the halt is announced, so the decision is recorded
+	// with the state the human is about to see. It does not change whether
+	// the halt happens (roadmap L2.16).
+	e.evaluatePolicies(state, stage)
 	// Capture before the halt is announced: this is the moment the state is
 	// presented to a human, and it is the baseline any edit they make is
 	// measured against (roadmap L4.5).
@@ -478,6 +502,7 @@ func (e *Executor) persistCompletion(state *RunState, stage Stage, plan Plan, in
 	record.ArtifactPath = artifactPath
 	record.ViewPath = viewPathFor(stage, input)
 	record.Agent = stage.Agent
+	record.StateKind = stage.StateKind
 	record.Usage = output.Usage
 	if artifactPath != "" {
 		sum, err := ArtifactSHA256(artifactPath)

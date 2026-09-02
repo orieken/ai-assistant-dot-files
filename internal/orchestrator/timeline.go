@@ -50,6 +50,11 @@ const (
 	// producing stage and agent rather than to the gate, because whose
 	// output needed fixing is the part worth learning from.
 	EventArtifactCorrected EventKind = "artifact.corrected"
+	// EventPolicyEvaluated records what the policies watching a gate
+	// decided (roadmap L2.16). approval-gates.md asserted this event for
+	// every decision since v3.3 and nothing emitted it; something does now,
+	// which is what earns it a place in the vocabulary.
+	EventPolicyEvaluated EventKind = "policy.evaluated"
 )
 
 // Event is one line of the timeline.
