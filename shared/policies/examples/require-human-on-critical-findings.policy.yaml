@@ -1,0 +1,35 @@
+name: require-human-on-critical-findings
+version: "1.0"
+description: >
+  EVALUABLE TODAY — every field this policy tests has a source in run state, so it produces a real
+  TRUE or FALSE under `loom run` rather than UNKNOWN. Requires human confirmation whenever the
+  security review found a critical finding, the code reviewer did not approve, or any changed file
+  touches a security or auth path.
+enabled: true
+
+matcher:
+  gates:
+    - confirm-design
+    - confirm-security
+
+# `any` combines whole conditions, so each arm may itself be a `not`. There is
+# no `greaterThan` operator in the vocabulary — "has at least one critical" is
+# expressed as "not (criticals < 1)", which is the same statement.
+condition:
+  any:
+    - not:
+        securityReviewer.criticals:
+          lessThan: 1
+    - not:
+        codeReviewer.verdict:
+          equals: "APPROVED"
+    - filePaths:
+        anyMatch: "**/auth/**"
+    - filePaths:
+        anyMatch: "**/security/**"
+
+action:
+  type: require-human
+  reason: >
+    A critical security finding, an unapproved review, or a change touching a security or auth
+    path. require-human always beats auto-approve in conflict resolution.

@@ -58,7 +58,7 @@ func (d Decision) Summary() string {
 	}
 	matched := d.matchedNames()
 	if len(matched) == 0 {
-		return fmt.Sprintf("%d policies evaluated, none matched", len(d.Policies))
+		return fmt.Sprintf("%s evaluated, none matched", plural(len(d.Policies), "policy", "policies"))
 	}
 	return fmt.Sprintf("%s → %s (matched: %s)", d.Effect, d.effectNote(), strings.Join(matched, ", "))
 }
@@ -132,4 +132,12 @@ func partitionMatched(outcomes []Result) (approving, stopping []string) {
 	sort.Strings(approving)
 	sort.Strings(stopping)
 	return approving, stopping
+}
+
+// plural keeps the one-policy case from reading as a bug report.
+func plural(count int, singular, many string) string {
+	if count == 1 {
+		return fmt.Sprintf("%d %s", count, singular)
+	}
+	return fmt.Sprintf("%d %s", count, many)
 }

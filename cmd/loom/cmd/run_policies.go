@@ -20,7 +20,11 @@ import (
 // loadPolicies reads the project's policy directory. A load failure is
 // fatal on purpose: a policy that does not parse is not a policy that
 // silently does nothing, it is a file whose author believes it is working.
-func loadPolicies(dir string) ([]policy.Policy, error) {
+func loadPolicies(cmd *cobra.Command, dir string) ([]policy.Policy, error) {
+	if !policy.Enabled(policy.ConfigFile) {
+		cmd.Println(policy.DisabledNotice(policy.ConfigFile))
+		return nil, nil
+	}
 	policies, err := policy.Load(dir)
 	if err != nil {
 		return nil, fmt.Errorf("policies in %s: %w", dir, err)
@@ -74,7 +78,7 @@ func runDryRunPolicies(cmd *cobra.Command, store *orchestrator.StateStore, polic
 }
 
 func printDryRun(cmd *cobra.Command, store *orchestrator.StateStore, state *orchestrator.RunState, policies []policy.Policy) {
-	cmd.Printf("Dry-run against %s (%d policies, no state is modified)\n", state.FeatureName, len(policies))
+	cmd.Printf("Dry-run against %s (%d loaded, no state is modified)\n", state.FeatureName, len(policies))
 	for _, gate := range policy.EligibleGates() {
 		decision := policy.Decide(policies, orchestrator.PolicyContextFor(store, state, gate))
 		if len(decision.Policies) == 0 {

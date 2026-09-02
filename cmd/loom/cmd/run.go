@@ -84,15 +84,18 @@ func runRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	store := orchestrator.NewStateStore(filepath.Join(workspace, orchestrator.RunStateFileName))
-	if err := checkResumeState(store, runArgs.resume); err != nil {
-		return err
-	}
-	policies, err := loadPolicies(policy.DefaultDir)
+	policies, err := loadPolicies(cmd, policy.DefaultDir)
 	if err != nil {
 		return err
 	}
+	// Dry-run reads a finished run, so it must not go through the resume
+	// check — that check refuses to start over existing state, which is
+	// exactly the state dry-run exists to evaluate against.
 	if runArgs.dryRunPolicies {
 		return runDryRunPolicies(cmd, store, policies)
+	}
+	if err := checkResumeState(store, runArgs.resume); err != nil {
+		return err
 	}
 	provider, err := selectProvider(plan, runArgs.provider, runArgs.mockHangStage)
 	if err != nil {

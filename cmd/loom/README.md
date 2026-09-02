@@ -147,6 +147,36 @@ Seven artifacts of the built-in plan are **typed state** instead of markdown (ro
 The eight remaining artifacts — the end-of-pipeline reports and `context-manifest` — still pass
 markdown, unchanged. Nothing evaluates a condition over them yet.
 
+## Policies: what would have been decided
+
+`loom run` loads `.claude/policies/*.policy.yaml`, evaluates every policy watching a gate against
+the run's own state, and prints what they decided (roadmap L2.16):
+
+```
+Policy at gate "confirm-design": require-human → stops for a human (matched: require-human-on-critical-findings)
+  require-human-on-critical-findings  TRUE     require-human
+  auto-approve-refactor               UNKNOWN  auto-approve  (unknown: diffLines, fitnessFunction.allPass)
+```
+
+**Nothing is auto-approved.** A matching `auto-approve` policy changes nothing about whether you are
+asked — the run halts at every gate exactly as it did before, and the record says what *would* have
+happened. That is deliberate: the first run to skip a barrier should not also be the first evidence
+the evaluator decides what a human would. Honouring a decision is roadmap L2.19.
+
+- **`UNKNOWN` is not a failure.** Five of the nine condition fields a policy may test have no source
+  in run state yet, so a policy asking about them cannot be answered. The decision names which fact
+  it could not see, which is more useful than a bare "no match". Sourcing the rest is roadmap L2.20.
+- **Some gates cannot be governed at all.** Shipping, migrations, contract-phase drops, external API
+  mutations and deploys are always human — that list is compiled in, and a policy naming one fails
+  to load rather than being ignored.
+- **`--dry-run-policies`** evaluates against a finished run and prints the decisions without
+  touching anything: `loom run --spec <file> --dry-run-policies`.
+- **Off switch**: `policiesEnabled: false` in `.claude/delivery-policy.yaml` skips evaluation
+  entirely.
+
+Decisions are also on the timeline as `policy.evaluated` and in `run-state.json`, so they survive
+the terminal scrollback.
+
 ## Editing an artifact at a gate
 
 When a run halts and you disagree with what an agent produced, there are two

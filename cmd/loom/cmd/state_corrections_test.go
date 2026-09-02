@@ -6,6 +6,9 @@ package cmd
 
 import (
 	"bytes"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -103,5 +106,74 @@ func TestTimelineRendersACorrectionWithoutTheDiffPath(t *testing.T) {
 	}
 	if strings.Contains(output, "analyst.diff") {
 		t.Errorf("timeline line carries the absolute diff path:\n%s", output)
+	}
+}
+
+// --dry-run-policies evaluates a run that already happened, so it must not
+// go through the resume check — that check refuses to start over existing
+// state, which is exactly the state dry-run reads. Found end-to-end: the
+// flag failed on every run it was meant to inspect.
+func TestDryRunPoliciesDoesNotGoThroughTheResumeCheck(t *testing.T) {
+	binary := buildLoomBinary(t)
+	projectDir := t.TempDir()
+	spec := writeSpec(t, projectDir)
+	writeExamplePolicy(t, projectDir)
+
+	// Produce a halted run, so state exists.
+	run := exec.Command(binary, "run", "--spec", spec, "--provider", "mock")
+	run.Dir = projectDir
+	if output, err := run.CombinedOutput(); err == nil {
+		t.Fatalf("run should halt at confirm-design\n%s", output)
+	}
+
+	output, code := runLoom(t, binary, projectDir, "run", "--spec", spec, "--dry-run-policies")
+	if code != 0 {
+		t.Fatalf("dry-run exited %d over an existing run:\n%s", code, output)
+	}
+	for _, want := range []string{"Dry-run against", "confirm-design"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("dry-run output missing %q:\n%s", want, output)
+		}
+	}
+	if strings.Contains(output, "already exists") {
+		t.Errorf("dry-run hit the resume check:\n%s", output)
+	}
+}
+
+// The kill-switch has to work through the CLI, not only in the package.
+func TestPoliciesEnabledFalseSkipsEvaluation(t *testing.T) {
+	binary := buildLoomBinary(t)
+	projectDir := t.TempDir()
+	spec := writeSpec(t, projectDir)
+	writeExamplePolicy(t, projectDir)
+	if err := os.WriteFile(filepath.Join(projectDir, ".claude", "delivery-policy.yaml"),
+		[]byte("policiesEnabled: false\n"), 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	run := exec.Command(binary, "run", "--spec", spec, "--provider", "mock")
+	run.Dir = projectDir
+	output, err := run.CombinedOutput()
+	if err == nil {
+		t.Fatalf("run should halt at confirm-design\n%s", output)
+	}
+	if !strings.Contains(string(output), "policy evaluation is off") {
+		t.Errorf("output does not report the kill-switch:\n%s", output)
+	}
+	if strings.Contains(string(output), "Policy at gate") {
+		t.Errorf("policies were evaluated despite policiesEnabled: false:\n%s", output)
+	}
+}
+
+func writeExamplePolicy(t *testing.T, projectDir string) {
+	t.Helper()
+	dir := filepath.Join(projectDir, ".claude", "policies")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatalf("create policy dir: %v", err)
+	}
+	body := "name: watch-design\nversion: \"1.0\"\nmatcher:\n  gate: confirm-design\n" +
+		"condition:\n  testsPass: true\naction:\n  type: require-human\n  reason: \"always ask\"\n"
+	if err := os.WriteFile(filepath.Join(dir, "watch.policy.yaml"), []byte(body), 0o644); err != nil {
+		t.Fatalf("write policy: %v", err)
 	}
 }

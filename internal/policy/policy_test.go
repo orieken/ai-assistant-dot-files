@@ -234,3 +234,42 @@ func TestDisabledPoliciesAreLoadedButNotMatched(t *testing.T) {
 		t.Errorf("a disabled policy matched: %+v", matched)
 	}
 }
+
+// The kill-switch was documented in three places for two releases and read
+// by nothing. Only an explicit false disables: a typo must not silently
+// switch policy evaluation off, because a control that turns itself off by
+// accident is worse than one nobody set.
+func TestKillSwitch(t *testing.T) {
+	cases := []struct {
+		name    string
+		content string
+		want    bool
+	}{
+		{"explicitly disabled", "policiesEnabled: false\n", false},
+		{"explicitly enabled", "policiesEnabled: true\n", true},
+		{"absent key", "maxDiffLines: 200\n", true},
+		{"empty file", "", true},
+		{"malformed yaml", "policiesEnabled: [unclosed\n", true},
+		{"unrelated keys are ignored", "mode: strict-human\nmaxContractRetries: 3\n", true},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "delivery-policy.yaml")
+			if err := os.WriteFile(path, []byte(testCase.content), 0o644); err != nil {
+				t.Fatalf("write config: %v", err)
+			}
+			if got := policy.Enabled(path); got != testCase.want {
+				t.Errorf("Enabled = %v, want %v", got, testCase.want)
+			}
+		})
+	}
+}
+
+// A missing config file is the normal case and must leave evaluation on —
+// the default has to be the behaviour the framework had before the switch
+// existed.
+func TestKillSwitchDefaultsToEnabledWithNoConfig(t *testing.T) {
+	if !policy.Enabled(filepath.Join(t.TempDir(), "absent.yaml")) {
+		t.Error("a missing delivery-policy.yaml disabled policy evaluation")
+	}
+}

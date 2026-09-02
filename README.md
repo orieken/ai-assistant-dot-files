@@ -511,7 +511,10 @@ rounds rather than looping on a model's reading of its own output. L3.8 has land
 per stage and per model call, and per-stage token counts and cost taken from
 the provider's own reported accounting rather than computed from a price
 table — so "what did this pipeline cost" is answerable, which it was not
-before. L2.15 (real
+before. L2.16 has landed too: delivery policies are loaded and evaluated by typed Go
+rather than by a model reading YAML, the always-human gate list is a
+compiled constant a policy cannot target, and every decision is recorded —
+though nothing is auto-approved yet, deliberately. L2.15 (real
 resume) is still ahead — see
 [docs/roadmaps/BUILD-ROADMAP.md](docs/roadmaps/BUILD-ROADMAP.md) and
 [ADR-006](docs/adrs/ADR-006-loom-executes-pipelines.md).

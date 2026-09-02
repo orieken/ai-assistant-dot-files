@@ -479,7 +479,44 @@ markdown-pipeline runs — detection, not enforcement.
    checkpoint with no duplicated work.
 
 ### L2.16 — Replace the LLM policy evaluator with a real one
-**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.13 · **Blocks**: L4.3 · *(audit H7)*
+**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.13 (shipped) · **Blocks**: L4.3 · *(audit H7)*
+
+**SHIPPED** 2026-09-02 (epic 87, `da5d829`…) — `internal/policy` loads, validates and evaluates
+policies in typed Go. Every decision is recorded as `policy.evaluated` on the run event timeline and
+in `run-state.json`; `loom run --dry-run-policies` replays them against a finished run.
+
+**No expression language, against this item's own suggestion of CEL or Rego.** The condition
+vocabulary is closed and small — nine fields over facts the executor already holds. CEL would buy
+arbitrary boolean logic at the cost of a dependency, a cost-limiting surface, and a gate decision
+written in a language most readers of a `.policy.yaml` will not know. Epic 82 reached the same
+conclusion for loop conditions. Adding a check is now a code change with a test, which is the right
+direction for a mechanism whose purpose is skipping human review.
+
+**Nothing is auto-approved, deliberately.** A matching `auto-approve` policy is recorded as what
+*would* have happened and the executor halts for a human anyway; every record carries
+`honoured: false`. The first run that skips a barrier should not also be the first evidence the
+evaluator decides what a human would. Honouring a decision is **L2.19**.
+
+**Three prose controls became code.** The always-human list is a compiled constant and a policy
+targeting one of those five gates fails at load, naming the gate — it used to be "silently
+ignored", so someone writing a policy to auto-approve a deployment saw no error. `policiesEnabled:
+false` now actually disables evaluation; it had been documented in three files and read by nothing.
+And an unanswerable condition resolves to **unknown**, never true.
+
+**What building it found.**
+
+1. **The two gate vocabularies did not overlap.** Policy gate IDs named actions (`git-commit`,
+   `deploy`); the executor's named stage progressions (`confirm-design`, `confirm-ship`). No valid
+   policy could name a barrier `loom run` has, so evaluation would have run zero times forever. The
+   executor's four gates are now policy-eligible. `confirm-ship` needs care in prose: it *precedes*
+   the ship, commit and deploy gates rather than being one.
+2. **The done-when's invalid YAML is worse than reported.** It names `policy-schema.md`'s example;
+   `auto-approve-refactor.policy.yaml` — the example *this file* cites as its reference policy for
+   `git-commit` — also had a duplicate `filePaths` key and had never been parsed. A lenient reader
+   takes the second and discards the first, so its `**/security/**` exclusion would never have run.
+3. **Five of nine condition fields have no source.** `diffLines`, `diffType`, `dryRunPass`,
+   `fitnessFunction.allPass`, `codeReviewer.behaviorChange` are measured by nothing. Sourcing them
+   is **L2.20**.
 
 1. **Problem**: `policy-evaluator.md` specifies a condition language
    (`filePaths.noneMatch: "**/security/**"`, `diffLines.lessThan`, `not:`, `any:`) whose evaluator is
@@ -495,6 +532,42 @@ markdown-pipeline runs — detection, not enforcement.
    `shared/policies/examples/*.policy.yaml`, new `internal/policy/`
 4. **Done when**: a policy targeting an always-human gate is rejected at load time, and the invalid
    YAML example above fails to parse.
+
+### L2.19 — Honour a policy decision at a gate
+**Workstream**: KERNEL · **Effort**: S · **Blocked by**: L2.16 (shipped) · **Blocks**: none · *(raised 2026-09-02)*
+
+1. **Problem**: L2.16 evaluates policies and records what they decided, then halts for a human
+   anyway. The feature people actually want from policies — a gate that proceeds without a
+   prompt — does not exist. That was deliberate: the first run to skip a barrier should not also be
+   the first evidence the evaluator is correct.
+2. **Architectural Fix**: `checkGate` honours a decision whose effect is `auto-approve`, recording
+   `honoured: true` and an approval attributed to the policy rather than to a person. Gated behind
+   the existing `policiesEnabled` switch, and never for an always-human gate, which cannot be
+   targeted at all. The change is small; the evidence it needs is not.
+3. **Target Files**: `internal/orchestrator/gate.go`, `policy_gate.go`, `shared/rules/approval-gates.md`
+4. **Done when**: a run with a matching auto-approve policy proceeds without a prompt, the approval
+   names the policy, and recorded history shows the same decisions before and after the change.
+
+**Do not build this until real runs show the evaluator deciding what a human would.** That is the
+entire reason L2.16 stopped short, and the records it writes are how the question gets answered.
+
+### L2.20 — Source the condition facts nothing measures
+**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.16 (shipped) · **Blocks**: none · *(raised 2026-09-02)*
+
+1. **Problem**: `policy-schema.md` declares nine condition fields; four have a source in run state.
+   `diffLines`, `diffType`, `dryRunPass`, `fitnessFunction.allPass` and
+   `codeReviewer.behaviorChange` are measured by nothing, so three of the five shipped example
+   policies can never evaluate — they report **unknown**, correctly and uselessly.
+2. **Architectural Fix**: Each fact needs a real source, and they are not the same kind of work.
+   Diff size and type mean the executor learning to run `git diff`, which it does not do today and
+   which raises its own question (diff against what — the run's start, the branch point, HEAD?).
+   `fitnessFunction.allPass` and `dryRunPass` mean capturing CI results the executor never sees.
+   `codeReviewer.behaviorChange` is a field the review contract could simply declare, and is the
+   cheap one.
+3. **Target Files**: `internal/orchestrator/policy_gate.go`, `internal/state/review_state.go`,
+   new diff source, `shared/policies/README.md`
+4. **Done when**: every field `policy-schema.md` declares either resolves from run state or is
+   removed from the schema — a vocabulary should not describe questions nothing can answer.
 
 ---
 
@@ -1132,7 +1205,16 @@ configured.
    triggers a re-plan rather than a halt.
 
 ### L4.3 — Global budget governor
-**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L3.8, L2.16 · **Blocks**: none
+**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L3.8 (shipped), L2.16 (shipped) · **Blocks**: none
+
+**UNBLOCKED** 2026-09-02. It inherits both halves it was waiting for: per-stage token counts and
+cost on every `StageRecord` with `RunState.TotalUsage()` summing them (epic 84), and a policy
+evaluator that runs as code with a working kill-switch (epic 87). Neither needs a metrics pipeline
+or a collector — a governor reads the same numbers `loom state show` prints.
+
+One property to inherit rather than re-litigate: a budget check that cannot see a number must not
+treat it as zero. Epic 87's evaluator resolves an unanswerable condition to **unknown**, and a
+governor deciding to halt on absent usage data has the same shape of problem.
 
 1. **Problem**: No token ceiling, no dollar ceiling, no wall-clock ceiling, no per-run cap of any
    kind. `maxDiffLines` and `maxContractRetries` in `.claude/delivery-policy.yaml` are the only

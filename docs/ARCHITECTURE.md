@@ -190,6 +190,11 @@ not. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifact set:
   drift (L3.9) — the framework previously kept two hand-maintained lists of event types and a
   recorder instructed to enforce one of them, which is how 60% of the specified surface ended up
   outside it.
+- **Policy Decisions** (in `run-state.json` and on the timeline) — what the policies watching each
+  gate decided, evaluated in typed Go from the run's own state (L2.16). Recorded, not honoured: the
+  executor halts at every gate regardless, so these say what *would* have happened. An authorization
+  decision used to be resolved by a model reading YAML, with the kill-switch and the always-human
+  list in the same prose it might misread.
 - **Human Corrections** (in `run-state.json` and on the timeline, diffs under
   `.approved/<gate>/corrections/`) — what a person changed at a gate, attributed to the agent that
   produced it (L4.5). The framework has specified this as its highest-value learning signal since

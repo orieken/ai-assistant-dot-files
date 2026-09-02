@@ -34,11 +34,11 @@ is undefined — write policies that do not depend on evaluation order.
 ## Audit trail (non-negotiable)
 
 Every policy decision — whether it auto-approves, rejects, escalates, or falls through to a human —
-was specified to emit a `policy.evaluated` telemetry event. **Nothing emits it**: the `.claude/telemetry/events.jsonl` layer had no verified writer and was retired in roadmap L3.9, and this evaluator is prose a model follows rather than code that runs. The rule that there are no silent auto-approvals
+emits a `policy.evaluated` event onto the run event timeline, recording every policy's outcome and the facts it could not answer. The rule that there are no silent auto-approvals
 in this framework. Teams that disable telemetry lose their audit trail and should not enable
 auto-approve policies.
 
-The event's shape is no longer specified anywhere; see `shared/telemetry/README.md` for why, and for the roadmap item (L2.16) that would define and emit it.
+The event's shape is generated from the event vocabulary — see `shared/schemas/telemetry/run-event-types.md`.
 
 ---
 
@@ -56,6 +56,30 @@ The declarative policy format is documented in `shared/policies/policy-schema.md
 
 ---
 
+## Which examples evaluate today
+
+`internal/policy` answers a condition from the run's own state, and only four of the nine declared
+condition fields have a source there: `codeReviewer.verdict`, `securityReviewer.criticals`,
+`testsPass`, and `filePaths`. The other five — `diffLines`, `diffType`, `dryRunPass`,
+`fitnessFunction.allPass`, `codeReviewer.behaviorChange` — are not measured by anything yet, so a
+check against them resolves to **unknown**, which never satisfies a condition.
+
+| Example | Evaluates today? |
+|---|---|
+| `require-human-on-critical-findings` | **Yes** — every field it tests has a source |
+| `require-human-review-security` | **Yes** — tests `filePaths` only |
+| `auto-approve-doc-changes` | No — needs `diffType` and `diffLines` |
+| `auto-approve-refactor` | No — needs `diffLines` and `fitnessFunction.allPass` |
+| `auto-approve-test-additions` | No — needs `dryRunPass` and `fitnessFunction.allPass` |
+
+The three that do not evaluate are kept deliberately: they document what the schema is meant to
+express, and they become live the moment the facts they need are sourced (roadmap **L2.20**). A
+decision naming the field it could not see is more useful than one that silently reports no match.
+
+Run `loom run --spec <file> --dry-run-policies` against a finished run to see this for yourself.
+
+---
+
 ## Emergency override
 
 To disable all policies for a project without deleting them:
@@ -65,8 +89,11 @@ To disable all policies for a project without deleting them:
 policiesEnabled: false
 ```
 
-This is a global kill-switch. All gate decisions revert to `require-human`. The policy files are
-preserved — re-enable by removing or flipping the flag.
+This is a global kill-switch, and as of roadmap L2.16 it is read by `loom run` rather than only
+documented — until that release it appeared in three files and nothing acted on it. Only an
+explicit `false` disables: a typo cannot silently switch evaluation off, because a control that
+turns itself off by accident is worse than one nobody set. The policy files are preserved —
+re-enable by removing or flipping the flag.
 
 ---
 

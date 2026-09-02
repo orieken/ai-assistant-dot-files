@@ -132,8 +132,9 @@ INVALIDATED for markdown-pipeline runs, and `loom state show` marks it. That is 
 barrier — the markdown pipeline can still proceed, because the gated action does not run under the
 executor.
 
-**Not yet.** Policy-based auto-approval of executor gates is **L2.16**; the Policy-Based Gate Type
-section above governs the prose gates only.
+**Not yet.** Policy-based auto-approval of executor gates is still not implemented: L2.16 shipped
+the evaluator and the audit trail, and honouring a decision is the follow-up item **L2.19**. The
+Policy-Based Gate Type section above describes what is recorded, not what is skipped.
 
 ---
 
@@ -142,18 +143,32 @@ section above governs the prose gates only.
 A policy-based gate operates identically to a human gate except the human prompt is replaced by
 the policy evaluator's decision when a matching policy exists and its condition is met.
 
-**No decision is recorded, and none ever has been.** This section used to say the evaluator emits a
-`policy.evaluated` event for every decision, so there are no silent auto-approvals. That event had
-no emitter: the file it targeted was never written and was retired in roadmap L3.9, and the
-evaluator is itself prose a model follows rather than code that runs. The requirement below is
-unchanged — a gate marked **Always Human** is never delegated, and a policy-eligible gate needs a
-matching policy with no `require-human` policy also matching — but nothing produces an audit trail
-proving which decisions were made. Building an evaluator that runs as code and records what it
-decided is roadmap **L2.16**.
+**Decisions are recorded now, and nothing is auto-approved yet** (roadmap L2.16, shipped
+2026-09-02). Both halves matter, and neither should be read as the other.
 
-Until it lands, treat policy-based auto-approval as a convenience that trades away
-auditability, and prefer human confirmation for anything you would want to be able to reconstruct
-afterwards.
+What exists: `loom run` loads `.claude/policies/*.policy.yaml`, evaluates every policy watching a
+gate against the run's own state, and records what they collectively decided — as
+`policy.evaluated` on the run event timeline and in `run-state.json`, naming each policy, its
+outcome, and any fact it could not see. `loom run --dry-run-policies` prints the same decisions for
+a finished run without touching anything. This is the audit trail this section asserted since v3.3
+and did not have.
+
+What does not exist: **the executor still halts at every gate.** A matching `auto-approve` policy
+changes nothing about whether a human is asked; the record simply says what would have happened.
+That is deliberate — the first run that skips a barrier should not also be the first evidence the
+evaluator decides what a human would — and every record carries `honoured: false` so the history
+stays comparable when that changes.
+
+Three properties are now enforced in code rather than asserted in prose:
+
+- The **Always Human** list is a compiled constant. A policy targeting one of those five gates
+  fails to load, naming the gate and the reason. It used to be "silently ignored", which meant
+  someone who wrote a policy to auto-approve a deployment saw no error.
+- A condition the run cannot answer resolves to **unknown**, never to true. Five of the nine
+  declared condition fields have no source in run state today, and a decision names which ones it
+  could not see rather than guessing.
+- `policiesEnabled: false` in `.claude/delivery-policy.yaml` now actually disables evaluation.
+  Until this release it was documented in three places and read by nothing.
 
 To opt in: place `.policy.yaml` files in `.claude/policies/` in your project.
 To opt out globally: set `policiesEnabled: false` in `.claude/delivery-policy.yaml`.

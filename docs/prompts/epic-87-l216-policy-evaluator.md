@@ -124,8 +124,22 @@ executor's gates name *stage progressions* (`confirm-design`, `confirm-security`
 because of one. **Commit** (`feat(policy): evaluate policies at gates and record every decision`),
 report, PAUSE.
 
-## Phase C — Docs, and the honesty pass — BLOCKED BY Phase B
+### Phase C decisions (settled 2026-09-02, from a gap found in Phase B)
 
+**The documented kill-switch was never implemented.** `policiesEnabled: false` in
+`.claude/delivery-policy.yaml` appears in `approval-gates.md`, `shared/policies/README.md`, and as
+step 1 of the evaluator's own algorithm — and nothing in Go reads it. Phase B evaluates
+unconditionally.
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Implement the kill-switch in this phase | Phase C is **not pure docs**: it reads `.claude/delivery-policy.yaml` and skips evaluation when `policiesEnabled` is false | Shipping an evaluator whose off-switch exists only in prose repeats the exact defect this item removes. It is harmless today because nothing is honoured, which is precisely why now is the cheap moment to build it — and the follow-up that starts honouring decisions then inherits a working off-switch instead of needing one under pressure |
+| One evaluable example is added | The four existing examples stay; a fifth uses only answerable fields | The four document what the schema is meant to express and should not be deleted for being ahead of the executor. But a first `--dry-run-policies` that prints four UNKNOWNs reads as broken rather than as unmeasured, so one example must actually evaluate. The README says which are which |
+
+## Phase C — Docs, the kill-switch, and the honesty pass — BLOCKED BY Phase B
+
+0. Implement `policiesEnabled: false` per the decision above, with a test, and add the one
+   evaluable example policy.
 1. `shared/rules/approval-gates.md`: replace epic 86's "no decision is recorded, and none ever has
    been" with what is now true — decisions are recorded and auditable, and **auto-approval still
    does not happen**. Do not overstate: the gate still stops for a human.
