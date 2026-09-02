@@ -770,7 +770,15 @@ able to route to agents it was never hardcoded to know about.)*
 ## Workstream: MEMORY
 
 ### L3.4 — Implement the retriever backends that are currently markdown
-**Workstream**: MEMORY · **Effort**: L · **Blocked by**: L2.7 · **Blocks**: L3.5
+**Workstream**: MEMORY · **Effort**: L · **Blocked by**: L2.7 · **Blocks**: L3.5, ADR-002's fitness function
+
+**Also owns the `retrieval.queried` emitter** (added 2026-09-01, epic 86). ADR-002 declared
+retrieval quality a judgment-only fitness function whose evidence would be a telemetry log of
+retrieval events. That log never existed, the event type was never defined, and the layer was
+retired in L3.9 — so retrieval quality is currently **unmeasured**, and graduating a corpus to a
+higher tier is a judgement with no data behind it. Emitting `retrieval.queried` is not a row in a
+table: it means a retriever that runs as code and can report what it was asked and what it returned,
+which is this item. `shared/evaluation/retrieval-regression.md` waits on the same thing.
 
 1. **Problem**: `shared/rag/retriever.interface.md` is a well-specified contract — references not
    content, bounded top-K, corpus isolation, no side effects. Then three of its four adapters
@@ -799,8 +807,13 @@ able to route to agents it was never hardcoded to know about.)*
    `artifact.corrected` in run state and on `run-events.jsonl` with a retained diff. This item's job
    for it is durability across runs and queryability, not detection — that is built.)* Index it as a retrievable
    corpus so the planner can condition on "how did this go last time."
-3. **Target Files**: `shared/skills/pipeline-trace/SKILL.md`, `shared/telemetry/event-schema.md`,
+3. **Target Files**: `shared/skills/pipeline-trace/SKILL.md`,
    `shared/rag/retriever.interface.md` (new `episodic` corpus), new `internal/memory/`
+   *(`shared/telemetry/event-schema.md` was here; it is deleted. The event vocabulary this item
+   stores is now generated from `internal/orchestrator/vocabulary.go` into
+   `shared/schemas/telemetry/` — L3.9 shipped, so this item **inherits a vocabulary rather than
+   needing to invent one**, and adding an episodic event type means adding it to that enum, where
+   the fitness function will require it to be documented.)*
 4. **Done when**: "show me every run where code-reviewer retried more than twice" is answerable by
    query.
 
@@ -889,16 +902,41 @@ though its usage signal now exists.
 ### L3.9 — Resolve the telemetry schema contradiction and generate the schema
 **Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.8 (shipped) · **Blocks**: none · *(audit H6)*
 
-**UNBLOCKED** 2026-09-01 by epic 84, which deliberately left this item's whole scope alone. What it
-inherits: `internal/telemetry` now exists as the home for the enum, and the executor is the emitter
-that makes "an undocumented event type is a compile error" reachable. What it still owns, untouched:
-the six-documented-versus-fifteen-emitted contradiction, the `event`/`event_type` key mismatch in
-the policy events, and deleting `event-recorder.md`.
+**SHIPPED** 2026-09-01 (epic 86, `d4df34a`…`b134dc2`) — one Go enum in
+`internal/orchestrator/vocabulary.go` is the source of truth; `shared/schemas/telemetry/`'s JSON
+Schema and event-types table are generated from it by `go run ./cmd/gen-schemas`, with a drift test.
+`shared/telemetry/event-recorder.md` and `event-schema.md` are deleted, and every live instruction
+that pointed at `.claude/telemetry/events.jsonl` is redirected.
 
-One boundary epic 84 drew that this item should keep: **traces are not events**. The run's OTel
-trace and `run-events.jsonl` answer different questions — timing and cost versus gates, digests and
-staleness — and `.claude/telemetry/events.jsonl` is a third thing that still has no emitter. Folding
-them together would lose the audit log's independence from an exporter being configured.
+**The done-when was amended, and made stricter.** It read: *"all 15 event types are in one enum and
+adding a 16th without documenting it fails to compile."* That count was wrong — it assumed all
+fifteen were real. Fourteen are emitted and in the enum; the other nine were specified across the
+spec files and emitted by nothing. Meeting the letter would have meant putting types that fire from
+nowhere into the source of truth, which is the trap this item exists to close. So the enum holds
+**only what is emitted**, the nine live in one table in `shared/telemetry/README.md` naming the item
+that would build each emitter, and the fitness function parses the constants out of the source with
+`go/ast` rather than trusting a list — a registry that enumerated itself would pass happily while a
+new constant sat undocumented beside it.
+
+**Where the enum lives, against this item's own target-files line.** It stays in
+`internal/orchestrator`, not the proposed `internal/telemetry/events.go`: epic 84's guardrail
+fitness function forbids the orchestrator importing the telemetry adapter, and the enum belongs
+where the emitter is. That line predates the boundary.
+
+**What building it found.** The premise "emitted by nothing" was not quite right — `deliver-feature`
+instructed emission at seven points, and three other files added more. Prompt-discipline
+instructions, never verified, and a v3.0.0 release check recorded the file was never created; but
+instructions, and one of them backed a stated guarantee. `approval-gates.md` claimed a policy-based
+gate emits `policy.evaluated` for every decision, so there are no silent auto-approvals. Nothing
+recorded those decisions and nothing ever had. That file now states the gap rather than losing it:
+the requirement is unchanged, no audit trail exists, and **L2.16** is what would produce one. See
+also the ADR-002 amendment — its judgment-only fitness function named the same non-existent layer as
+its evidence.
+
+One boundary from epic 84 that this item kept: **traces are not events**. The run's OTel trace and
+`run-events.jsonl` answer different questions — timing and cost versus gates, digests and staleness
+— and folding them together would cost the audit log its independence from an exporter being
+configured.
 
 1. **Problem**: `event-recorder.md` instructs: "**Never** invent a new `event_type` — refuse if the
    caller passes one not documented." `event-schema.md` documents **six** types. Nine more are

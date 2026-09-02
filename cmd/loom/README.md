@@ -304,6 +304,9 @@ Recorded kinds: `run.started`, `run.completed`, `stage.started`, `stage.complete
 - **Append-only.** The file is never rewritten or truncated; each event is one write. A
   process killed mid-write can leave a torn final line, which readers skip rather than
   failing on.
+- **Its event types are generated.** One Go enum is the source of truth; the JSON Schema and the
+  table of types under `shared/schemas/telemetry/` come from it via `go run ./cmd/gen-schemas`, and
+  a test fails when they drift. Adding a kind without documenting it fails the build (roadmap L3.9).
 - **Not the trace.** This is the audit log — gates, digests, staleness — and it stays readable
   with no collector configured and no exporter running. The run's OpenTelemetry trace, in
   `traces.jsonl` beside it, answers a different question: how long each stage took and what it

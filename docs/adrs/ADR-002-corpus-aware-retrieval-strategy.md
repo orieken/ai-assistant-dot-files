@@ -59,6 +59,18 @@ The `shared/rag/` adapter interface stays intentionally simple: `Retrieve(query,
 
 - **LightRAG as future v2** — the design pack names LightRAG as the preferred vector backend, but it adds a Python runtime dependency to installs. Deferring to a v2 upgrade if sqlite-vec's simpler baseline proves insufficient in practice.
 - **Judgment-only fitness function for retrieval quality** — retrieval quality is hard to measure without a test set that itself becomes a maintenance burden. Instead, use the AOS telemetry layer (Phase 1 landed) to record retrieval events (query, hits returned, hit chosen/dismissed). Review the log periodically for miss patterns. If a class of miss becomes chronic, that's the signal to graduate a corpus to the next retrieval tier.
+
+  > **Amendment, 2026-09-01 (roadmap L3.9).** The mechanism above never existed. The AOS telemetry
+  > layer recorded nothing — `.claude/telemetry/events.jsonl` had no verified writer — and a
+  > `retrieval.queried` event type was never defined, let alone emitted. That layer is now retired,
+  > so there is no log to review periodically and no miss pattern to find.
+  >
+  > The decision stands; what changes is an honest account of what backs it. Guardrail #7 permits a
+  > judgment-only fitness function with a documented reason, and the documented reason is now this:
+  > **retrieval quality is currently unmeasured**, and graduating a corpus to a higher tier is a
+  > judgement call with no data behind it. Giving it data means building the retriever and its
+  > emitter together — roadmap **L3.4** — not adding a row to a table. Until then, treat any claim
+  > about retrieval quality in this repository as an opinion.
 - **Mechanical CI check that could be added later**: assert every entry in `shared/memory-registry.json` has a `retrievalBackend` field valued from the enum `{lexical, llm-as-retriever, bm25, vector}` — no false positives, catches "someone added a source without deciding how it's retrieved."
 
 ## Related

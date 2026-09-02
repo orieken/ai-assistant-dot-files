@@ -164,7 +164,7 @@ full install unchanged.**
 |---|---|---|
 | **1** | Foundational prompts | The 5 core rules (guardrails, approval gates, design principles, memory trust boundary, testing), all agents + skills, project base files. Core rules stay under the context ceiling recorded in `levels.yaml` (~5.6k tokens, test-enforced) |
 | **2** | Coordinated multi-agent | Level 1 + `.mcp.json` registering `loom mcp serve` (written only if absent) + workflow and orchestration definitions under `.claude/` |
-| **3** | Observed and governed | Level 2 + telemetry/hooks docs; telemetry stream and policy engine are gated on unlanded roadmap items today |
+| **3** | Observed and governed | Level 2 + hooks docs. Telemetry is real for `loom run` — an event timeline with a generated vocabulary, plus OTel traces with per-stage token counts and cost — while the hook executor (L3.10) and the policy engine (L2.16) are gated on unlanded roadmap items |
 | **4** | Self-improving | Level 3 + evaluation corpus; the live evaluation loop is gated on unlanded roadmap items today |
 
 Language and IaC conventions are **on-demand modules**, not part of any level bundle — opt in per
