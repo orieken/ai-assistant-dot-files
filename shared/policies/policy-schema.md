@@ -46,9 +46,13 @@ matcher:
 | `external-api` | Gate 5 — third-party API mutation | No — always human |
 | `deploy` | Gate 8 — triggering a deployment | No — always human |
 
-Policies targeting non-eligible gates are **silently ignored** by the evaluator and logged as
-`policy.skipped` in telemetry (reason: `gate-not-eligible`). The evaluator never auto-approves a
-gate marked "No — always human."
+Policies targeting non-eligible gates **fail to load**, naming the gate and the reason it is
+always human. This used to say they were "silently ignored" — which meant someone who wrote a
+policy to auto-approve a deployment saw no error and could reasonably conclude it worked. Silence
+is the wrong answer to a request that will never be honoured.
+
+The always-human list is a **compiled constant** in `internal/policy`, not a field in any YAML. A
+kill-switch that can be edited by whoever is trying to bypass it is not a control.
 
 ---
 
@@ -59,26 +63,40 @@ A condition is a YAML map of key-value checks. All checks must pass for the cond
 
 ### Scalar checks
 
+This is a **catalogue of available checks, not a single condition** — a real condition uses a
+subset, and each field may appear at most once in a mapping. (This block previously listed
+`diffType` and `filePaths` twice each, which is invalid YAML; no parser had ever read this file.
+It is now valid and is loaded as a fixture by `internal/policy`'s tests.)
+
+| Field | Operators | Value | Meaning |
+|---|---|---|---|
+| `diffLines` | `lessThan`, `equals` | number | diff size in lines |
+| `diffType` | `equals` | string | `docs-only`, `test-additions`, … |
+| `testsPass` | bare boolean, `equals` | bool | all configured tests pass |
+| `dryRunPass` | bare boolean, `equals` | bool | CI dry-run validation passed |
+| `filePaths` | `allMatch`, `noneMatch`, `anyMatch` | glob | every / no / any changed file matches |
+| `codeReviewer.verdict` | `equals` | string | the review verdict, e.g. `APPROVED` |
+| `codeReviewer.behaviorChange` | bare boolean, `equals` | bool | the review reported a behaviour change |
+| `securityReviewer.criticals` | `equals`, `lessThan` | number | count of critical findings |
+| `fitnessFunction.allPass` | bare boolean, `equals` | bool | all fitness functions pass |
+
 ```yaml
 condition:
   diffLines:
-    lessThan: 200           # diff size in lines
-  testsPass: true           # all configured tests pass (boolean)
+    lessThan: 200
+  testsPass: true
   codeReviewer.verdict:
-    equals: "APPROVED"      # code-reviewer produced APPROVED verdict
-  securityReviewer.criticals:
-    equals: 0               # zero critical security findings
-  fitnessFunction.allPass: true   # all fitness functions pass
-  diffType:
-    equals: "docs-only"     # diff contains only documentation files
-  diffType:
-    equals: "test-additions" # diff adds test files without touching source
+    equals: "APPROVED"
   filePaths:
-    allMatch: "docs/**"     # all changed files match a glob
-  filePaths:
-    noneMatch: "**/security/**"   # no changed files match a glob
-  dryRunPass: true          # CI dry-run validation passed
+    noneMatch: "**/security/**"
 ```
+
+To express "none of these paths", either use `noneMatch` once with a single glob, or combine
+alternatives under `not: { any: [...] }` — a field may not repeat within one mapping.
+
+**This list is closed.** There is no expression language: the evaluator is typed Go
+(`internal/policy`), so adding a check is a code change with a test, not a config change. That is
+deliberate for a mechanism whose purpose is skipping human review (roadmap L2.16).
 
 ### OR logic
 

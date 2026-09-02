@@ -16,10 +16,12 @@ condition:
   fitnessFunction.allPass: true
   diffLines:
     lessThan: 200
-  filePaths:
-    noneMatch: "**/security/**"
-  filePaths:
-    noneMatch: "**/auth/**"
+  not:
+    any:
+      - filePaths:
+          anyMatch: "**/security/**"
+      - filePaths:
+          anyMatch: "**/auth/**"
 
 action:
   type: auto-approve
