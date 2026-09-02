@@ -29,6 +29,35 @@ here directly). Do NOT push.
 6. `shared/telemetry/event-schema.md` — the `gate_decision` event and its three outcomes. Read the
    Executor note: it already says L2.14 made this detection real and that the *emitter* is L3.9.
 
+## Second discovery (Phase A, 2026-09-01) — where a correction can actually live
+
+Phase A's own test turned out to be vacuous, and finding out why changed Phase B's design.
+
+**A human edit to a tracked artifact does not survive under `loom run`.** Editing a completed
+artifact makes its stage STALE (L2.12), so the executor re-runs the stage and the agent's fresh
+output overwrites what the human wrote. Verified directly: invocations go from `[analyst]` to
+`[analyst analyst]` and the file reverts. The executor treats an edit as drift to correct, not as a
+correction to keep.
+
+**And for the seven typed artifacts, the file a human would naturally edit is not tracked at all.**
+The artifact is `state/<stage>.json`; `analysis.md` is a *rendered view*, deliberately not
+digest-tracked since epic 79 so that editing it cannot corrupt a run. So editing `analysis.md` is
+silently ignored and overwritten at the next render, while hand-editing the JSON produces a signal
+about an edit the executor then discards. The natural action yields nothing; the unnatural one
+yields something worthless.
+
+**The resolution: the correction signal comes from the rendered view.** The property that makes the
+view safe is exactly what makes it the right channel — a human can write "here is what this should
+have said" into `analysis.md`, the executor will never read it, and the divergence from what was
+rendered is a pure corrective signal with nothing to discard and nothing to guard against. For the
+eight artifacts that are still markdown, that markdown *is* the tracked artifact, so the capture
+happens at detection time before the staleness cascade re-runs the stage. Both cases end up as one
+comparison against a retained baseline.
+
+Two things this design must state plainly rather than let someone discover: a view edit is
+**advisory by construction** — it changes nothing the pipeline reads — and the human's text survives
+only in the retained copy and the diff, because the next render overwrites the view.
+
 ## The discovery that shapes this epic
 
 **The schema and L2.14 describe two different sequences, and only one of them is covered.**
@@ -53,6 +82,9 @@ approval.
 |---|---|---|
 | Where the signal lands | A new `EventKind` on `run-events.jsonl`, alongside `gate.approved` and `gate.invalidated` | The timeline is a Go-owned enum with no prose contradiction, needs nothing from L3.9, and sits exactly where this signal is produced. `events.jsonl` and the `gate_decision` schema stay **entirely L3.9's problem** — writing them here would build half of L3.9 under this item's number, which is the scope-absorption failure epic 83 had to write a roadmap correction for |
 | How a diff becomes possible | Retain a copy of every gate-bound artifact when the gate is presented and when an approval is granted, following `retainIteration`'s pattern exactly — copy aside, digest the copy, record it in state | Digests alone answer *that* something changed and never *what*, and L4.4's prompt-variant generation needs to read the correction. L2.17 already established that retaining the artifact is what makes a question about an earlier state answerable |
+| What is compared *(revised in Phase A)* | For a typed stage, the **rendered view** (`analysis.md`); for an untyped stage, the markdown artifact itself | The view is where a human's correction can exist without being destroyed or discarded, and it is what a person would open. Comparing only tracked artifacts would miss all seven typed stages and would describe an edit the executor immediately re-runs away |
+| Where an untyped artifact is compared | At detection time, before the staleness cascade re-runs the stage | The re-run overwrites the human's text. Capturing after it would record the agent's second attempt as if it were the human's correction — a wrong number wearing the appearance of a measurement |
+| What a view edit means | Advisory. It changes nothing the pipeline reads, and the next render overwrites it | Stated rather than discovered. The signal is the *record* of the correction, not the adoption of it — adopting it is L4.4's problem and possibly nobody's |
 | What the baseline is | The **presented baseline**: set at gate halt, refreshed at each approval | See the discovery above. Anchoring only to approval would miss the schema's own primary sequence |
 | Attribution | To the **producing stage and its agent**, not to the gate | The signal's value is "this agent's output needed human correction". A gate name says where it was caught, not who produced it. `run-state.json` already knows which stage wrote each artifact |
 | Scope | `loom run` only. The docs state plainly that the markdown pipeline does not emit it | Same posture as every gate and state item before this. That pipeline's checksums are the model's own except where `loom state verify` runs, so a signal from it would vary in trustworthiness by whether the binary happened to be installed — worse than no signal, because it would be mined as if uniform |
@@ -98,19 +130,24 @@ at a gate`), report, PAUSE.
 
 ## Phase B — Detect the correction and emit it — BLOCKED BY Phase A
 
-1. At approval, compare each bound artifact against the presented baseline. Unchanged is
-   `approved`; changed is the correction case.
-2. A new `EventKind` on the timeline carrying the bounded summary from the design table, attributed
+1. Extend Phase A's retention to cover the **rendered view** of every typed stage, not only the
+   tracked artifact. This is the file a human edits, and it is the comparison target.
+2. At approval, compare each retained view (typed) or artifact (untyped) against the presented
+   baseline. Unchanged is a plain approval; changed is the correction case.
+3. For untyped artifacts, the comparison must happen **before** verification demotes the stage and
+   re-runs it — otherwise the recorded "correction" is the agent's second attempt.
+4. A new `EventKind` on the timeline carrying the bounded summary from the design table, attributed
    to the **producing stage and agent**. Write the unified diff to a retained file beside the
    baseline and name it in the event.
-3. Cover both sequences: edited-before-first-approval (the schema's) and
+5. Cover both sequences: edited-before-first-approval (the schema's) and
    edited-after-approval-then-re-approved (L2.14's). Both are the same comparison against the
    presented baseline; the tests must show that explicitly, because the epic exists partly because
    they were conflated.
-4. Record the correction on run state too, so it survives without reading the timeline.
-5. Tests: both sequences produce the event; an unchanged approval produces none; the attribution
-   names the producing agent rather than the gate; the diff file matches what changed; a diff that
-   cannot be written leaves the approval intact.
+6. Record the correction on run state too, so it survives without reading the timeline.
+7. Tests: a view edit on a typed stage produces the signal and does **not** disturb the run; both
+   sequences produce the event; an unchanged approval produces none; the attribution names the
+   producing agent rather than the gate; an untyped edit is captured before the re-run rather than
+   after; a diff that cannot be written leaves the approval intact.
 
 **Done when**: editing an artifact at a gate produces a stored diff attributable to the producing
 agent — L4.5's stated done-when, in full. **Commit** (`feat(orchestrator): emit the human-correction
@@ -126,6 +163,11 @@ signal at approval`), report, PAUSE.
 3. `shared/skills/deliver-feature/SKILL.md` and `shared/skills/extract-lessons/SKILL.md`: state
    plainly which pipeline produces this signal and which does not, and what `extract-lessons` may
    now mine when a run was executed by `loom run`.
+3a. Document the editing contract for a human at a gate: annotating a rendered view is how you say
+   "this should have said X", it is recorded and attributed, and it is advisory — the pipeline does
+   not adopt it and the next render overwrites the file. Editing a tracked artifact instead re-runs
+   its stage (L2.12), which is a different act with a different consequence. `cmd/loom/README.md`
+   carries this too.
 4. Roadmap: L4.5 **SHIPPED**; update **L4.4** with what it inherits and what it still needs; update
    **L3.5** to record that it adopts this signal rather than inventing one; check L4.5's blockers
    line against reality the way epic 84 had to.
