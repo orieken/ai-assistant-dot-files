@@ -30,6 +30,12 @@ const otelModulePrefix = "go.opentelemetry.io/"
 var innerLayers = []string{
 	"github.com/orieken/loom/internal/state",
 	"github.com/orieken/loom/internal/orchestrator",
+	// The MCP server's domain layer is held to it too. Tool-call spans are
+	// emitted from mcp_adapter.go, which is explicitly the only file allowed
+	// to translate between domain types and the wire — so it is also the
+	// only place telemetry belongs (M0.3 and guardrail #8 agreeing).
+	"github.com/orieken/loom/shared/mcp/internal/domain",
+	"github.com/orieken/loom/tools",
 }
 
 func TestInnerLayersDoNotImportOpenTelemetry(t *testing.T) {

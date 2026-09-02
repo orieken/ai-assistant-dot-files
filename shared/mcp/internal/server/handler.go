@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/orieken/loom/internal/telemetry"
 	"github.com/orieken/loom/shared/mcp/internal/domain"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
@@ -10,6 +11,10 @@ import (
 type Handler struct {
 	logger   *logging.Logger
 	registry *domain.Registry
+	// session traces tool calls (roadmap L3.8). A nil session is the normal
+	// case and is safe to use: the server runs untraced unless an OTLP
+	// endpoint is configured.
+	session *telemetry.Session
 }
 
 // New constructs a Handler wired with all framework M1 tools.
@@ -18,6 +23,12 @@ func New(logger *logging.Logger) *Handler {
 		logger:   logger,
 		registry: buildFrameworkRegistry(logger),
 	}
+}
+
+// WithTracing attaches a telemetry session so tool calls are traced. Passing
+// nil leaves the handler untraced, which is the default.
+func (h *Handler) WithTracing(session *telemetry.Session) {
+	h.session = session
 }
 
 // Registry returns the handler's tool registry.

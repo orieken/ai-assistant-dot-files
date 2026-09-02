@@ -1,14 +1,19 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
 
+	"github.com/orieken/loom/internal/telemetry"
 	"github.com/orieken/loom/shared/mcp/internal/domain"
+	"github.com/orieken/loom/shared/mcp/internal/logging"
 )
 
 type stubTool struct {
@@ -71,7 +76,7 @@ func TestMCPToolHandlerConvertsRequestAndResult(t *testing.T) {
 			request := mcp.CallToolRequest{}
 			request.Params.Arguments = map[string]any{"projectPath": "/tmp/x"}
 
-			got, err := mcpToolHandler(stub)(context.Background(), request)
+			got, err := New(logging.NewLogger(&bytes.Buffer{})).mcpToolHandler(stub)(context.Background(), request)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -107,7 +112,7 @@ func TestMCPToolHandlerPropagatesExecuteError(t *testing.T) {
 	executeErr := errors.New("transport failure")
 	stub := &stubTool{name: "stub_tool", err: executeErr}
 
-	_, err := mcpToolHandler(stub)(context.Background(), mcp.CallToolRequest{})
+	_, err := New(logging.NewLogger(&bytes.Buffer{})).mcpToolHandler(stub)(context.Background(), mcp.CallToolRequest{})
 	if !errors.Is(err, executeErr) {
 		t.Errorf("expected execute error to propagate, got %v", err)
 	}
@@ -116,5 +121,66 @@ func TestMCPToolHandlerPropagatesExecuteError(t *testing.T) {
 func TestMCPResultNilStaysNil(t *testing.T) {
 	if got := mcpResult(nil); got != nil {
 		t.Errorf("expected nil, got %#v", got)
+	}
+}
+
+// Tool telemetry must be invisible to the tools: a handler with no session
+// still calls Execute and returns its result. Tracing is off by default and
+// must never be load-bearing.
+func TestToolHandlerWorksWithoutATelemetrySession(t *testing.T) {
+	stub := &stubTool{name: "stub_tool", result: domain.NewTextResult("ok")}
+	request := mcp.CallToolRequest{}
+	request.Params.Arguments = map[string]any{"projectPath": "/tmp/x"}
+
+	handler := New(logging.NewLogger(&bytes.Buffer{}))
+	got, err := handler.mcpToolHandler(stub)(context.Background(), request)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertTextResult(t, got, "ok", false)
+}
+
+// Log lines carry trace and span IDs when a trace is in flight, so a log
+// and a span can be joined without guessing from timestamps.
+func TestToolCallLogsCarryTraceCorrelation(t *testing.T) {
+	const parent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+	t.Setenv(telemetry.TraceParentEnvVar, parent)
+	session, err := telemetry.Start(telemetry.Options{
+		Version: "test", TraceFile: filepath.Join(t.TempDir(), telemetry.TracesFileName),
+	})
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	logs := &bytes.Buffer{}
+	handler := New(logging.NewLogger(logs))
+	handler.WithTracing(session)
+
+	stub := &stubTool{name: "stub_tool", result: domain.NewTextResult("ok")}
+	ctx := telemetry.ContextFromEnvironment(context.Background())
+	if _, err := handler.mcpToolHandler(stub)(ctx, mcp.CallToolRequest{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_ = session.Shutdown(context.Background())
+
+	if !strings.Contains(logs.String(), "4bf92f3577b34da6a3ce929d0e0e4736") {
+		t.Errorf("tool call log carries no trace id:\n%s", logs.String())
+	}
+}
+
+// Untraced calls must still log, without empty correlation fields that
+// would read as a trace that failed rather than one that never started.
+func TestUntracedToolCallLogsWithoutEmptyCorrelationFields(t *testing.T) {
+	logs := &bytes.Buffer{}
+	handler := New(logging.NewLogger(logs))
+	stub := &stubTool{name: "stub_tool", result: domain.NewTextResult("ok")}
+
+	if _, err := handler.mcpToolHandler(stub)(context.Background(), mcp.CallToolRequest{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.Contains(logs.String(), "trace_id") {
+		t.Errorf("untraced call logged a trace_id field:\n%s", logs.String())
+	}
+	if !strings.Contains(logs.String(), "tool.called") {
+		t.Errorf("untraced call did not log at all:\n%s", logs.String())
 	}
 }

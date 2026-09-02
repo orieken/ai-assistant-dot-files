@@ -13,6 +13,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/server"
 
+	"github.com/orieken/loom/internal/telemetry"
 	"github.com/orieken/loom/shared/mcp/internal/logging"
 	mcpserver "github.com/orieken/loom/shared/mcp/internal/server"
 	"github.com/orieken/loom/tools"
@@ -46,7 +47,15 @@ func Frameworks(logWriter io.Writer) *tools.Registry {
 // FrameworkTools couples callers to loom's mcp-go version pin and will be
 // removed after the D.2 embedding API's first tagged release.
 func FrameworkTools(s *server.MCPServer, logWriter io.Writer) error {
+	return FrameworkToolsTraced(s, logWriter, nil)
+}
+
+// FrameworkToolsTraced is FrameworkTools with a telemetry session attached,
+// so each tool call becomes a span (roadmap L3.8). A nil session traces
+// nothing, which is what FrameworkTools passes.
+func FrameworkToolsTraced(s *server.MCPServer, logWriter io.Writer, session *telemetry.Session) error {
 	handler := mcpserver.New(logging.NewLogger(resolveLogWriter(logWriter)))
+	handler.WithTracing(session)
 	return handler.RegisterTools(s)
 }
 

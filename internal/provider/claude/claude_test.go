@@ -14,6 +14,7 @@ import (
 
 	"github.com/orieken/loom/internal/orchestrator"
 	"github.com/orieken/loom/internal/provider/claude"
+	"github.com/orieken/loom/internal/telemetry"
 )
 
 // Leading YAML frontmatter mirrors real shared/agents/*.md files — it is why
@@ -281,5 +282,58 @@ func TestInvokeReportsNoModelWhenSeveralServedTheRequest(t *testing.T) {
 	}
 	if output.Usage.Model != "" {
 		t.Errorf("model = %q, want empty when several models served the request", output.Usage.Model)
+	}
+}
+
+// The subprocess must carry TRACEPARENT so a tool call the agent makes can
+// land under the stage that caused it. Env is the only channel: MCP carries
+// no trace context, and loom does not spawn the MCP server.
+func TestInvokeExportsTraceParentToTheSubprocess(t *testing.T) {
+	dir := t.TempDir()
+	envFile := filepath.Join(dir, "env.txt")
+	binary := writeFakeClaude(t, dir, `printenv > `+envFile+`
+`+envelopeScript("# analysis output"))
+	provider, stage, input := newTestProvider(t, binary)
+
+	session, err := telemetry.Start(telemetry.Options{
+		Version: "test", TraceFile: filepath.Join(dir, "traces.jsonl"),
+	})
+	if err != nil {
+		t.Fatalf("telemetry.Start: %v", err)
+	}
+	ctx, span := session.Tracer().StartStage(context.Background(), orchestrator.StageSpan{ID: "analyst"})
+	if _, err := provider.Invoke(ctx, stage, input); err != nil {
+		t.Fatalf("Invoke: %v", err)
+	}
+	span.End(orchestrator.SpanOutcome{Status: orchestrator.StageStatusCompleted})
+	_ = session.Shutdown(context.Background())
+
+	environment := readFile(t, envFile)
+	if !strings.Contains(environment, telemetry.TraceParentEnvVar+"=00-") {
+		t.Errorf("subprocess environment carries no %s:\n%s", telemetry.TraceParentEnvVar, environment)
+	}
+	// The rest of the environment must survive — replacing it rather than
+	// appending would strip PATH and HOME from every agent.
+	if !strings.Contains(environment, "PATH=") {
+		t.Error("subprocess lost the inherited environment")
+	}
+}
+
+// Untraced runs must not set the variable at all. An empty TRACEPARENT is
+// worse than an absent one: a child would try to parse it.
+func TestInvokeSetsNoTraceParentWhenUntraced(t *testing.T) {
+	dir := t.TempDir()
+	envFile := filepath.Join(dir, "env.txt")
+	binary := writeFakeClaude(t, dir, `printenv > `+envFile+`
+`+envelopeScript("# analysis output"))
+	provider, stage, input := newTestProvider(t, binary)
+
+	if _, err := provider.Invoke(context.Background(), stage, input); err != nil {
+		t.Fatalf("Invoke: %v", err)
+	}
+	for _, line := range strings.Split(readFile(t, envFile), "\n") {
+		if strings.HasPrefix(line, telemetry.TraceParentEnvVar+"=") {
+			t.Errorf("untraced run exported %q", line)
+		}
 	}
 }

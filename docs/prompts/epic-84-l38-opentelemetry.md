@@ -107,20 +107,30 @@ the stages that actually executed, and `internal/state/` provably has no telemet
 figure — L3.8's stated done-when, in full. **Commit** (`feat(telemetry): real token and cost
 accounting from the claude provider`), report, PAUSE.
 
+### Phase C decisions (settled 2026-09-01, before the phase)
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Trace propagation into the MCP server | Best-effort: `loom run` sets the W3C `TRACEPARENT` env var to the **current stage's** span when spawning `claude -p`, and the MCP server reads it at startup | MCP's protocol carries no trace context, and the server is spawned by the claude CLI rather than by loom. Env is inherited transitively through exec, which is the standard OTel convention (`otel-cli`, CI tooling). It works when the CLI passes env to its MCP children — which loom does not control — and falls back to a fresh trace when it does not. Both paths must be tested; neither may be described as guaranteed |
+| Where MCP traces go | OTLP endpoint only, when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. **No file by default** | A long-lived server spawned by a desktop app has no run to scope a file to, and an unbounded jsonl in an unpredictable location is worse than none. The on-by-default local file stays a property of `loom run`, where it scopes to exactly one run |
+
 ## Phase C — The MCP server surface — BLOCKED BY Phase A
 
 1. Spans per tool call in `shared/mcp/`, with arguments and results as attributes under a **size
    cap** and with **secret redaction** — the roadmap names both explicitly and both are testable.
-2. Trace context propagation: a tool call made during a `loom run` stage must land under that
-   stage's span rather than starting an orphan trace.
+2. Trace context propagation, best-effort per the decision above: `loom run` exports `TRACEPARENT`
+   for the stage's subprocess, and the MCP server adopts it when present. A tool call made during a
+   traced stage lands under that stage's span **when the env survives the hop**; when it does not,
+   the tool call starts its own trace rather than failing or inventing a parent.
 3. Replace or wrap `shared/mcp/internal/logging/logger.go` so its output correlates with traces
    (trace and span IDs on log lines) rather than existing beside them.
 4. Tests: an oversized argument is truncated with a marker rather than dropped silently; a value
    matching the secret patterns never reaches an attribute; a propagated context produces one trace
    rather than two.
 
-**Done when**: a tool call made inside a traced run appears as a child span of the stage that made
-it, with no secret and no unbounded payload in its attributes. **Commit** (`feat(mcp): trace tool
+**Done when**: a tool call made with a propagated `TRACEPARENT` appears as a child span of the
+stage that made it, one made without it starts a clean trace of its own, and neither carries a
+secret or an unbounded payload in its attributes. **Commit** (`feat(mcp): trace tool
 calls and correlate logs`), report, PAUSE.
 
 ## Phase D — Docs, and the L3.9 boundary — BLOCKED BY Phases B+C

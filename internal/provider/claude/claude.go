@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/orieken/loom/internal/orchestrator"
+	"github.com/orieken/loom/internal/telemetry"
 )
 
 // DefaultBinaryName is the CLI the provider spawns.
@@ -115,6 +116,12 @@ func (p *Provider) runSubprocess(ctx context.Context, binaryPath, prompt string,
 	command.Stdin = strings.NewReader(prompt)
 	command.Stdout = stdout
 	command.Stderr = stderr
+	// TRACEPARENT rides the environment so a tool call the agent makes can
+	// land under this stage (roadmap L3.8). Env is inherited through exec,
+	// which is the only channel available: MCP carries no trace context and
+	// loom does not spawn the MCP server — the claude CLI does. Best-effort
+	// by construction, and nothing downstream depends on it arriving.
+	command.Env = append(os.Environ(), telemetry.TraceParentEnv(ctx)...)
 
 	started := time.Now()
 	p.logger.Info("stage.started", "stage", stage.ID, "agent", stage.Agent, "binary", binaryPath)
