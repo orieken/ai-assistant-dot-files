@@ -186,6 +186,11 @@ not. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifact set:
 - **`run-events.jsonl`** (per feature, beside run state) — append-only event log written by the Go
   binary from both pipelines: stage transitions, gate halts and approvals, and integrity failures,
   each with a real timestamp. Read with `loom state timeline`.
+- **Human Corrections** (in `run-state.json` and on the timeline, diffs under
+  `.approved/<gate>/corrections/`) — what a person changed at a gate, attributed to the agent that
+  produced it (L4.5). The framework has specified this as its highest-value learning signal since
+  v3.0 and collected none of it until the executor could measure it. It is taken from the rendered
+  view, which the pipeline does not read back, so a Human Correction is recorded rather than adopted.
 - **`traces.jsonl`** (per feature, beside run state) — the Run Trace in OTLP/JSON,
   one complete request body per line, so a saved file replays into a collector unmodified (L3.8).
   Written by `loom run` unless `--no-telemetry` is passed. Token counts and cost also land on each

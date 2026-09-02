@@ -230,6 +230,7 @@ func printStateReport(cmd *cobra.Command, state *orchestrator.RunState) {
 		cmd.Printf("  %2d. %-28s %s%s\n", record.Sequence, stageID, record.Status, roundsSuffix(record))
 	}
 	printUsage(cmd, state)
+	printCorrections(cmd, state)
 	printApprovals(cmd, state)
 	printRouteDecisions(cmd, state)
 }
@@ -245,6 +246,27 @@ func printUsage(cmd *cobra.Command, state *orchestrator.RunState) {
 	}
 	cmd.Printf("  usage: %d in / %d out tokens (%d cache read, %d cache write) — $%.4f\n",
 		total.InputTokens, total.OutputTokens, total.CacheReadTokens, total.CacheCreationTokens, total.CostUSD)
+}
+
+// printCorrections answers "whose output did a human have to fix?" from run
+// state (roadmap L4.5). Nothing is printed when nobody corrected anything —
+// a clean run should say nothing rather than print an empty heading.
+func printCorrections(cmd *cobra.Command, state *orchestrator.RunState) {
+	if len(state.Corrections) == 0 {
+		return
+	}
+	cmd.Println("  corrected by a human:")
+	for _, correction := range state.Corrections {
+		cmd.Printf("    %-24s %s at %s%s\n",
+			correction.Stage, correction.Stat, correction.Gate, diffSuffix(correction))
+	}
+}
+
+func diffSuffix(correction orchestrator.Correction) string {
+	if correction.DiffPath == "" {
+		return ""
+	}
+	return " — " + correction.DiffPath
 }
 
 // printRouteDecisions answers "why isn't devops running?" from run state,

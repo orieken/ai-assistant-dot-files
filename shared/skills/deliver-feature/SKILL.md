@@ -141,6 +141,19 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 
 ### Gate Decision Telemetry (opt-in, non-negotiable guarantee)
 
+**Scope note (roadmap L4.5).** Everything in this section describes **this markdown pipeline**, where
+the checksums are ones a model computed and recorded. It is not the same mechanism as the executor's:
+under `loom run`, the Go executor detects a human correction by comparing what the human was last
+*shown* against what is on disk at approval, records it as `artifact.corrected` on
+`run-events.jsonl` attributed to the producing agent, and retains a unified diff. That path needs
+nothing from this section and emits nothing to `events.jsonl`. `extract-lessons` reads both and says
+which is which.
+
+One difference worth knowing before you edit anything at a gate here: under the executor, the file a
+human is meant to annotate is the *rendered view*, which the pipeline never reads back — so the edit
+is recorded but not adopted. In this pipeline the markdown IS the artifact, so an edit here does
+change what the next agent reads. See `cmd/loom/README.md`, "Editing an artifact at a gate".
+
 **Emit `gate_decision` events ONLY when telemetry is enabled** (i.e., `.claude/telemetry/events.jsonl`
 already exists and the user has opted in per `shared/telemetry/README.md`). If telemetry is not enabled,
 skip silently — do not create the file, do not log, do not warn. Pipeline correctness never depends on

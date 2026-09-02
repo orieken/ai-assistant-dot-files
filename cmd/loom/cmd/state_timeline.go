@@ -54,6 +54,9 @@ func elapsed(start, at time.Time) string {
 }
 
 func subjectOf(event orchestrator.Event) string {
+	if event.Kind == orchestrator.EventArtifactCorrected {
+		return correctionSubject(event)
+	}
 	parts := []string{event.Stage, event.Gate, string(event.StaleReason), string(event.ApprovalMethod), event.Error}
 	kept := make([]string, 0, len(parts))
 	for _, part := range parts {
@@ -62,4 +65,11 @@ func subjectOf(event orchestrator.Event) string {
 		}
 	}
 	return strings.Join(kept, " ")
+}
+
+// correctionSubject reads as "who was corrected, by how much" rather than
+// dumping an absolute diff path onto the line. The path is in --json for
+// anything that wants to open the diff.
+func correctionSubject(event orchestrator.Event) string {
+	return strings.TrimSpace(fmt.Sprintf("%s (%s) %s", event.Stage, event.Agent, event.Correction))
 }

@@ -70,7 +70,11 @@ type Event struct {
 	// stays one greppable line.
 	Agent      string `json:"agent,omitempty"`
 	Correction string `json:"correction,omitempty"`
-	Error      string `json:"error,omitempty"`
+	// DiffPath names the retained diff on disk. It is a separate field from
+	// Reason because Reason means "why a stage was skipped" — overloading it
+	// would make the timeline's JSON ambiguous to anything reading it.
+	DiffPath string `json:"diffPath,omitempty"`
+	Error    string `json:"error,omitempty"`
 }
 
 // Timeline appends events to one run's log.

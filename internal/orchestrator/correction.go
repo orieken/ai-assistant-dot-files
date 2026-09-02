@@ -162,7 +162,7 @@ func (e *Executor) recordCorrections(state *RunState, corrections []Correction) 
 func correctionEvent(correction Correction) Event {
 	return Event{
 		Kind: EventArtifactCorrected, Stage: correction.Stage, Gate: correction.Gate,
-		Agent: correction.Agent, Correction: correction.Stat.String(), Reason: correction.DiffPath,
+		Agent: correction.Agent, Correction: correction.Stat.String(), DiffPath: correction.DiffPath,
 	}
 }
 

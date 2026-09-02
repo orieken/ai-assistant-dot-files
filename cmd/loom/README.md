@@ -147,6 +147,46 @@ Seven artifacts of the built-in plan are **typed state** instead of markdown (ro
 The eight remaining artifacts — the end-of-pipeline reports and `context-manifest` — still pass
 markdown, unchanged. Nothing evaluates a condition over them yet.
 
+## Editing an artifact at a gate
+
+When a run halts and you disagree with what an agent produced, there are two
+different things you can do to the files in the workspace, with two different
+consequences. Knowing which is which matters, because one of them throws your
+edit away.
+
+**Annotate the rendered view** — `analysis.md`, `qa-report.md`, and the other
+markdown files for typed stages. This is the recommended way to say "this should
+have said X". The executor never reads these files back: they are rendered from
+`state/<stage>.json`, so your edit cannot corrupt the run and nothing goes stale.
+On approval the change is recorded as a **human correction**, attributed to the
+agent that produced it, with a unified diff retained under
+`.approved/<gate>/corrections/` (roadmap L4.5).
+
+It is **advisory**. The pipeline does not adopt what you wrote, and the next time
+that stage runs the view is re-rendered over your text. What survives is the
+record — which is the point: it is a labelled example of an agent getting
+something wrong, which is the signal the framework has always specified and never
+collected.
+
+**Editing a tracked artifact is a different act.** For a stage that still writes
+markdown, and for `state/<stage>.json` on a typed one, the file IS what integrity
+tracks. Changing it makes the stage STALE, so the executor **re-runs it** and the
+agent's fresh output replaces what you wrote (L2.12). Any approval bound to that
+artifact resets (L2.14). Your edit is still captured as a correction before the
+re-run, but do not expect the text itself to survive — that path means "do this
+again", not "use my version".
+
+Neither is a way to hand-write an artifact the pipeline will use. If an agent's
+output is wrong enough that you want to replace it outright, the honest move is to
+fix the spec or the agent and re-run.
+
+Corrections show up in `loom state show` and on the timeline:
+
+```
+  corrected by a human:
+    analyst                  +4/-1 at confirm-design — .../corrections/analyst.diff
+```
+
 ## Telemetry: what a run cost
 
 Every run emits a **Run Trace** (roadmap L3.8): one root span for the run, a child per

@@ -794,7 +794,10 @@ able to route to agents it was never hardcoded to know about.)*
    human corrected. `pipeline-trace.json` is specified to hold that and **does not exist anywhere in
    the repo**. Consequently nothing can learn from execution, which blocks all of Milestone 3.
 2. **Architectural Fix**: An append-only run store (sqlite) keyed by `run_id`/`stage_id` capturing
-   inputs, outputs, tool calls, retries, gate decisions, and human edits. Index it as a retrievable
+   inputs, outputs, tool calls, retries, gate decisions, and human edits. *(The human-edit half now
+   exists per run and should be **adopted rather than reinvented**: epic 85 records
+   `artifact.corrected` in run state and on `run-events.jsonl` with a retained diff. This item's job
+   for it is durability across runs and queryability, not detection — that is built.)* Index it as a retrievable
    corpus so the planner can condition on "how did this go last time."
 3. **Target Files**: `shared/skills/pipeline-trace/SKILL.md`, `shared/telemetry/event-schema.md`,
    `shared/rag/retriever.interface.md` (new `episodic` corpus), new `internal/memory/`
@@ -1112,7 +1115,18 @@ them together would lose the audit log's independence from an exporter being con
 ## Workstream: OBSERVE — Prompt & Tool Evolution
 
 ### L4.4 — Prompt registry with eval-gated promotion
-**Workstream**: OBSERVE · **Effort**: XL · **Blocked by**: L3.5, L3.11, L4.1, L4.5 · **Blocks**: L4.6
+**Workstream**: OBSERVE · **Effort**: XL · **Blocked by**: L3.5, L3.11, L4.1, L4.5 (shipped) · **Blocks**: L4.6
+
+**Inherits from L4.5** (epic 85): a labelled corrective signal that already exists per run —
+`artifact.corrected` entries in run state and on the timeline, each naming the producing agent and
+carrying a unified diff of what a human thought the output should have said. That is the training
+signal this item's prompt-variant generation was specified to need, and it no longer has to be
+inferred from gate ownership.
+
+Two properties to design around rather than discover. The correction is **advisory**: the human's
+text was recorded, not adopted, so the delivered artifact does not contain it. And one correction is
+one person's judgement — promotion must stay eval-gated and recurrence-based, which is what this item
+is for.
 
 1. **Problem**: "Self-learning" today is `learning-engine` scanning retrospectives and writing a
    markdown proposal to `.claude/feature-workspace/proposed-lessons.md` for a human to approve into
@@ -1137,7 +1151,37 @@ them together would lose the audit log's independence from an exporter being con
    edit to a `.md` file.
 
 ### L4.5 — Capture the human-correction signal the schema already describes
-**Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L2.13, L2.14, L3.8 · **Blocks**: L4.4
+**Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L2.13, L2.14, L3.8 — all shipped · **Blocks**: L4.4
+
+**SHIPPED** 2026-09-01 (epic 85, `b818edb`…) — the executor retains what a human was shown at each
+gate, diffs it at approval, and records `artifact.corrected` on `run-events.jsonl` and in run state,
+attributed to the **producing stage and agent** with a unified diff under
+`.approved/<gate>/corrections/`. Visible in `loom state show` and `loom state timeline`.
+
+**What building it changed about the design.** The signal is taken from the **rendered view**, not
+the tracked artifact, and that is the finding rather than a compromise. Two facts forced it:
+
+1. A human edit to a tracked artifact **does not survive**. L2.12 marks the stage STALE and re-runs
+   it, and the agent's fresh output overwrites the human's text.
+2. For the seven typed artifacts the tracked file is `state/<stage>.json`, while `analysis.md` is a
+   derived view that is deliberately not digest-tracked (L2.9). So the file a person would actually
+   open produced **no signal at all**, and hand-editing the JSON produced a signal about an edit the
+   executor immediately discarded.
+
+The property that makes a view safe to edit is what makes it the right channel: the executor never
+reads it back, so a human can write a correction there with nothing to corrupt and nothing to
+discard. A view edit is **advisory** — the pipeline does not adopt it, and the next render overwrites
+the file. What survives is the record, which is what a learning signal needs.
+
+Two invariants keep the signal from becoming fiction, both held by tests: reporting a correction
+refreshes the baseline so nothing is reported twice, and the executor refreshes any baseline holding
+a stage whose output *it* just wrote — without the second, a stage re-running after an edit would
+have its own second attempt attributed to a person.
+
+**Not done here, deliberately**: `events.jsonl`, the `gate_decision` event type and its emitter
+(**L3.9**); the episodic store this belongs in long-term (**L3.5**); anything that consumes the
+signal to change an agent (**L4.4**); and emission from the markdown pipeline, whose checksums are
+the model's own.
 
 1. **Problem**: `event-schema.md:131` defines `edited_then_approved` — "the human edited the artifact
    (checksum changed between gate-presented and gate-approved) … the corrective-signal case

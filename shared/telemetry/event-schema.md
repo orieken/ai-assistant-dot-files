@@ -141,6 +141,20 @@ Emitted only when telemetry is enabled (opt-in guarantee is non-negotiable — s
 | `rejected` | Human declined or said "no"; pipeline halted or rolled back. |
 | `edited_then_approved` | Human edited the artifact (checksum changed between gate-presented and gate-approved) before confirming. This is the corrective-signal case `extract-lessons` and `retrospective` mine. |
 
+**Executor note (L4.5) — this signal is now collected, on a different file.** For runs executed by
+`loom run`, the executor records a human correction as `artifact.corrected` on `run-events.jsonl`,
+attributed to the **producing stage and agent** rather than to the gate, with a unified diff retained
+under `.approved/<gate>/corrections/`. It detects the correction by comparing what the human was last
+*shown* against what is on disk at approval — which covers the sequence this schema describes, and
+which an approval-bound digest alone cannot see, because at the moment of that edit no approval
+exists yet to invalidate.
+
+Two things that note deliberately does not say. It is **not** this `gate_decision` event and it is
+**not** written to `events.jsonl` — adding the type here, and building the emitter, is **L3.9**, and
+this schema is left alone until then. And the correction it records is the edit to a **rendered
+view**, which the pipeline does not adopt; an edit to a tracked artifact re-runs its stage instead.
+See `cmd/loom/README.md`, "Editing an artifact at a gate".
+
 **Executor note (L2.14).** For runs executed by `loom run`, edited-then-approved is no longer a
 heuristic: an approval binds to the digests of everything completed when it was given, and the
 executor invalidates it in code when any of them changes, recording the gate, the stage responsible,

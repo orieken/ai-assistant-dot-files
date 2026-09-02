@@ -67,7 +67,25 @@ Tally, across all `context-manifest.md` files, how many times each KI in `shared
 - KIs referenced frequently — evidence the KI system is paying for itself.
 
 ### 5. Gate decision patterns -> candidate agent improvement
-If `.claude/telemetry/events.jsonl` exists, scan it for `gate_decision` events. Filter to outcomes
+
+**Two sources, and only one of them exists today.**
+
+**5a. `run-events.jsonl` (executor runs — this is the one that has data).** For any feature delivered
+by `loom run`, read `.claude/feature-workspace/<feature>/run-events.jsonl` and
+`docs/features/<feature>/run-state.json` for `artifact.corrected` entries (roadmap L4.5). Each is a
+human editing a stage's output at a gate, already attributed to the **producing agent** — no
+inference from gate ownership needed — with a retained unified diff under
+`.approved/<gate>/corrections/`. Read the diff: it is a labelled example of what that agent got
+wrong and what a human thought it should have said, which is far stronger evidence than a reason
+string. Group by agent, and apply the same 3+-occurrences-across-distinct-features bar below.
+
+Two caveats to carry into any hypothesis. The correction was **advisory** — the pipeline did not
+adopt the human's text, so do not assume the delivered artifact contains it. And a single human's
+edits are one person's judgement, not a verdict; the recurrence bar exists precisely because one
+correction is an anecdote.
+
+**5b. `.claude/telemetry/events.jsonl` (both pipelines — no emitter yet).** If that file exists, scan
+it for `gate_decision` events. Filter to outcomes
 `rejected` or `edited_then_approved`. Group by `gate_id` + `agent_or_skill_name`. For any combination
 with 3+ occurrences across distinct features (identified via `metadata.feature`):
 - Identify the owning agent (the one whose artifact was gated on the specified step).
@@ -78,8 +96,10 @@ with 3+ occurrences across distinct features (identified via `metadata.feature`)
   present, require explicit confirmation, don't auto-apply).
 - Record every gate-decision pattern in the lessons-learned output regardless of promotion decision.
 
-Never read or process this step when `.claude/telemetry/events.jsonl` does not exist — the opt-in
-guarantee is absolute (see `shared/telemetry/README.md`).
+Never read or process **step 5b** when `.claude/telemetry/events.jsonl` does not exist — the opt-in
+guarantee is absolute (see `shared/telemetry/README.md`). Nothing writes that file today; its emitter
+is roadmap L3.9. Step 5a has no such gate: `run-events.jsonl` is written by the executor for every
+`loom run` delivery, and a run that produced no corrections simply has no entries to read.
 
 ### 6. Incident-feature pair analysis -> candidate pipeline improvement
 Scan every `docs/incidents/*.md` record. For each incident whose **Affected Feature** field links to a
@@ -133,8 +153,14 @@ Write `docs/lessons-learned/lessons-[YYYY-MM-DD].md`:
 |---|---|---|---|
 | [ki name] | [N] | [feature name / "never"] | [flag if 0] |
 
-## Gate Corrections (opt-in — omit when events.jsonl absent)
-Raw events (rejected or edited_then_approved outcomes, any count):
+## Gate Corrections
+Corrections recorded by the executor (`artifact.corrected`, from step 5a — omit the table when a
+feature was not delivered by `loom run`):
+| Agent | Feature | Gate | Diff | What the human changed |
+|---|---|---|---|---|
+| [agent] | [feature] | [gate] | +N/-M | [one line from reading the diff] |
+
+Raw `gate_decision` events from step 5b (omit when events.jsonl absent):
 | Gate | Agent | Feature | Outcome | Reason |
 |---|---|---|---|---|
 | Gate #[N] ([name]) | [agent] | [feature] | rejected / edited_then_approved | [reason or "none given"] |
