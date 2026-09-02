@@ -14,7 +14,7 @@ import (
 
 // StateSchemaVersion identifies the run-state JSON shape. Bump on any
 // incompatible change so a future reader can refuse or migrate old files.
-const StateSchemaVersion = 8
+const StateSchemaVersion = 9
 
 // RunStateFileName is the executor-owned state file inside the feature
 // workspace. NOTE: this lives beside the markdown pipeline's
@@ -83,7 +83,12 @@ type RunState struct {
 	StartedAt     time.Time              `json:"startedAt"`
 	Stages        map[string]StageRecord `json:"stages"`
 	Approvals     map[string]Approval    `json:"approvals"`
-	UpdatedAt     time.Time              `json:"updatedAt"`
+	// Baselines records what a human was last shown at each gate (roadmap
+	// L4.5), keyed by gate name. Retained so a later edit can be described
+	// rather than merely detected — a digest says that something changed
+	// and never what.
+	Baselines map[string]GateBaseline `json:"baselines,omitempty"`
+	UpdatedAt time.Time               `json:"updatedAt"`
 }
 
 // Creator identifies which pipeline owns a state file. The two pipelines
@@ -107,6 +112,7 @@ func NewRunState(planName string, createdBy Creator) *RunState {
 		StartedAt:     time.Now().UTC(),
 		Stages:        map[string]StageRecord{},
 		Approvals:     map[string]Approval{},
+		Baselines:     map[string]GateBaseline{},
 	}
 }
 
@@ -190,6 +196,9 @@ func decodeRunState(raw []byte, path string) (*RunState, error) {
 	}
 	if state.Approvals == nil {
 		state.Approvals = map[string]Approval{}
+	}
+	if state.Baselines == nil {
+		state.Baselines = map[string]GateBaseline{}
 	}
 	return &state, nil
 }

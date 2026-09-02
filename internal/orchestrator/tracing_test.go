@@ -15,7 +15,7 @@ import (
 // involvement, which is the point of the seam: the executor's tracing
 // behaviour is testable without an SDK, an exporter, or a collector.
 type recordingTracer struct {
-	mutex  sync.Mutex
+	mutex     sync.Mutex
 	runs      []orchestrator.RunSpan
 	stages    []orchestrator.StageSpan
 	providers []orchestrator.ProviderSpan

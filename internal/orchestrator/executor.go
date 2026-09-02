@@ -19,6 +19,11 @@ type Executor struct {
 	onRoute  func(RouteSummary)
 	onLoop   func(LoopRound)
 	tracer   Tracer
+	// onBaselineError reports a failure to retain what a human was shown at
+	// a gate (roadmap L4.5). Retention is best-effort: it observes a human's
+	// action rather than controlling the run, so a failure is reported and
+	// never propagated.
+	onBaselineError func(error)
 }
 
 // NewExecutor wires a provider and a state store into an executor.
@@ -56,6 +61,14 @@ func (e *Executor) OnApprovalReset(report func(*StaleApprovalError)) {
 // before the design gate asks them to approve it.
 func (e *Executor) OnRoute(report func(RouteSummary)) {
 	e.onRoute = report
+}
+
+// OnBaselineError registers a callback invoked when the executor cannot
+// retain the artifact state a human is being shown at a gate. The run
+// continues either way — losing the ability to describe a later edit is a
+// lost observation, not a broken delivery.
+func (e *Executor) OnBaselineError(report func(error)) {
+	e.onBaselineError = report
 }
 
 // OnLoopRound registers a callback invoked when a loop sends its span round
@@ -256,6 +269,10 @@ func (e *Executor) checkGate(stage Stage, state *RunState) error {
 			return nil
 		}
 	}
+	// Capture before the halt is announced: this is the moment the state is
+	// presented to a human, and it is the baseline any edit they make is
+	// measured against (roadmap L4.5).
+	e.captureBaseline(state, stage.Gate, BaselinePresented)
 	if err := e.persistStatus(state, stage.ID, waitingRecord(state, stage)); err != nil {
 		return err
 	}

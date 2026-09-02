@@ -99,6 +99,7 @@ func executeRun(cmd *cobra.Command, plan orchestrator.Plan, provider orchestrato
 	defer stopTelemetry()
 	executor.OnStale(func(stale []orchestrator.StaleStage) { reportStaleStages(cmd, stale) })
 	executor.OnApprovalReset(func(reset *orchestrator.StaleApprovalError) { reportApprovalReset(cmd, reset) })
+	executor.OnBaselineError(func(err error) { cmd.PrintErrf("warning: %v\n", err) })
 	executor.OnRoute(func(summary orchestrator.RouteSummary) { reportRoute(cmd, summary, input.WorkspaceDir) })
 	executor.OnLoopRound(func(round orchestrator.LoopRound) { reportLoopRound(cmd, round) })
 	if err := applyApproveFlag(executor, runArgs.approve, runArgs.resume); err != nil {

@@ -115,6 +115,10 @@ func (e *Executor) Approve(gate string, method ApprovalMethod) error {
 		return err
 	}
 	state.RecordApproval(gate, method)
+	// Refresh the baseline: approving means accepting the state as it
+	// stands right now, so that state is what a *later* edit is measured
+	// against (roadmap L4.5).
+	e.captureBaseline(state, gate, BaselineApproved)
 	if err := e.store.Save(state); err != nil {
 		return fmt.Errorf("persist approval for gate %q: %w", gate, err)
 	}
