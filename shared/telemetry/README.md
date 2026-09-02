@@ -1,9 +1,40 @@
 # Telemetry (AOS v3.0, Phase 1)
 
 Telemetry is the AOS layer that captures pipeline events so continuous evaluations
-(Phase 3+) and policy engines (Phase 4) have data to reason about. In v3.0 it is
-**scaffolding only** — nothing in the framework writes telemetry events by default,
-and no downstream consumer reads them yet.
+(Phase 3+) and policy engines (Phase 4) have data to reason about. The event layer
+described in this directory is still **scaffolding only** — nothing writes
+`.claude/telemetry/events.jsonl` by default, and no downstream consumer reads it.
+
+## Two telemetry systems, and which one exists
+
+Do not read this directory as a description of what loom emits today. There are
+two systems and only one of them is running.
+
+| | **AOS events** (this directory) | **OTel traces** (`loom run`) |
+|---|---|---|
+| Status | Specified, **no emitter** | **Shipped** — roadmap L3.8, epic 84 |
+| Written by | Nothing. The `event-recorder` skill is a prose spec | The Go executor and `loom mcp serve`, in `internal/telemetry/` |
+| Output | `.claude/telemetry/events.jsonl` (does not exist) | OTLP/JSON `traces.jsonl` per run, plus OTLP/HTTP when an endpoint is set |
+| Shape | `event_type` + free-form `metadata` | W3C trace/span tree with GenAI semantic conventions |
+| Answers | "what happened", eventually | "how long did it take, and what did it cost" |
+| Measured by | A model, which cannot observe elapsed time | The process doing the work, by subtraction |
+
+The traces are the reason `duration_ms` in `event-schema.md` was never trustworthy:
+a language model reporting its own elapsed time is recalling a number, not measuring
+one. Under `loom run`, timing and cost now come from the process that did the work,
+and token counts and dollars come from the provider's own reported accounting rather
+than from a price table in this repository.
+
+Reconciling the two — one event-type enum, generated schema, emission from the
+executor — is roadmap **L3.9**, which is unblocked and not yet built. Until then this
+directory describes the markdown pipeline's intended event layer, and
+`internal/telemetry/` describes what actually runs.
+
+A third file is easy to confuse with both: `run-events.jsonl`, beside `run-state.json`,
+is the executor's own append-only audit log of gates, digests and staleness. It is
+deliberately not OTel and deliberately not this event layer — it stays readable with
+no collector configured and no exporter running, which is the property an audit record
+needs and a trace does not.
 
 ## Location convention
 

@@ -76,9 +76,7 @@ loom run --spec docs/features/user-auth/spec.md --provider mock
 
 **What it does NOT do yet** (skeleton by design — see `docs/roadmaps/BUILD-ROADMAP.md`):
 no `--from-phase` or rollback (L2.15), no retries or backoff, no parallelism
-(L3.3), no policy evaluation (L2.16), no conditional stage routing (L3.1) —
-every stage of the linear plan runs, including ones the markdown pipeline
-would skip — and no telemetry emission (L3.8).
+(L3.3), and no policy evaluation (L2.16).
 
 ## Recording markdown-pipeline checkpoints
 
@@ -148,6 +146,46 @@ Seven artifacts of the built-in plan are **typed state** instead of markdown (ro
 
 The eight remaining artifacts — the end-of-pipeline reports and `context-manifest` — still pass
 markdown, unchanged. Nothing evaluates a condition over them yet.
+
+## Telemetry: what a run cost
+
+Every run emits a **Run Trace** (roadmap L3.8): one root span for the run, a child per
+stage, and a grandchild per model invocation.
+
+- **Where, by default**: `.claude/feature-workspace/<feature>/traces.jsonl`, beside
+  `run-state.json` and `run-events.jsonl`. Each line is a complete OTLP/JSON request
+  body, so a saved file can be POSTed to a collector unmodified. `--otel-file <path>`
+  moves it; `--no-telemetry` records nothing.
+- **Over the network**: set `OTEL_EXPORTER_OTLP_ENDPOINT` and traces also go to that
+  collector over OTLP/HTTP. The endpoint is opt-in and the file is not, because what
+  makes a phone-home default rude is egress — a file beside the run's own state has
+  none, and a trace that only exists when someone predicted they would want it cannot
+  answer a question about a run that already finished.
+- **Cost, without any of the above**: token counts and dollars are recorded on each
+  stage in run state, so the run summary and `loom state show` report them with no
+  collector configured:
+
+```
+usage: 48120 in / 9330 out tokens (31002 cache read, 2048 cache write) — $1.8730
+```
+
+  That is **Reported Usage**: the claude CLI says what it was charged and loom records
+  it verbatim. A price table in this repository would be wrong within a quarter while
+  sounding authoritative. Note that absent Reported Usage is not zero — a provider that
+  reported nothing is a different fact from one that reported zero, and the run summary
+  stays silent rather than printing a total of $0.00.
+
+- **Tool calls**: `loom mcp serve` traces each tool call, exporting only when an OTLP
+  endpoint is set — it is spawned by a host application and may outlive many runs, so
+  there is no run to scope a file to. Arguments are recorded with secret-shaped names
+  redacted and every value length-capped. A tool call joins its stage's trace when the
+  `TRACEPARENT` environment variable survives the hop from `loom run` through the
+  claude CLI, and starts a clean trace of its own when it does not — loom does not
+  spawn that server, and MCP carries no trace context, so this is best-effort by
+  construction.
+
+Nothing about a run depends on any of it. With no exporter and no endpoint, tracing is
+a no-op and the run behaves identically.
 
 ## Routing: which stages actually run
 
@@ -226,9 +264,11 @@ Recorded kinds: `run.started`, `run.completed`, `stage.started`, `stage.complete
 - **Append-only.** The file is never rewritten or truncated; each event is one write. A
   process killed mid-write can leave a torn final line, which readers skip rather than
   failing on.
-- **Not telemetry.** This is a local audit log. OpenTelemetry emission is roadmap L3.8, and
-  this file does not replace `pipeline-trace.json`, whose `budgetUtilization` and iteration
-  counts are still model-written estimates.
+- **Not the trace.** This is the audit log — gates, digests, staleness — and it stays readable
+  with no collector configured and no exporter running. The run's OpenTelemetry trace, in
+  `traces.jsonl` beside it, answers a different question: how long each stage took and what it
+  cost. Neither replaces `pipeline-trace.json`, whose `budgetUtilization` and iteration counts
+  are still model-written estimates.
 
 ## Maturity level report
 

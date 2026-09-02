@@ -164,20 +164,34 @@ The pipeline is *specified* to instrument itself the way you'd instrument a prod
 Honest status first, artifact by artifact — some of this is now measured, and the rest is still a
 model's own account of itself:
 
-- **Measured** (written by the Go binary, timestamps from the clock): `run-state.json` and
-  `run-events.jsonl`. Stage transitions, gate decisions, and artifact digests are recorded by
-  `loom run`, or by the `loom state` subcommands the markdown pipeline calls (M0.4, L2.13, L2.12).
-  Stage durations are derivable by subtracting two recorded timestamps.
+- **Measured** (written by the Go binary, timestamps from the clock): `run-state.json`,
+  `run-events.jsonl`, and `traces.jsonl`. Stage transitions, gate decisions, and artifact digests
+  are recorded by `loom run`, or by the `loom state` subcommands the markdown pipeline calls (M0.4,
+  L2.13, L2.12). Stage durations are measured by the process doing the work (L3.8), not derived
+  after the fact.
+- **Reported Usage** (stated by the provider, recorded verbatim): per-stage token counts and dollar
+  cost, taken from the claude CLI's own result envelope (L3.8). Loom computes no prices — a table in this
+  repository would be wrong within a quarter while sounding authoritative.
 - **Estimated** (written by the host platform's LLM following prompt instructions):
   `pipeline-trace.json`'s `budgetUtilization` and iteration counts, the scorecards, and the
   lessons-learned corpus. A duration recalled by a model is not a measurement.
 
-Real OpenTelemetry emission is still ahead (L3.8) — `run-events.jsonl` is a local audit log, not a
-telemetry pipeline. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifact set as specified:
+OpenTelemetry emission has landed (L3.8): a run produces one trace — a root span, a child per
+stage, a grandchild per model call carrying `gen_ai.*` usage — exported to a local OTLP/JSON file by
+default and to a collector when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. `run-events.jsonl` remains a
+separate thing on purpose: it is the audit log of gates, digests and staleness, and it stays
+readable with no collector configured, which is a property an audit record needs and a trace does
+not. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifact set:
 
 - **`run-events.jsonl`** (per feature, beside run state) — append-only event log written by the Go
   binary from both pipelines: stage transitions, gate halts and approvals, and integrity failures,
   each with a real timestamp. Read with `loom state timeline`.
+- **`traces.jsonl`** (per feature, beside run state) — the Run Trace in OTLP/JSON,
+  one complete request body per line, so a saved file replays into a collector unmodified (L3.8).
+  Written by `loom run` unless `--no-telemetry` is passed. Token counts and cost also land on each
+  stage in `run-state.json`, so `loom state show` answers what a run cost without a collector.
+  `loom mcp serve` traces tool calls too, but writes no file — it is spawned by a host application
+  and has no run to scope one to.
 - **`pipeline-state.json`** (per feature, in `.claude/feature-workspace/`, persisted to `docs/features/<name>/`)
   — resumability: current phase, completed agents, artifact checksums. `resume-pipeline` reads this.
   Ownership has moved to the Go executor (L2.12). Under `loom run` the executor keeps its own
@@ -188,7 +202,8 @@ telemetry pipeline. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifa
 - **`pipeline-trace.json`** (same location) — timing, status, iteration counts, and `budgetUtilization` per
   agent. `pipeline-trace` (single run) and `pipeline-retrospective` (cross-delivery trends) read this.
   Its timings remain model-written estimates. Measured wall-clock timing now exists alongside it in
-  `run-events.jsonl` (L2.12); folding the two together, and emitting OTel, is L3.8.
+  `run-events.jsonl` (L2.12) and in the trace (L3.8); folding this file into them is L3.5's episodic
+  store, not a docs change.
 - **`docs/agent-metrics/scorecard-YYYY-MM.md`** — monthly quality scores per agent (security TPR proxy,
   code-reviewer first-pass acceptance, analyst completeness, architect fitness-function coverage),
   trend-compared month over month.

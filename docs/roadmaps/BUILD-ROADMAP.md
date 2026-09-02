@@ -838,7 +838,34 @@ able to route to agents it was never hardcoded to know about.)*
 ## Workstream: OBSERVE — Governance & Auditing
 
 ### L3.8 — Emit OpenTelemetry with GenAI semantic conventions
-**Workstream**: OBSERVE · **Effort**: L · **Blocked by**: M0.4 · **Blocks**: L3.5, L3.9, L4.3, L4.5, L4.6
+**Workstream**: OBSERVE · **Effort**: L · **Blocked by**: M0.4 · **Blocks**: L3.5, L3.9, L4.3 (with L2.16), L4.5
+
+**SHIPPED** 2026-09-01 (epic 84, `1031891`…`71538ae`) — `internal/telemetry/` emits OTel traces from
+the executor and the MCP server. A run produces one trace: a root run span, a child per stage, and a
+grandchild per model invocation carrying `gen_ai.*` usage. Token counts and cost are **reported by
+the claude CLI's own JSON envelope**, never computed here, and land in run state as well as the
+trace — so `loom state show` and the run summary answer "what did this cost" with no collector
+configured. Network export is opt-in via `OTEL_EXPORTER_OTLP_ENDPOINT`; a local OTLP/JSON
+`traces.jsonl` is written per run by default, because the reason to make export opt-in is egress and
+a file beside `run-state.json` has none.
+
+Guardrail #8 is now structural rather than reviewed: the `Tracer` interface lives with its consumer
+in `internal/orchestrator`, `internal/telemetry` implements it, and an import-graph test asserts
+that `internal/state`, `internal/orchestrator`, `shared/mcp/internal/domain` and `tools` reach no
+OpenTelemetry package — with a companion test that fails if `internal/telemetry` ever stops
+importing one, so the check cannot quietly become vacuous.
+
+**Two honest limits.** MCP trace propagation is best-effort: the chain is `loom run` → `claude -p` →
+`loom mcp serve`, loom spawns only the first hop, and MCP's protocol carries no trace context, so a
+`TRACEPARENT` environment variable is the only channel. When it survives, a tool call lands under
+its stage; when it does not, the call starts a clean trace of its own. And the envelope field names
+are unverified against the live CLI — see **L3.15**.
+
+**Blocks, corrected.** This entry previously claimed L4.6, which lists `L3.6, L3.10, L4.4` as its
+own blockers and never named L3.8; the header's dependency graph reaches L4.4 through L3.5 and L4.5
+rather than directly. Four items are directly unblocked, one of them only partly: **L3.5** and
+**L4.5** are now fully unblocked, **L3.9** is unblocked, and **L4.3** still waits on **L2.16**
+though its usage signal now exists.
 
 1. **Problem**: `event-schema.md` has no `token_count`, no `cost`, no `trace_id`, no `span_id`, and
    no parent/child correlation — only a `pipeline_id` convention in free-form `metadata`.
@@ -857,7 +884,18 @@ able to route to agents it was never hardcoded to know about.)*
    cost figure.
 
 ### L3.9 — Resolve the telemetry schema contradiction and generate the schema
-**Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.8 · **Blocks**: none · *(audit H6)*
+**Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.8 (shipped) · **Blocks**: none · *(audit H6)*
+
+**UNBLOCKED** 2026-09-01 by epic 84, which deliberately left this item's whole scope alone. What it
+inherits: `internal/telemetry` now exists as the home for the enum, and the executor is the emitter
+that makes "an undocumented event type is a compile error" reachable. What it still owns, untouched:
+the six-documented-versus-fifteen-emitted contradiction, the `event`/`event_type` key mismatch in
+the policy events, and deleting `event-recorder.md`.
+
+One boundary epic 84 drew that this item should keep: **traces are not events**. The run's OTel
+trace and `run-events.jsonl` answer different questions — timing and cost versus gates, digests and
+staleness — and `.claude/telemetry/events.jsonl` is a third thing that still has no emitter. Folding
+them together would lose the audit log's independence from an exporter being configured.
 
 1. **Problem**: `event-recorder.md` instructs: "**Never** invent a new `event_type` — refuse if the
    caller passes one not documented." `event-schema.md` documents **six** types. Nine more are
@@ -969,6 +1007,26 @@ able to route to agents it was never hardcoded to know about.)*
 6. **Not in scope**: enforcing the fetch for the separate-repository path — that is a supply-chain
    step no current gate covers, and ADR-007 records it as documented-but-unenforced.
 
+### L3.15 — Verify the provider envelope against the live CLI
+**Workstream**: OBSERVE · **Effort**: S · **Blocked by**: L3.8 (shipped) · **Blocks**: none · *(raised 2026-09-01)*
+
+1. **Problem**: `internal/provider/claude/envelope.go` decodes `claude -p --output-format json` from
+   a documented understanding of its shape, not from an observed response — verifying it costs real
+   API spend, so epic 84 did not. The failure mode is specific and asymmetric: a wrong field name
+   does not error, it decodes to the zero value, so usage silently reads **zero tokens and zero
+   dollars**. That is a wrong number wearing the appearance of a measurement, which is the exact
+   defect L3.8 exists to remove — and the one place in the telemetry stack where it can still occur.
+   Unknown-field tolerance is a feature everywhere else and a hazard precisely here.
+2. **Architectural Fix**: Run one real stage against the live CLI, capture the envelope verbatim as
+   a test fixture, and assert the decoder against it. Then add the check that closes the class of
+   bug rather than one instance: a completed non-mock stage reporting exactly zero input tokens is
+   not a cheap stage, it is a decode that missed, so it should warn loudly rather than record a
+   confident zero.
+3. **Target Files**: `internal/provider/claude/envelope.go`, new
+   `internal/provider/claude/testdata/envelope.json`, `internal/provider/claude/claude.go`
+4. **Done when**: the decoder is tested against a captured real response, and a zero-token
+   completion from a real provider is reported as suspect rather than recorded as fact.
+
 ### L3.13 — Derive agent quality metrics from execution
 **Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.5, L3.8 · **Blocks**: none
 
@@ -1040,7 +1098,11 @@ able to route to agents it was never hardcoded to know about.)*
    numeric limits and neither bounds spend. Combined with the unbounded loop in L4.1 and doubled
    invocations from synchronous audits, a single stuck delivery burns until a human notices.
 2. **Architectural Fix**: A `BudgetGovernor` seeded per run (tokens, dollars, wall-clock, tool
-   calls), decremented from real OTel usage data, enforcing soft-warn then hard-halt. Budget
+   calls), decremented from real OTel usage data, enforcing soft-warn then hard-halt. *(As of epic
+   84 the usage signal exists and is readable in-process: every stage's reported tokens and cost are
+   on its `StageRecord`, and `RunState.TotalUsage()` sums them. A governor needs no metrics pipeline
+   and no collector — it reads the same numbers `loom state show` prints. L2.16 remains the real
+   blocker.)* Budget
    exhaustion is a first-class terminal state that checkpoints cleanly and reports what was consumed
    where.
 3. **Target Files**: `.claude/delivery-policy.yaml` schema,

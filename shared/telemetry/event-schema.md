@@ -10,6 +10,17 @@ Human-readable schema for events written to `.claude/telemetry/events.jsonl`.
 Format is **JSONL** — one JSON object per line, newline-delimited, append-only.
 Every event is a self-contained, order-independent record.
 
+> **Nothing emits this file yet, and two things nearby do emit.** Under `loom run`,
+> OpenTelemetry traces carry timing and cost (roadmap L3.8, shipped) and
+> `run-events.jsonl` carries the gate/digest/staleness audit log. Neither is this
+> schema. See `README.md` for the three-way distinction.
+>
+> One field below is worth flagging specifically: `metadata.duration_ms` is described
+> here as recorded by the emitting agent, which cannot observe elapsed time. Where a
+> duration is now needed, take it from a trace span. Reconciling this schema with what
+> is actually emitted — including the six documented types versus the fifteen specified
+> across the spec files — is roadmap **L3.9**.
+
 ## Wire format
 
 Each line is a UTF-8-encoded JSON object with no embedded newlines and no

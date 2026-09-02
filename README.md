@@ -507,7 +507,11 @@ what is actually there. L3.0 has landed as well: the executor computes which sta
 typed analysis, records the decision with a reason per stage, and has a human
 approve that route along with the design. L2.17 has landed as well: the developer↔code-reviewer iteration is a bounded loop
 the executor runs, reading a typed verdict and stopping at a stated number of
-rounds rather than looping on a model's reading of its own output. L2.15 (real
+rounds rather than looping on a model's reading of its own output. L3.8 has landed as well: a run emits an OpenTelemetry trace with a span
+per stage and per model call, and per-stage token counts and cost taken from
+the provider's own reported accounting rather than computed from a price
+table — so "what did this pipeline cost" is answerable, which it was not
+before. L2.15 (real
 resume) is still ahead — see
 [docs/roadmaps/BUILD-ROADMAP.md](docs/roadmaps/BUILD-ROADMAP.md) and
 [ADR-006](docs/adrs/ADR-006-loom-executes-pipelines.md).
