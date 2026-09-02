@@ -8,7 +8,7 @@ The AOS Hooks layer provides an event-driven interceptor system for the framewor
 
 ## Event Catalog
 
-Hooks trigger on specific pipeline events (aligned with `shared/telemetry/event-schema.md`):
+Hooks trigger on specific pipeline events. These trigger names are the hook layer's own vocabulary and are not the executor's event types — for those, see the generated `shared/schemas/telemetry/run-event-types.md`. Nothing dispatches hooks today; the executor for them is roadmap L3.10.
 
 | Event Name | Trigger Condition | Common Action |
 |---|---|---|

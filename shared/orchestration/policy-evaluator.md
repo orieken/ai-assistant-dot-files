@@ -15,7 +15,8 @@ proceeding past the gate. The evaluator:
 2. Filters to policies whose `matcher.gate` matches the current gate ID.
 3. Evaluates each matching policy's `condition` against the current pipeline context.
 4. Determines the final action (see Conflict Resolution below).
-5. Emits a `policy.evaluated` telemetry event for every policy — whether it matched or not.
+5. Was specified to emit a `policy.evaluated` event for every policy, matched or not. Nothing emits
+   it — see "Telemetry events: specified, not emitted" below.
 6. Returns one of three signals to the workflow runtime:
    - `proceed` — the pipeline advances without prompting the human operator
    - `halt` — the pipeline stops and reports the reason; human must intervene
@@ -40,7 +41,6 @@ evaluatorInputs:
     securityReviewer.criticals: integer
     dryRunPass: boolean              # for fitness-function-wiring gate
   policyDir: path                    # resolved policy directory (default: .claude/policies/)
-  telemetryStream: path              # where to append events (default: .claude/telemetry/events.jsonl)
 ```
 
 ---
@@ -55,7 +55,7 @@ evaluatorInputs:
    ship-to-friday, db-migration, db-contract-phase, external-api, deploy
 5. For each candidate policy:
    a. Evaluate condition against pipelineContext
-   b. Emit policy.evaluated event (conditionMet: true|false)
+   b. (No event is emitted — see below.)
 6. Collect actions from policies where conditionMet == true
 7. Apply conflict resolution (see below)
 8. If no policies matched → return require-human (default)
@@ -81,76 +81,29 @@ conflict event lists both policy names and their actions so operators can diagno
 
 ---
 
-## Telemetry events emitted (non-negotiable)
+## Telemetry events: specified, not emitted
 
-Every call to the evaluator emits at least one event. There are no silent auto-approvals.
+This section used to define three event payloads — `policy.evaluated`, `policy.conflict`,
+`policy.skipped` — and to state that every call emits at least one, so there are no silent
+auto-approvals.
 
-### `policy.evaluated`
+**Nothing emits them.** The `.claude/telemetry/events.jsonl` file they targeted had no verified
+writer and was retired in roadmap **L3.9**; the payloads used the key `event` where that schema
+required `event_type`, which is the kind of mismatch a format nobody writes never has to resolve.
+This evaluator is itself prose a model follows, not code that runs.
 
-```json
-{
-  "event": "policy.evaluated",
-  "policyName": "<name from policy file>",
-  "gate": "<gate-id>",
-  "conditionMet": true | false,
-  "action": "auto-approve | auto-reject | require-human | escalate | no-op",
-  "reason": "<policy action.reason or 'no-match'>",
-  "timestamp": "<ISO-8601>",
-  "pipelineRunId": "<run-id>",
-  "pipelineStage": "<stage-id>"
-}
-```
+The payload definitions are removed rather than corrected. Fixing a key in a message nothing sends
+makes the specification look more real than it is, which is how a documented guarantee comes to be
+believed.
 
-### `policy.conflict`
+**What this means for the guarantee.** The rule stands: a policy-based gate is a human gate whose
+prompt is replaced by a policy decision, and gates marked Always Human are never delegated. What
+does not exist is any record of those decisions. Building an evaluator that runs as code and emits
+a real audit trail is roadmap **L2.16**; until it lands, "no silent auto-approvals" is a property of
+whoever follows these instructions, not one anything can demonstrate after the fact.
 
-```json
-{
-  "event": "policy.conflict",
-  "gate": "<gate-id>",
-  "conflictingPolicies": ["<name-a>", "<name-b>"],
-  "actions": ["auto-approve", "require-human"],
-  "resolution": "require-human",
-  "timestamp": "<ISO-8601>",
-  "pipelineRunId": "<run-id>"
-}
-```
-
-### `policy.skipped`
-
-```json
-{
-  "event": "policy.skipped",
-  "policyName": "<name>",
-  "gate": "<gate-id>",
-  "reason": "gate-not-eligible | disabled | parse-error",
-  "timestamp": "<ISO-8601>",
-  "pipelineRunId": "<run-id>"
-}
-```
-
----
-
-## Integration points in FeatureDeliveryWorkflow
-
-The `FeatureDeliveryWorkflow` (`shared/workflows/feature-delivery-workflow.md`) has explicit stage
-boundary comments noting where Phase 4 policy hooks evaluate. The evaluator is called at:
-
-- `code-review` stage boundary — `gate: git-commit`
-- `fitness-function-wiring` gate (inline in devops stage) — `gate: fitness-function-wiring`
-- `out-of-boundary-write` check (inline in development stage) — `gate: out-of-boundary-write`
-
-The workflow does NOT call the evaluator for non-eligible gates (1, 3, 4, 5, 8). Those gate
-decisions always return `require-human` unconditionally, bypassing the evaluator entirely.
-
----
-
-## Backward-compatibility guarantee
-
-If `.claude/policies/` does not exist or is empty, the evaluator returns `require-human` for every
-gate — identical to v3.2 behavior. Teams that upgrade to v3.3 without creating any policy files
-see **zero behavior change**.
-
----
+See `shared/telemetry/README.md` for the full list of specified-but-unemitted types and the roadmap
+item behind each.
 
 ## Dry-run mode
 
@@ -158,10 +111,10 @@ see **zero behavior change**.
 /orchestrate --workflow feature-delivery --spec <file> --dry-run-policies
 ```
 
-In dry-run mode, the evaluator evaluates all policies against historical telemetry from
-`.claude/telemetry/events.jsonl` instead of live pipeline context. The `policy.evaluated` events
-are written to `.claude/telemetry/events-dryrun.jsonl` and never mutate the pipeline state. Use
-this to validate new policies before enabling them.
+Dry-run mode was specified to evaluate policies against historical telemetry from
+`.claude/telemetry/events.jsonl`. That file was retired in roadmap L3.9 and never had a writer, so
+there is no history to replay and dry-run has nothing to read. It lands with **L2.16**, alongside
+the evaluator that would produce the history in the first place.
 
 ---
 

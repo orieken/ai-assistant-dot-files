@@ -34,11 +34,11 @@ is undefined — write policies that do not depend on evaluation order.
 ## Audit trail (non-negotiable)
 
 Every policy decision — whether it auto-approves, rejects, escalates, or falls through to a human —
-MUST emit a telemetry event to `.claude/telemetry/events.jsonl`. There are no silent auto-approvals
+was specified to emit a `policy.evaluated` telemetry event. **Nothing emits it**: the `.claude/telemetry/events.jsonl` layer had no verified writer and was retired in roadmap L3.9, and this evaluator is prose a model follows rather than code that runs. The rule that there are no silent auto-approvals
 in this framework. Teams that disable telemetry lose their audit trail and should not enable
 auto-approve policies.
 
-Event shape: see `shared/telemetry/event-schema.md`, event type `policy.evaluated`.
+The event's shape is no longer specified anywhere; see `shared/telemetry/README.md` for why, and for the roadmap item (L2.16) that would define and emit it.
 
 ---
 

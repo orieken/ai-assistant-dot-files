@@ -91,6 +91,8 @@ generate the event vocabulary from one Go enum`), report, PAUSE.
 |---|---|---|
 | Historical records are left alone | `shared/agents/CHANGELOG.md`, `docs/human-tasks.md`'s v3.0.0 release verification, `docs/audits/`, and the `docs/aos/` design pack are **not edited** | A changelog entry and a dated verification log ("events.jsonl NOT created — PASS") are correct as records of what was true then. Editing them to match today makes the history lie. Only *live instructions* get redirected |
 | `event-schema.md` is deleted, not rewritten | Both it and `event-recorder.md` go. `shared/telemetry/README.md` is the one surviving file | Keeping a schema document for a file nothing will ever write is close to the thing being retired. The README carries the honest content: the run event timeline, the generated vocabulary, the L3.8 traces, and the specified-but-unemitted list |
+| The premise is corrected: there WERE callers | `deliver-feature` instructs emission at seven points, and `scheduler`, `policy-evaluator` and `audit-composition-pattern` add more. They are prompt-discipline instructions, never verified, and the v3.0.0 release check recorded the file was not created in practice — but they are not nothing, and the epic's "emitted by nothing" framing was wrong | Escalated at the start of Phase B rather than worked around. The retirement still proceeds; what changes is that Phase B removes *instructions*, not just dead prose, and must account for what those instructions backed |
+| The "no silent auto-approvals" guarantee is recorded as unbacked | `approval-gates.md` and `policy-evaluator.md` state that every policy decision emits `policy.evaluated`. Retiring the channel does not create a gap — the file was never written, so nothing audits those decisions today. Phase B says so plainly in both files and points at **L2.16** | Deleting a safety property's only specified mechanism as a side effect of a cleanup is not acceptable; stating that the property is currently unenforced, and naming the item that would enforce it, is. This makes an existing gap visible rather than a new one |
 | `shared/telemetry/` survives as a directory | Not folded into `shared/schemas/telemetry/` | The AOS design pack made telemetry a first-class top-level concern deliberately; quietly reversing that as a side effect of a cleanup is the wrong way to revisit it |
 
 ## Phase B — Retire the layer that never emitted — BLOCKED BY Phase A
@@ -109,7 +111,12 @@ generate the event vocabulary from one Go enum`), report, PAUSE.
    still mines `gate_decision` per feature and should read `artifact.corrected` instead, the way
    `extract-lessons` was taught to in epic 85. A dangling reference is a worse outcome than the
    contradiction being fixed.
-4. If any of them turns out to have a real caller or a real emitter, STOP and escalate.
+4. `approval-gates.md` and `policy-evaluator.md`: record that "no silent auto-approvals" has no
+   audit channel today and that **L2.16** is what would give it one. Do not weaken the requirement
+   itself — the gate still requires a human; what is being stated is that nothing records the
+   decision.
+5. Grep the whole tree at the end, not just the file list above. A dangling reference is undetected
+   here: there is no link checker, and no script depends on `shared/telemetry/`.
 
 **Done when**: no file describes a telemetry file nothing writes, and every reference resolves.
 **Commit** (`refactor(telemetry): retire the event layer that never had an emitter`), report, PAUSE.

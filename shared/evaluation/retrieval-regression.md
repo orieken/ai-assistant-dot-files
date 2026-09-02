@@ -12,10 +12,12 @@ verification: using queries people actually asked, not synthetic benchmarks.
 
 ## Telemetry dependency (PENDING — schema extension required)
 
-Auto-population from telemetry requires a `retrieval.queried` event type not yet
-in `shared/telemetry/event-schema.md` (schema v1.1.0 as of Epic 60). Until that
-event type is added and emitting, `retrieval-evaluator` must propose cases manually
-from memory (i.e., from prior known query failures surfaced in evaluation reports).
+Auto-population from telemetry requires a `retrieval.queried` event type that nothing
+emits and that is deliberately absent from the event vocabulary — which holds only
+emitted types (roadmap L3.9). Adding it means building the emitter, in the retriever
+work of **L3.4**, not adding a row to a table. Until then, `retrieval-evaluator` must
+propose cases manually from memory (i.e., from prior known query failures surfaced in
+evaluation reports).
 
 **Proposed schema extension** (for human review before implementing — schema changes
 ripple to all telemetry consumers):
@@ -102,10 +104,10 @@ The evaluator never modifies this file — all case additions require human appr
 
 ## Seed cases (manually added — 0 from telemetry, schema extension pending)
 
-No seed cases yet. Once the `retrieval.queried` event type is added to
-`shared/telemetry/event-schema.md` and emitting, `retrieval-evaluator` can propose
-cases from actual zero-hit queries. Until then, cases can be added manually by
-the framework team when a known retrieval failure is identified.
+No seed cases yet. Once something emits `retrieval.queried` — which means building the
+emitter, roadmap **L3.4** — it joins the generated vocabulary and `retrieval-evaluator`
+can propose cases from actual zero-hit queries. Until then, cases can be added manually
+by the framework team when a known retrieval failure is identified.
 
 ### Example (reference — not a real case, shows format)
 

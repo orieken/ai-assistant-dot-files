@@ -18,9 +18,10 @@ Do NOT use for root cause analysis of a specific bug — use `/five-whys` instea
 2. `docs/features/<feature-name>/delivery-summary.md` — pipeline run status
 3. `CLAUDE.md` — project constraints for benchmarking
 4. The most recent `docs/agent-metrics/scorecard-*.md` (if one exists) — for the Agent Scorecard Cross-Reference section
-5. `.claude/telemetry/events.jsonl` (if it exists — opt-in, absence is not an error) — filter to
-   `gate_decision` events where `metadata.feature` matches this feature's slug. These are the human
-   correction signals for this delivery's gate halts.
+5. `run-state.json` and `run-events.jsonl` for this feature (present when it was delivered by
+   `loom run`; their absence is not an error) — the `artifact.corrected` entries are this delivery's
+   human corrections, already attributed to the producing agent, each naming a retained diff under
+   `.approved/<gate>/corrections/` (roadmap L4.5).
 
 ## Process
 
@@ -53,16 +54,16 @@ Do NOT use for root cause analysis of a specific bug — use `/five-whys` instea
    - **What went poorly** — things that required rework, were missed, or caused delays
    - **What to improve** — actionable process changes for next time
 
-5. **Gate Corrections (opt-in)**: If `.claude/telemetry/events.jsonl` exists, filter to
-   `gate_decision` events for this feature. For each event with outcome `rejected` or
-   `edited_then_approved`:
-   - Note the gate (`gate_id`), the owning agent (`agent_or_skill_name`), and the artifact
-     (`artifact_path`).
-   - If a `reason` is present, include it verbatim (short quotes only; never reproduce a full
-     artifact body that may appear in reason).
-   - Summarize: "Gate #N was edited before approval — [what changed at a high level]" or
-     "Gate #N was rejected — [stated reason or 'no reason given']."
-   - Omit this step (and the output section) entirely when events.jsonl does not exist.
+5. **Human Corrections**: If this feature was delivered by `loom run`, read the `artifact.corrected`
+   entries from its run state. For each one:
+   - Note the producing agent (`agent`), the gate it was caught at (`gate`), and the size of the
+     change (`stat`). Attribution comes from the record — do not infer it from who owns the gate.
+   - Read the diff at `diffPath`. Summarize at a high level what the human changed; quote only
+     short fragments, never a whole artifact body.
+   - Remember the correction was **advisory**: the executor recorded it and did not adopt it, so
+     the delivered artifact does not contain the human's text. Do not describe it as a fix that
+     shipped.
+   - Omit this step (and the output section) when the feature has no run state or no corrections.
 
 6. **Cross-reference the latest agent scorecard** (if `docs/agent-metrics/scorecard-*.md` exists): for each
    agent that ran in this delivery, check whether it was flagged `UNDERPERFORMING` in the most recent
@@ -121,8 +122,9 @@ Delivery status: Complete | Complete with notes | Blocked
 [Recurring themes across this and prior deliveries, if other retrospectives exist in docs/features/]
 
 ## Gate Corrections
-[Include this section ONLY when gate_decision events exist in .claude/telemetry/events.jsonl for this
-feature. Omit entirely when telemetry is not enabled or no matching events exist.]
+[Include this section ONLY when the feature was delivered by `loom run` and its run state records
+`artifact.corrected` entries. Omit entirely otherwise — a delivery through the markdown pipeline
+records no corrections, and neither does a run nobody corrected.]
 
 | Gate | Agent | Outcome | Reason |
 |---|---|---|---|

@@ -75,7 +75,7 @@ If both deliveries run tests simultaneously and the test suite picks a fixed por
 
 ### 3. `events.jsonl` concurrent writes
 
-`.claude/telemetry/events.jsonl` is shared. Two pipelines appending simultaneously can produce interleaved lines. Each event carries `pipeline_id`, so queries and `extract-lessons` analysis remain correct. Individual JSON line corruption from concurrent byte-level writes is extremely unlikely in interactive usage (sequential LLM turns, not parallel OS processes). The risk is accepted and documented.
+There is no shared telemetry file to contend over: `.claude/telemetry/events.jsonl` was retired in roadmap L3.9. Each `loom run` writes its own `run-events.jsonl` inside its own feature workspace, so two parallel deliveries share no append target. The interleaving risk this section used to document no longer exists.
 
 ---
 

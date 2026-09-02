@@ -25,7 +25,7 @@ Do NOT use when:
 
 1. **Read Schedule Specification**: Identify target event, cadence, and action script/agent.
 2. **Configure Background Timer**: Invoke system `schedule` tool with explicit prompt or cron expression.
-3. **Log Scheduled Event**: Append schedule event log to `.claude/telemetry/events.jsonl`.
+3. **Log Scheduled Event**: Nothing to append. The `.claude/telemetry/events.jsonl` layer was retired in roadmap L3.9 — it had no verified writer and no reader. A scheduled run executed by `loom run` records itself on that run's `run-events.jsonl`; a scheduled run of this skill records nothing.
 4. **Report Schedule Configuration**: Output status confirmation report.
 
 ## Examples

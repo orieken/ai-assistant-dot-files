@@ -185,7 +185,11 @@ not. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifact set:
 
 - **`run-events.jsonl`** (per feature, beside run state) — append-only event log written by the Go
   binary from both pipelines: stage transitions, gate halts and approvals, and integrity failures,
-  each with a real timestamp. Read with `loom state timeline`.
+  each with a real timestamp. Read with `loom state timeline`. Its event types come from one Go
+  enum, with the JSON Schema and the documentation table generated from it and a test that fails on
+  drift (L3.9) — the framework previously kept two hand-maintained lists of event types and a
+  recorder instructed to enforce one of them, which is how 60% of the specified surface ended up
+  outside it.
 - **Human Corrections** (in `run-state.json` and on the timeline, diffs under
   `.approved/<gate>/corrections/`) — what a person changed at a gate, attributed to the agent that
   produced it (L4.5). The framework has specified this as its highest-value learning signal since

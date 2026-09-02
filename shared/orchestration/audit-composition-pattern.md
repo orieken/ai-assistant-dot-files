@@ -70,7 +70,7 @@ When an auditor returns FAIL on a `retry` stage:
 2. The producer is reinvoked with the findings as additional context:
    > "Your previous `<artifact>` failed the `<auditor>` audit. The specific violations are: [findings]. Fix these violations and produce a new `<artifact>`."
 3. The retry counter is incremented. On `maxRetries` exhausted: fall back to `halt`.
-4. Both the findings and the retry event are logged to `.claude/telemetry/events.jsonl`
+4. Neither the findings nor the retry are recorded anywhere. The `audit.fail` / `audit.retry` / `audit.halt` events this step described were specified and never emitted, and the file they targeted was retired in roadmap L3.9. Giving audit composition a real execution record is **L3.12**
    (event type: `audit.fail`, `audit.retry`, `audit.halt`).
 
 ## Why This Is the Default

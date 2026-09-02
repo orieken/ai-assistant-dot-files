@@ -68,7 +68,7 @@ and Phase 3 (paired with the Learning/Forgetting engines).
 When the hook layer lands (Phase 3), evaluations will gain access to telemetry signals beyond timing
 and iteration count. The signal introduced in Epic 62 is **gate-rejection rate**:
 
-- **Per-agent gate-rejection rate**: across all `gate_decision` events (see `shared/telemetry/event-schema.md`)
+- **Per-agent correction rate**: across `artifact.corrected` entries in run state (roadmap L4.5 — the `gate_decision` events this metric was specified against were never emitted, and their layer was retired in L3.9)
   tied to a given `agent_or_skill_name`, what fraction had outcome `rejected` or `edited_then_approved`
   vs. `approved`? A consistently high edit rate for a specific agent is evidence that the agent's
   output often needs human correction before a gate passes — a quality signal `agent-scorecard` should

@@ -35,7 +35,7 @@ not implement anything.
 
 ### Trigger event
 
-- **Event type**: `agent.completed` (from `shared/telemetry/event-schema.md`)
+- **Event type**: `stage.completed` (from the generated `shared/schemas/telemetry/run-event-types.md`; the `agent.completed` type this referenced was specified and never emitted)
 - **Filter**: `agent_or_skill_name == "deliver-feature"` AND
   `outcome == "success"`
 - **Cadence**: every Nth matching event (default N=5, matching the current
@@ -88,7 +88,7 @@ Principle #6 (counter agents / continuous evaluations run only when invoked).
 
 - `shared/skills/pipeline-retrospective/SKILL.md` — the authoritative analysis
   logic
-- `shared/telemetry/event-schema.md` — the event types this spec references
+- `shared/schemas/telemetry/run-event-types.md` — the generated event vocabulary this spec references
 - `shared/evaluation/README.md` — the layer overview and the
   continuous-vs-on-demand model
 - `docs/aos/migration-plan.md` — Phase 3 will implement the hook layer that

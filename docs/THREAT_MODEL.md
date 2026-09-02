@@ -440,7 +440,7 @@ Per the epic's escalation clause:
   dependency direction) that partially address some surfaces
 - `shared/hooks/README.md` — hook layer overview (to be updated in Op 2)
 - `scripts/sync-memory.sh` — org KI sync implementation (F-04, F-05, F-08)
-- `shared/telemetry/event-schema.md` — events that fire hooks (TB-4 source)
+- `shared/schemas/telemetry/run-event-types.md` — the generated event vocabulary (TB-4 source; the hand-maintained `shared/telemetry/event-schema.md` it replaced was retired in roadmap L3.9)
 - `docs/adrs/ADR-003-enterprise-memory-sync.md` — design rationale for TB-5
 
 ---

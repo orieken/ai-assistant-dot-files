@@ -59,7 +59,7 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 1. Read the `feature` field from the state file (use `default` if the field is absent).
 2. Move all files from `.claude/feature-workspace/` into
    `.claude/feature-workspace/<feature>/` — rename in place; do not copy-then-delete.
-3. Log a `workspace.migrated` event to `.claude/telemetry/events.jsonl` (if telemetry is
+3. No event is logged for the migration. The `.claude/telemetry/events.jsonl` layer this step wrote to was retired in roadmap L3.9 — it had no verified emitter and no consumer. The migration itself is unchanged.
    enabled).
 4. Continue from the migrated path. The migration is idempotent: if the named subdirectory
    already exists, skip silently.
@@ -80,14 +80,14 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 3. **Run legacy workspace detection** (see "Workspace Path Resolution" above), then **check for an existing `.claude/feature-workspace/<feature-name>/pipeline-state.json`.** If one exists: stop and invoke `resume-pipeline` instead of continuing here — do not blindly clean the workspace out from under an in-progress or crashed run. If the user explicitly asked to start over ("start fresh", "restart delivery"), archive the old state file to `.claude/feature-workspace/<feature-name>/.history/pipeline-state.json.<timestamp>` and proceed. If no workspace exists yet, create it: `.claude/feature-workspace/<feature-name>/`.
 4. **Create the feature archive directory**: `docs/features/<feature-name>/` — this is where all final artifacts are persisted.
 5. **Initialize `.claude/feature-workspace/<feature-name>/pipeline-state.json` and `.claude/feature-workspace/<feature-name>/pipeline-trace.json`** — see "Checkpointing & Pipeline State" and "Pipeline Tracing" below.
-6. **Check for `.claude/delivery-policy.yaml`** — if present, parse policy mode (`policy-driven` | `strict-human`), `maxContractRetries` (default 3), `maxDiffLines` (default 200), and stage `autoProceed` settings into pipeline state. If missing, default mode to `strict-human` (100% backward compatible, standard human prompt at every checkpoint). Log initial `policy.evaluated` event to `.claude/telemetry/events.jsonl`.
+6. **Check for `.claude/delivery-policy.yaml`** — if present, parse policy mode (`policy-driven` | `strict-human`), `maxContractRetries` (default 3), `maxDiffLines` (default 200), and stage `autoProceed` settings into pipeline state. If missing, default mode to `strict-human` (100% backward compatible, standard human prompt at every checkpoint).
 
 ### Phase 1: Discovery and Design
 7. **Invoke context-engineer** -> produces `context-manifest.md` in `.claude/feature-workspace/<feature-name>/`. This scopes the bounded context, pins the specific files analyst/developer must read, lists relevant KIs/ADRs, and estimates the token budget. If it flags a budget WARNING, tell the user which files it recommends cutting before continuing. **Checkpoint**: record in `pipeline-state.json`.
-8. **Invoke validate-artifact** against `shared/contracts/context-manifest-contract.md`. If FAIL: if `policy-driven` mode is active and `attempts < maxContractRetries` (default 3), log `contract.retry` to `.claude/telemetry/events.jsonl` and re-invoke context-engineer with the specific contract violations; otherwise send back to human. Repeat until PASS. **Checkpoint** on PASS.
+8. **Invoke validate-artifact** against `shared/contracts/context-manifest-contract.md`. If FAIL: if `policy-driven` mode is active and `attempts < maxContractRetries` (default 3), re-invoke context-engineer with the specific contract violations; otherwise send back to human. Repeat until PASS. **Checkpoint** on PASS.
 9. **Invoke analyst** -> reads `context-manifest.md` first, then produces `analysis.md`.
-10. **Invoke validate-artifact** against `shared/contracts/analysis-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries` (log `contract.retry`), re-invoking analyst. Repeat until PASS. **Checkpoint** on PASS.
-11. **PAUSE / Policy Evaluation**: Evaluate policy for analyst checkpoint. If mode is `policy-driven`, stage `autoProceedAnalyst: true`, contract validation == `PASS`, and diff lines < `maxDiffLines`: log `policy.evaluated` (`decision: AUTO_PROCEED`) to `.claude/telemetry/events.jsonl` and proceed immediately to step 12. Else: log `policy.evaluated` (`decision: PAUSE_HUMAN`), show summary to user, and wait for confirmation before continuing.
+10. **Invoke validate-artifact** against `shared/contracts/analysis-contract.md`. If FAIL: apply Tier B retry loop up to `maxContractRetries`, re-invoking analyst. Repeat until PASS. **Checkpoint** on PASS.
+11. **PAUSE / Policy Evaluation**: Evaluate policy for analyst checkpoint. If mode is `policy-driven`, stage `autoProceedAnalyst: true`, contract validation == `PASS`, and diff lines < `maxDiffLines`: proceed immediately to step 12. Else: show summary to user, and wait for confirmation before continuing.
 12. **Invoke architect** (if `analysis.md` declares any of: Context Crossings; Data Model Changes in an Expand or Contract phase; New Dependencies; or a performance requirement with a measurable threshold — the last because thresholds are what force timeout, circuit-breaker, and idempotency decisions. Also invoke it whenever the analysis flags structural work the list above cannot see, such as a new base class or a reversal of an existing ADR, or when the human asks for one regardless. This mirrors `AnalysisState.RequiresArchitect()` in `internal/state/`, which is the tested form of the same condition) -> produces `architecture-notes.md`.
 13. **Invoke validate-artifact** against `shared/contracts/architecture-contract.md` (only if architect was invoked). If FAIL: apply Tier B retry loop up to `maxContractRetries`. **PAUSE** if an RFC was written — human must acknowledge before developer starts. **Checkpoint** on PASS or SKIP.
 14. **Invoke performance-engineer** (if `analysis.md` has a performance Non-Functional Requirement carrying a measurable threshold — prose about feeling fast is not a target a review can work against) -> produces `performance-report.md`. **Checkpoint**.
@@ -125,12 +125,12 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 39. **Update feature index** — add the new feature entry to `docs/features/README.md`.
 40. **Count total deliveries** — count `docs/features/*/delivery-summary.md` (including the one just written). If count is evenly divisible by 5, auto-invoke `/retrospective` for the feature just delivered.
 41. **PAUSE / Policy Evaluation**: Show `docs/features/<feature-name>/` listing. If `strict-human` or policy `autoProceedPersistence: false`, wait for human confirmation.
-42. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`. **Gate Decision Telemetry** (opt-in only, see below): after the human responds, record a `gate_decision` event to `.claude/telemetry/events.jsonl` — `gate_id: 1`, `gate_name: "friday_ship"`, `outcome` is `approved` / `rejected` (no artifact checksum diff applies here since Gate #1 doesn't gate a single file; `artifact_path: null`).
+42. **Ship to Friday (Non-Negotiable Human Gate #1)** — ask: "Ship to Friday?" On explicit human confirmation ("ship" or "yes"): POST Cucumber JSON to Friday. Set `pipeline-state.json` phase to `complete`.
 43. **[Optional] Open a PR via `ship-feature`** — after Friday is confirmed, ask: "Would you like to open a pull request?" If the user says yes, invoke `/ship-feature <feature-name>`. If `--ship` was passed at invocation, proceed directly without the prompt — the flag counts as prior consent (this is consistent with "opt-in only": the user must explicitly pass `--ship` or answer yes). Never auto-invoke when neither condition is met. Existing `deliver-feature` behavior is unchanged when the user does not request it. See `shared/skills/ship-feature/SKILL.md` for branch, commit, and PR gate details.
 
 ## Human Checkpoints & Policy Evaluation
 
-- **Policy Evaluation Rule**: For policy-eligible stages, if `.claude/delivery-policy.yaml` mode is `policy-driven`, stage `autoProceed: true`, validation status is `PASS`, and diff lines < `maxDiffLines`, log `policy.evaluated` (`decision: AUTO_PROCEED`) to `.claude/telemetry/events.jsonl` and auto-proceed. Otherwise, log `policy.evaluated` (`decision: PAUSE_HUMAN`) and pause for manual confirmation.
+- **Policy Evaluation Rule**: For policy-eligible stages, if `.claude/delivery-policy.yaml` mode is `policy-driven`, stage `autoProceed: true`, validation status is `PASS`, and diff lines < `maxDiffLines`, auto-proceed. Otherwise, pause for manual confirmation. **Neither decision is recorded anywhere** — `approval-gates.md` says every policy decision emits `policy.evaluated`, and nothing has ever written it. Giving that guarantee a real audit trail is roadmap L2.16.
 - **Non-Negotiable Human Gates**: Gate #1 (Friday ship), Gate #3 (DB Expand/Migrate), Gate #4 (DB Contracting phase), Gate #5 (External API mutations), and Gate #8 (Deploy) ALWAYS require explicit human confirmation regardless of policy file settings.
 - After context-engineer passes contract validation (step 8): if token budget is WARNING, confirm pruning before analyst starts.
 - After analyst passes contract validation (step 10/11): evaluate policy or confirm scope before code is written.
@@ -139,49 +139,29 @@ directly at the root (not inside any `<feature-name>/` subdirectory). If found:
 - After security Critical finding (step 25): explicit "fix confirmed" before QA starts (halt escalation).
 - Before shipping to Friday (step 40): explicit "ship" confirmation.
 
-### Gate Decision Telemetry (opt-in, non-negotiable guarantee)
+### Gate Decisions: what is recorded, and what is not
 
-**Scope note (roadmap L4.5).** Everything in this section describes **this markdown pipeline**, where
-the checksums are ones a model computed and recorded. It is not the same mechanism as the executor's:
-under `loom run`, the Go executor detects a human correction by comparing what the human was last
-*shown* against what is on disk at approval, records it as `artifact.corrected` on
-`run-events.jsonl` attributed to the producing agent, and retains a unified diff. That path needs
-nothing from this section and emits nothing to `events.jsonl`. `extract-lessons` reads both and says
-which is which.
+**This pipeline records nothing about a gate decision.** It used to be instructed to write
+`gate_decision` events to `.claude/telemetry/events.jsonl`. That file had no verified writer and no
+reader; a v3.0.0 release check confirmed a real delivery never created it. The layer was retired in
+roadmap **L3.9**, and the instructions with it, rather than being carried forward as ceremony.
 
-One difference worth knowing before you edit anything at a gate here: under the executor, the file a
+Two consequences to be honest about:
+
+- **`approval-gates.md` says every policy-based decision emits `policy.evaluated` and that there are
+  no silent auto-approvals.** Nothing records those decisions here, and nothing did before. The
+  requirement is unchanged — a gate still stops for a human unless a policy matches — but the audit
+  trail that would demonstrate it is roadmap **L2.16**'s to build.
+- **The corrective signal is collected under `loom run` only.** The executor compares what a human
+  was last *shown* at a gate against what is on disk at approval, records `artifact.corrected` on
+  `run-events.jsonl` attributed to the producing agent, and retains a unified diff (roadmap L4.5).
+  It needs nothing from this section. `extract-lessons` and `retrospective` read that, and say which
+  pipeline a delivery came from.
+
+One difference worth knowing before you edit anything at a gate. Under the executor, the file a
 human is meant to annotate is the *rendered view*, which the pipeline never reads back — so the edit
 is recorded but not adopted. In this pipeline the markdown IS the artifact, so an edit here does
 change what the next agent reads. See `cmd/loom/README.md`, "Editing an artifact at a gate".
-
-**Emit `gate_decision` events ONLY when telemetry is enabled** (i.e., `.claude/telemetry/events.jsonl`
-already exists and the user has opted in per `shared/telemetry/README.md`). If telemetry is not enabled,
-skip silently — do not create the file, do not log, do not warn. Pipeline correctness never depends on
-telemetry emission.
-
-**When to emit**: immediately after the human responds to any Non-Negotiable Human Gate halt (gates 1, 3,
-4, 5, 8). Also emit for any policy-eligible gate pause that resolves via explicit human confirmation rather
-than AUTO_PROCEED.
-
-**Edit detection**: before presenting the gate halt, note the artifact's checksum from `pipeline-state.json`
-(the `completedAgents[].checksum` entry for the most recent agent that produced it). After the human
-confirms, recompute the checksum using the same `sha256` of the artifact's current file content. If the
-checksums differ, the human edited the artifact — set `outcome: "edited_then_approved"`. If unchanged,
-`outcome: "approved"`. If the human rejected (said anything other than the gate's approval word), `outcome:
-"rejected"`.
-
-**Minimum event shape** at each gate halt in this skill:
-
-| Gate | `gate_id` | `gate_name` | `artifact_path` |
-|---|---|---|---|
-| Step 42 Friday ship (Gate #1) | 1 | `friday_ship` | null (no single artifact) |
-| Analyst PAUSE (step 11) | — | — | `.claude/feature-workspace/<feature-name>/analysis.md` |
-| Architect RFC PAUSE (step 13) | — | — | `.claude/feature-workspace/<feature-name>/architecture-notes.md` |
-| Security Critical halt (step 25) | — | — | `.claude/feature-workspace/<feature-name>/security-report.md` |
-
-Policy-evaluation pauses (AUTO_PROCEED / PAUSE_HUMAN) emit `policy.evaluated` events instead; do not
-double-emit `gate_decision` for those — `policy.evaluated` already captures the decision signal for
-non-Non-Negotiable gates.
 
 ## The Review Loop (roadmap L2.17)
 

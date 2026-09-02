@@ -140,9 +140,20 @@ section above governs the prose gates only.
 ## Policy-Based Gate Type (v3.3+)
 
 A policy-based gate operates identically to a human gate except the human prompt is replaced by
-the policy evaluator's decision when a matching policy exists and its condition is met. The
-evaluator emits a `policy.evaluated` telemetry event for every decision — including decisions
-that fall through to `require-human`. There are no silent auto-approvals.
+the policy evaluator's decision when a matching policy exists and its condition is met.
+
+**No decision is recorded, and none ever has been.** This section used to say the evaluator emits a
+`policy.evaluated` event for every decision, so there are no silent auto-approvals. That event had
+no emitter: the file it targeted was never written and was retired in roadmap L3.9, and the
+evaluator is itself prose a model follows rather than code that runs. The requirement below is
+unchanged — a gate marked **Always Human** is never delegated, and a policy-eligible gate needs a
+matching policy with no `require-human` policy also matching — but nothing produces an audit trail
+proving which decisions were made. Building an evaluator that runs as code and records what it
+decided is roadmap **L2.16**.
+
+Until it lands, treat policy-based auto-approval as a convenience that trades away
+auditability, and prefer human confirmation for anything you would want to be able to reconstruct
+afterwards.
 
 To opt in: place `.policy.yaml` files in `.claude/policies/` in your project.
 To opt out globally: set `policiesEnabled: false` in `.claude/delivery-policy.yaml`.

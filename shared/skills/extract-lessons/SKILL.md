@@ -24,10 +24,11 @@ in terms of things that recur *across* deliveries.
 4. `docs/features/*/context-manifest.md` — for the KI usage tally
 5. `shared/knowledge/*.md` and `.claude/knowledge/*.md` — the current KI corpus
 6. `.claude/rules/approval-gates.md` — this skill's promotion step is gated by it, not exempt from it
-7. `.claude/telemetry/events.jsonl` (if it exists — telemetry is opt-in; its absence is not an error) —
-   scan for `gate_decision` events with outcome `rejected` or `edited_then_approved`. These are
-   first-class corrective signals: a human overriding or editing an artifact at a gate is the
-   strongest real-world evidence that the producing agent needs improvement.
+7. `run-state.json` and `run-events.jsonl` for each feature delivered by `loom run` (their absence
+   is not an error) — the `artifact.corrected` entries, with their retained diffs. These are
+   first-class corrective signals: a human editing an artifact at a gate is the strongest
+   real-world evidence that the producing agent needs improvement, and the record already names
+   which agent.
 
 ## Process
 
@@ -84,22 +85,19 @@ adopt the human's text, so do not assume the delivered artifact contains it. And
 edits are one person's judgement, not a verdict; the recurrence bar exists precisely because one
 correction is an anecdote.
 
-**5b. `.claude/telemetry/events.jsonl` (both pipelines — no emitter yet).** If that file exists, scan
-it for `gate_decision` events. Filter to outcomes
-`rejected` or `edited_then_approved`. Group by `gate_id` + `agent_or_skill_name`. For any combination
-with 3+ occurrences across distinct features (identified via `metadata.feature`):
-- Identify the owning agent (the one whose artifact was gated on the specified step).
-- Draft a hypothesis for what consistent mistake caused the human to reject or edit. Check the `reason`
-  metadata field (when non-null) across the matching events for recurring language. Compare
-  `artifact_path` entries against the actual artifact files when available.
-- If a hypothesis is credible, draft it as a candidate agent-prompt improvement (same gating as step 2:
-  present, require explicit confirmation, don't auto-apply).
-- Record every gate-decision pattern in the lessons-learned output regardless of promotion decision.
+**5b. The markdown pipeline records nothing.** A delivery run by a host platform's LLM rather than by
+`loom run` leaves no correction record. `.claude/telemetry/events.jsonl` and its `gate_decision`
+events were specified, never emitted, and retired in roadmap L3.9 — do not look for that file, and
+do not treat its absence as telemetry being switched off. For those deliveries, gate-decision
+analysis is unavailable, and saying so in the output is better than inferring it from artifacts.
 
-Never read or process **step 5b** when `.claude/telemetry/events.jsonl` does not exist — the opt-in
-guarantee is absolute (see `shared/telemetry/README.md`). Nothing writes that file today; its emitter
-is roadmap L3.9. Step 5a has no such gate: `run-events.jsonl` is written by the executor for every
-`loom run` delivery, and a run that produced no corrections simply has no entries to read.
+Apply the same bar to step 5a's corrections: 3+ occurrences for the same agent across distinct
+features before drafting a hypothesis.
+- Draft a hypothesis for what consistent mistake caused the human to correct that agent, reading the
+  retained diffs for recurring language.
+- If a hypothesis is credible, draft it as a candidate agent-prompt improvement (same gating as step
+  2: present, require explicit confirmation, don't auto-apply).
+- Record every correction pattern in the lessons-learned output regardless of promotion decision.
 
 ### 6. Incident-feature pair analysis -> candidate pipeline improvement
 Scan every `docs/incidents/*.md` record. For each incident whose **Affected Feature** field links to a
@@ -160,15 +158,13 @@ feature was not delivered by `loom run`):
 |---|---|---|---|---|
 | [agent] | [feature] | [gate] | +N/-M | [one line from reading the diff] |
 
-Raw `gate_decision` events from step 5b (omit when events.jsonl absent):
-| Gate | Agent | Feature | Outcome | Reason |
-|---|---|---|---|---|
-| Gate #[N] ([name]) | [agent] | [feature] | rejected / edited_then_approved | [reason or "none given"] |
-
-Recurring patterns (3+ events for same gate + agent):
-| Gate + Agent | Count | Features | Hypothesis | Proposed Action | Status |
+Recurring patterns (3+ corrections for the same agent across distinct features):
+| Agent | Count | Features | Hypothesis | Proposed Action | Status |
 |---|---|---|---|---|---|
-| Gate #[N] / [agent] | [N] | [feature list] | [draft hypothesis] | [prompt edit / rule change / none] | Proposed / Approved / Declined |
+| [agent] | [N] | [feature list] | [draft hypothesis] | [prompt edit / rule change / none] | Proposed / Approved / Declined |
+
+State explicitly when a delivery in scope came from the markdown pipeline: it records no corrections,
+so its absence from this table means "not observable", not "nothing was corrected".
 
 ## Incident-Feature Pairs (Step 6)
 | Incident | Feature | Pipeline Gap Identified | Proposed Change | Status |
