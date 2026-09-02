@@ -87,12 +87,28 @@ here directly). Do NOT push.
 YAML example fails to parse — L2.16's stated done-when, in full. **Commit** (`feat(policy): load and
 validate policies against a compiled gate list`), report, PAUSE.
 
+### Phase B decisions (settled 2026-09-02, before the phase — from a mismatch found in Phase A)
+
+**The two gate vocabularies do not overlap.** Policy gate IDs name *actions* from
+`approval-gates.md` (`git-commit`, `out-of-boundary-write`, `fitness-function-wiring`); the
+executor's gates name *stage progressions* (`confirm-design`, `confirm-security`, `confirm-ship`,
+`confirm-unresolved-review`). No valid policy could name a barrier `loom run` actually has, so
+"evaluate at each gate" would have evaluated nothing, ever.
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| The executor's four gates become policy-eligible | They join the three action gates in the eligible list; the always-human five are untouched | These are stage progressions, not irreversible actions — the class the always-human list exists to protect. Without them the evaluator has nothing to run at, and the audit trail this epic exists to create would not exist |
+| `confirm-ship` is eligible but must be documented carefully | It is eligible; the docs must state what it does and does not authorise | It *precedes* the ship, commit and deploy gates rather than being one of them. A reader who assumes a policy on `confirm-ship` can auto-approve a deployment has misread it, and the docs are what prevent that. Note this epic auto-approves nothing anyway |
+| Five condition fields have no source and resolve to **unknown** | `diffLines`, `diffType`, `dryRunPass`, `fitnessFunction.allPass`, `codeReviewer.behaviorChange` are unavailable. An unknown check never satisfies a condition, and the recorded decision names the missing fact | Only four of nine fields have anything behind them: verdict, security criticals, test results, and changed paths. Reporting *why* a policy did not fire is more useful than silently treating absence as false, and it makes the gap measurable rather than assumed |
+| Sourcing the rest is its own item | Phase C raises it: shelling to git for diff size and type, and wiring fitness-function results | Adding a git dependency to the executor is real scope with its own questions (diff against what?), not a detail of this phase |
+
 ## Phase B — Evaluate, and record what was decided — BLOCKED BY Phase A
 
 1. Typed evaluation of every declared condition check against a `GateContext` the executor builds
-   from run state — diff size, test results, review verdict, security criticals, changed paths.
-   Where a fact is not available, the check is **unknown**, and an unknown check never satisfies a
-   condition.
+   from run state — review verdict, security criticals, test results, changed paths. The other five
+   fields are **unknown**; an unknown check never satisfies a condition, and the recorded decision
+   names which fact was missing.
+1a. Extend the eligible gate list with the executor's four gates, per the decision above.
 2. Conflict resolution as specified: `require-human` wins; the conflict is recorded.
 3. `policy.evaluated` joins the event vocabulary — it is emitted now, which is what earns it a place
    — and is written for every policy considered, matched or not.
