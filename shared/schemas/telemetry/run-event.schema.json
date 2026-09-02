@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/orieken/loom/internal/orchestrator/event",
+  "properties": {
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "artifact.corrected",
+        "gate.approved",
+        "gate.invalidated",
+        "gate.waiting",
+        "loop.exhausted",
+        "loop.iterated",
+        "run.completed",
+        "run.started",
+        "stage.completed",
+        "stage.failed",
+        "stage.interrupted",
+        "stage.skipped",
+        "stage.stale",
+        "stage.started"
+      ]
+    },
+    "stage": {
+      "type": "string"
+    },
+    "sequence": {
+      "type": "integer"
+    },
+    "gate": {
+      "type": "string"
+    },
+    "staleReason": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "loop": {
+      "type": "string"
+    },
+    "iteration": {
+      "type": "integer"
+    },
+    "approvalMethod": {
+      "type": "string"
+    },
+    "agent": {
+      "type": "string"
+    },
+    "correction": {
+      "type": "string"
+    },
+    "diffPath": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "at",
+    "kind"
+  ]
+}
