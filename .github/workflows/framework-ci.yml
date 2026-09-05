@@ -126,7 +126,7 @@ jobs:
           go test ./... -coverprofile=coverage.out
       - name: Coverage ratchet
         # Ratchet policy (roadmap M0.2): the floor is the honest measured combined
-        # statement coverage of the loom module — 66.1% on 2026-09-02 (epic 87 phase B) — NOT the
+        # statement coverage of the loom module — 66.1% on 2026-09-02 (epic 88 phase A) — NOT the
         # aspirational 85% from CLAUDE.md. CI fails below the floor. When real
         # coverage rises, raise COVERAGE_FLOOR to the new measured value in this
         # step; never lower it. Target remains 85%.

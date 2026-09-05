@@ -134,6 +134,10 @@ func executeRun(cmd *cobra.Command, setup runSetup) error {
 	}
 	ctx, stopSignals := interruptibleContext(cmd)
 	defer stopSignals()
+	// Record the episode however the run ends — completed, halted at a gate,
+	// interrupted, or failed. A store that only knew about clean completions
+	// would miss the runs anyone actually investigates (roadmap L3.5).
+	defer recordEpisode(cmd, input.WorkspaceDir, orchestrator.FeatureNameFromSpec(input.SpecPath))
 	cmd.Printf("Running plan %q (%d stages) — state: %s\n", plan.Name, len(plan.Stages), store.Path())
 	err = runWithGates(ctx, cmd, executor, plan, input)
 	if errors.Is(err, context.Canceled) {
