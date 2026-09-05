@@ -56,6 +56,19 @@ adding a new emitter should stop and ask why.
 | Cost and corrections are first-class columns | Not JSON blobs | The done-when is a query, and the two things anyone will actually ask about are "what did this cost" and "what did a human have to fix" |
 | No new event types | If a query needs a fact nothing records, that is a finding to report, not a licence to add an emitter | The vocabulary's rule (L3.9): a type joins by acquiring an emitter, never by being wanted |
 
+### Additional decisions (settled 2026-09-02, before Phase A)
+
+**The executor's records are not archived.** `run-events.jsonl` and `run-state.json` live only in
+`.claude/feature-workspace/<feature>/`, the temporary directory. `docs/features/<name>/` receives
+the artifacts and `pipeline-trace.json` but not these — so the episodic source dies when a
+workspace is cleaned.
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Ingest runs automatically | `loom run` ingests when it completes or halts at a gate, plus a `loom memory ingest` command for anything else | A store nobody populates is a feature that exists only in its tests, and the payoff here is months away when L4.4 wants history that was never captured. Ingest failure must **never** fail a run — same posture as L4.5's baseline capture. This touches the CLI, not `internal/orchestrator`, so the "do not modify the executor" guardrail holds |
+| The records get archived | `run-events.jsonl` and `run-state.json` join what is persisted into `docs/features/<name>/` | They then live in git beside the artifacts they describe: version-controlled, reviewable in a PR, and enough to rebuild the store if `episodes.db` is lost or gitignored. Making an untracked binary the sole home of a run's history is how history quietly disappears |
+| The store is a cache, not the record | The archived JSONL is the durable record; sqlite is a queryable projection of it | This is why re-ingest must be idempotent, and it is what makes deleting `episodes.db` a recoverable event rather than a loss |
+
 ## Shared guardrails (all phases)
 
 - Conventional Commits; commit at the end of each phase, then PAUSE for human review before the
@@ -86,7 +99,11 @@ adding a new emitter should stop and ask why.
    no `run.completed`) ingests cleanly, because most runs a human looks at are halted ones; a
    corrupt trailing line is skipped rather than fatal, matching how the timeline is already read.
 
-**Done when**: a completed or halted run's history is in sqlite and re-ingesting it is a no-op.
+5. Archive `run-events.jsonl` and `run-state.json` into `docs/features/<name>/`, and ingest
+   automatically at the end of a run — reporting a failure without failing the run.
+
+**Done when**: a completed or halted run's history is in sqlite, re-ingesting it is a no-op, and the
+records it was built from are archived beside the artifacts they describe.
 **Commit** (`feat(memory): an episodic store ingested from the run timeline`), report, PAUSE.
 
 ## Phase B — The query surface — BLOCKED BY Phase A
