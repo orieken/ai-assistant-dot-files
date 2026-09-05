@@ -106,6 +106,14 @@ workspace is cleaned.
 records it was built from are archived beside the artifacts they describe.
 **Commit** (`feat(memory): an episodic store ingested from the run timeline`), report, PAUSE.
 
+### Phase B decisions (settled 2026-09-02, before the phase)
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Named queries only | Fixed subcommands, each parameterized by construction. **No** `--sql` escape hatch | Injection-proof by construction, discoverable through `--help`, and it keeps the schema private so later phases can change it. The cost is real and accepted: a question nobody anticipated needs a code change, so the store is only as useful as the questions already imagined — which is an argument for choosing the first few carefully, not for opening the database |
+| Backfill from the archive | `loom memory ingest` with no argument walks `docs/features/*/` and ingests every run whose records are archived | This is what makes the store genuinely rebuildable after deletion, and it imports deliveries that happened before this epic. Idempotency already makes repeated runs safe. Without it, archiving the records buys much less than it should |
+| "Retried more than twice" means iteration count > 2 | At least three attempts. The output header states the reading | The done-when is ambiguous — a retry could be the stage record's `Iteration` or a count of `loop.iterated` events, and "more than twice" could mean three attempts or three retries after the first. Pinning it in the output means nobody has to guess which reading they are looking at |
+
 ## Phase B — The query surface — BLOCKED BY Phase A
 
 1. `loom memory` subcommands: ingest a run, and query. The queries must include L3.5's own

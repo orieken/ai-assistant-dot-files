@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/orieken/loom/internal/orchestrator"
 )
@@ -75,4 +76,34 @@ func copyIfPresent(source, target string) error {
 		return fmt.Errorf("write %s: %w", target, err)
 	}
 	return nil
+}
+
+// ArchivedRunDirs lists every feature archive holding a run's records, so a
+// store can be rebuilt from what is in git after the workspaces are gone —
+// and so deliveries that predate the store can be imported.
+func ArchivedRunDirs(featuresDir string) ([]string, error) {
+	entries, err := os.ReadDir(featuresDir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read feature archive %s: %w", featuresDir, err)
+	}
+	dirs := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		dir := filepath.Join(featuresDir, entry.Name())
+		if entry.IsDir() && hasRunState(dir) {
+			dirs = append(dirs, dir)
+		}
+	}
+	sort.Strings(dirs)
+	return dirs, nil
+}
+
+// hasRunState is what separates an archived run from a feature directory
+// that only ever held markdown — most existing archives are the latter, and
+// skipping them quietly is correct rather than an error.
+func hasRunState(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, orchestrator.RunStateFileName))
+	return err == nil
 }
