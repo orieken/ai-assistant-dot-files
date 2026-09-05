@@ -129,13 +129,28 @@ records it was built from are archived beside the artifacts they describe.
 query — L3.5's stated done-when, in full. **Commit** (`feat(memory): query the episodic store`),
 report, PAUSE.
 
+### Phase C decisions (settled 2026-09-02, before the phase)
+
+`pipeline-trace.json` holds per-agent duration, status and iteration counts — written by a model
+that cannot observe elapsed time. The episodic store now holds the same three things, measured. That
+is the epic-86 shape again: a specified record whose data is now produced properly elsewhere.
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| `pipeline-trace.json` is scoped, not retired | Keep it, and say plainly that it is the **markdown pipeline's estimate-based record** while the episodic store is the executor's measured one, with a table of which questions each answers | Unlike `events.jsonl`, which had no writer at all, this file is genuinely written on every markdown-pipeline delivery and read by two skills. Removing it would take away that pipeline's only record. Retiring it properly belongs with whatever brings the markdown pipeline under the executor |
+| Its consumers are told, not rewritten | `pipeline-retrospective` and `agent-scorecard` gain a step: when a delivery ran under `loom run`, prefer the store's measured figures and **name the source of each finding**; otherwise fall back to the estimates | Same treatment `extract-lessons` got in epic 85. It makes the better source available without a rewrite of two analysis skills — inside a phase scoped as docs — whose correctness this epic cannot verify |
+| No deprecation marker | The schema is not marked deprecated | Deprecating a file the markdown pipeline still writes, with no replacement for it, is a promise this epic cannot keep |
+
+Also verified: `uninstall.sh` touches only `agents`, `skills`, `rules` and the install marker, so
+`.claude/memory/` is never removed by an uninstall. No data-loss path to close.
+
 ## Phase C — Docs and boundaries — BLOCKED BY Phase B
 
 1. Roadmap: L3.5 **SHIPPED**, stating what it stores, what it deliberately does not (the corpus),
    and that the executor was not touched. Update **L4.4** and **L3.13** with what they inherit.
-2. `shared/skills/pipeline-trace/SKILL.md`: it owns a `pipeline-trace.json` schema whose timings are
-   model-written estimates. Say plainly which questions the episodic store now answers with measured
-   data, and what remains its own.
+2. `shared/skills/pipeline-trace/SKILL.md`: scope it to the markdown pipeline per the decision
+   above, with the which-answers-what table. Then update `pipeline-retrospective` and
+   `agent-scorecard` to prefer the store for `loom run` deliveries and name their source.
 3. `shared/rag/retriever.interface.md`: record that an `episodic` corpus is intended and belongs to
    **L3.4**, without adding it.
 4. `cmd/loom/README.md`, `README.md`, `docs/ARCHITECTURE.md`, `shared/DOMAIN_DICTIONARY.md`, and
