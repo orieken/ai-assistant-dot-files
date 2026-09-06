@@ -1,6 +1,6 @@
 # Python Porting Guide (`shared/mcp-patterns/porting-guides/python.md`)
 
-This guide explains how to port the Go reference MCP patterns in `shared/mcp-patterns/go/` into a Python MCP server (e.g. using FastMCP or official `mcp` library).
+This guide explains how to port the framework's Go MCP tools in `shared/mcp/internal/` into a Python MCP server (e.g. using FastMCP or official `mcp` library).
 
 ## 1. Interface & Data Classes
 

@@ -1,6 +1,6 @@
 # TypeScript Porting Guide (`shared/mcp-patterns/porting-guides/typescript.md`)
 
-This guide explains how to port the Go reference MCP patterns in `shared/mcp-patterns/go/` into a TypeScript Node.js/Bun MCP server (e.g. using `@modelcontextprotocol/sdk`).
+This guide explains how to port the framework's Go MCP tools in `shared/mcp/internal/` into a TypeScript Node.js/Bun MCP server (e.g. using `@modelcontextprotocol/sdk`).
 
 ## 1. Interface & Class Mapping
 

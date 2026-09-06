@@ -61,7 +61,7 @@ shared/                              <- single source of truth, edit here only
 ├── memory-registry.json           <- catalog of every durable memory source + retrieval backend
 ├── platform-registry.json           <- tier/capability/format per platform
 ├── mcp/                             <- MCP server scaffold (6 M1 tools, stdio transport, Go)
-└── mcp-patterns/go/                 <- copy-me templates; compile with build tags removed
+└── mcp-patterns/                    <- porting guides for non-Go MCP servers (Go: import register.Frameworks)
 
         │  scripts/generate-configs.sh (reads shared/ + platform-registry.json)
         ▼

@@ -163,6 +163,17 @@ provider, with a mock provider for tests.
 ### M0.5 — Delete or compile `shared/mcp-patterns/go/`
 **Workstream**: TOOLS · **Effort**: S · **Blocked by**: none · **Blocks**: none · *(audit H10)*
 
+**SHIPPED** 2026-09-02 (epic 89) — deleted. Twenty `//go:build ignore` files in no module,
+compiled by nothing, presented as templates to copy. No Go file in the repository carries that tag
+any more.
+
+Deleting it left three porting guides pointing at nothing, and they now read
+`shared/mcp/internal/` instead — the implementation that is actually compiled and tested on every
+CI run, which is precisely the property the templates lacked. `shared/mcp-patterns/README.md`
+documents `register.Frameworks` as the supported Go path, with `examples/embedding/` as a working
+server that CI builds, so the embedding path breaking is a build failure rather than a copy
+silently rotting.
+
 1. **Problem**: ~1,200 lines of `//go:build ignore` copies of `shared/mcp/internal/`, in no Go
    module, referenced by no build, presented as the reference implementation teams should copy. All
    11 shared files have diverged from their originals (`retriever.go` by 186 diff lines,

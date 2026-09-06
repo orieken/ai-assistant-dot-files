@@ -1,6 +1,6 @@
 # Java Porting Guide (`shared/mcp-patterns/porting-guides/java.md`)
 
-This guide explains how to port the Go reference MCP patterns in `shared/mcp-patterns/go/` into a Java MCP server (e.g. using Spring AI MCP SDK or Java MCP SDK).
+This guide explains how to port the framework's Go MCP tools in `shared/mcp/internal/` into a Java MCP server (e.g. using Spring AI MCP SDK or Java MCP SDK).
 
 ## 1. Interface & Record Mapping
 

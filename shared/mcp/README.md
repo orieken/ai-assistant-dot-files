@@ -78,8 +78,7 @@ claude mcp add loom -- loom mcp serve
 
 If you already have an MCP server, see
 [`shared/skills/install-framework-with-mcp-bridge/SKILL.md`](../skills/install-framework-with-mcp-bridge/SKILL.md)
-for the bridge-prompt approach (no Go required — drop a
-`shared/mcp-patterns/go/` tool call into your existing server).
+for the bridge-prompt approach (no Go required).
 
 If you do not have an MCP server, you don't need a scaffold anymore — install
 the `loom` binary and point your MCP host at `loom mcp serve`. The
