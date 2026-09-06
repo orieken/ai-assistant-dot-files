@@ -389,7 +389,9 @@ After pipeline completion, all artifacts are copied to `docs/features/<feature-n
 docs/features/<feature-name>/
   README.md                  <- index of all artifacts with links
   context-manifest.md        <- context-engineer output (scope, pinned files, KIs/ADRs, token budget)
-  pipeline-trace.json        <- per-agent timing, status, and iteration counts (see Pipeline Tracing)
+  pipeline-trace.json        <- per-agent timing, status, and iteration counts (see Pipeline Tracing) — model-written estimates
+  run-state.json             <- the executor's own state, archived here so run history survives workspace cleanup (loom run only)
+  run-events.jsonl           <- the executor's measured event timeline, likewise (loom run only). Together these two rebuild the episodic store — see `loom memory ingest`
   analysis.md                <- analyst output
   architecture-notes.md      <- architect output (if invoked)
   performance-report.md      <- performance-engineer output (if invoked)

@@ -35,9 +35,22 @@ Treat this metric as directional, not exact, until that dispute-tracking mechani
 item — see `docs/features/context-engineering-framework/TODO.md`, Epic 15).
 
 ## Context To Load First
+0. **Prefer measured data where it exists.** Run `loom memory corrections --json` and
+   `loom memory retries --json` (roadmap L3.5). For deliveries that ran under `loom run`, these give
+   two of the scores below from records rather than from reading markdown: how often a human had to
+   correct an agent's output, and how often a stage needed more than one attempt. Provider-reported
+   cost is in `loom memory runs --json`. Fall back to the files below when the binary is absent or
+   the store is empty, and **label every score with the source it came from**.
+
+   Two things not to misread. A correction was *recorded, not adopted* (roadmap L4.5) — it is
+   evidence an agent's output needed fixing, not that anything shipped fixed. And a run reporting
+   zero cost reported **nothing**, which is not the same as costing nothing; do not average a
+   missing figure in as a zero.
+
 1. `docs/features/*/delivery-summary.md` — determine which features fall in the scoring period
 2. `docs/features/*/pipeline-trace.json` — for code-reviewer's `changesRequestedCount` and per-agent
-   `estimatedCostUsd` (present only when the runtime surfaced token counts; `null` otherwise)
+   `estimatedCostUsd` (present only when the runtime surfaced token counts; `null` otherwise).
+   Model-written estimates — prefer step 0 for any delivery that ran under the executor
 3. `docs/features/*/security-report.md`, `analysis.md`, `architecture-notes.md` — per-agent artifacts
 4. `docs/features/*/retrospective.md` (if present) — for disputed-finding signals
 5. `shared/contracts/analysis-contract.md` — required section list for the analyst completeness score

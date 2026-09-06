@@ -147,6 +147,30 @@ Seven artifacts of the built-in plan are **typed state** instead of markdown (ro
 The eight remaining artifacts — the end-of-pipeline reports and `context-manifest` — still pass
 markdown, unchanged. Nothing evaluates a condition over them yet.
 
+## What past runs did
+
+Every run records itself into a project-local store at `.claude/memory/episodes.db` when it ends —
+completed, halted at a gate, interrupted, or failed (roadmap L3.5). Query it with `loom memory`:
+
+```
+loom memory runs                       # every recorded run: state, tokens, cost, corrections
+loom memory retries --agent code-reviewer --more-than 2
+loom memory corrections                # which agents a human had to correct most
+loom memory ingest                     # rebuild the store from docs/features/
+```
+
+Add `--json` to any query for machine-readable output.
+
+- **It collects nothing new.** Stage timings, loop rounds, gate halts, human corrections, token
+  counts and routing reasons were already recorded per run; they just died with the feature
+  workspace. This keeps them.
+- **The store is a projection, not the record.** `run-state.json` and `run-events.jsonl` are
+  archived into `docs/features/<name>/` beside the artifacts they describe, so the history is in git.
+  `.claude/memory/` is gitignored, and `loom memory ingest` rebuilds it from the archive — deleting
+  the database loses nothing.
+- **Project-local, always.** Nothing is aggregated across projects and nothing is uploaded.
+- **Recording never fails a run.** If the store cannot be written, the run says so and carries on.
+
 ## Policies: what would have been decided
 
 `loom run` loads `.claude/policies/*.policy.yaml`, evaluates every policy watching a gate against

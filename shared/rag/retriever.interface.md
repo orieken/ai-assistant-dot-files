@@ -14,6 +14,11 @@ type CorpusID =
   | "project-docs"       // <project>/docs/ (BM25)
   | "project-features"   // <project>/docs/features/ (vector)
   | "project-source"     // <project>/src/ (DEFERRED)
+  // "episodic"         // what past runs did — INTENDED, deliberately NOT a CorpusID yet.
+  //                    // The store exists (roadmap L3.5): .claude/memory/episodes.db, queryable
+  //                    // through `loom memory`. Every adapter below is a markdown spec with no
+  //                    // running backend, so adding an entry now would specify a thing nothing
+  //                    // implements. L3.4 adds it alongside a retriever that can serve it.
 
 type Reference = {
   path: string        // repo-relative path to the canonical markdown or source file

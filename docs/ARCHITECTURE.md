@@ -190,6 +190,12 @@ not. See `docs/roadmaps/BUILD-ROADMAP.md` and ADR-006. The artifact set:
   drift (L3.9) — the framework previously kept two hand-maintained lists of event types and a
   recorder instructed to enforce one of them, which is how 60% of the specified surface ended up
   outside it.
+- **Episodic store** (`.claude/memory/episodes.db`, project-local) — what past runs did, kept beyond
+  the life of a feature workspace and queried with `loom memory` (L3.5). It collects nothing new:
+  timings, loop rounds, gate halts, corrections, cost and routing reasons were already recorded per
+  run and simply died with the workspace. A projection, not the record — `run-state.json` and
+  `run-events.jsonl` are archived into `docs/features/<name>/`, so the history is in git and the
+  store is rebuildable.
 - **Policy Decisions** (in `run-state.json` and on the timeline) — what the policies watching each
   gate decided, evaluated in typed Go from the run's own state (L2.16). Recorded, not honoured: the
   executor halts at every gate regardless, so these say what *would* have happened. An authorization

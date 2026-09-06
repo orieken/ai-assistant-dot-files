@@ -7,6 +7,30 @@ triggers:
 standalone: true
 ---
 
+## Scope: this is the markdown pipeline's record
+
+`pipeline-trace.json` is written by a host platform's LLM following `deliver-feature`, which cannot
+observe elapsed time — its `durationSeconds` and `budgetUtilization` are the model's own account of
+itself. That was the only record available when this skill was written. It no longer is.
+
+Under `loom run`, the Go executor measures the same things and the episodic store keeps them beyond
+the run (roadmap L3.5). **Prefer the store for any delivery that ran under the executor**, and say
+which source a number came from — a trend mixing measured and estimated figures without labelling
+them is worse than either alone.
+
+| Question | Markdown pipeline | `loom run` |
+|---|---|---|
+| How long did a stage take? | `durationSeconds` — a model's estimate | Measured by the process doing the work: `loom memory runs`, or the run's trace |
+| How many rounds did the review loop take? | `iterations` — model-counted | Counted by the executor: `loom memory retries` |
+| What did it cost? | `budgetUtilization` — a fraction of an unstated budget | Reported by the provider in dollars and tokens |
+| Did a human correct the output? | not recorded | `loom memory corrections`, with the diff |
+| Which stages were skipped, and why? | not recorded | recorded with a reason per stage |
+
+This file is **not deprecated**. It is genuinely written on every markdown-pipeline delivery and is
+that pipeline's only record; retiring it belongs with whatever brings the markdown pipeline under
+the executor. What has changed is that it is no longer the best available answer when a better one
+exists.
+
 ## When To Use
 - `deliver-feature` writes to `.claude/feature-workspace/<feature-name>/pipeline-trace.json` directly as part of its own
   Checkpoint bookkeeping (see `deliver-feature/SKILL.md`, "Pipeline Tracing") — it does not invoke this
@@ -14,7 +38,8 @@ standalone: true
 - Invoke this skill when a human asks an ad-hoc question about timing/iterations for a specific feature's
   run, current or past: "why did this delivery take so long", "which agent looped the most on user-auth".
 - For cross-delivery trend analysis (is code-reviewer getting slower over the last 10 features?), use
-  `pipeline-retrospective` instead — this skill only looks at one run at a time.
+  `pipeline-retrospective` instead — this skill only looks at one run at a time. For deliveries that
+  ran under `loom run`, `loom memory` answers cross-run questions from measured data.
 
 ## Context To Load First
 1. `.claude/feature-workspace/<feature-name>/pipeline-trace.json` (in-progress run) or `docs/features/<feature-name>/pipeline-trace.json` (completed run)

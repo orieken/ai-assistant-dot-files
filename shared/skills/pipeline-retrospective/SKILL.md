@@ -17,6 +17,16 @@ Do NOT use for a single delivery's narrative (what went well/poorly on this one 
 `/retrospective` instead. Do NOT use for a single run's raw numbers — use `pipeline-trace` instead.
 
 ## Context To Load First
+0. **Prefer measured data where it exists.** Run `loom memory runs --json` and
+   `loom memory retries --json` first (roadmap L3.5). Deliveries that ran under `loom run` have
+   timings measured by the process doing the work, real iteration counts, and provider-reported
+   cost. `pipeline-trace.json`'s equivalents are a model's account of itself. If the binary is
+   absent or the store is empty, fall back to step 1 and say so.
+
+   **Name the source of every finding** — "measured" or "estimated". A trend line that mixes them
+   without labelling which is which is worse than either alone, because a reader cannot tell whether
+   a change is a real regression or a change in who was counting.
+
 1. `docs/features/*/pipeline-trace.json` — collect the most recent N (default 10), ordered by each
    feature directory's `pipeline-trace.json` `completedAt` timestamp
 2. The most recent `docs/agent-metrics/scorecard-*.md` if one exists (see `agent-scorecard`), for

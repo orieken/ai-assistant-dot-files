@@ -514,7 +514,11 @@ table — so "what did this pipeline cost" is answerable, which it was not
 before. L2.16 has landed too: delivery policies are loaded and evaluated by typed Go
 rather than by a model reading YAML, the always-human gate list is a
 compiled constant a policy cannot target, and every decision is recorded —
-though nothing is auto-approved yet, deliberately. L2.15 (real
+though nothing is auto-approved yet, deliberately. L3.5 has landed as well: what a run did — its stage timings, loop rounds,
+gate halts, human corrections and cost — is kept in a project-local store
+past the life of the workspace and queried with `loom memory`, so "which
+agent needed the most attempts" is answerable from measurement rather than
+from a model's account of itself. L2.15 (real
 resume) is still ahead — see
 [docs/roadmaps/BUILD-ROADMAP.md](docs/roadmaps/BUILD-ROADMAP.md) and
 [ADR-006](docs/adrs/ADR-006-loom-executes-pipelines.md).

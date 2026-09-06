@@ -868,7 +868,40 @@ which is this item. `shared/evaluation/retrieval-regression.md` waits on the sam
 4. **Done when**: a conceptual paraphrase query that BM25 misses is answered by the vector adapter.
 
 ### L3.5 — Add episodic memory
-**Workstream**: MEMORY · **Effort**: L · **Blocked by**: L3.8 · **Blocks**: L4.4, L4.6
+**Workstream**: MEMORY · **Effort**: L · **Blocked by**: L3.8 (shipped) · **Blocks**: L4.4, L4.6
+
+**SHIPPED** 2026-09-02 (epic 88, `9e3ce12`…) — `internal/memory` is a project-local sqlite store of
+what runs actually did, with `loom memory` to query it. Ingest is automatic at the end of every run
+and rebuildable from the archive.
+
+**It collects nothing new, and that is the finding.** This item's Problem says nothing can learn
+from execution. That stopped being true two epics ago without anyone reconciling it: usage (L3.8),
+corrections with diffs (L4.5), policy decisions (L2.16), loop iterations (L2.17), routing reasons
+(L3.0) and measured stage timings (M0.4, L2.12) are all produced per run — and all died with the
+feature workspace. This epic is a store and a query surface over data that already existed.
+
+**Three structural choices.**
+
+1. **Ingest, not co-writing.** The executor is untouched. A database inside the run loop adds a
+   locking failure mode that could disturb a delivery and duplicates a record already written
+   reliably. Ingest is idempotent, so re-ingesting is a no-op and any past run can be imported.
+2. **The records are now archived.** `run-state.json` and `run-events.jsonl` lived only in the
+   temporary workspace and died on cleanup; they are persisted into `docs/features/<name>/`
+   alongside the artifacts they describe. That archived JSONL is the durable record and the database
+   is a projection of it — which is why `.claude/memory/` is gitignored and why deleting the store
+   is recoverable rather than a loss.
+3. **Project-local.** A global store would pool data from every repository loom runs in, including
+   client code, into one file outside those repositories. That is a privacy posture change and not
+   one a memory epic gets to make as a side effect.
+
+**Deliberately not built**: the `episodic` CorpusID and any retriever adapter. Its adapters are
+markdown specs with no running backends and the planner that would consume it is **L3.1**, so adding
+an interface entry nothing implements is the defect epics 84–87 kept cleaning up. **L3.4** adds the
+corpus when there is a retriever to add it to.
+
+**The done-when was ambiguous and is now pinned.** "Retried more than twice" reads as iteration
+count > 2 — at least three attempts — and the query's output states that, because the other reading
+is equally defensible and a reader should not have to guess which produced the rows.
 
 1. **Problem**: "Organizational memory" is semantic only: markdown KIs plus ADRs. There is no
    episodic store — no record of what was attempted, what failed, what a retry changed, or what a
@@ -881,7 +914,8 @@ which is this item. `shared/evaluation/retrieval-regression.md` waits on the sam
    for it is durability across runs and queryability, not detection — that is built.)* Index it as a retrievable
    corpus so the planner can condition on "how did this go last time."
 3. **Target Files**: `shared/skills/pipeline-trace/SKILL.md`,
-   `shared/rag/retriever.interface.md` (new `episodic` corpus), new `internal/memory/`
+   `shared/rag/retriever.interface.md` (the `episodic` corpus — **left to L3.4**), new
+   `internal/memory/`
    *(`shared/telemetry/event-schema.md` was here; it is deleted. The event vocabulary this item
    stores is now generated from `internal/orchestrator/vocabulary.go` into
    `shared/schemas/telemetry/` — L3.9 shipped, so this item **inherits a vocabulary rather than
@@ -1142,7 +1176,17 @@ configured.
    completion from a real provider is reported as suspect rather than recorded as fact.
 
 ### L3.13 — Derive agent quality metrics from execution
-**Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.5, L3.8 · **Blocks**: none
+**Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.5 (shipped), L3.8 (shipped) · **Blocks**: none
+
+**UNBLOCKED** 2026-09-02. Both blockers shipped, and the store already answers two of the four
+metrics this item wants with measured data: how often an agent needed more than one attempt
+(`loom memory retries`) and how often a human corrected its output (`loom memory corrections`).
+Neither is an LLM reading persisted markdown.
+
+Two properties to inherit rather than re-derive. A correction was **recorded, not adopted** (L4.5),
+so it is evidence an agent's output needed fixing and not that anything shipped fixed. And a run
+reporting zero cost reported *nothing*, which is not the same as costing nothing — a scorecard that
+conflates those produces a confident wrong number.
 
 1. **Problem**: `agent-scorecard/SKILL.md` scores four metrics computed by an LLM reading persisted
    artifacts. Nothing measures retry count, human-edit rate, gate rejection rate, latency, or cost,
@@ -1236,6 +1280,12 @@ governor deciding to halt on absent usage data has the same shape of problem.
 
 ### L4.4 — Prompt registry with eval-gated promotion
 **Workstream**: OBSERVE · **Effort**: XL · **Blocked by**: L3.5, L3.11, L4.1, L4.5 (shipped) · **Blocks**: L4.6
+
+**Inherits from L3.5** (epic 88): that corrective signal is now durable and queryable across runs
+rather than per-workspace. `loom memory corrections` ranks agents by how often a human corrected
+them, which is the recurrence bar this item needs — one correction is an anecdote, and the store is
+what turns a set of anecdotes into a count. `loom memory retries` does the same for stages that
+needed several attempts.
 
 **Inherits from L4.5** (epic 85): a labelled corrective signal that already exists per run —
 `artifact.corrected` entries in run state and on the timeline, each naming the producing agent and
