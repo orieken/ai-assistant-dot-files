@@ -9,6 +9,13 @@
 > below it is deliberately preserved as the historical motivation, not as a current claim.
 >
 > Absence of a SHIPPED line means only that no one has reconciled it, not that the work is unbuilt.
+
+> **First real end-to-end run: 2026-09-06.** Every item above M0.4 had been verified against
+> `--provider mock` until then. One run with `--provider claude` — five stages, seven minutes,
+> $3.57, 3.8M tokens — produced two new items (**L2.21**, **L3.16**), confirmed that L2.9's typed
+> invariants stop a bad run on real data, and showed that the router takes a materially different
+> path on a real analysis (10 of 12 stages, against the mock's 7). Mock-driven tests systematically
+> under-exercise this pipeline; that is worth remembering when an item claims to be verified.
 > Markers below were verified against the code on the date above; older milestones (M0.1–M0.3, L2.4,
 > D.1–D.5) shipped earlier and are tracked in `docs/prompts/README.md`'s Completed Prompts table.
 
@@ -1214,6 +1221,56 @@ appearance of a measurement, and it is now closed by a captured response rather 
    `internal/provider/claude/testdata/envelope.json`, `internal/provider/claude/claude.go`
 4. **Done when**: the decoder is tested against a captured real response, and a zero-token
    completion from a real provider is reported as suspect rather than recorded as fact.
+
+### L2.21 — Consume the analyst's own uncertainty
+**Workstream**: KERNEL · **Effort**: M · **Blocked by**: L2.9 (shipped), L3.0 (shipped) · **Blocks**: none · *(raised 2026-09-06, from the first real end-to-end run)*
+
+1. **Problem**: The analyst can say it does not know what it is looking at, and nothing reads it.
+   In the first `--provider claude` run, against a project with no source code, the analyst named
+   its Affected Components as `<app entrypoint / router — exact file depends on chosen stack,
+   unresolved>` and `<health handler source file — unresolved pending stack decision>`. That is a
+   correct and useful answer. The router then routed **10 of 12 stages**, the architect designed for
+   an unknown stack, the performance-engineer set thresholds against nothing, and the run continued
+   for seven minutes and **$3.57** before the developer produced an implementation touching no files
+   and the typed invariant stopped it (L2.9). Every stage did its job; the pipeline had no way to
+   act on the one fact that mattered.
+2. **Architectural Fix**: Make unresolvability a **field**, not prose. `AnalysisState` already
+   carries `ArchitecturalFlags`; it needs the counterpart — the analyst declaring that a component,
+   a stack, or a target codebase could not be resolved, with what it would need. The router reads it
+   before routing (it already runs at the earliest point the facts exist, L3.0), and an unresolved
+   analysis halts at a gate for a human rather than routing work that cannot land. This is the same
+   move as L2.17's typed verdict: a decision the pipeline needs was expressible only in prose that
+   nothing parsed.
+3. **Target Files**: `internal/state/analysis_state.go`, `internal/orchestrator/router.go`,
+   `shared/agents/analyst.md`, `shared/contracts/analysis-contract.md`
+4. **Done when**: an analysis that cannot name a single concrete affected file halts the run at a
+   gate before any implementation stage is invoked, and says which fact it lacked.
+
+**Why this is worth the effort**: the cost of the current behaviour is not a wrong answer, it is a
+confidently-executed one. Four agents produced good artifacts about a codebase that did not exist.
+
+### L3.16 — `run.started` fires once per invocation, not once per run
+**Workstream**: OBSERVE · **Effort**: S · **Blocked by**: none · **Blocks**: none · *(raised 2026-09-06, from the first real end-to-end run)*
+
+1. **Problem**: `Executor.Run` emits `run.started` unconditionally, and the TTY approval path
+   re-enters `Run` after every gate. One logical run therefore records several starts. The first
+   real end-to-end run's timeline shows `run.started` at `0s` and again at `7m38s`, immediately
+   after `gate.approved` — so "how long did this run take" has no unambiguous answer, and any
+   analysis over the event log has to know to ignore all but the first. The episodic store (L3.5)
+   inherits the ambiguity, and L3.13 would compute durations from it.
+2. **Architectural Fix**: `prepareState` already distinguishes a fresh run from a resumed one — it
+   is where `newRunFor` is called. Emit `run.started` only for a genuinely new run, and emit a
+   distinct `run.resumed` for a continuation, which is a fact worth recording in its own right: how
+   often a run is resumed is a question nobody can currently answer. Adding a kind means adding it
+   to the vocabulary, where L3.9's fitness function requires it be documented.
+3. **Target Files**: `internal/orchestrator/executor.go`, `vocabulary.go`, `timeline.go`,
+   `internal/memory/ingest.go`
+4. **Done when**: a run interrupted and resumed three times records one `run.started` and three
+   `run.resumed` events, and the episodic store reports one run.
+
+**Found by running the thing.** Every executor test drives `Run` once per assertion or resumes
+through `--approve`, and neither shape surfaced this. It took a human answering `y` at three
+consecutive gates.
 
 ### L3.13 — Derive agent quality metrics from execution
 **Workstream**: OBSERVE · **Effort**: M · **Blocked by**: L3.5 (shipped), L3.8 (shipped) · **Blocks**: none
