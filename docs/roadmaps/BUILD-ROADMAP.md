@@ -1169,6 +1169,35 @@ configured.
 ### L3.15 — Verify the provider envelope against the live CLI
 **Workstream**: OBSERVE · **Effort**: S · **Blocked by**: L3.8 (shipped) · **Blocks**: none · *(raised 2026-09-01)*
 
+**SHIPPED** 2026-09-02 (epic 89) — verified against one real `claude -p --output-format json`
+response, captured as `internal/provider/claude/testdata/envelope-real.json` with only the session
+identifiers redacted, and asserted field by field.
+
+**The decoder was correct.** Every field name matched: `result`, `is_error`, `subtype`,
+`total_cost_usd`, `usage.{input,output,cache_read_input,cache_creation_input}_tokens`, and
+`modelUsage` keyed by model name. The real response carries twenty-one top-level fields, most of
+which loom ignores — a test asserts the fixture is genuinely that wide, so nobody replaces it with a
+hand-written approximation and loses the point.
+
+**The suspicion check is narrower than this item proposed, and the real data is why.** It said a
+completed stage reporting exactly zero input tokens is a decode that missed. The verified response
+reported **input_tokens = 2** alongside **58,299 cache-creation tokens**: when the prompt is cached,
+a tiny input count is correct. The check is now "no tokens of any kind AND no cost", which a real
+invocation never produces. It warns rather than fails, since a provider may legitimately report
+nothing — but it must not pass unremarked, because unreported and mis-decoded look identical
+downstream.
+
+**It also found a live defect in L3.5's store.** Cache tokens were not recorded, and
+`loom memory runs` computed its token figure from input plus output — so that verified run would
+have been reported as **6 tokens** rather than 58,305, understating it by four orders of magnitude
+while showing its real cost of $0.35. The store now records cache read and creation counts and
+totals all four. Its schema is versioned, and a mismatch rebuilds rather than migrates, which is
+only safe because the store is a projection of records archived in git.
+
+The item's premise holds and is worth restating: a wrong field name does not error, it decodes to a
+zero value. This is the one place in the telemetry stack where a wrong number could still wear the
+appearance of a measurement, and it is now closed by a captured response rather than by care.
+
 1. **Problem**: `internal/provider/claude/envelope.go` decodes `claude -p --output-format json` from
    a documented understanding of its shape, not from an observed response — verifying it costs real
    API spend, so epic 84 did not. The failure mode is specific and asymmetric: a wrong field name

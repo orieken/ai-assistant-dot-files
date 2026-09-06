@@ -93,11 +93,13 @@ func insertRun(tx *sql.Tx, run Run, state *orchestrator.RunState) error {
 	total := state.TotalUsage()
 	_, err := tx.Exec(`INSERT INTO runs
 		(run_id, feature, plan, created_by, spec_path, started_at, updated_at, completed,
-		 waiting_gate, input_tokens, output_tokens, cost_usd, ingested_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		 waiting_gate, input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens,
+		 cost_usd, ingested_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		run.ID, state.FeatureName, state.PlanName, string(state.CreatedBy), state.SpecPath,
 		timestamp(state.StartedAt), timestamp(state.UpdatedAt), boolean(run.Complete),
-		state.WaitingGate(), total.InputTokens, total.OutputTokens, total.CostUSD,
+		state.WaitingGate(), total.InputTokens, total.OutputTokens,
+		total.CacheReadTokens, total.CacheCreationTokens, total.CostUSD,
 		timestamp(time.Now().UTC()))
 	if err != nil {
 		return fmt.Errorf("insert run: %w", err)
@@ -121,11 +123,13 @@ func insertStage(tx *sql.Tx, runID, stageID string, record orchestrator.StageRec
 	}
 	_, err := tx.Exec(`INSERT INTO stages
 		(run_id, stage_id, agent, status, sequence, iterations, gate, skip_reason,
-		 started_at, finished_at, duration_ms, input_tokens, output_tokens, cost_usd)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		 started_at, finished_at, duration_ms, input_tokens, output_tokens,
+		 cache_read_tokens, cache_creation_tokens, cost_usd)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		runID, stageID, record.Agent, string(record.Status), record.Sequence, record.Iteration,
 		record.Gate, record.SkipReason, timestamp(record.StartedAt), finishedAt(record),
-		durationMillis(record), usage.InputTokens, usage.OutputTokens, usage.CostUSD)
+		durationMillis(record), usage.InputTokens, usage.OutputTokens,
+		usage.CacheReadTokens, usage.CacheCreationTokens, usage.CostUSD)
 	if err != nil {
 		return fmt.Errorf("insert stage %q: %w", stageID, err)
 	}

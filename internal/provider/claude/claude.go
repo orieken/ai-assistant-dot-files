@@ -142,6 +142,7 @@ func (p *Provider) finish(ctx context.Context, waitErr error, stage orchestrator
 	if err != nil {
 		return orchestrator.StageOutput{}, fmt.Errorf("stage %q: %w", stage.ID, err)
 	}
+	p.warnIfUnreported(stage, result)
 	return p.outputFor(stage, input, result)
 }
 
@@ -169,4 +170,24 @@ func truncate(s string, limit int) string {
 		return s
 	}
 	return s[:limit] + "…(truncated)"
+}
+
+// warnIfUnreported flags a successful invocation that reported no usage at
+// all (roadmap L3.15).
+//
+// It is a warning rather than a failure because a provider is entitled to
+// report nothing, and failing a stage over an accounting detail would be
+// worse than the silence. But it must not pass unremarked: a wrong field
+// name in the envelope decoder does not error, it decodes to zero, so
+// unreported and mis-decoded look identical downstream — and everything
+// built on those numbers, including any future budget ceiling, would then
+// be protecting nothing.
+func (p *Provider) warnIfUnreported(stage orchestrator.Stage, result *envelope) {
+	if result.Reported() {
+		return
+	}
+	p.logger.Warn("stage.usage.unreported",
+		"stage", stage.ID,
+		"detail", "the CLI returned no token counts and no cost; treat this run's usage as unmeasured, "+
+			"not as zero — and check that the result envelope's shape has not changed")
 }

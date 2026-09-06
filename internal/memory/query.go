@@ -16,15 +16,26 @@ import (
 
 // RunSummary is one run, as anyone asking about history wants to see it.
 type RunSummary struct {
-	RunID        string  `json:"runId"`
-	Feature      string  `json:"feature"`
-	StartedAt    string  `json:"startedAt"`
-	Complete     bool    `json:"complete"`
-	WaitingGate  string  `json:"waitingGate,omitempty"`
-	InputTokens  int64   `json:"inputTokens"`
-	OutputTokens int64   `json:"outputTokens"`
-	CostUSD      float64 `json:"costUsd"`
-	Corrections  int     `json:"corrections"`
+	RunID        string `json:"runId"`
+	Feature      string `json:"feature"`
+	StartedAt    string `json:"startedAt"`
+	Complete     bool   `json:"complete"`
+	WaitingGate  string `json:"waitingGate,omitempty"`
+	InputTokens  int64  `json:"inputTokens"`
+	OutputTokens int64  `json:"outputTokens"`
+	// CacheReadTokens and CacheCreationTokens are kept because they dominate:
+	// a verified real invocation reported 2 input tokens and 58,299 cache
+	// creation tokens. A "tokens" figure that omitted them would understate
+	// that run by four orders of magnitude.
+	CacheReadTokens     int64   `json:"cacheReadTokens"`
+	CacheCreationTokens int64   `json:"cacheCreationTokens"`
+	CostUSD             float64 `json:"costUsd"`
+	Corrections         int     `json:"corrections"`
+}
+
+// TotalTokens is every billable token, cache traffic included.
+func (r RunSummary) TotalTokens() int64 {
+	return r.InputTokens + r.OutputTokens + r.CacheReadTokens + r.CacheCreationTokens
 }
 
 // RetryRow is one stage that took more than one attempt.
@@ -50,7 +61,8 @@ type AgentCorrections struct {
 func (s *Store) Runs(limit int) ([]RunSummary, error) {
 	rows, err := s.db.Query(`
 		SELECT r.run_id, r.feature, r.started_at, r.completed, COALESCE(r.waiting_gate, ''),
-		       r.input_tokens, r.output_tokens, r.cost_usd,
+		       r.input_tokens, r.output_tokens, r.cache_read_tokens, r.cache_creation_tokens,
+		       r.cost_usd,
 		       (SELECT COUNT(*) FROM corrections c WHERE c.run_id = r.run_id)
 		FROM runs r ORDER BY r.started_at DESC LIMIT ?`, limit)
 	if err != nil {
@@ -66,6 +78,7 @@ func scanRuns(rows *sql.Rows) ([]RunSummary, error) {
 		var summary RunSummary
 		if err := rows.Scan(&summary.RunID, &summary.Feature, &summary.StartedAt, &summary.Complete,
 			&summary.WaitingGate, &summary.InputTokens, &summary.OutputTokens,
+			&summary.CacheReadTokens, &summary.CacheCreationTokens,
 			&summary.CostUSD, &summary.Corrections); err != nil {
 			return nil, fmt.Errorf("scan run: %w", err)
 		}
@@ -148,7 +161,9 @@ func (s *Store) CostReported() (bool, error) {
 		return false, nil
 	}
 	var runs int
-	if err := s.db.QueryRow(`SELECT COUNT(*) FROM runs WHERE cost_usd > 0 OR input_tokens > 0`).
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM runs
+		WHERE cost_usd > 0 OR input_tokens > 0 OR output_tokens > 0
+		   OR cache_read_tokens > 0 OR cache_creation_tokens > 0`).
 		Scan(&runs); err != nil {
 		return false, fmt.Errorf("check reported cost: %w", err)
 	}

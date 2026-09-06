@@ -1,11 +1,14 @@
 package memory_test
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
 	"github.com/orieken/loom/internal/memory"
 	"github.com/orieken/loom/internal/orchestrator"
+
+	_ "modernc.org/sqlite"
 )
 
 // runWithRetries builds a run whose code-reviewer loop took a known number
@@ -183,5 +186,97 @@ func TestQueriesOnAnEmptyStoreReturnNothing(t *testing.T) {
 	corrections, err := store.Corrections()
 	if err != nil || len(corrections) != 0 {
 		t.Errorf("Corrections on an empty store = (%v, %v)", corrections, err)
+	}
+}
+
+// Cache tokens dominate a real run and must be in the total. A verified
+// real invocation reported 2 input tokens and 58,299 cache-creation tokens;
+// a "tokens" figure omitting cache would understate it by four orders of
+// magnitude (roadmap L3.15).
+func TestTotalTokensIncludesCacheTraffic(t *testing.T) {
+	store := openStore(t)
+	state, events := fixtureRun()
+	state.Stages["analyst"] = orchestrator.StageRecord{
+		Status: orchestrator.StageStatusCompleted, Sequence: 1, Agent: "analyst",
+		Usage: &orchestrator.Usage{
+			InputTokens: 2, OutputTokens: 4, CacheCreationTokens: 58299, CostUSD: 0.34986,
+		},
+	}
+	if _, err := store.Ingest(state, events); err != nil {
+		t.Fatalf("Ingest: %v", err)
+	}
+
+	runs, err := store.Runs(1)
+	if err != nil || len(runs) != 1 {
+		t.Fatalf("Runs = (%v, %v)", runs, err)
+	}
+	if runs[0].CacheCreationTokens != 58299 {
+		t.Errorf("cacheCreationTokens = %d, want 58299 — the store dropped the tokens that dominate",
+			runs[0].CacheCreationTokens)
+	}
+	if got := runs[0].TotalTokens(); got != 58305 {
+		t.Errorf("TotalTokens = %d, want 58305 (2 + 4 + 58299)", got)
+	}
+}
+
+// A run whose only usage is cache traffic still counts as having reported.
+func TestCostReportedCountsCacheOnlyUsage(t *testing.T) {
+	store := openStore(t)
+	state, events := fixtureRun()
+	state.Stages["analyst"] = orchestrator.StageRecord{
+		Status: orchestrator.StageStatusCompleted, Sequence: 1, Agent: "analyst",
+		Usage: &orchestrator.Usage{CacheReadTokens: 900},
+	}
+	if _, err := store.Ingest(state, events); err != nil {
+		t.Fatalf("Ingest: %v", err)
+	}
+
+	reported, err := store.CostReported()
+	if err != nil || !reported {
+		t.Errorf("CostReported = %v (err %v) for a run whose usage was all cache reads", reported, err)
+	}
+}
+
+// A store built by an older schema is rebuilt rather than migrated. That is
+// only safe because the store is a projection of records archived in git.
+func TestAnOlderSchemaIsRebuiltNotMigrated(t *testing.T) {
+	path := memory.DefaultPath(t.TempDir())
+	store, err := memory.Open(path)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	state, events := fixtureRun()
+	if _, err := store.Ingest(state, events); err != nil {
+		t.Fatalf("Ingest: %v", err)
+	}
+	_ = store.Close()
+
+	downgradeSchema(t, path)
+
+	reopened, err := memory.Open(path)
+	if err != nil {
+		t.Fatalf("reopen after a version change: %v", err)
+	}
+	t.Cleanup(func() { _ = reopened.Close() })
+	runs, err := reopened.Runs(10)
+	if err != nil {
+		t.Fatalf("Runs after rebuild: %v", err)
+	}
+	if len(runs) != 0 {
+		t.Errorf("got %d runs after a schema rebuild, want an empty store to re-ingest into", len(runs))
+	}
+}
+
+// downgradeSchema rewrites the recorded version, standing in for a store
+// that an earlier release created.
+func downgradeSchema(t *testing.T, path string) {
+	t.Helper()
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open raw: %v", err)
+	}
+	defer func() { _ = db.Close() }()
+	if _, err := db.Exec(`UPDATE schema_meta SET version = 1`); err != nil {
+		t.Fatalf("downgrade version: %v", err)
 	}
 }

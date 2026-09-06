@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS runs (
 	waiting_gate  TEXT,
 	input_tokens  INTEGER NOT NULL DEFAULT 0,
 	output_tokens INTEGER NOT NULL DEFAULT 0,
+	cache_read_tokens     INTEGER NOT NULL DEFAULT 0,
+	cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
 	cost_usd      REAL NOT NULL DEFAULT 0,
 	ingested_at   TEXT NOT NULL
 );
@@ -80,6 +82,8 @@ CREATE TABLE IF NOT EXISTS stages (
 	duration_ms   INTEGER,
 	input_tokens  INTEGER NOT NULL DEFAULT 0,
 	output_tokens INTEGER NOT NULL DEFAULT 0,
+	cache_read_tokens     INTEGER NOT NULL DEFAULT 0,
+	cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
 	cost_usd      REAL NOT NULL DEFAULT 0,
 	PRIMARY KEY (run_id, stage_id)
 );
@@ -124,6 +128,26 @@ CREATE INDEX IF NOT EXISTS idx_events_kind ON events(kind);
 CREATE INDEX IF NOT EXISTS idx_corrections_agent ON corrections(agent);
 `
 
+// SchemaVersion is bumped whenever the tables change shape.
+//
+// A mismatch rebuilds the store from scratch rather than migrating it. That
+// is only safe because the store is a PROJECTION: run-state.json and
+// run-events.jsonl are archived in git, and `loom memory ingest` rebuilds
+// everything from them. Migrations are for records; this is a cache.
+const SchemaVersion = 2
+
+const versionTable = `CREATE TABLE IF NOT EXISTS schema_meta (version INTEGER NOT NULL)`
+
+// dropAll is applied when the version does not match. Order matters only in
+// that children go before parents.
+const dropAll = `
+DROP TABLE IF EXISTS policy_decisions;
+DROP TABLE IF EXISTS corrections;
+DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS stages;
+DROP TABLE IF EXISTS runs;
+`
+
 // Store is an open episodic database.
 type Store struct {
 	db   *sql.DB
@@ -152,8 +176,35 @@ func initialise(db *sql.DB) error {
 	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
 		return fmt.Errorf("enable foreign keys: %w", err)
 	}
+	if err := reconcileVersion(db); err != nil {
+		return err
+	}
 	if _, err := db.Exec(schema); err != nil {
 		return fmt.Errorf("apply schema: %w", err)
+	}
+	return nil
+}
+
+// reconcileVersion drops a store built by an older schema. Nothing is lost
+// that `loom memory ingest` cannot restore from the archived records, which
+// is the whole reason the store is allowed to be disposable.
+func reconcileVersion(db *sql.DB) error {
+	if _, err := db.Exec(versionTable); err != nil {
+		return fmt.Errorf("create schema_meta: %w", err)
+	}
+	var found int
+	err := db.QueryRow(`SELECT version FROM schema_meta LIMIT 1`).Scan(&found)
+	if err == nil && found == SchemaVersion {
+		return nil
+	}
+	if _, err := db.Exec(dropAll); err != nil {
+		return fmt.Errorf("rebuild store for schema %d: %w", SchemaVersion, err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_meta`); err != nil {
+		return fmt.Errorf("reset schema version: %w", err)
+	}
+	if _, err := db.Exec(`INSERT INTO schema_meta (version) VALUES (?)`, SchemaVersion); err != nil {
+		return fmt.Errorf("record schema version: %w", err)
 	}
 	return nil
 }

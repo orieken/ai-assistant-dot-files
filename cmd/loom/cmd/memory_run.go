@@ -91,7 +91,7 @@ func printRuns(cmd *cobra.Command, store *memory.Store, runs []memory.RunSummary
 	for _, run := range runs {
 		cmd.Printf("%-22s %-20s %-10s %10d %10s %6d\n",
 			run.Feature, shortTime(run.StartedAt), runState(run),
-			run.InputTokens+run.OutputTokens, costText(run.CostUSD), run.Corrections)
+			run.TotalTokens(), costText(run.CostUSD), run.Corrections)
 	}
 	noteUnreportedCost(cmd, store)
 }

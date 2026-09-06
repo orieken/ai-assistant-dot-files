@@ -54,6 +54,23 @@ func parseEnvelope(stdout []byte) (*envelope, error) {
 	return &decoded, nil
 }
 
+// Reported reports whether the envelope carried any accounting at all.
+//
+// This exists because of how the decoder could fail silently: a wrong field
+// name does not error, it decodes to the zero value, so usage would read as
+// zero tokens and zero dollars — a wrong number wearing the appearance of a
+// measurement. A real invocation always reports something, so all four
+// counts AND the cost being zero together means nothing was read.
+//
+// "Zero input tokens" alone is deliberately NOT the test. A verified real
+// response reported input_tokens = 2 with 58,299 cache-creation tokens: when
+// the prompt is cached, the input count is legitimately tiny.
+func (e *envelope) Reported() bool {
+	usage := e.Usage
+	return usage.InputTokens > 0 || usage.OutputTokens > 0 ||
+		usage.CacheReadInputTokens > 0 || usage.CacheCreationInputTokens > 0 || e.TotalCost > 0
+}
+
 // usage converts the envelope's accounting into the executor's. Cost comes
 // straight across; it is reported, never derived.
 func (e *envelope) usage() *orchestrator.Usage {
